@@ -76,6 +76,19 @@ router.post(
     try {
       await conn.beginTransaction();
 
+      // Server-side price enforcement: never trust the client-supplied amount.
+      const [[svc]] = await conn.query("SELECT id, price FROM services WHERE id = ? AND deleted_at IS NULL", [service_id]);
+      if (!svc) throw new HttpError(404, "Service not found");
+      const expected = Number(svc.price);
+      // Paid bookings must match the real service price exactly; pending-payment
+      // bookings (pay later) are allowed to carry a 0 amount.
+      const isPending = payment !== "Paid";
+      if (isPending) {
+        if (Number(amount) !== 0) throw new HttpError(400, "Pending bookings must have amount 0");
+      } else if (Math.abs(Number(amount) - expected) > 0.01) {
+        throw new HttpError(400, "Amount does not match the service price");
+      }
+
       // Reserve slot if provided
       if (slot_id) {
         const [slots] = await conn.query("SELECT * FROM slots WHERE id = ? FOR UPDATE", [slot_id]);

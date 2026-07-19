@@ -95,15 +95,27 @@ router.post(
 );
 
 // POST /api/coupons/apply (records usage — increments used_count)
+// SECURITY: requires booking_id, validates the booking belongs to the caller,
+// and is idempotent per booking (a coupon cannot be applied twice to the same
+// booking), preventing replay/exhaustion of a coupon.
 router.post(
   "/apply",
   authRequired,
   asyncHandler(async (req, res) => {
-    const { code, amount } = req.body;
+    const { code, amount, booking_id } = req.body;
     if (!code) throw new HttpError(400, "code required");
+    if (!booking_id) throw new HttpError(400, "booking_id required");
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
+      const [b] = await conn.query("SELECT id, user_id, amount FROM bookings WHERE id = ?", [booking_id]);
+      if (!b.length) throw new HttpError(404, "Booking not found");
+      if (b[0].user_id !== req.user.id) throw new HttpError(403, "Forbidden");
+      const [[already]] = await conn.query(
+        "SELECT id FROM payments WHERE booking_id = ? AND gateway = ? LIMIT 1",
+        [booking_id, "coupon:" + code.toUpperCase()]
+      );
+      if (already) throw new HttpError(409, "Coupon already applied to this booking");
       const [rows] = await conn.query("SELECT * FROM coupons WHERE code = ? FOR UPDATE", [code.toUpperCase()]);
       if (!rows.length) throw new HttpError(404, "Invalid coupon");
       const c = rows[0];
@@ -115,6 +127,10 @@ router.post(
         ? (Number(amount) * Number(c.discount_value)) / 100
         : Number(c.discount_value);
       await conn.query("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?", [c.id]);
+      await conn.query(
+        "INSERT INTO payments (booking_id, user_id, amount, method, status, gateway) VALUES (?, ?, 0, 'coupon', 'success', ?)",
+        [booking_id, req.user.id, "coupon:" + c.code.toUpperCase()]
+      );
       await conn.commit();
       ok(res, { code: c.code, discount: Math.round(discount * 100) / 100 });
     } catch (e) {

@@ -24,6 +24,11 @@ router.get(
 );
 
 // POST /api/subscriptions (subscribe to a package)
+// SECURITY: a subscription is created in 'pending-payment' state and the
+// 'premium' role is NOT granted here. It is activated (status -> active,
+// role -> premium) ONLY when a successful payment is recorded against it
+// (via the gateway webhook in payments.js). A genuinely free package
+// (price 0 / null) is activated immediately since no payment is required.
 router.post(
   "/",
   authRequired,
@@ -32,21 +37,46 @@ router.post(
     const { package_id, plan_name, duration_days, auto_renew } = req.body;
     let name = plan_name;
     let days = duration_days ? Number(duration_days) : 30;
+    let price = 0;
     if (package_id) {
-      const [rows] = await pool.query("SELECT * FROM packages WHERE id = ?", [package_id]);
+      const [rows] = await pool.query("SELECT * FROM packages WHERE id = ? AND deleted_at IS NULL", [package_id]);
       if (!rows.length) throw new HttpError(404, "Package not found");
+      if (rows[0].status !== "Active") throw new HttpError(400, "Package is not available");
       name = rows[0].name;
       days = rows[0].duration_days || days;
+      price = Number(rows[0].price) || 0;
     }
     if (!name) throw new HttpError(400, "plan_name or package_id required");
     const expires = new Date(Date.now() + days * 86400000);
-    const [result] = await pool.query(
-      "INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at, status, auto_renew) VALUES (?, ?, ?, ?, 'active', ?)",
-      [req.user.id, package_id || null, name, expires, auto_renew ? 1 : 0]
-    );
-    await pool.query("UPDATE users SET role = 'premium' WHERE id = ?", [req.user.id]);
-    req.audit("create", "subscription", result.insertId, { plan_name: name });
-    created(res, { id: result.insertId, plan_name: name, expires_at: expires });
+    const isFree = price <= 0;
+    const status = isFree ? "active" : "pending-payment";
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const [result] = await conn.query(
+        "INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at, status, auto_renew) VALUES (?, ?, ?, ?, ?, ?)",
+        [req.user.id, package_id || null, name, expires, status, auto_renew ? 1 : 0]
+      );
+      if (isFree) {
+        // No payment needed: activate premium immediately.
+        await conn.query("UPDATE users SET role = 'premium' WHERE id = ?", [req.user.id]);
+      }
+      await conn.commit();
+      req.audit("create", "subscription", result.insertId, { plan_name: name, free: isFree });
+      created(res, {
+        id: result.insertId,
+        plan_name: name,
+        expires_at: expires,
+        status,
+        premium_activated: isFree,
+        note: isFree ? "Free plan activated." : "Complete payment to activate premium.",
+      });
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
+    }
   })
 );
 

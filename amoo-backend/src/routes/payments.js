@@ -30,25 +30,53 @@ router.get(
 );
 
 // POST /api/payments (record a payment for a booking)
+// SECURITY: a non-admin can NEVER mark a payment "success" — only the
+// payment-gateway webhook may do that. The amount is taken from the booking,
+// never the client, and the booking must belong to the caller.
 router.post(
   "/",
   authRequired,
   validate("payment"),
   asyncHandler(async (req, res) => {
-    const { booking_id, amount, method, status, txn_id, gateway } = req.body;
+    const { booking_id, subscription_id, method, txn_id, gateway } = req.body;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
-      const [result] = await conn.query(
-        "INSERT INTO payments (booking_id, user_id, amount, method, status, txn_id, gateway) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [booking_id || null, req.user.id, amount, method || null, status || "pending", txn_id || null, gateway || null]
-      );
-      if (status === "success" && booking_id) {
-        await conn.query("UPDATE bookings SET payment = 'Paid', status = 'upcoming' WHERE id = ?", [booking_id]);
+      let amount = 0;
+      if (booking_id) {
+        const [b] = await conn.query(
+          "SELECT id, user_id, amount, payment FROM bookings WHERE id = ?",
+          [booking_id]
+        );
+        if (!b.length) throw new HttpError(404, "Booking not found");
+        if (req.user.kind !== "admin" && b[0].user_id !== req.user.id) {
+          throw new HttpError(403, "Forbidden");
+        }
+        amount = Number(b[0].amount);
+      } else if (subscription_id) {
+        const [s] = await conn.query(
+          "SELECT id, user_id, status FROM subscriptions WHERE id = ?",
+          [subscription_id]
+        );
+        if (!s.length) throw new HttpError(404, "Subscription not found");
+        if (req.user.kind !== "admin" && s[0].user_id !== req.user.id) {
+          throw new HttpError(403, "Forbidden");
+        }
+        const [[pkg]] = await conn.query(
+          "SELECT COALESCE(p.price,0) AS price FROM subscriptions s LEFT JOIN packages p ON p.id = s.package_id WHERE s.id = ?",
+          [subscription_id]
+        );
+        amount = Number(pkg.price) || 0;
       }
+      // Force pending for users; only the webhook upgrades to success.
+      const status = req.user.kind === "admin" ? (req.body.status || "pending") : "pending";
+      const [result] = await conn.query(
+        "INSERT INTO payments (booking_id, subscription_id, user_id, amount, method, status, txn_id, gateway) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [booking_id || null, subscription_id || null, req.user.id, amount, method || null, status, txn_id || null, gateway || null]
+      );
       await conn.commit();
       req.audit("create", "payment", result.insertId, { booking_id, amount, status });
-      created(res, { id: result.insertId });
+      created(res, { id: result.insertId, status });
     } catch (err) {
       await conn.rollback();
       throw err;
@@ -115,23 +143,71 @@ router.get(
   })
 );
 
-// POST /api/payments/webhook  (payment gateway webhook stub — e.g. Razorpay/Stripe)
+// POST /api/payments/webhook  (payment gateway webhook — Razorpay/Stripe aware)
+// Signature verification uses the RAW request body so it is not affected by
+// JSON key reordering or number coercion. The raw body is captured in server.js.
 router.post(
   "/webhook",
   asyncHandler(async (req, res) => {
+    const env2 = require("../config/env");
+    if (env2.isProd && env2.payments.webhookSecret) {
+      const sig = req.headers["x-payment-signature"] || req.headers["x-razorpay-signature"];
+      const raw = req.rawBody || JSON.stringify(req.body);
+      const crypto = require("crypto");
+      const expected = crypto
+        .createHmac("sha256", env2.payments.webhookSecret)
+        .update(raw)
+        .digest("hex");
+      if (!sig || sig !== expected) return res.status(401).json({ success: false, error: "Invalid signature" });
+    }
+
     const event = req.body && req.body.event;
-    // Real gateways sign their webhooks; verify the signature here in production.
     if (!event) return res.status(400).json({ success: false, error: "Unknown event" });
-    if (event === "payment.captured" || event === "payment.success") {
-      const paymentId = req.body.payment_id || req.body.id;
-      const [rows] = await pool.query("SELECT id, booking_id FROM payments WHERE txn_id = ?", [paymentId]);
-      if (rows.length) {
-        const p = rows[0];
-        await pool.query("UPDATE payments SET status = 'success' WHERE id = ?", [p.id]);
-        if (p.booking_id) {
-          await pool.query("UPDATE bookings SET payment = 'Paid', status = 'upcoming' WHERE id = ?", [p.booking_id]);
+    if (event === "payment.captured" || event === "payment.success" || event === "order.paid") {
+      // Prefer matching the booking/subscription directly; fall back to txn_id only when set by gateway.
+      const bookingId = req.body.booking_id || req.body.bookingId || req.body.payload?.booking_id;
+      const subscriptionId = req.body.subscription_id || req.body.subscriptionId || req.body.payload?.subscription_id;
+      const paymentId = req.body.payment_id || req.body.id || req.body.txn_id;
+      let p = null;
+      if (bookingId) {
+        const [byBooking] = await pool.query("SELECT id, booking_id, subscription_id FROM payments WHERE booking_id = ?", [bookingId]);
+        if (byBooking.length) p = byBooking[0];
+      }
+      if (!p && subscriptionId) {
+        const [bySub] = await pool.query("SELECT id, booking_id, subscription_id FROM payments WHERE subscription_id = ?", [subscriptionId]);
+        if (bySub.length) p = bySub[0];
+      }
+      if (!p && paymentId) {
+        const [byTxn] = await pool.query("SELECT id, booking_id, subscription_id FROM payments WHERE txn_id = ?", [paymentId]);
+        if (byTxn.length) p = byTxn[0];
+      }
+      if (p) {
+        const conn = await pool.getConnection();
+        try {
+          await conn.beginTransaction();
+          await conn.query("UPDATE payments SET status = 'success' WHERE id = ?", [p.id]);
+          if (p.booking_id) {
+            await conn.query("UPDATE bookings SET payment = 'Paid', status = 'upcoming' WHERE id = ?", [p.booking_id]);
+          }
+          // Activate a subscription paid via this payment and grant premium.
+          if (p.subscription_id) {
+            await conn.query(
+              "UPDATE subscriptions SET status = 'active' WHERE id = ? AND status = 'pending-payment'",
+              [p.subscription_id]
+            );
+            const [[sub]] = await conn.query("SELECT user_id FROM subscriptions WHERE id = ?", [p.subscription_id]);
+            if (sub) {
+              await conn.query("UPDATE users SET role = 'premium' WHERE id = ? AND role != 'premium'", [sub.user_id]);
+            }
+          }
+          await conn.commit();
+          req.audit("webhook-success", "payment", p.id);
+        } catch (e) {
+          await conn.rollback();
+          throw e;
+        } finally {
+          conn.release();
         }
-        req.audit("webhook-success", "payment", p.id);
       }
     }
     res.json({ success: true, received: true });

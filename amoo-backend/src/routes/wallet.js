@@ -4,7 +4,7 @@ const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
-const { ok, paginated, parsePagination } = require("../utils/response");
+const { ok, paginated, parsePagination, fail } = require("../utils/response");
 
 async function ensureWallet(conn, userId) {
   const [rows] = await conn.query("SELECT * FROM wallets WHERE user_id = ? FOR UPDATE", [userId]);
@@ -40,25 +40,37 @@ router.get(
   })
 );
 
-// POST /api/wallet/credit
+// POST /api/wallet/credit  ->  DEPRECATED for users.
+// Direct balance crediting is a privilege-escalation / fraud vector and is now
+// admin-only (see /api/wallet/admin/credit). Reject user calls clearly.
 router.post(
   "/credit",
   authRequired,
+  (req, res) => {
+    return fail(res, 403, "Wallet top-up must go through a payment. Admins use /api/wallet/admin/credit.");
+  }
+);
+
+// POST /api/wallet/admin/credit  (admin-only, audited)
+router.post(
+  "/admin/credit",
+  adminRequired,
   validate("walletTxn"),
   asyncHandler(async (req, res) => {
-    const { amount, reason, ref } = req.body;
+    const { user_id, amount, reason, ref } = req.body;
+    if (!user_id) throw new HttpError(400, "user_id is required");
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
-      const w = await ensureWallet(conn, req.user.id);
+      const w = await ensureWallet(conn, Number(user_id));
       await conn.query("UPDATE wallets SET balance = balance + ? WHERE id = ?", [amount, w.id]);
       await conn.query(
         "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES (?, ?, 'credit', ?, ?)",
-        [w.id, amount, reason || "Added funds", ref || null]
+        [w.id, amount, reason || "Admin credited", ref || null]
       );
       await conn.commit();
       const [updated] = await conn.query("SELECT balance, currency FROM wallets WHERE id = ?", [w.id]);
-      req.audit("wallet-credit", "wallet", w.id, { amount });
+      req.audit("wallet-admin-credit", "wallet", w.id, { user_id, amount });
       ok(res, updated[0]);
     } catch (err) {
       await conn.rollback();
