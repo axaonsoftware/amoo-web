@@ -1,86 +1,228 @@
 const Joi = require("joi");
 
-// Reusable schemas
+// Allow empty-string-or-absent helper
+const optionalString = Joi.string().allow("").allow(null);
+const optionalNumber = Joi.number().allow(null);
+
 const schemas = {
   register: Joi.object({
     name: Joi.string().min(2).max(120).required(),
     email: Joi.string().email().required(),
-    phone: Joi.string().allow("").max(20),
-    password: Joi.string().min(6).required(),
+    phone: optionalString.max(20),
+    password: Joi.string().min(6).max(128).required(),
   }),
+
   userLogin: Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
   }),
+
+  adminLogin: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }),
+
+  refresh: Joi.object({
+    refresh_token: optionalString,
+  }),
+
+  forgotPassword: Joi.object({
+    email: Joi.string().email().required(),
+  }),
+
+  resetPassword: Joi.object({
+    email: Joi.string().email().required(),
+    otp: Joi.string().length(6).required(),
+    password: Joi.string().min(6).max(128).required(),
+  }),
+
+  changePassword: Joi.object({
+    current_password: Joi.string().required(),
+    password: Joi.string().min(6).max(128).required(),
+  }),
+
+  verifyEmail: Joi.object({
+    email: Joi.string().email().required(),
+    token: Joi.string().required(),
+  }),
+
+  updateProfile: Joi.object({
+    name: Joi.string().min(2).max(120),
+    phone: optionalString.max(20),
+    avatar: optionalString.max(512),
+  }),
+
   booking: Joi.object({
-    service_id: Joi.number().integer().required(),
-    expert_id: Joi.number().integer().allow(null),
+    service_id: Joi.number().integer().positive().required(),
+    expert_id: optionalNumber.integer().positive(),
+    slot_id: optionalNumber.integer().positive(),
     date: Joi.date().iso().required(),
     time: Joi.string().required(),
-    mode: Joi.string().allow(""),
-    amount: Joi.number().min(0),
-    payment: Joi.string().valid("Paid", "Pending"),
-    method: Joi.string().allow(""),
-  }),
-  payment: Joi.object({
-    booking_id: Joi.number().integer().allow(null),
+    mode: Joi.string().valid("chat", "video", "in-person", "").allow(null),
     amount: Joi.number().min(0).required(),
-    method: Joi.string().allow(""),
-    status: Joi.string().valid("success", "pending", "failed", "refunded"),
-    txn_id: Joi.string().allow(""),
+    payment: Joi.string().valid("Paid", "Pending").default("Pending"),
+    method: optionalString.max(40),
+    notes: optionalString.max(2000),
   }),
+
+  bookingUpdate: Joi.object({
+    status: Joi.string().valid("upcoming", "completed", "cancelled", "pending-payment"),
+    payment: Joi.string().valid("Paid", "Pending"),
+    expert_id: optionalNumber.integer().positive(),
+    notes: optionalString.max(2000),
+  }),
+
+  payment: Joi.object({
+    booking_id: optionalNumber.integer().positive(),
+    amount: Joi.number().min(0).required(),
+    method: optionalString.max(40),
+    status: Joi.string().valid("success", "pending", "failed", "refunded").default("pending"),
+    txn_id: optionalString.max(120),
+    gateway: optionalString.max(40),
+  }),
+
+  refund: Joi.object({
+    reason: optionalString.max(255),
+  }),
+
   service: Joi.object({
-    name: Joi.string().required(),
-    sub: Joi.string().allow(""),
-    img: Joi.string().allow(""),
-    category: Joi.string().valid("Numerology", "Tarot", "Astrology", "Healing", "Vastu", "AI Services", "Spiritual").required(),
+    name: Joi.string().max(160).required(),
+    sub: optionalString.max(255),
+    img: optionalString.max(512),
+    category: Joi.string()
+      .valid("Numerology", "Tarot", "Astrology", "Healing", "Vastu", "AI Services", "Spiritual")
+      .required(),
     type: Joi.string().valid("Report", "Consultation", "Chat").required(),
     price: Joi.number().min(0).required(),
-    duration: Joi.string().allow(""),
+    duration: optionalString.max(40),
     status: Joi.string().valid("Active", "Inactive"),
   }),
+
+  expert: Joi.object({
+    name: Joi.string().max(120).required(),
+    email: Joi.string().email().required(),
+    phone: optionalString.max(20),
+    avatar: optionalString.max(512),
+    role_title: optionalString.max(120),
+    bio: optionalString.max(4000),
+    specialties: optionalString.max(255),
+    rating: Joi.number().min(0).max(5),
+    status: Joi.string().valid("active", "inactive"),
+  }),
+
+  slot: Joi.object({
+    expert_id: Joi.number().integer().positive().required(),
+    date: Joi.date().iso().required(),
+    start_time: Joi.string().required(),
+    end_time: optionalString,
+    status: Joi.string().valid("available", "booked", "blocked").default("available"),
+  }),
+
+  package: Joi.object({
+    name: Joi.string().max(160).required(),
+    description: optionalString.max(2000),
+    price: Joi.number().min(0).required(),
+    duration_days: optionalNumber.integer().positive(),
+    status: Joi.string().valid("Active", "Inactive"),
+  }),
+
+  subscription: Joi.object({
+    package_id: optionalNumber.integer().positive(),
+    plan_name: optionalString.max(120),
+    duration_days: optionalNumber.integer().positive(),
+  }),
+
+  report: Joi.object({
+    service_id: optionalNumber.integer().positive(),
+    type: optionalString.max(60),
+    title: Joi.string().max(200).required(),
+    content: optionalString,
+    file_url: optionalString.max(512),
+  }),
+
+  reportUpdate: Joi.object({
+    status: Joi.string().valid("pending", "ready", "rejected"),
+    title: Joi.string().max(200),
+    content: optionalString,
+    file_url: optionalString.max(512),
+  }),
+
   contact: Joi.object({
     name: Joi.string().min(2).max(120).required(),
     email: Joi.string().email().required(),
-    phone: Joi.string().allow("").max(20),
-    subject: Joi.string().allow("").max(200),
-    message: Joi.string().min(5).required(),
+    phone: optionalString.max(20),
+    subject: optionalString.max(200),
+    message: Joi.string().min(5).max(4000).required(),
   }),
-  report: Joi.object({
-    service_id: Joi.number().integer().allow(null),
-    type: Joi.string().allow(""),
-    title: Joi.string().required(),
-    content: Joi.string().allow(""),
-    file_url: Joi.string().allow(""),
-  }),
-  package: Joi.object({
-    name: Joi.string().required(),
-    description: Joi.string().allow(""),
-    price: Joi.number().min(0).required(),
-    duration_days: Joi.number().integer().allow(null),
-    status: Joi.string().valid("Active", "Inactive"),
-  }),
-  slot: Joi.object({
-    expert_id: Joi.number().integer().required(),
-    date: Joi.date().iso().required(),
-    start_time: Joi.string().required(),
-    end_time: Joi.string().allow(""),
-    status: Joi.string().valid("available", "booked", "blocked"),
-  }),
+
   testimonial: Joi.object({
-    name: Joi.string().allow(""),
-    comment: Joi.string().min(2).required(),
-    rating: Joi.number().min(1).max(5),
-    user_id: Joi.number().integer().allow(null),
-    avatar: Joi.string().allow(""),
+    name: optionalString.max(120),
+    comment: Joi.string().min(2).max(2000).required(),
+    rating: Joi.number().min(1).max(5).default(5),
+    user_id: optionalNumber.integer().positive(),
+    avatar: optionalString.max(512),
+  }),
+
+  notification: Joi.object({
+    user_id: optionalNumber.integer().positive(),
+    title: Joi.string().max(200).required(),
+    message: Joi.string().max(2000).required(),
+    type: optionalString.max(40).default("info"),
+  }),
+
+  walletTxn: Joi.object({
+    amount: Joi.number().positive().required(),
+    reason: optionalString.max(120),
+    ref: optionalString.max(64),
+  }),
+
+  walletTransfer: Joi.object({
+    to_user_id: Joi.number().integer().positive().required(),
+    amount: Joi.number().positive().required(),
+    note: optionalString.max(120),
+  }),
+
+  walletAdjust: Joi.object({
+    user_id: Joi.number().integer().positive().required(),
+    amount: Joi.number().required(),
+    reason: optionalString.max(120),
+  }),
+
+  userUpdateAdmin: Joi.object({
+    name: Joi.string().min(2).max(120),
+    email: Joi.string().email(),
+    phone: optionalString.max(20),
+    role: Joi.string().valid("free", "premium", "consultant"),
+    status: Joi.string().valid("active", "blocked", "pending"),
+    verified: Joi.boolean(),
+  }),
+
+  query: Joi.object({
+    page: Joi.number().integer().min(1),
+    limit: Joi.number().integer().min(1).max(100),
+    pageSize: Joi.number().integer().min(1).max(100),
+    search: optionalString.max(120),
+    status: optionalString.max(40),
+    type: optionalString.max(60),
+    category: optionalString.max(60),
+    date_from: optionalString.max(40),
+    date_to: optionalString.max(40),
+    expert_id: optionalNumber.integer().positive(),
+    user_id: optionalNumber.integer().positive(),
+    method: optionalString.max(40),
   }),
 };
 
-function validate(bodySchema) {
+// Validate req.body with a named schema (or pass a Joi schema directly).
+// Strips unknown keys.
+function validate(schemaOrName, _unused, inlineSchema) {
+  const schema = inlineSchema || schemas[schemaOrName];
+  if (!schema) throw new Error(`Unknown validation schema: ${schemaOrName}`);
   return (req, res, next) => {
-    const { error, value } = bodySchema.validate(req.body, { abortEarly: false, stripUnknown: true });
+    const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
     if (error) {
       return res.status(400).json({
+        success: false,
         error: "Validation failed",
         details: error.details.map((d) => d.message),
       });
@@ -90,4 +232,18 @@ function validate(bodySchema) {
   };
 }
 
-module.exports = { schemas, validate };
+// Validate query string (does not strip, just checks).
+function validateQuery(req, res, next) {
+  const { error, value } = schemas.query.validate(req.query, { abortEarly: false, stripUnknown: true });
+  if (error) {
+    return res.status(400).json({
+      success: false,
+      error: "Invalid query parameters",
+      details: error.details.map((d) => d.message),
+    });
+  }
+  req.query = value;
+  next();
+}
+
+module.exports = { schemas, validate, validateQuery };

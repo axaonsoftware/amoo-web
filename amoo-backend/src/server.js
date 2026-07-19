@@ -1,7 +1,16 @@
 const express = require("express");
-const cors = require("cors");
 const path = require("path");
+const cors = require("cors");
+const cookieParser = require("cookie-parser");
+const compression = require("compression");
+const morgan = require("morgan");
 const { testConnection } = require("./config/db");
+const env = require("./config/env");
+const logger = require("./utils/logger");
+const { helmetConfig, corsOptions, limiter, authLimiter } = require("./middleware/security");
+const { HttpError } = require("./utils/helpers");
+const { fail } = require("./utils/response");
+const { withAudit, authRequired } = require("./middleware/auth");
 
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
@@ -19,16 +28,59 @@ const subscriptionRoutes = require("./routes/subscriptions");
 const notificationRoutes = require("./routes/notifications");
 const contactRoutes = require("./routes/contact");
 const uploadRoutes = require("./routes/uploads");
+const chatRoutes = require("./routes/chat");
+const couponRoutes = require("./routes/coupons");
+const auditRoutes = require("./routes/audit");
 
 const app = express();
-const PORT = process.env.PORT || 4000;
+const PORT = env.port;
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "*" }));
-app.use(express.json());
+// --- Core middleware ---
+app.use(helmetConfig);
+app.use(cors(corsOptions));
+app.use(compression());
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+// Request correlation id (traced in logs / errors)
+app.use((req, res, next) => {
+  res.setHeader("X-Request-Id", require("crypto").randomUUID());
+  next();
+});
+
+// Request logging (skip in test)
+if (env.nodeEnv !== "test") {
+  app.use(morgan(env.isProd ? "combined" : "dev", {
+    skip: (req) => req.path === "/api/health",
+  }));
+}
+
+// Global rate limiter
+app.use("/api", limiter);
+// Stricter limit on auth endpoints
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/admin/login", authLimiter);
+app.use("/api/auth/forgot-password", authLimiter);
+
+// Serve uploads (kept simple; in production put behind a CDN / signed URLs)
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
-app.get("/api/health", (req, res) => res.json({ status: "ok", time: new Date() }));
+// Health check (includes DB probe)
+app.get("/api/health", async (req, res) => {
+  let db = "ok";
+  try {
+    await require("./config/db").testConnection();
+  } catch (e) {
+    db = "unavailable";
+  }
+  res.json({ status: db === "ok" ? "ok" : "degraded", db, time: new Date().toISOString() });
+});
 
+// Attach audit helper to every request
+app.use(withAudit);
+
+// --- Routes ---
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/experts", expertRoutes);
@@ -45,24 +97,48 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/coupons", couponRoutes);
+app.use("/api/audit", auditRoutes);
 
-app.use((req, res) => res.status(404).json({ error: "Not found" }));
+// 404
+app.use((req, res) => fail(res, 404, "Not found"));
 
+// Central error handler
+// eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({ error: err.message || "Internal server error" });
+  if (err instanceof HttpError) {
+    return fail(res, err.status, err.message, err.details);
+  }
+  if (err.type === "entity.too.large") {
+    return fail(res, 413, "Payload too large");
+  }
+  if (err.code === "LIMIT_FILE_SIZE") {
+    return fail(res, 413, "File too large");
+  }
+  logger.error("Unhandled error:", err.message, err.stack);
+  // Never leak internal error details in production
+  fail(res, err.status || 500, env.isProd ? "Internal server error" : err.message);
 });
 
+// Graceful shutdown
+function shutdown(signal) {
+  logger.info(`Received ${signal}, shutting down...`);
+  pool_end().finally(() => process.exit(0));
+}
+function pool_end() {
+  const { pool } = require("./config/db");
+  return Promise.resolve(pool.end());
+}
+process.on("SIGTERM", () => shutdown("SIGTERM"));
+process.on("SIGINT", () => shutdown("SIGINT"));
+
 if (require.main === module) {
-  testConnection()
-    .then(() => {
-      app.listen(PORT, () => console.log(`[server] API listening on http://localhost:${PORT}`));
-    })
-    .catch((e) => {
-      console.error("[server] Could not connect to MySQL:", e.message);
-      console.error("[server] Starting anyway (DB calls will fail until MySQL is available).");
-      app.listen(PORT, () => console.log(`[server] API listening on http://localhost:${PORT} (DB unavailable)`));
+  testConnection().then((okDb) => {
+    app.listen(PORT, () => {
+      logger.info(`[server] API listening on http://localhost:${PORT} (db: ${okDb ? "connected" : "UNAVAILABLE"})`);
     });
+  });
 }
 
 module.exports = app;

@@ -1,6 +1,8 @@
--- Amoo Guru backend schema
--- Run: mysql -u root -p < src/schema.sql
--- Or from the MySQL CLI: source src/schema.sql
+-- ============================================================
+--  Amoo Guru — consolidated production schema
+--  Run once:  mysql -u root -p < src/schema.sql
+--  Idempotent: uses CREATE TABLE IF NOT EXISTS and IF NOT EXISTS indexes.
+-- ============================================================
 
 CREATE DATABASE IF NOT EXISTS amoo_db
   CHARACTER SET utf8mb4
@@ -11,20 +13,40 @@ USE amoo_db;
 -- Users (end customers)
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS users (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  name            VARCHAR(120) NOT NULL,
+  email           VARCHAR(160) NOT NULL UNIQUE,
+  phone           VARCHAR(20),
+  password_hash   VARCHAR(255),
+  avatar          VARCHAR(512),
+  role            ENUM('free','premium','consultant') NOT NULL DEFAULT 'free',
+  status          ENUM('active','blocked','pending') NOT NULL DEFAULT 'pending',
+  verified        TINYINT(1) NOT NULL DEFAULT 0,
+  token_version   INT NOT NULL DEFAULT 0,
+  verify_token    VARCHAR(64),
+  verify_token_expires DATETIME,
+  reset_otp       VARCHAR(12),
+  reset_otp_expires DATETIME,
+  deleted_at      DATETIME,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+-- --------------------------------------------------------
+-- Admins
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS admins (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   name          VARCHAR(120) NOT NULL,
   email         VARCHAR(160) NOT NULL UNIQUE,
-  phone         VARCHAR(20),
-  password_hash VARCHAR(255),
-  avatar        VARCHAR(512),
-  role          ENUM('free','premium','consultant') NOT NULL DEFAULT 'free',
-  status        ENUM('active','blocked','pending') NOT NULL DEFAULT 'pending',
-  verified      TINYINT(1) NOT NULL DEFAULT 0,
+  password_hash VARCHAR(255) NOT NULL,
+  role          VARCHAR(40) NOT NULL DEFAULT 'admin',
+  token_version INT NOT NULL DEFAULT 0,
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- --------------------------------------------------------
--- Experts / Astrologers / Consultants
+-- Experts
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS experts (
   id            INT AUTO_INCREMENT PRIMARY KEY,
@@ -32,16 +54,17 @@ CREATE TABLE IF NOT EXISTS experts (
   email         VARCHAR(160) NOT NULL UNIQUE,
   phone         VARCHAR(20),
   avatar        VARCHAR(512),
-  role_title    VARCHAR(120),                -- e.g. "Vedic Astrology"
+  role_title    VARCHAR(120),
   bio           TEXT,
-  specialties   VARCHAR(255),                -- comma separated service keys
+  specialties   VARCHAR(255),
   rating        DECIMAL(2,1) DEFAULT 0.0,
   status        ENUM('active','inactive') NOT NULL DEFAULT 'active',
+  deleted_at    DATETIME,
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- --------------------------------------------------------
--- Services (numerology, tarot, kundli, reiki, vastu, etc.)
+-- Services
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS services (
   id          INT AUTO_INCREMENT PRIMARY KEY,
@@ -54,11 +77,12 @@ CREATE TABLE IF NOT EXISTS services (
   duration    VARCHAR(40),
   status      ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
   bookings    INT NOT NULL DEFAULT 0,
+  deleted_at  DATETIME,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- --------------------------------------------------------
--- Availability slots for experts
+-- Availability slots
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS slots (
   id         INT AUTO_INCREMENT PRIMARY KEY,
@@ -75,13 +99,14 @@ CREATE TABLE IF NOT EXISTS slots (
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS bookings (
   id          INT AUTO_INCREMENT PRIMARY KEY,
-  booking_ref VARCHAR(32) NOT NULL UNIQUE,   -- BOOK-2143
+  booking_ref VARCHAR(40) NOT NULL UNIQUE,
   user_id     INT NOT NULL,
   expert_id   INT,
   service_id  INT NOT NULL,
+  slot_id     INT,
   date        DATE NOT NULL,
   time        TIME NOT NULL,
-  mode        VARCHAR(40),                    -- chat / video / in-person
+  mode        VARCHAR(40),
   amount      DECIMAL(10,2) NOT NULL DEFAULT 0,
   payment     ENUM('Paid','Pending') NOT NULL DEFAULT 'Pending',
   status      ENUM('upcoming','completed','cancelled','pending-payment') NOT NULL DEFAULT 'upcoming',
@@ -89,18 +114,20 @@ CREATE TABLE IF NOT EXISTS bookings (
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
   FOREIGN KEY (expert_id)  REFERENCES experts(id)  ON DELETE SET NULL,
-  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
+  FOREIGN KEY (slot_id)    REFERENCES slots(id)    ON DELETE SET NULL
 );
 
 -- --------------------------------------------------------
--- Payments / transactions
+-- Payments
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS payments (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   booking_id    INT,
   user_id       INT,
   amount        DECIMAL(10,2) NOT NULL DEFAULT 0,
-  method        VARCHAR(40),                  -- card / upi / wallet
+  method        VARCHAR(40),
+  gateway       VARCHAR(40),
   status        ENUM('success','pending','failed','refunded') NOT NULL DEFAULT 'pending',
   txn_id        VARCHAR(120),
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -109,32 +136,107 @@ CREATE TABLE IF NOT EXISTS payments (
 );
 
 -- --------------------------------------------------------
--- Packages & offers
+-- Refunds
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS packages (
+CREATE TABLE IF NOT EXISTS refunds (
   id          INT AUTO_INCREMENT PRIMARY KEY,
-  name        VARCHAR(160) NOT NULL,
-  description TEXT,
-  price       DECIMAL(10,2) NOT NULL DEFAULT 0,
-  duration_days INT,
-  status      ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
-  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  payment_id  INT NOT NULL,
+  user_id     INT,
+  amount      DECIMAL(10,2) NOT NULL DEFAULT 0,
+  reason      VARCHAR(255),
+  status      ENUM('pending','processed','failed') NOT NULL DEFAULT 'pending',
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
 );
 
 -- --------------------------------------------------------
--- Reports generated for users (kundli, numerology, tarot, reiki)
+-- Packages
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS packages (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(160) NOT NULL,
+  description   TEXT,
+  price         DECIMAL(10,2) NOT NULL DEFAULT 0,
+  duration_days INT,
+  status        ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
+  deleted_at    DATETIME,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- --------------------------------------------------------
+-- Coupons / discounts
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS coupons (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  code            VARCHAR(30) NOT NULL UNIQUE,
+  description     VARCHAR(255),
+  discount_type   ENUM('percent','flat') NOT NULL,
+  discount_value  DECIMAL(10,2) NOT NULL,
+  min_amount      DECIMAL(10,2) NOT NULL DEFAULT 0,
+  max_uses        INT,
+  used_count      INT NOT NULL DEFAULT 0,
+  expires_at      DATETIME,
+  active          TINYINT(1) NOT NULL DEFAULT 1,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- --------------------------------------------------------
+-- Subscriptions
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT NOT NULL,
+  package_id    INT,
+  plan_name     VARCHAR(120),
+  status        ENUM('active','expired','cancelled') NOT NULL DEFAULT 'active',
+  auto_renew    TINYINT(1) NOT NULL DEFAULT 0,
+  started_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at    DATETIME,
+  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL
+);
+
+-- --------------------------------------------------------
+-- Reports
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS reports (
   id          INT AUTO_INCREMENT PRIMARY KEY,
   user_id     INT NOT NULL,
   service_id  INT,
-  type        VARCHAR(60),                    -- kundli / numerology / tarot / reiki
+  type        VARCHAR(60),
   title       VARCHAR(200),
   content     MEDIUMTEXT,
   file_url    VARCHAR(512),
+  status      ENUM('pending','ready','rejected') NOT NULL DEFAULT 'pending',
+  deleted_at  DATETIME,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
   FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL
+);
+
+-- --------------------------------------------------------
+-- Conversations & Messages (chat)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS conversations (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  user_a           INT NOT NULL,
+  user_b           INT NOT NULL,
+  last_message_at  DATETIME,
+  created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_a) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_b) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS messages (
+  id               INT AUTO_INCREMENT PRIMARY KEY,
+  conversation_id  INT NOT NULL,
+  sender_id        INT NOT NULL,
+  content          TEXT NOT NULL,
+  is_read          TINYINT(1) NOT NULL DEFAULT 0,
+  created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+  FOREIGN KEY (sender_id)        REFERENCES users(id)        ON DELETE CASCADE
 );
 
 -- --------------------------------------------------------
@@ -148,31 +250,57 @@ CREATE TABLE IF NOT EXISTS testimonials (
   comment     TEXT,
   rating      TINYINT(1) DEFAULT 5,
   status      ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
+  deleted_at  DATETIME,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id)    ON DELETE SET NULL
+);
+
+-- --------------------------------------------------------
+-- Notifications
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS notifications (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  user_id     INT,
+  title       VARCHAR(200) NOT NULL,
+  message     TEXT,
+  type        VARCHAR(40) DEFAULT 'info',
+  is_read     TINYINT(1) NOT NULL DEFAULT 0,
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- --------------------------------------------------------
+-- Contacts / enquiries
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS contacts (
+  id          INT AUTO_INCREMENT PRIMARY KEY,
+  name        VARCHAR(120) NOT NULL,
+  email       VARCHAR(160) NOT NULL,
+  phone       VARCHAR(20),
+  subject     VARCHAR(200),
+  message     TEXT NOT NULL,
+  reply       TEXT,
+  status      ENUM('new','replied','closed') NOT NULL DEFAULT 'new',
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- --------------------------------------------------------
+-- Uploads
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS uploads (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  user_id        INT,
+  original_name  VARCHAR(255),
+  stored_name    VARCHAR(255) NOT NULL,
+  path           VARCHAR(512) NOT NULL,
+  mime           VARCHAR(120),
+  size           INT,
+  created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- --------------------------------------------------------
--- Admin users
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS admins (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  name          VARCHAR(120) NOT NULL,
-  email         VARCHAR(160) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
-  role          VARCHAR(40) NOT NULL DEFAULT 'admin',
-  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE INDEX idx_bookings_user     ON bookings(user_id);
-CREATE INDEX idx_bookings_expert   ON bookings(expert_id);
-CREATE INDEX idx_bookings_service  ON bookings(service_id);
-CREATE INDEX idx_payments_user     ON payments(user_id);
-CREATE INDEX idx_reports_user      ON reports(user_id);
-CREATE INDEX idx_slots_expert      ON slots(expert_id);
-
--- --------------------------------------------------------
--- Wallet (per user balance + transactions)
+-- Wallets
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS wallets (
   id         INT AUTO_INCREMENT PRIMARY KEY,
@@ -195,64 +323,18 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
 );
 
 -- --------------------------------------------------------
--- Subscriptions (user plan linkage)
+-- Audit log
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS subscriptions (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  user_id       INT NOT NULL,
-  package_id    INT,
-  plan_name     VARCHAR(120),
-  status        ENUM('active','expired','cancelled') NOT NULL DEFAULT 'active',
-  started_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  expires_at    DATETIME,
-  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
-  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL
-);
-
--- --------------------------------------------------------
--- Notifications
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE IF NOT EXISTS audit_log (
   id          INT AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT,
-  title       VARCHAR(200) NOT NULL,
-  message     TEXT,
-  type        VARCHAR(40) DEFAULT 'info',
-  is_read     TINYINT(1) NOT NULL DEFAULT 0,
+  actor_id    INT,
+  actor_type  VARCHAR(20) DEFAULT 'system',
+  action      VARCHAR(60) NOT NULL,
+  entity      VARCHAR(60),
+  entity_id   INT,
+  meta        JSON,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  INDEX idx_audit_created (created_at)
 );
 
 -- --------------------------------------------------------
--- Contact / enquiry messages
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS contacts (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  name        VARCHAR(120) NOT NULL,
-  email       VARCHAR(160) NOT NULL,
-  phone       VARCHAR(20),
-  subject     VARCHAR(200),
-  message     TEXT NOT NULL,
-  status      ENUM('new','replied','closed') NOT NULL DEFAULT 'new',
-  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- --------------------------------------------------------
--- Uploaded files
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS uploads (
-  id          INT AUTO_INCREMENT PRIMARY KEY,
-  user_id     INT,
-  original_name VARCHAR(255),
-  stored_name VARCHAR(255) NOT NULL,
-  path        VARCHAR(512) NOT NULL,
-  mime        VARCHAR(120),
-  size        INT,
-  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
-);
-
-CREATE INDEX idx_wallet_user        ON wallets(user_id);
-CREATE INDEX idx_sub_user           ON subscriptions(user_id);
-CREATE INDEX idx_notif_user         ON notifications(user_id);
-CREATE INDEX idx_contact_status     ON contacts(status);

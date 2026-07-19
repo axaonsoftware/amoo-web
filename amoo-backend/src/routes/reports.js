@@ -2,47 +2,125 @@ const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
-const { asyncHandler } = require("../utils/helpers");
-const { validate, schemas } = require("../middleware/validate");
+const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
+const { validate, validateQuery } = require("../middleware/validate");
+const { ok, paginated, created, assertFound, parsePagination, fail } = require("../utils/response");
+const fs = require("fs");
+const path = require("path");
 
-// GET /api/reports  (user: own, admin: all)
-router.get("/", authRequired, asyncHandler(async (req, res) => {
-  if (req.user.kind === "admin") {
-    const [rows] = await pool.query("SELECT * FROM reports ORDER BY created_at DESC");
-    return res.json(rows);
-  }
-  const [rows] = await pool.query("SELECT * FROM reports WHERE user_id = ? ORDER BY created_at DESC", [req.user.id]);
-  res.json(rows);
-}));
+const REPORT_UPDATE_ALLOWED = ["status", "title", "content", "file_url"];
+
+// GET /api/reports (user: own, admin: all, with filters)
+router.get(
+  "/",
+  authRequired,
+  validateQuery,
+  asyncHandler(async (req, res) => {
+    const { page, pageSize, offset } = parsePagination(req.query);
+    const params = [];
+    let where = req.user.kind === "admin" ? "WHERE 1=1" : "WHERE user_id = ? AND deleted_at IS NULL";
+    if (req.user.kind !== "admin") params.push(req.user.id);
+    if (req.query.type) { where += " AND type = ?"; params.push(req.query.type); }
+    if (req.query.status) { where += " AND status = ?"; params.push(req.query.status); }
+    if (req.query.user_id && req.user.kind === "admin") { where += " AND user_id = ?"; params.push(req.query.user_id); }
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM reports ${where}`, params);
+    const [rows] = await pool.query(
+      `SELECT * FROM reports ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      [...params, pageSize, offset]
+    );
+    paginated(res, rows, { page, pageSize, total });
+  })
+);
 
 // GET /api/reports/:id
-router.get("/:id", authRequired, asyncHandler(async (req, res) => {
-  const [rows] = await pool.query("SELECT * FROM reports WHERE id = ?", [req.params.id]);
-  if (!rows.length) return res.status(404).json({ error: "Report not found" });
-  if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-    return res.status(403).json({ error: "Forbidden" });
-  }
-  res.json(rows[0]);
-}));
+router.get(
+  "/:id",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query("SELECT * FROM reports WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
+    if (assertFound(res, rows[0])) return;
+    if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+    ok(res, rows[0]);
+  })
+);
 
-// user create (generate report)
-router.post("/", authRequired, validate(schemas.report), asyncHandler(async (req, res) => {
-  const { service_id, type, title, content, file_url } = req.body;
-  const [result] = await pool.query(
-    "INSERT INTO reports (user_id, service_id, type, title, content, file_url) VALUES (?,?,?,?,?,?)",
-    [req.user.id, service_id, type, title, content, file_url]
-  );
-  res.status(201).json({ id: result.insertId });
-}));
+// user create
+router.post(
+  "/",
+  authRequired,
+  validate("report"),
+  asyncHandler(async (req, res) => {
+    const { service_id, type, title, content, file_url } = req.body;
+    const [result] = await pool.query(
+      "INSERT INTO reports (user_id, service_id, type, title, content, file_url, status) VALUES (?,?,?,?,?,?,'pending')",
+      [req.user.id, service_id || null, type || null, title, content || null, file_url || null]
+    );
+    req.audit("create", "report", result.insertId, { title });
+    created(res, { id: result.insertId });
+  })
+);
 
 // admin create for any user
-router.post("/admin", adminRequired, asyncHandler(async (req, res) => {
-  const { user_id, service_id, type, title, content, file_url } = req.body;
-  const [result] = await pool.query(
-    "INSERT INTO reports (user_id, service_id, type, title, content, file_url) VALUES (?,?,?,?,?,?)",
-    [user_id, service_id, type, title, content, file_url]
-  );
-  res.status(201).json({ id: result.insertId });
-}));
+router.post(
+  "/admin",
+  adminRequired,
+  validate("report"),
+  asyncHandler(async (req, res) => {
+    const { user_id, service_id, type, title, content, file_url } = req.body;
+    if (!user_id) throw new HttpError(400, "user_id required");
+    const [result] = await pool.query(
+      "INSERT INTO reports (user_id, service_id, type, title, content, file_url, status) VALUES (?,?,?,?,?,?,'ready')",
+      [user_id, service_id || null, type || null, title, content || null, file_url || null]
+    );
+    req.audit("create", "report", result.insertId, { title });
+    created(res, { id: result.insertId });
+  })
+);
+
+// admin update (status/title/content/file)
+router.patch(
+  "/:id",
+  adminRequired,
+  validate("reportUpdate"),
+  asyncHandler(async (req, res) => {
+    const { setClause, values } = buildUpdate(req.body, REPORT_UPDATE_ALLOWED, [req.params.id]);
+    await pool.query(`UPDATE reports SET ${setClause} WHERE id = ?`, values);
+    req.audit("update", "report", Number(req.params.id), req.body);
+    ok(res, { id: Number(req.params.id), updated: true });
+  })
+);
+
+// admin soft-delete
+router.delete(
+  "/:id",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query("SELECT id FROM reports WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
+    if (assertFound(res, rows[0])) return;
+    await pool.query("UPDATE reports SET deleted_at = NOW() WHERE id = ?", [req.params.id]);
+    req.audit("delete", "report", Number(req.params.id));
+    ok(res, { id: Number(req.params.id), deleted: true });
+  })
+);
+
+// GET /api/reports/:id/download  (serve the linked file)
+router.get(
+  "/:id/download",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query("SELECT * FROM reports WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
+    if (assertFound(res, rows[0])) return;
+    if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+    const fileUrl = rows[0].file_url;
+    if (!fileUrl) return fail(res, 404, "No file attached to this report");
+    const filePath = path.join(__dirname, "..", "..", fileUrl);
+    if (!fs.existsSync(filePath)) return fail(res, 404, "File not found on disk");
+    res.download(filePath, path.basename(filePath));
+  })
+);
 
 module.exports = router;

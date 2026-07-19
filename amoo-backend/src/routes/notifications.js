@@ -2,47 +2,114 @@ const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
-const { asyncHandler } = require("../utils/helpers");
+const { asyncHandler, HttpError } = require("../utils/helpers");
+const { validate } = require("../middleware/validate");
+const { ok, paginated, created, parsePagination } = require("../utils/response");
 
-// GET /api/notifications  (own)
-router.get("/", authRequired, asyncHandler(async (req, res) => {
-  const [rows] = await pool.query(
-    "SELECT * FROM notifications WHERE user_id = ? OR user_id IS NULL ORDER BY created_at DESC LIMIT 50",
-    [req.user.id]
-  );
-  res.json(rows);
-}));
+// GET /api/notifications (own + broadcast)
+router.get(
+  "/",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const { page, pageSize, offset } = parsePagination(req.query);
+    const [[{ total }]] = await pool.query(
+      "SELECT COUNT(*) AS total FROM notifications WHERE (user_id = ? OR user_id IS NULL)",
+      [req.user.id]
+    );
+    const [rows] = await pool.query(
+      "SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) ORDER BY created_at DESC LIMIT ? OFFSET ?",
+      [req.user.id, pageSize, offset]
+    );
+    paginated(res, rows, { page, pageSize, total });
+  })
+);
 
 // GET /api/notifications/unread-count
-router.get("/unread-count", authRequired, asyncHandler(async (req, res) => {
-  const [rows] = await pool.query(
-    "SELECT COUNT(*) AS count FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0",
-    [req.user.id]
-  );
-  res.json(rows[0]);
-}));
+router.get(
+  "/unread-count",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query(
+      "SELECT COUNT(*) AS count FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0",
+      [req.user.id]
+    );
+    ok(res, rows[0]);
+  })
+);
 
-// POST /api/notifications/:id/read
-router.post("/:id/read", authRequired, asyncHandler(async (req, res) => {
-  await pool.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [req.params.id]);
-  res.json({ success: true });
-}));
+// POST /api/notifications/:id/read (ownership-checked)
+router.post(
+  "/:id/read",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query("SELECT * FROM notifications WHERE id = ?", [req.params.id]);
+    if (rows.length && rows[0].user_id && rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+    await pool.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [req.params.id]);
+    ok(res, { id: Number(req.params.id), read: true });
+  })
+);
+
+// POST /api/notifications/read-all (mark all own+broadcast as read)
+router.post(
+  "/read-all",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const [result] = await pool.query(
+      "UPDATE notifications SET is_read = 1 WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0",
+      [req.user.id]
+    );
+    ok(res, { marked: result.affectedRows });
+  })
+);
+
+// DELETE /api/notifications/:id (own or admin)
+router.delete(
+  "/:id",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query("SELECT * FROM notifications WHERE id = ?", [req.params.id]);
+    if (!rows.length) return ok(res, { id: Number(req.params.id), deleted: true });
+    const n = rows[0];
+    if (req.user.kind !== "admin" && n.user_id && n.user_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+    await pool.query("DELETE FROM notifications WHERE id = ?", [req.params.id]);
+    req.audit("delete", "notification", Number(req.params.id));
+    ok(res, { id: Number(req.params.id), deleted: true });
+  })
+);
 
 // admin: create for a user (or broadcast with user_id null)
-router.post("/", adminRequired, asyncHandler(async (req, res) => {
-  const { user_id, title, message, type } = req.body;
-  if (!title || !message) return res.status(400).json({ error: "title and message required" });
-  const [result] = await pool.query(
-    "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
-    [user_id || null, title, message, type || "info"]
-  );
-  res.status(201).json({ id: result.insertId });
-}));
+router.post(
+  "/",
+  adminRequired,
+  validate("notification"),
+  asyncHandler(async (req, res) => {
+    const { user_id, title, message, type } = req.body;
+    const [result] = await pool.query(
+      "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
+      [user_id || null, title, message, type || "info"]
+    );
+    req.audit("create", "notification", result.insertId, { user_id });
+    created(res, { id: result.insertId });
+  })
+);
 
 // admin: all
-router.get("/all", adminRequired, asyncHandler(async (req, res) => {
-  const [rows] = await pool.query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 100");
-  res.json(rows);
-}));
+router.get(
+  "/all",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { page, pageSize, offset } = parsePagination(req.query);
+    const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM notifications");
+    const [rows] = await pool.query(
+      "SELECT * FROM notifications ORDER BY created_at DESC LIMIT ? OFFSET ?",
+      [pageSize, offset]
+    );
+    paginated(res, rows, { page, pageSize, total });
+  })
+);
 
 module.exports = router;

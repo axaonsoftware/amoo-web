@@ -1,12 +1,13 @@
 require("dotenv").config();
 const bcrypt = require("bcryptjs");
-const { pool } = require("./config/db");
+const { pool, testConnection } = require("./config/db");
+const logger = require("./utils/logger");
 
 async function seed() {
-  console.log("Seeding database...");
+  logger.info("Seeding database...");
 
   // Admin
-  const adminHash = await bcrypt.hash("admin123", 10);
+  const adminHash = await bcrypt.hash("admin123", 12);
   await pool.query(
     `INSERT INTO admins (name, email, password_hash, role)
      VALUES ('Admin', 'admin@amooguru.com', ?, 'admin')
@@ -15,7 +16,7 @@ async function seed() {
   );
 
   // Users
-  const userHash = await bcrypt.hash("user123", 10);
+  const userHash = await bcrypt.hash("user123", 12);
   const users = [
     ["Vedika Desai", "vedika.desai@gmail.com", "+91 98765 43210", "premium", "active", 1],
     ["Rahul Sharma", "rahulsharma@gmail.com", "+91 87654 32109", "premium", "active", 1],
@@ -24,10 +25,11 @@ async function seed() {
     ["Pooja Mehta", "pooja.mehta@gmail.com", "+91 88776 65544", "premium", "blocked", 1],
   ];
   for (const u of users) {
+    const row = [u[0], u[1], u[2], userHash, u[3], u[4], u[5]];
     await pool.query(
       `INSERT INTO users (name, email, phone, password_hash, role, status, verified)
        VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE name = VALUES(name)`,
-      [u[0], u[1], u[2], userHash, u[3], u[4], u[5]]
+      row
     );
   }
 
@@ -65,6 +67,17 @@ async function seed() {
     );
   }
 
+  // Slots for expert 1
+  for (let d = 0; d < 3; d++) {
+    const date = new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
+    for (const [start, end] of [["09:00:00", "09:30:00"], ["10:00:00", "10:30:00"], ["11:00:00", "11:30:00"]]) {
+      await pool.query(
+        "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES (?,?,?,?, 'available') ON DUPLICATE KEY UPDATE status = status",
+        [1, date, start, end]
+      );
+    }
+  }
+
   // Packages
   await pool.query(
     `INSERT INTO packages (name, description, price, duration_days, status)
@@ -72,25 +85,32 @@ async function seed() {
     ["Premium Healing Package", "Unlimited reiki + tarot for 3 months", 4999, 90, "Active"]
   );
 
+  // Coupons
+  await pool.query(
+    `INSERT INTO coupons (code, description, discount_type, discount_value, min_amount, max_uses, expires_at, active)
+     VALUES ('WELCOME20', '20% off first booking', 'percent', 20, 0, 1000, DATE_ADD(NOW(), INTERVAL 60 DAY), 1)
+     ON DUPLICATE KEY UPDATE code = code`
+  );
+
   // Wallet for first user
   await pool.query(
     `INSERT INTO wallets (user_id, balance) VALUES (1, 1500) ON DUPLICATE KEY UPDATE balance = VALUES(balance)`
   );
   await pool.query(
-    "INSERT INTO wallet_transactions (wallet_id, amount, type, reason) VALUES (1, 1500, 'credit', 'Welcome bonus')"
+    "INSERT INTO wallet_transactions (wallet_id, amount, type, reason) SELECT id, 1500, 'credit', 'Welcome bonus' FROM wallets WHERE user_id = 1 AND NOT EXISTS (SELECT 1 FROM wallet_transactions wt WHERE wt.wallet_id = wallets.id)"
   );
 
   // Subscription for first user
   await pool.query(
-    `INSERT INTO subscriptions (user_id, plan_name, expires_at)
-     VALUES (1, 'Premium Healing Package', DATE_ADD(NOW(), INTERVAL 90 DAY))
+    `INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at)
+     VALUES (1, 1, 'Premium Healing Package', DATE_ADD(NOW(), INTERVAL 90 DAY))
      ON DUPLICATE KEY UPDATE plan_name = VALUES(plan_name)`
   );
 
   // Notifications
   await pool.query(
     `INSERT INTO notifications (user_id, title, message, type) VALUES
-     (1, 'Booking confirmed', 'Your Kundli Reading is confirmed for 18 May.', 'booking'),
+     (1, 'Booking confirmed', 'Your Kundli Reading is confirmed.', 'booking'),
      (1, 'New report ready', 'Your Numerology report is ready to download.', 'report'),
      (NULL, 'Festive offer', 'Get 20% off on all Tarot readings this week!', 'offer')`
   );
@@ -101,11 +121,30 @@ async function seed() {
      ('Guest User', 'guest@example.com', '+91 90000 00000', 'Service query', 'Want to know about Reiki healing.')`
   );
 
-  console.log("Seed complete.");
-  console.log("Admin login: admin@amooguru.com / admin123");
-  console.log("User  login: vedika.desai@gmail.com / user123");
+  // Testimonials
+  await pool.query(
+    `INSERT INTO testimonials (name, comment, rating, status) VALUES
+     ('Riya Kapoor', 'The numerology report was spot on and transformative.', 5, 'Active'),
+     ('Arjun Mehta', 'Tarot reading gave me clarity about my career path.', 5, 'Active')
+     ON DUPLICATE KEY UPDATE comment = comment`
+  );
+
+  logger.info("Seed complete.");
+  logger.info("Admin login: admin@amooguru.com / admin123");
+  logger.info("User  login: vedika.desai@gmail.com / user123");
 }
 
-seed()
-  .then(() => process.exit(0))
-  .catch((e) => { console.error(e); process.exit(1); });
+(async () => {
+  const okDb = await testConnection();
+  if (!okDb) {
+    logger.error("Cannot connect to database. Aborting seed.");
+    process.exit(1);
+  }
+  try {
+    await seed();
+    process.exit(0);
+  } catch (e) {
+    logger.error(e);
+    process.exit(1);
+  }
+})();

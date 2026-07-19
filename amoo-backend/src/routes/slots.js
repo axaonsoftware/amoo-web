@@ -1,39 +1,71 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
-const { asyncHandler } = require("../utils/helpers");
-const { validate, schemas } = require("../middleware/validate");
+const { authRequired, adminRequired } = require("../middleware/auth");
+const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
+const { validate, validateQuery } = require("../middleware/validate");
+const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
 
-// GET /api/slots?expert_id=1&date=2025-05-18
-router.get("/", asyncHandler(async (req, res) => {
-  const { expert_id, date } = req.query;
-  let sql = "SELECT * FROM slots WHERE 1=1";
-  const params = [];
-  if (expert_id) { sql += " AND expert_id = ?"; params.push(expert_id); }
-  if (date) { sql += " AND date = ?"; params.push(date); }
-  sql += " ORDER BY date, start_time";
-  const [rows] = await pool.query(sql, params);
-  res.json(rows);
-}));
+// GET /api/slots?expert_id=1&date=2025-05-18 (public + filters)
+router.get(
+  "/",
+  validateQuery,
+  asyncHandler(async (req, res) => {
+    const { page, pageSize, offset } = parsePagination(req.query);
+    const params = [];
+    let where = "WHERE 1=1";
+    if (req.query.expert_id) { where += " AND expert_id = ?"; params.push(req.query.expert_id); }
+    if (req.query.date) { where += " AND date = ?"; params.push(req.query.date); }
+    if (req.query.status) { where += " AND status = ?"; params.push(req.query.status); }
+    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM slots ${where}`, params);
+    const [rows] = await pool.query(
+      `SELECT * FROM slots ${where} ORDER BY date, start_time LIMIT ? OFFSET ?`,
+      [...params, pageSize, offset]
+    );
+    paginated(res, rows, { page, pageSize, total });
+  })
+);
 
 // admin create slot
-router.post("/", validate(schemas.slot), asyncHandler(async (req, res) => {
-  const { expert_id, date, start_time, end_time, status } = req.body;
-  if (!expert_id || !date || !start_time) {
-    return res.status(400).json({ error: "expert_id, date and start_time are required" });
-  }
-  const [result] = await pool.query(
-    "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES (?,?,?,?,?)",
-    [expert_id, date, start_time, end_time, status || "available"]
-  );
-  res.status(201).json({ id: result.insertId });
-}));
+router.post(
+  "/",
+  adminRequired,
+  validate("slot"),
+  asyncHandler(async (req, res) => {
+    const { expert_id, date, start_time, end_time, status } = req.body;
+    const [result] = await pool.query(
+      "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES (?,?,?,?,?)",
+      [expert_id, date, start_time, end_time || null, status || "available"]
+    );
+    req.audit("create", "slot", result.insertId, { expert_id });
+    created(res, { id: result.insertId });
+  })
+);
 
-// admin book/block slot
-router.patch("/:id", asyncHandler(async (req, res) => {
-  const { status } = req.body;
-  await pool.query("UPDATE slots SET status = ? WHERE id = ?", [status, req.params.id]);
-  res.json({ success: true });
-}));
+// admin book/block/unblock slot
+router.patch(
+  "/:id",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { status } = req.body;
+    if (!["available", "booked", "blocked"].includes(status)) throw new HttpError(400, "Invalid status");
+    await pool.query("UPDATE slots SET status = ? WHERE id = ?", [status, req.params.id]);
+    req.audit("update", "slot", Number(req.params.id), { status });
+    ok(res, { id: Number(req.params.id), status });
+  })
+);
+
+// admin delete slot
+router.delete(
+  "/:id",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query("SELECT id FROM slots WHERE id = ?", [req.params.id]);
+    if (assertFound(res, rows[0])) return;
+    await pool.query("DELETE FROM slots WHERE id = ?", [req.params.id]);
+    req.audit("delete", "slot", Number(req.params.id));
+    ok(res, { id: Number(req.params.id), deleted: true });
+  })
+);
 
 module.exports = router;
