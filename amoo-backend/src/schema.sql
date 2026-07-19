@@ -124,6 +124,7 @@ CREATE TABLE IF NOT EXISTS bookings (
 CREATE TABLE IF NOT EXISTS payments (
   id            INT AUTO_INCREMENT PRIMARY KEY,
   booking_id    INT,
+  subscription_id INT,
   user_id       INT,
   amount        DECIMAL(10,2) NOT NULL DEFAULT 0,
   method        VARCHAR(40),
@@ -132,6 +133,7 @@ CREATE TABLE IF NOT EXISTS payments (
   txn_id        VARCHAR(120),
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
+  FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL,
   FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE
 );
 
@@ -189,7 +191,7 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   user_id       INT NOT NULL,
   package_id    INT,
   plan_name     VARCHAR(120),
-  status        ENUM('active','expired','cancelled') NOT NULL DEFAULT 'active',
+  status        ENUM('active','expired','cancelled','pending-payment') NOT NULL DEFAULT 'active',
   auto_renew    TINYINT(1) NOT NULL DEFAULT 0,
   started_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   expires_at    DATETIME,

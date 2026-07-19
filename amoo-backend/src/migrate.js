@@ -70,6 +70,7 @@ const logger = require("./utils/logger");
       ["conversations", "last_message_at", "DATETIME"],
       ["bookings", "slot_id", "INT"],
       ["payments", "gateway", "VARCHAR(40)"],
+      ["payments", "subscription_id", "INT"],
     ];
     for (const [table, col, def] of columnAdds) {
       const [existing] = await conn.query(
@@ -78,6 +79,22 @@ const logger = require("./utils/logger");
       );
       if (existing.length) continue;
       await conn.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+    }
+
+    // Extend the subscriptions `status` ENUM to allow 'pending-payment'
+    // (idempotent: only alter if the value isn't already present).
+    try {
+      const [enumRows] = await conn.query(
+        "SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'subscriptions' AND column_name = 'status' LIMIT 1"
+      );
+      const enumDef = enumRows[0] && enumRows[0].COLUMN_TYPE;
+      if (enumDef && !/pending-payment/.test(enumDef)) {
+        await conn.query(
+          "ALTER TABLE subscriptions MODIFY COLUMN status ENUM('active','expired','cancelled','pending-payment') NOT NULL DEFAULT 'active'"
+        );
+      }
+    } catch (e) {
+      if (!/duplicate|already exists/i.test(e.message)) throw e;
     }
 
     // Indexes — created defensively (older MySQL lacks CREATE INDEX IF NOT EXISTS).
@@ -89,6 +106,7 @@ const logger = require("./utils/logger");
       ["idx_bookings_slot", "bookings", "slot_id"],
       ["idx_payments_user", "payments", "user_id"],
       ["idx_payments_booking", "payments", "booking_id"],
+      ["idx_payments_sub", "payments", "subscription_id"],
       ["idx_reports_user", "reports", "user_id"],
       ["idx_slots_expert", "slots", "expert_id"],
       ["idx_slots_date", "slots", "date"],
