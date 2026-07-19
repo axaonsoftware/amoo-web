@@ -83,6 +83,41 @@ Single source of truth: `src/schema.sql` (create-if-not-exists + indexes).
 New tables vs. earlier versions: `refunds`, `conversations`/`messages`,
 `coupons`, `audit_log`, and `reset_otp` columns on `users`.
 
+## Deployment
+The API is container-ready and platform-ready. Migrations run automatically
+on container start (`node src/migrate.js && node src/server.js`).
+
+### Environment
+Copy `.env.example` → `.env` and set real values. In production you MUST set:
+`NODE_ENV=production`, strong `JWT_SECRET` + `JWT_REFRESH_SECRET`, and
+`CLIENT_ORIGIN` to your frontend URL. Optional production integrations:
+- Object storage: `S3_ENABLED=true` + `S3_*` (files then serve via signed/public URLs)
+- Email: `EMAIL_ENABLED=true` + `EMAIL_*` (sends OTP + verification emails)
+- Payments: `PAYMENT_GATEWAY=razorpay|stripe` + `PAYMENT_*` (webhook signature verified in prod)
+
+### Docker (local full stack)
+```bash
+cp .env.example .env        # set DB_PASSWORD etc.
+docker compose up --build
+# API on :4000, MySQL on :3306
+```
+
+### Docker (image only)
+```bash
+docker build -t amoo-backend .
+docker run -p 4000:4000 --env-file .env amoo-backend
+```
+
+### Platforms
+- **Render**: `render.yaml` blueprint provisions the web service + MySQL.
+- **Railway**: `railway.toml` builds from `./amoo-backend` and runs migrate+start.
+- **VPS / PM2**: `npm run pm2` (uses `ecosystem.config.js`, cluster mode).
+
+### Frontend
+The Next.js app reads `NEXT_PUBLIC_API_URL`. In production set it to the
+deployed backend URL. A `Dockerfile` (standalone Next build) is provided in the
+frontend directory; ensure `next.config.ts` keeps `output: "standalone"`.
+
 ## Default credentials (after seed)
 - Admin: `admin@amooguru.com` / `admin123`
 - User:  `vedika.desai@gmail.com` / `user123`

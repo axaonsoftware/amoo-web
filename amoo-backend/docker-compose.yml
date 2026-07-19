@@ -1,0 +1,46 @@
+# Docker Compose for local + staging full-stack runs.
+# For production, point DB_HOST at a managed MySQL and do NOT expose the DB port.
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: amoo_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_DATABASE: ${DB_NAME:-amoo_db}
+    ports:
+      - "3306:3306"
+    volumes:
+      - amoo_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    container_name: amoo_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-root}
+      DB_NAME: ${DB_NAME:-amoo_db}
+      JWT_SECRET: ${JWT_SECRET:-please_change_this}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-please_change_this_refresh}
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./uploads:/app/uploads
+
+volumes:
+  amoo_db_data:
