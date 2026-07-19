@@ -21,15 +21,32 @@ async function ensureConversation(conn, userA, userB) {
 }
 
 // POST /api/chat/conversations  (start or resume a conversation)
+// SECURITY: a user may only open a conversation with an EXPERT (or support),
+// never directly with arbitrary other users / admins. This prevents
+// unsolicited DMs / spam between members.
 router.post(
   "/conversations",
   authRequired,
   asyncHandler(async (req, res) => {
     const { participant_id } = req.body;
     if (!participant_id) return res.status(400).json({ success: false, error: "participant_id required" });
+    const pid = Number(participant_id);
+    if (!Number.isInteger(pid) || pid <= 0) {
+      return res.status(400).json({ success: false, error: "Invalid participant_id" });
+    }
+    if (pid === req.user.id) {
+      return res.status(400).json({ success: false, error: "Cannot chat with yourself" });
+    }
+    const [expert] = await pool.query(
+      "SELECT id FROM experts WHERE id = ? AND status = 'active' AND deleted_at IS NULL",
+      [pid]
+    );
+    if (!expert.length) {
+      return res.status(403).json({ success: false, error: "You can only start a conversation with an expert" });
+    }
     const conn = await pool.getConnection();
     try {
-      const conv = await ensureConversation(conn, req.user.id, Number(participant_id));
+      const conv = await ensureConversation(conn, req.user.id, pid);
       ok(res, conv);
     } finally {
       conn.release();

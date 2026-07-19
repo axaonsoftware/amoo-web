@@ -3,9 +3,9 @@ const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
+const { saveFile, deleteFile } = require("../config/storage");
 const { asyncHandler } = require("../utils/helpers");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
-const fs = require("fs");
 const path = require("path");
 
 // POST /api/uploads (single file, auth required)
@@ -15,12 +15,14 @@ router.post(
   upload.single("file"),
   asyncHandler(async (req, res) => {
     if (!req.file) return res.status(400).json({ success: false, error: "No file uploaded" });
-    const url = `/uploads/${req.file.filename}`;
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const unique = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
+    const saved = await saveFile(req.file.buffer, unique, req.file.mimetype);
     const [result] = await pool.query(
       "INSERT INTO uploads (user_id, original_name, stored_name, path, mime, size) VALUES (?, ?, ?, ?, ?, ?)",
-      [req.user.id, req.file.originalname, req.file.filename, url, req.file.mimetype, req.file.size]
+      [req.user.id, req.file.originalname, saved.key, saved.url, req.file.mimetype, req.file.size]
     );
-    created(res, { id: result.insertId, url, filename: req.file.filename, size: req.file.size });
+    created(res, { id: result.insertId, url: saved.url, filename: saved.key, size: req.file.size });
   })
 );
 
@@ -52,6 +54,28 @@ router.get(
   })
 );
 
+// GET /api/uploads/:id/download (owner or admin) — authenticated file access.
+// Prevents anyone from fetching arbitrary uploaded files by guessing the name.
+router.get(
+  "/:id/download",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const [rows] = await pool.query("SELECT * FROM uploads WHERE id = ?", [req.params.id]);
+    if (assertFound(res, rows[0])) return;
+    const u = rows[0];
+    if (req.user.kind !== "admin" && u.user_id !== req.user.id) {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+    if (env.storage.enabled && u.path && u.path.startsWith("http")) {
+      return res.redirect(u.path);
+    }
+    const filePath = path.join(__dirname, "..", "..", u.path || "");
+    if (!fs.existsSync(filePath)) return fail(res, 404, "File not found on disk");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.download(filePath, u.original_name || path.basename(filePath));
+  })
+);
+
 // DELETE /api/uploads/:id (owner or admin)
 router.delete(
   "/:id",
@@ -62,8 +86,7 @@ router.delete(
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
-    const filePath = path.join(__dirname, "..", "..", rows[0].path);
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    await deleteFile(rows[0].stored_name);
     await pool.query("DELETE FROM uploads WHERE id = ?", [req.params.id]);
     ok(res, { id: Number(req.params.id), deleted: true });
   })

@@ -5,6 +5,7 @@ const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination, fail } = require("../utils/response");
+const env = require("../config/env");
 const fs = require("fs");
 const path = require("path");
 
@@ -117,6 +118,12 @@ router.get(
     }
     const fileUrl = rows[0].file_url;
     if (!fileUrl) return fail(res, 404, "No file attached to this report");
+
+    // S3 / object storage: redirect to the public/signed URL.
+    if (env.storage.enabled && fileUrl.startsWith("http")) {
+      return res.redirect(fileUrl);
+    }
+    // Local disk: stream the file.
     const filePath = path.join(__dirname, "..", "..", fileUrl);
     if (!fs.existsSync(filePath)) return fail(res, 404, "File not found on disk");
     res.download(filePath, path.basename(filePath));

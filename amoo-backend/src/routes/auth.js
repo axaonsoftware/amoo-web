@@ -12,6 +12,7 @@ const { asyncHandler, HttpError, genOtp } = require("../utils/helpers");
 const { validate, schemas } = require("../middleware/validate");
 const { ok, created, raw, fail } = require("../utils/response");
 const env = require("../config/env");
+const { sendMail } = require("../config/email");
 
 function publicUser(u) {
   return {
@@ -218,6 +219,13 @@ router.post(
       "UPDATE users SET verify_token = ?, verify_token_expires = ? WHERE id = ?",
       [token, expires, req.user.id]
     );
+    const link = `${env.appUrl}/verify-email?email=${encodeURIComponent(req.user.email)}&token=${token}`;
+    await sendMail({
+      to: req.user.email,
+      subject: "Amoo Guru — Verify your email",
+      text: `Click to verify your email: ${link}`,
+      html: `<p>Click to verify your email:</p><p><a href="${link}">${link}</a></p>`,
+    });
     if (!env.isProd) return ok(res, { message: "Verification token generated", dev_token: token });
     ok(res, { message: "Verification email sent" });
   })
@@ -229,7 +237,7 @@ router.post(
   validate("forgotPassword"),
   asyncHandler(async (req, res) => {
     const { email } = req.body;
-    const [rows] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+    const [rows] = await pool.query("SELECT id, name, email FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
     // Always respond 200 to avoid user enumeration; only act if user exists.
     if (rows.length) {
       const otp = genOtp(6);
@@ -238,7 +246,12 @@ router.post(
         "UPDATE users SET reset_otp = ?, reset_otp_expires = ? WHERE id = ?",
         [otp, expires, rows[0].id]
       );
-      // NOTE: real deployment should send OTP via email/SMS. We return it here for dev only.
+      await sendMail({
+        to: rows[0].email,
+        subject: "Amoo Guru — Password reset OTP",
+        text: `Your password reset OTP is ${otp}. It expires in ${env.jwt.resetExpiresMin} minutes.`,
+      });
+      // NOTE: real deployment sends the OTP via email/SMS. We return it here for dev only.
       if (!env.isProd) return ok(res, { message: "OTP generated", dev_otp: otp });
     }
     ok(res, { message: "If the account exists, a reset OTP has been sent." });

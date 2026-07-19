@@ -16,7 +16,11 @@ router.get(
   "/",
   validateQuery,
   asyncHandler(async (req, res) => {
+    // ?all=1 reveals inactive/expert PII — only admins may do this.
     const isAdmin = req.headers.authorization && req.query.all === "1";
+    if (req.query.all === "1" && !isAdmin) {
+      return res.status(401).json({ success: false, error: "Admin authentication required" });
+    }
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];
     let where = isAdmin ? "WHERE deleted_at IS NULL" : "WHERE status = 'active' AND deleted_at IS NULL";

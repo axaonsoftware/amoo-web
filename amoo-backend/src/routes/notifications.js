@@ -65,6 +65,8 @@ router.post(
 );
 
 // DELETE /api/notifications/:id (own or admin)
+// Broadcast notifications (user_id IS NULL) may be READ by any user, but only
+// an admin may delete them (otherwise any user could delete global notices).
 router.delete(
   "/:id",
   authRequired,
@@ -72,7 +74,10 @@ router.delete(
     const [rows] = await pool.query("SELECT * FROM notifications WHERE id = ?", [req.params.id]);
     if (!rows.length) return ok(res, { id: Number(req.params.id), deleted: true });
     const n = rows[0];
-    if (req.user.kind !== "admin" && n.user_id && n.user_id !== req.user.id) {
+    if (n.user_id && n.user_id !== req.user.id && req.user.kind !== "admin") {
+      return res.status(403).json({ success: false, error: "Forbidden" });
+    }
+    if (!n.user_id && req.user.kind !== "admin") {
       return res.status(403).json({ success: false, error: "Forbidden" });
     }
     await pool.query("DELETE FROM notifications WHERE id = ?", [req.params.id]);
