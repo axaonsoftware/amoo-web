@@ -11,10 +11,11 @@ function genBookingRef() {
   return `BOOK-${t}-${r}`;
 }
 
-// Generate a numeric/human OTP (default 6 digits).
+// Generate a cryptographically-secure numeric OTP (default 6 digits).
+// Uses crypto.randomInt so OTPs are not predictable (unlike Math.random).
 function genOtp(length = 6) {
-  const max = Math.pow(10, length) - 1;
-  return String(Math.floor(Math.random() * (max + 1))).padStart(length, "0");
+  const max = Math.pow(10, length);
+  return String(crypto.randomInt(0, max)).padStart(length, "0");
 }
 
 // Build a parameterized UPDATE SET clause from a whitelist of allowed fields.

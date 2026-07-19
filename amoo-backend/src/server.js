@@ -7,7 +7,7 @@ const morgan = require("morgan");
 const { testConnection } = require("./config/db");
 const env = require("./config/env");
 const logger = require("./utils/logger");
-const { helmetConfig, corsOptions, limiter, authLimiter } = require("./middleware/security");
+const { helmetConfig, corsOptions, limiter, authLimiter, registerLimiter } = require("./middleware/security");
 const { HttpError } = require("./utils/helpers");
 const { fail } = require("./utils/response");
 const { withAudit, authRequired } = require("./middleware/auth");
@@ -41,6 +41,11 @@ app.use(cors(corsOptions));
 app.use(compression());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true }));
+// Capture the raw body for the payment webhook so signature HMAC is reliable.
+app.use("/api/payments/webhook", express.json({
+  limit: "1mb",
+  verify: (req, res, buf) => { req.rawBody = buf.toString("utf8"); },
+}));
 app.use(cookieParser());
 
 // Request correlation id (traced in logs / errors)
@@ -62,9 +67,11 @@ app.use("/api", limiter);
 app.use("/api/auth/login", authLimiter);
 app.use("/api/auth/admin/login", authLimiter);
 app.use("/api/auth/forgot-password", authLimiter);
+app.use("/api/auth/register", registerLimiter);
 
-// Serve uploads (kept simple; in production put behind a CDN / signed URLs)
-app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
+// NOTE: uploaded files are NO LONGER served statically. They are accessed
+// only via the authenticated /api/uploads/:id/download route (owner or admin),
+// which prevents unauthenticated access to (potentially private) user files.
 
 // Health check (includes DB probe)
 app.get("/api/health", async (req, res) => {

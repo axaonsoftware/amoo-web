@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Secrets & env
+.env
+**/.env
+.env.local
+**/.env.local
+
+# Uploads / runtime artifacts
+uploads/
+**/uploads/
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Tooling noise
+.claude/
+**/.claude/
+
+# Design exports / OS noise
+Website/
+__MACOSX/
+.DS_Store

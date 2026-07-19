@@ -18,8 +18,10 @@ const corsOptions = {
 };
 
 const helmetConfig = helmet({
-  contentSecurityPolicy: false, // static uploads / Next.js frontend handles CSP
-  crossOriginResourcePolicy: { policy: "cross-origin" }, // allow /uploads to be embedded
+  contentSecurityPolicy: false, // JSON API; the Next.js frontend sets its own CSP
+  crossOriginResourcePolicy: { policy: "same-origin" }, // no public uploads to embed
+  referrerPolicy: { policy: "no-referrer" },
+  // Keep the default X-Content-Type-Options: nosniff (anti-MIME-sniffing).
 });
 
 const limiter = rateLimit({
@@ -39,4 +41,13 @@ const authLimiter = rateLimit({
   message: { success: false, error: "Too many attempts, please try again later." },
 });
 
-module.exports = { corsOptions, helmetConfig, limiter, authLimiter };
+// Registration is its own target: prevents account/email spam & enumeration floods.
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many registrations from this address, please try later." },
+});
+
+module.exports = { corsOptions, helmetConfig, limiter, authLimiter, registerLimiter };

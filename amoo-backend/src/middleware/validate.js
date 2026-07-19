@@ -9,7 +9,7 @@ const schemas = {
     name: Joi.string().min(2).max(120).required(),
     email: Joi.string().email().required(),
     phone: optionalString.max(20),
-    password: Joi.string().min(6).max(128).required(),
+    password: Joi.string().min(8).max(128).required(),
   }),
 
   userLogin: Joi.object({
@@ -33,12 +33,12 @@ const schemas = {
   resetPassword: Joi.object({
     email: Joi.string().email().required(),
     otp: Joi.string().length(6).required(),
-    password: Joi.string().min(6).max(128).required(),
+    password: Joi.string().min(8).max(128).required(),
   }),
 
   changePassword: Joi.object({
     current_password: Joi.string().required(),
-    password: Joi.string().min(6).max(128).required(),
+    password: Joi.string().min(8).max(128).required(),
   }),
 
   verifyEmail: Joi.object({
@@ -74,7 +74,8 @@ const schemas = {
 
   payment: Joi.object({
     booking_id: optionalNumber.integer().positive(),
-    amount: Joi.number().min(0).required(),
+    subscription_id: optionalNumber.integer().positive(),
+    amount: Joi.number().min(0),
     method: optionalString.max(40),
     status: Joi.string().valid("success", "pending", "failed", "refunded").default("pending"),
     txn_id: optionalString.max(120),
@@ -171,6 +172,7 @@ const schemas = {
   }),
 
   walletTxn: Joi.object({
+    user_id: optionalNumber.integer().positive(),
     amount: Joi.number().positive().required(),
     reason: optionalString.max(120),
     ref: optionalString.max(64),
