@@ -40,6 +40,11 @@ const env = {
     max: Number(required("RATE_LIMIT_MAX", "200")),
   },
 
+  lockout: {
+    maxAttempts: Number(required("LOCKOUT_MAX_ATTEMPTS", "5")),
+    durationMin: Number(required("LOCKOUT_DURATION_MIN", "15")),
+  },
+
   maxFileSize: Number(required("MAX_FILE_SIZE", "5242880")),
   logLevel: required("LOG_LEVEL", "info"),
 

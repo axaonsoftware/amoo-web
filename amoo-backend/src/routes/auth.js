@@ -35,6 +35,54 @@ function issueTokens(user) {
   return { access, refresh };
 }
 
+async function checkLockout(table, id) {
+  const [rows] = await pool.query(
+    `SELECT failed_attempts, locked_until FROM ${table} WHERE id = ?`,
+    [id]
+  );
+  if (!rows.length) return;
+  const row = rows[0];
+  if (row.locked_until && new Date(row.locked_until) > new Date()) {
+    const remaining = Math.ceil((new Date(row.locked_until) - new Date()) / 60000);
+    throw new HttpError(423, `Account locked. Try again in ${remaining} minute(s).`);
+  }
+  // Lock has expired — reset so the next attempt can succeed
+  if (row.locked_until && new Date(row.locked_until) <= new Date()) {
+    await pool.query(
+      `UPDATE ${table} SET failed_attempts = 0, locked_until = NULL WHERE id = ?`,
+      [id]
+    );
+  }
+}
+
+async function recordFailedAttempt(table, id) {
+  const [rows] = await pool.query(
+    `SELECT failed_attempts FROM ${table} WHERE id = ?`,
+    [id]
+  );
+  if (!rows.length) return;
+  const attempts = (rows[0].failed_attempts || 0) + 1;
+  if (attempts >= env.lockout.maxAttempts) {
+    const lockedUntil = new Date(Date.now() + env.lockout.durationMin * 60000);
+    await pool.query(
+      `UPDATE ${table} SET failed_attempts = ?, locked_until = ? WHERE id = ?`,
+      [attempts, lockedUntil, id]
+    );
+  } else {
+    await pool.query(
+      `UPDATE ${table} SET failed_attempts = ? WHERE id = ?`,
+      [attempts, id]
+    );
+  }
+}
+
+async function resetFailedAttempts(table, id) {
+  await pool.query(
+    `UPDATE ${table} SET failed_attempts = 0, locked_until = NULL WHERE id = ?`,
+    [id]
+  );
+}
+
 // POST /api/auth/register
 router.post(
   "/register",
@@ -69,8 +117,14 @@ router.post(
     const user = rows[0];
     if (!user || !user.password_hash) throw new HttpError(401, "Invalid credentials");
     if (user.status === "blocked") throw new HttpError(403, "Account is blocked");
+
+    await checkLockout("users", user.id);
     const okPw = await bcrypt.compare(password, user.password_hash);
-    if (!okPw) throw new HttpError(401, "Invalid credentials");
+    if (!okPw) {
+      await recordFailedAttempt("users", user.id);
+      throw new HttpError(401, "Invalid credentials");
+    }
+    await resetFailedAttempts("users", user.id);
 
     const { access, refresh } = issueTokens(user);
     res.cookie("refresh_token", refresh, {
@@ -92,8 +146,14 @@ router.post(
     const [rows] = await pool.query("SELECT * FROM admins WHERE email = ?", [email]);
     const admin = rows[0];
     if (!admin) throw new HttpError(401, "Invalid credentials");
+
+    await checkLockout("admins", admin.id);
     const okPw = await bcrypt.compare(password, admin.password_hash);
-    if (!okPw) throw new HttpError(401, "Invalid credentials");
+    if (!okPw) {
+      await recordFailedAttempt("admins", admin.id);
+      throw new HttpError(401, "Invalid credentials");
+    }
+    await resetFailedAttempts("admins", admin.id);
 
     const payload = { id: admin.id, kind: "admin", tokenVersion: admin.token_version || 0 };
     const access = signAccessToken(payload);
@@ -114,6 +174,7 @@ router.post(
 // POST /api/auth/refresh  (rotate refresh -> new access+refresh)
 router.post(
   "/refresh",
+  validate("refresh"),
   asyncHandler(async (req, res) => {
     const token = req.cookies?.refresh_token || req.body?.refresh_token;
     if (!token) throw new HttpError(401, "No refresh token");

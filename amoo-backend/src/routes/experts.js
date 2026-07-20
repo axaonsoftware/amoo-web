@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
-const { adminRequired } = require("../middleware/auth");
+const { authRequired, adminRequired } = require("../middleware/auth");
+const { verifyAccessToken } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
@@ -17,9 +18,19 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     // ?all=1 reveals inactive/expert PII — only admins may do this.
-    const isAdmin = req.headers.authorization && req.query.all === "1";
-    if (req.query.all === "1" && !isAdmin) {
-      return res.status(401).json({ success: false, error: "Admin authentication required" });
+    // Properly verify the token instead of just checking header existence.
+    let isAdmin = false;
+    if (req.query.all === "1") {
+      const header = req.headers.authorization || "";
+      if (header.startsWith("Bearer ")) {
+        try {
+          const decoded = verifyAccessToken(header.slice(7));
+          isAdmin = decoded.kind === "admin";
+        } catch (_) { /* token invalid — not admin */ }
+      }
+      if (!isAdmin) {
+        return res.status(401).json({ success: false, error: "Admin authentication required" });
+      }
     }
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];

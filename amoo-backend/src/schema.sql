@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS users (
   verify_token_expires DATETIME,
   reset_otp       VARCHAR(12),
   reset_otp_expires DATETIME,
+  failed_attempts INT NOT NULL DEFAULT 0,
+  locked_until    DATETIME,
   deleted_at      DATETIME,
   created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -42,6 +44,8 @@ CREATE TABLE IF NOT EXISTS admins (
   password_hash VARCHAR(255) NOT NULL,
   role          VARCHAR(40) NOT NULL DEFAULT 'admin',
   token_version INT NOT NULL DEFAULT 0,
+  failed_attempts INT NOT NULL DEFAULT 0,
+  locked_until    DATETIME,
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
