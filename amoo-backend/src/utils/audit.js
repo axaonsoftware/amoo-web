@@ -1,3 +1,4 @@
+const logger = require("./logger");
 const { pool } = require("../config/db");
 
 // Best-effort audit log write. Never throws to the caller.
@@ -16,7 +17,7 @@ async function logAudit({ actor_id, actor_type, action, entity, entity_id, meta 
     );
   } catch (e) {
     // audit failures should not break the main flow
-    console.warn("[audit] write failed:", e.message);
+    logger.warn("[audit] write failed:", e.message);
   }
 }
 

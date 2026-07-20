@@ -54,7 +54,8 @@ app.use(cookieParser());
 
 // Request correlation id (traced in logs / errors)
 app.use((req, res, next) => {
-  res.setHeader("X-Request-Id", require("crypto").randomUUID());
+  req.id = require("crypto").randomUUID();
+  res.setHeader("X-Request-Id", req.id);
   next();
 });
 
@@ -129,10 +130,33 @@ app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
     return fail(res, 413, "File too large");
   }
-  logger.error("Unhandled error:", err.message, err.stack);
+  // Log with request context (no request body — may contain sensitive data)
+  logger.error(
+    "Unhandled error:",
+    JSON.stringify({
+      requestId: req.id,
+      method: req.method,
+      url: req.originalUrl,
+      userId: req.user?.id ?? null,
+      ip: req.ip,
+    }),
+    err.message,
+    err.stack
+  );
   // Never leak internal paths / stack traces — strip everything after the first line
   const safeMsg = (err.message || "").split("\n")[0].trim() || "Internal server error";
   fail(res, err.status || 500, env.isProd ? "Internal server error" : safeMsg);
+});
+
+// Process-level safety net: log + exit on truly unhandled errors
+process.on("uncaughtException", (err) => {
+  logger.error("UNCAUGHT_EXCEPTION:", err.message, err.stack);
+  // Exit uncleanly — process is in unknown state
+  // eslint-disable-next-line no-process-exit
+  process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  logger.error("UNHANDLED_REJECTION:", typeof reason === "object" ? reason.message : reason, reason?.stack ?? "");
 });
 
 // Graceful shutdown
