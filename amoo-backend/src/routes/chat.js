@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
-const { asyncHandler } = require("../utils/helpers");
+const { asyncHandler, HttpError } = require("../utils/helpers");
+const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
 
 // Ensure a conversation exists between a user and an expert (or support).
@@ -27,14 +28,10 @@ async function ensureConversation(conn, userA, userB) {
 router.post(
   "/conversations",
   authRequired,
+  validate("chatConversation"),
   asyncHandler(async (req, res) => {
     const { participant_id } = req.body;
-    if (!participant_id) return res.status(400).json({ success: false, error: "participant_id required" });
-    const pid = Number(participant_id);
-    if (!Number.isInteger(pid) || pid <= 0) {
-      return res.status(400).json({ success: false, error: "Invalid participant_id" });
-    }
-    if (pid === req.user.id) {
+    if (participant_id === req.user.id) {
       return res.status(400).json({ success: false, error: "Cannot chat with yourself" });
     }
     const [expert] = await pool.query(
@@ -58,6 +55,7 @@ router.post(
 router.get(
   "/conversations",
   authRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     if (req.user.kind === "admin") {
       const { page, pageSize, offset } = parsePagination(req.query);
@@ -104,6 +102,7 @@ router.post(
 router.get(
   "/conversations/:id/messages",
   authRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const [conv] = await pool.query("SELECT * FROM conversations WHERE id = ?", [req.params.id]);
@@ -128,9 +127,9 @@ router.get(
 router.post(
   "/conversations/:id/messages",
   authRequired,
+  validate("chatMessage"),
   asyncHandler(async (req, res) => {
     const { content } = req.body;
-    if (!content || !content.trim()) return res.status(400).json({ success: false, error: "content required" });
     const conn = await pool.getConnection();
     try {
       const [conv] = await conn.query("SELECT * FROM conversations WHERE id = ?", [req.params.id]);

@@ -3,6 +3,7 @@ const router = express.Router();
 const { pool } = require("../config/db");
 const { adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
+const { validateQuery } = require("../middleware/validate");
 const { ok } = require("../utils/response");
 
 const allowedPeriods = { day: "%Y-%m-%d", week: "%Y-%u", month: "%Y-%m", year: "%Y" };
@@ -50,6 +51,7 @@ router.get(
 router.get(
   "/revenue",
   adminRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const fmt = allowedPeriods[req.query.period] || allowedPeriods.month;
     const where = req.query.from ? "WHERE DATE(p.created_at) >= ?" : "";
@@ -72,6 +74,7 @@ router.get(
 router.get(
   "/bookings/trends",
   adminRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const fmt = allowedPeriods[req.query.period] || allowedPeriods.month;
     const [rows] = await pool.query(
@@ -89,6 +92,7 @@ router.get(
 router.get(
   "/users/growth",
   adminRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const fmt = allowedPeriods[req.query.period] || allowedPeriods.month;
     const [rows] = await pool.query(
@@ -104,6 +108,7 @@ router.get(
 router.get(
   "/experts/top",
   adminRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const limit = Math.min(Number(req.query.limit) || 5, 20);
     const [rows] = await pool.query(

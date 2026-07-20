@@ -3,12 +3,14 @@ const router = express.Router();
 const { pool } = require("../config/db");
 const { adminRequired } = require("../middleware/auth");
 const { asyncHandler } = require("../utils/helpers");
+const { validateQuery } = require("../middleware/validate");
 const { ok, paginated, parsePagination } = require("../utils/response");
 
 // GET /api/audit (admin, paginated + filters)
 router.get(
   "/",
   adminRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];

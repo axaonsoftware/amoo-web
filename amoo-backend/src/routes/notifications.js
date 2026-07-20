@@ -3,13 +3,14 @@ const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
-const { validate } = require("../middleware/validate");
+const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, parsePagination } = require("../utils/response");
 
 // GET /api/notifications (own + broadcast)
 router.get(
   "/",
   authRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const [[{ total }]] = await pool.query(
@@ -106,6 +107,7 @@ router.post(
 router.get(
   "/all",
   adminRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM notifications");

@@ -26,6 +26,25 @@ const schemas = {
     refresh_token: optionalString,
   }),
 
+  chatConversation: Joi.object({
+    participant_id: Joi.number().integer().positive().required(),
+  }),
+
+  chatMessage: Joi.object({
+    content: Joi.string().min(1).max(5000).required(),
+  }),
+
+  couponValidate: Joi.object({
+    code: Joi.string().min(3).max(30).required(),
+    amount: optionalNumber.min(0),
+  }),
+
+  couponApply: Joi.object({
+    code: Joi.string().min(3).max(30).required(),
+    amount: optionalNumber.min(0),
+    booking_id: Joi.number().integer().positive().required(),
+  }),
+
   forgotPassword: Joi.object({
     email: Joi.string().email().required(),
   }),
@@ -212,6 +231,23 @@ const schemas = {
     expert_id: optionalNumber.integer().positive(),
     user_id: optionalNumber.integer().positive(),
     method: optionalString.max(40),
+    role: optionalString.max(20),
+    service_id: optionalNumber.integer().positive(),
+    // Slots
+    date: optionalString.max(20),
+    // Dashboard
+    period: Joi.string().valid("day", "week", "month", "year"),
+    from: optionalString.max(40),
+    to: optionalString.max(40),
+    // Wallet
+    threshold: optionalNumber.min(0),
+    // Audit
+    actor_id: optionalNumber.integer().positive(),
+    actor_type: optionalString.max(20),
+    action: optionalString.max(60),
+    entity: optionalString.max(60),
+    // Coupons
+    active: Joi.boolean(),
   }),
 };
 

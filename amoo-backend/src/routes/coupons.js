@@ -3,7 +3,7 @@ const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
-const { validate } = require("../middleware/validate");
+const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
 
 const joi = require("joi");
@@ -33,6 +33,7 @@ const COUPON_UPDATE_ALLOWED = ["code", "description", "discount_type", "discount
 router.get(
   "/",
   adminRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];
@@ -73,9 +74,9 @@ router.post(
 // POST /api/coupons/validate (public — used at checkout)
 router.post(
   "/validate",
+  validate("couponValidate"),
   asyncHandler(async (req, res) => {
     const { code, amount } = req.body;
-    if (!code) throw new HttpError(400, "code required");
     const [rows] = await pool.query("SELECT * FROM coupons WHERE code = ?", [code.toUpperCase()]);
     if (!rows.length) throw new HttpError(404, "Invalid coupon");
     const c = rows[0];
@@ -101,10 +102,9 @@ router.post(
 router.post(
   "/apply",
   authRequired,
+  validate("couponApply"),
   asyncHandler(async (req, res) => {
     const { code, amount, booking_id } = req.body;
-    if (!code) throw new HttpError(400, "code required");
-    if (!booking_id) throw new HttpError(400, "booking_id required");
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
