@@ -140,14 +140,20 @@ router.post(
     );
     if (expired.length) {
       const ids = expired.map((e) => e.id);
+      // mysql2 expands an array in `?` to a comma-separated list for IN clauses
       await pool.query("UPDATE subscriptions SET status = 'expired' WHERE id IN (?)", [ids]);
-      // Downgrade users with no remaining active subscription
-      for (const e of expired) {
-        const [[active]] = await pool.query(
-          "SELECT COUNT(*) AS c FROM subscriptions WHERE user_id = ? AND status = 'active'",
-          [e.user_id]
+      // Downgrade users who have NO remaining active subscription (single query, no N+1)
+      const userIds = [...new Set(expired.map((e) => e.user_id))];
+      // Find users among the expired group that still have an active subscription
+      const [[{ keepActive }]] = await pool.query(
+        "SELECT COUNT(DISTINCT user_id) AS keepActive FROM subscriptions WHERE user_id IN (?) AND status = 'active'",
+        [userIds]
+      );
+      if (keepActive < userIds.length) {
+        await pool.query(
+          "UPDATE users SET role = 'free' WHERE id IN (?) AND role != 'free' AND id NOT IN (SELECT user_id FROM subscriptions WHERE status = 'active')",
+          [userIds]
         );
-        if (active.c === 0) await pool.query("UPDATE users SET role = 'free' WHERE id = ?", [e.user_id]);
       }
     }
     req.audit("expire-job", "subscription", null, { count: expired.length });
