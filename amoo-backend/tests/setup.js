@@ -1,0 +1,32 @@
+// Test environment setup — runs before every test suite.
+process.env.NODE_ENV = "test";
+process.env.JWT_SECRET = "test_jwt_secret_1234567890";
+process.env.JWT_REFRESH_SECRET = "test_refresh_secret_1234567890";
+process.env.LOG_LEVEL = "silent";
+process.env.RATE_LIMIT_WINDOW_MS = "60000";
+process.env.RATE_LIMIT_MAX = "10000";
+process.env.MAX_FILE_SIZE = "1024";
+
+// Helper to create a mock MySQL pool.
+function createMockPool() {
+  const query = (...args) => {
+    throw new Error(
+      "No mock query handler registered. Use mockPool.query.mockImplementation or mockResolvedValue."
+    );
+  };
+  const getConnection = () =>
+    Promise.resolve(createMockConnection());
+  return { query, getConnection };
+}
+
+function createMockConnection() {
+  return {
+    query: () => Promise.resolve([[]]),
+    beginTransaction: () => Promise.resolve(),
+    commit: () => Promise.resolve(),
+    rollback: () => Promise.resolve(),
+    release: () => {},
+  };
+}
+
+module.exports = { createMockPool, createMockConnection };

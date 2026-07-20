@@ -66,13 +66,14 @@ if (env.nodeEnv !== "test") {
   }));
 }
 
-// Global rate limiter
-app.use("/api", limiter);
-// Stricter limit on auth endpoints
-app.use("/api/auth/login", authLimiter);
-app.use("/api/auth/admin/login", authLimiter);
-app.use("/api/auth/forgot-password", authLimiter);
-app.use("/api/auth/register", registerLimiter);
+// Rate limiters (skipped in test mode to avoid false test failures)
+if (env.nodeEnv !== "test") {
+  app.use("/api", limiter);
+  app.use("/api/auth/login", authLimiter);
+  app.use("/api/auth/admin/login", authLimiter);
+  app.use("/api/auth/forgot-password", authLimiter);
+  app.use("/api/auth/register", registerLimiter);
+}
 
 // NOTE: uploaded files are NO LONGER served statically. They are accessed
 // only via the authenticated /api/uploads/:id/download route (owner or admin),
