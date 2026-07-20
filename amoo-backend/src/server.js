@@ -160,21 +160,32 @@ process.on("unhandledRejection", (reason) => {
   logger.error("UNHANDLED_REJECTION:", typeof reason === "object" ? reason.message : reason, reason?.stack ?? "");
 });
 
-// Graceful shutdown
-function shutdown(signal) {
-  logger.info(`Received ${signal}, shutting down...`);
-  pool_end().finally(() => process.exit(0));
-}
-function pool_end() {
-  const { pool } = require("./config/db");
-  return Promise.resolve(pool.end());
-}
-process.on("SIGTERM", () => shutdown("SIGTERM"));
-process.on("SIGINT", () => shutdown("SIGINT"));
-
+// Graceful shutdown: stop accepting requests, drain in-flight, then close DB
 if (require.main === module) {
+  let server;
+  function shutdown(signal) {
+    logger.info(`Received ${signal}, shutting down...`);
+    if (!server) process.exit(0);
+    server.close(() => {
+      logger.info("HTTP server closed, closing DB pool...");
+      const { pool } = require("./config/db");
+      pool.end().then(() => {
+        logger.info("DB pool closed, exiting.");
+        process.exit(0);
+      });
+    });
+    // Hard exit if graceful shutdown takes > 10 seconds
+    setTimeout(() => {
+      logger.error("Forced exit after shutdown timeout");
+      // eslint-disable-next-line no-process-exit
+      process.exit(1);
+    }, 10000).unref();
+  }
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
+
   testConnection().then((okDb) => {
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       logger.info(`[server] API listening on http://localhost:${PORT} (db: ${okDb ? "connected" : "UNAVAILABLE"})`);
     });
   });

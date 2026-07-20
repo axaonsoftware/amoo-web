@@ -31,6 +31,9 @@ Server listens on `PORT` (default 4000). Health: `GET /api/health`.
 | `npm run dev` | Run with nodemon |
 | `npm run migrate` | Apply `src/schema.sql` idempotently |
 | `npm run seed` | Insert demo admin/users/experts/services |
+| `npm test` | Run all 45 tests (unit + integration) |
+| `npm run test:unit` | Run 27 unit tests only (helpers + Joi schemas) |
+| `npm run test:int` | Run 18 integration tests (auth, bookings, security) |
 
 ## Auth model
 - `POST /api/auth/register` → access + httpOnly refresh cookie
