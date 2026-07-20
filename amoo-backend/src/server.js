@@ -43,13 +43,18 @@ app.set("trust proxy", env.isProd ? 1 : 0);
 app.use(helmetConfig);
 app.use(cors(corsOptions));
 app.use(compression());
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true }));
-// Capture the raw body for the payment webhook so signature HMAC is reliable.
-app.use("/api/payments/webhook", express.json({
+// JSON parser: use the standard parser for all routes EXCEPT the payment webhook
+// (which needs the raw body for HMAC signature verification).
+const jsonParser = express.json({ limit: "1mb" });
+const webhookJsonParser = express.json({
   limit: "1mb",
   verify: (req, res, buf) => { req.rawBody = buf.toString("utf8"); },
-}));
+});
+app.use((req, res, next) => {
+  if (req.path === "/api/payments/webhook") return webhookJsonParser(req, res, next);
+  jsonParser(req, res, next);
+});
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Request correlation id (traced in logs / errors)
@@ -72,6 +77,7 @@ if (env.nodeEnv !== "test") {
   app.use("/api/auth/login", authLimiter);
   app.use("/api/auth/admin/login", authLimiter);
   app.use("/api/auth/forgot-password", authLimiter);
+  app.use("/api/auth/reset-password", authLimiter);
   app.use("/api/auth/register", registerLimiter);
 }
 

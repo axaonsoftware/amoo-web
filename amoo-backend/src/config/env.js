@@ -95,4 +95,10 @@ if (env.isProd && env.storage.enabled && !env.storage.bucket) {
   throw new Error("S3_BUCKET is required when S3_ENABLED=true in production");
 }
 
+if (env.isProd && env.payments.gateway !== "mock" && !env.payments.webhookSecret) {
+  throw new Error(
+    "PAYMENT_WEBHOOK_SECRET is required when PAYMENT_GATEWAY is not 'mock' in production"
+  );
+}
+
 module.exports = env;

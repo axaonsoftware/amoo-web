@@ -1,10 +1,12 @@
 const express = require("express");
 const router = express.Router();
+const crypto = require("crypto");
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
+const env = require("../config/env");
 
 // GET /api/payments (admin: all, user: own) with filters
 router.get(
@@ -149,13 +151,11 @@ router.get(
 router.post(
   "/webhook",
   asyncHandler(async (req, res) => {
-    const env2 = require("../config/env");
-    if (env2.isProd && env2.payments.webhookSecret) {
+    if (env.payments.gateway !== "mock" && env.payments.webhookSecret) {
       const sig = req.headers["x-payment-signature"] || req.headers["x-razorpay-signature"];
       const raw = req.rawBody || JSON.stringify(req.body);
-      const crypto = require("crypto");
       const expected = crypto
-        .createHmac("sha256", env2.payments.webhookSecret)
+        .createHmac("sha256", env.payments.webhookSecret)
         .update(raw)
         .digest("hex");
       if (!sig || sig !== expected) return res.status(401).json({ success: false, error: "Invalid signature" });
