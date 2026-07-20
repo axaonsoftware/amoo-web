@@ -54,51 +54,59 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     const fmt = allowedPeriods[req.query.period] || allowedPeriods.month;
-    const where = req.query.from ? "WHERE DATE(p.created_at) >= ?" : "";
-    const params = req.query.from ? [req.query.from] : [];
-    if (req.query.to) { where && (where += " AND"); params.push(req.query.to); }
+    const params = [fmt];
+    let where = "WHERE p.status = 'success'";
+    if (req.query.from) { where += " AND p.created_at >= ?"; params.push(req.query.from); }
+    if (req.query.to) { where += " AND p.created_at <= ?"; params.push(req.query.to + " 23:59:59"); }
     const [rows] = await pool.query(
       `SELECT DATE_FORMAT(p.created_at, ?) AS label,
               COUNT(*) AS payments,
               COALESCE(SUM(p.amount),0) AS revenue
        FROM payments p ${where}
-       WHERE p.status = 'success'
        GROUP BY label ORDER BY label`,
-      [fmt, ...params]
+      params
     );
     ok(res, rows);
   })
 );
 
-// GET /api/dashboard/bookings/trends?period=month
+// GET /api/dashboard/bookings/trends?period=month&from=2025-01-01&to=2025-12-31
 router.get(
   "/bookings/trends",
   adminRequired,
   validateQuery,
   asyncHandler(async (req, res) => {
     const fmt = allowedPeriods[req.query.period] || allowedPeriods.month;
+    const params = [fmt];
+    let where = "WHERE created_at >= ?";
+    params.push(req.query.from || "1970-01-01");
+    if (req.query.to) { where += " AND created_at <= ?"; params.push(req.query.to + " 23:59:59"); }
     const [rows] = await pool.query(
       `SELECT DATE_FORMAT(created_at, ?) AS label,
               COUNT(*) AS count,
               SUM(CASE WHEN status='cancelled' THEN 1 ELSE 0 END) AS cancelled
-       FROM bookings GROUP BY label ORDER BY label`,
-      [fmt]
+       FROM bookings ${where} GROUP BY label ORDER BY label`,
+      params
     );
     ok(res, rows);
   })
 );
 
-// GET /api/dashboard/users/growth?period=month
+// GET /api/dashboard/users/growth?period=month&from=2025-01-01&to=2025-12-31
 router.get(
   "/users/growth",
   adminRequired,
   validateQuery,
   asyncHandler(async (req, res) => {
     const fmt = allowedPeriods[req.query.period] || allowedPeriods.month;
+    const params = [fmt];
+    let where = "WHERE deleted_at IS NULL AND created_at >= ?";
+    params.push(req.query.from || "1970-01-01");
+    if (req.query.to) { where += " AND created_at <= ?"; params.push(req.query.to + " 23:59:59"); }
     const [rows] = await pool.query(
       `SELECT DATE_FORMAT(created_at, ?) AS label, COUNT(*) AS new_users
-       FROM users WHERE deleted_at IS NULL GROUP BY label ORDER BY label`,
-      [fmt]
+       FROM users ${where} GROUP BY label ORDER BY label`,
+      params
     );
     ok(res, rows);
   })

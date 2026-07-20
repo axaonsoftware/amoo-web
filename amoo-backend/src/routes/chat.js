@@ -36,14 +36,14 @@ router.post(
     }
     const [expert] = await pool.query(
       "SELECT id FROM experts WHERE id = ? AND status = 'active' AND deleted_at IS NULL",
-      [pid]
+      [participant_id]
     );
     if (!expert.length) {
       return res.status(403).json({ success: false, error: "You can only start a conversation with an expert" });
     }
     const conn = await pool.getConnection();
     try {
-      const conv = await ensureConversation(conn, req.user.id, pid);
+      const conv = await ensureConversation(conn, req.user.id, participant_id);
       ok(res, conv);
     } finally {
       conn.release();
@@ -57,8 +57,8 @@ router.get(
   authRequired,
   validateQuery,
   asyncHandler(async (req, res) => {
+    const { page, pageSize, offset } = parsePagination(req.query);
     if (req.user.kind === "admin") {
-      const { page, pageSize, offset } = parsePagination(req.query);
       const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM conversations");
       const [rows] = await pool.query(
         "SELECT * FROM conversations ORDER BY last_message_at DESC LIMIT ? OFFSET ?",
@@ -67,15 +67,19 @@ router.get(
       paginated(res, rows, { page, pageSize, total });
       return;
     }
+    const [[{ total }]] = await pool.query(
+      "SELECT COUNT(*) AS total FROM conversations WHERE user_a = ? OR user_b = ?",
+      [req.user.id, req.user.id]
+    );
     const [rows] = await pool.query(
       `SELECT c.*,
               CASE WHEN c.user_a = ? THEN c.user_b ELSE c.user_a END AS other_id
        FROM conversations c
        WHERE c.user_a = ? OR c.user_b = ?
-       ORDER BY c.last_message_at DESC`,
-      [req.user.id, req.user.id, req.user.id]
+       ORDER BY c.last_message_at DESC LIMIT ? OFFSET ?`,
+      [req.user.id, req.user.id, req.user.id, pageSize, offset]
     );
-    ok(res, rows);
+    paginated(res, rows, { page, pageSize, total });
   })
 );
 

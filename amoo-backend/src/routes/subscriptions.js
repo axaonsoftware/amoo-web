@@ -8,18 +8,24 @@ const { ok, paginated, created, assertFound, parsePagination } = require("../uti
 
 const SUB_UPDATE_ALLOWED = ["status", "auto_renew", "plan_name", "expires_at"];
 
-// GET /api/subscriptions (own)
+// GET /api/subscriptions (own — paginated)
 router.get(
   "/",
   authRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
+    const { page, pageSize, offset } = parsePagination(req.query);
+    const [[{ total }]] = await pool.query(
+      "SELECT COUNT(*) AS total FROM subscriptions WHERE user_id = ?",
+      [req.user.id]
+    );
     const [rows] = await pool.query(
       `SELECT s.*, p.name AS package_name, p.price AS package_price
        FROM subscriptions s LEFT JOIN packages p ON p.id = s.package_id
-       WHERE s.user_id = ? ORDER BY s.started_at DESC`,
-      [req.user.id]
+       WHERE s.user_id = ? ORDER BY s.started_at DESC LIMIT ? OFFSET ?`,
+      [req.user.id, pageSize, offset]
     );
-    ok(res, rows);
+    paginated(res, rows, { page, pageSize, total });
   })
 );
 

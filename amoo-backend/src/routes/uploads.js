@@ -5,6 +5,7 @@ const { authRequired, adminRequired } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
 const { saveFile, deleteFile } = require("../config/storage");
 const { asyncHandler } = require("../utils/helpers");
+const { validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
 const path = require("path");
 
@@ -26,16 +27,22 @@ router.post(
   })
 );
 
-// GET /api/uploads (own files)
+// GET /api/uploads (own files — paginated)
 router.get(
   "/",
   authRequired,
+  validateQuery,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(
-      "SELECT id, original_name, stored_name, path, mime, size, created_at FROM uploads WHERE user_id = ? ORDER BY created_at DESC",
+    const { page, pageSize, offset } = parsePagination(req.query);
+    const [[{ total }]] = await pool.query(
+      "SELECT COUNT(*) AS total FROM uploads WHERE user_id = ?",
       [req.user.id]
     );
-    ok(res, rows);
+    const [rows] = await pool.query(
+      "SELECT id, original_name, stored_name, path, mime, size, created_at FROM uploads WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+      [req.user.id, pageSize, offset]
+    );
+    paginated(res, rows, { page, pageSize, total });
   })
 );
 
