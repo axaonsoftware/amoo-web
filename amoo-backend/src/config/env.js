@@ -87,6 +87,10 @@ if (env.isProd && (env.jwt.secret === "dev_secret_change_me" || env.jwt.refreshS
   throw new Error("JWT secrets must be set to strong values in production");
 }
 
+if (env.isProd && env.clientOrigin.includes("*")) {
+  throw new Error("CLIENT_ORIGIN must not be '*' in production. Set specific origins.");
+}
+
 if (env.isProd && env.storage.enabled && !env.storage.bucket) {
   throw new Error("S3_BUCKET is required when S3_ENABLED=true in production");
 }

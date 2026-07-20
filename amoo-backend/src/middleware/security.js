@@ -21,6 +21,9 @@ const helmetConfig = helmet({
   contentSecurityPolicy: false, // JSON API; the Next.js frontend sets its own CSP
   crossOriginResourcePolicy: { policy: "same-origin" }, // no public uploads to embed
   referrerPolicy: { policy: "no-referrer" },
+  hsts: env.isProd
+    ? { maxAge: 31536000, includeSubDomains: true, preload: true }
+    : false, // only enable HSTS in production
   // Keep the default X-Content-Type-Options: nosniff (anti-MIME-sniffing).
 });
 

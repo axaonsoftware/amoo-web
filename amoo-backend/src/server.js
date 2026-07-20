@@ -35,6 +35,10 @@ const auditRoutes = require("./routes/audit");
 const app = express();
 const PORT = env.port;
 
+// Trust the first upstream proxy when behind a reverse proxy (Railway, Nginx, Cloudflare).
+// Required for rate-limiting + IP logging to use the real client IP.
+app.set("trust proxy", env.isProd ? 1 : 0);
+
 // --- Core middleware ---
 app.use(helmetConfig);
 app.use(cors(corsOptions));
@@ -73,7 +77,7 @@ app.use("/api/auth/register", registerLimiter);
 // only via the authenticated /api/uploads/:id/download route (owner or admin),
 // which prevents unauthenticated access to (potentially private) user files.
 
-// Health check (includes DB probe)
+// Health check (includes DB probe — only reports detail in non-production)
 app.get("/api/health", async (req, res) => {
   let db = "ok";
   try {
@@ -81,7 +85,9 @@ app.get("/api/health", async (req, res) => {
   } catch (e) {
     db = "unavailable";
   }
-  res.json({ status: db === "ok" ? "ok" : "degraded", db, time: new Date().toISOString() });
+  const body = { status: db === "ok" ? "ok" : "degraded", time: new Date().toISOString() };
+  if (!env.isProd) body.db = db; // hide internal state in production
+  res.json(body);
 });
 
 // Attach audit helper to every request
@@ -124,8 +130,9 @@ app.use((err, req, res, next) => {
     return fail(res, 413, "File too large");
   }
   logger.error("Unhandled error:", err.message, err.stack);
-  // Never leak internal error details in production
-  fail(res, err.status || 500, env.isProd ? "Internal server error" : err.message);
+  // Never leak internal paths / stack traces — strip everything after the first line
+  const safeMsg = (err.message || "").split("\n")[0].trim() || "Internal server error";
+  fail(res, err.status || 500, env.isProd ? "Internal server error" : safeMsg);
 });
 
 // Graceful shutdown
