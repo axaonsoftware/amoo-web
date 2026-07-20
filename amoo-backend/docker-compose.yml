@@ -1,5 +1,11 @@
 # Docker Compose for local + staging full-stack runs.
 # For production, point DB_HOST at a managed MySQL and do NOT expose the DB port.
+# WARNING: The defaults below are INSECURE — always set DB_PASSWORD, JWT_SECRET,
+# and JWT_REFRESH_SECRET via a .env file or environment overrides.
+#   $ echo "DB_PASSWORD=my_strong_password" >> .env
+#   $ echo "JWT_SECRET=$(openssl rand -base64 32)" >> .env
+#   $ echo "JWT_REFRESH_SECRET=$(openssl rand -base64 32)" >> .env
+#   $ docker compose up
 
 services:
   db:
@@ -7,14 +13,14 @@ services:
     container_name: amoo_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-root}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       MYSQL_DATABASE: ${DB_NAME:-amoo_db}
     ports:
       - "3306:3306"
     volumes:
       - amoo_db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -32,10 +38,10 @@ services:
       DB_HOST: db
       DB_PORT: 3306
       DB_USER: root
-      DB_PASSWORD: ${DB_PASSWORD:-root}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_NAME: ${DB_NAME:-amoo_db}
-      JWT_SECRET: ${JWT_SECRET:-please_change_this}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-please_change_this_refresh}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
     ports:
       - "4000:4000"
