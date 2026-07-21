@@ -81,6 +81,12 @@ const env = {
     secret: required("PAYMENT_SECRET", ""),
     webhookSecret: required("PAYMENT_WEBHOOK_SECRET", ""),
   },
+
+  // OpenTelemetry tracing. Set OTEL_EXPORTER_OTLP_ENDPOINT in production
+  // to export traces to a collector (e.g. Jaeger, Grafana Tempo, Datadog).
+  otel: {
+    endpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "",
+  },
 };
 
 if (env.isProd && (env.jwt.secret === "dev_secret_change_me" || env.jwt.refreshSecret === "dev_refresh_secret_change_me")) {

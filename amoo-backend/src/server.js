@@ -1,3 +1,6 @@
+// --- OpenTelemetry (must be imported before anything else) ---
+require("./config/telemetry");
+
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
@@ -31,6 +34,7 @@ const uploadRoutes = require("./routes/uploads");
 const chatRoutes = require("./routes/chat");
 const couponRoutes = require("./routes/coupons");
 const auditRoutes = require("./routes/audit");
+const activityRoutes = require("./routes/activity");
 
 const app = express();
 const PORT = env.port;
@@ -79,6 +83,7 @@ if (env.nodeEnv !== "test") {
   app.use("/api/auth/forgot-password", authLimiter);
   app.use("/api/auth/reset-password", authLimiter);
   app.use("/api/auth/register", registerLimiter);
+  app.use("/api/auth/verify-email/send", authLimiter);
 }
 
 // NOTE: uploaded files are NO LONGER served statically. They are accessed
@@ -89,7 +94,7 @@ if (env.nodeEnv !== "test") {
 app.get("/api/health", async (req, res) => {
   let db = "ok";
   try {
-    await require("./config/db").testConnection();
+    await testConnection();
   } catch (e) {
     db = "unavailable";
   }
@@ -121,6 +126,7 @@ app.use("/api/uploads", uploadRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/audit", auditRoutes);
+app.use("/api/activity", activityRoutes);
 
 // 404
 app.use((req, res) => fail(res, 404, "Not found"));
