@@ -4,12 +4,12 @@ const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
-const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
+const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
 
 // Ensure a conversation exists between a user and an expert (or support).
 async function ensureConversation(conn, userA, userB) {
   const [existing] = await conn.query(
-    "SELECT * FROM conversations WHERE (user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?)",
+    "SELECT * FROM conversations WHERE (user_a = ? AND user_b = ?) OR (user_a = ? AND user_b = ?) FOR UPDATE",
     [userA, userB, userB, userA]
   );
   if (existing.length) return existing[0];
@@ -32,14 +32,14 @@ router.post(
   asyncHandler(async (req, res) => {
     const { participant_id } = req.body;
     if (participant_id === req.user.id) {
-      return res.status(400).json({ success: false, error: "Cannot chat with yourself" });
+      return fail(res, 400, "Cannot chat with yourself");
     }
     const [expert] = await pool.query(
       "SELECT id FROM experts WHERE id = ? AND status = 'active' AND deleted_at IS NULL",
       [participant_id]
     );
     if (!expert.length) {
-      return res.status(403).json({ success: false, error: "You can only start a conversation with an expert" });
+      return fail(res, 403, "You can only start a conversation with an expert");
     }
     const conn = await pool.getConnection();
     try {
@@ -92,7 +92,7 @@ router.post(
     if (assertFound(res, conv[0])) return;
     const c = conv[0];
     if (c.user_a !== req.user.id && c.user_b !== req.user.id && req.user.kind !== "admin") {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     await pool.query(
       "UPDATE messages SET is_read = 1 WHERE conversation_id = ? AND sender_id != ?",
@@ -113,7 +113,7 @@ router.get(
     if (assertFound(res, conv[0])) return;
     const c = conv[0];
     if (c.user_a !== req.user.id && c.user_b !== req.user.id && req.user.kind !== "admin") {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     const [[{ total }]] = await pool.query(
       "SELECT COUNT(*) AS total FROM messages WHERE conversation_id = ?",
@@ -140,7 +140,7 @@ router.post(
       if (assertFound(res, conv[0])) return;
       const c = conv[0];
       const isParticipant = c.user_a === req.user.id || c.user_b === req.user.id || req.user.kind === "admin";
-      if (!isParticipant) return res.status(403).json({ success: false, error: "Forbidden" });
+      if (!isParticipant) return fail(res, 403, "Forbidden");
       const [result] = await conn.query(
         "INSERT INTO messages (conversation_id, sender_id, content) VALUES (?, ?, ?)",
         [c.id, req.user.id, content]
