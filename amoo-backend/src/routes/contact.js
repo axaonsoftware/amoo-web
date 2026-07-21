@@ -57,6 +57,7 @@ router.get(
 router.patch(
   "/:id",
   adminRequired,
+  validate("contactUpdate"),
   asyncHandler(async (req, res) => {
     const { status } = req.body;
     if (status && !["new", "replied", "closed"].includes(status)) {
