@@ -64,7 +64,8 @@ CREATE TABLE IF NOT EXISTS experts (
   rating        DECIMAL(2,1) DEFAULT 0.0,
   status        ENUM('active','inactive') NOT NULL DEFAULT 'active',
   deleted_at    DATETIME,
-  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_experts_status (status, deleted_at)
 );
 
 -- --------------------------------------------------------
@@ -82,7 +83,9 @@ CREATE TABLE IF NOT EXISTS services (
   status      ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
   bookings    INT NOT NULL DEFAULT 0,
   deleted_at  DATETIME,
-  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+  created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX idx_services_status (status, deleted_at),
+  INDEX idx_services_category (category)
 );
 
 -- --------------------------------------------------------
@@ -95,7 +98,9 @@ CREATE TABLE IF NOT EXISTS slots (
   start_time TIME NOT NULL,
   end_time   TIME,
   status     ENUM('available','booked','blocked') NOT NULL DEFAULT 'available',
-  FOREIGN KEY (expert_id) REFERENCES experts(id) ON DELETE CASCADE
+  FOREIGN KEY (expert_id) REFERENCES experts(id) ON DELETE CASCADE,
+  INDEX idx_slots_expert_date (expert_id, date),
+  INDEX idx_slots_status (status)
 );
 
 -- --------------------------------------------------------
@@ -119,7 +124,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
   FOREIGN KEY (expert_id)  REFERENCES experts(id)  ON DELETE SET NULL,
   FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE,
-  FOREIGN KEY (slot_id)    REFERENCES slots(id)    ON DELETE SET NULL
+  FOREIGN KEY (slot_id)    REFERENCES slots(id)    ON DELETE SET NULL,
+  INDEX idx_bookings_user_id (user_id),
+  INDEX idx_bookings_status (status),
+  INDEX idx_bookings_date (date),
+  INDEX idx_bookings_expert_id (expert_id),
+  INDEX idx_bookings_service_id (service_id)
 );
 
 -- --------------------------------------------------------
@@ -138,7 +148,11 @@ CREATE TABLE IF NOT EXISTS payments (
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
   FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL,
-  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE
+  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+  INDEX idx_payments_booking_id (booking_id),
+  INDEX idx_payments_user_id (user_id),
+  INDEX idx_payments_status (status),
+  INDEX idx_payments_txn_id (txn_id)
 );
 
 -- --------------------------------------------------------
@@ -153,7 +167,8 @@ CREATE TABLE IF NOT EXISTS refunds (
   status      ENUM('pending','processed','failed') NOT NULL DEFAULT 'pending',
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (payment_id) REFERENCES payments(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL
+  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL,
+  INDEX idx_refunds_payment_id (payment_id)
 );
 
 -- --------------------------------------------------------
@@ -200,7 +215,9 @@ CREATE TABLE IF NOT EXISTS subscriptions (
   started_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   expires_at    DATETIME,
   FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
-  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL
+  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL,
+  INDEX idx_subscriptions_user_id (user_id),
+  INDEX idx_subscriptions_status (status)
 );
 
 -- --------------------------------------------------------
@@ -215,10 +232,15 @@ CREATE TABLE IF NOT EXISTS reports (
   content     MEDIUMTEXT,
   file_url    VARCHAR(512),
   status      ENUM('pending','ready','rejected') NOT NULL DEFAULT 'pending',
+  is_favorite TINYINT(1) NOT NULL DEFAULT 0,
+  downloaded  TINYINT(1) NOT NULL DEFAULT 0,
+  chakra_data JSON,
   deleted_at  DATETIME,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
-  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL
+  FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL,
+  INDEX idx_reports_user_id (user_id),
+  INDEX idx_reports_status (status)
 );
 
 -- --------------------------------------------------------
@@ -231,7 +253,10 @@ CREATE TABLE IF NOT EXISTS conversations (
   last_message_at  DATETIME,
   created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_a) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_b) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_b) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_conversations_user_a (user_a),
+  INDEX idx_conversations_user_b (user_b),
+  INDEX idx_conversations_last_message (last_message_at)
 );
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -242,7 +267,9 @@ CREATE TABLE IF NOT EXISTS messages (
   is_read          TINYINT(1) NOT NULL DEFAULT 0,
   created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-  FOREIGN KEY (sender_id)        REFERENCES users(id)        ON DELETE CASCADE
+  FOREIGN KEY (sender_id)        REFERENCES users(id)        ON DELETE CASCADE,
+  INDEX idx_messages_conversation_id (conversation_id),
+  INDEX idx_messages_sender_id (sender_id)
 );
 
 -- --------------------------------------------------------
@@ -272,7 +299,9 @@ CREATE TABLE IF NOT EXISTS notifications (
   type        VARCHAR(40) DEFAULT 'info',
   is_read     TINYINT(1) NOT NULL DEFAULT 0,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_notifications_user_id (user_id),
+  INDEX idx_notifications_is_read (is_read)
 );
 
 -- --------------------------------------------------------
@@ -302,7 +331,8 @@ CREATE TABLE IF NOT EXISTS uploads (
   mime           VARCHAR(120),
   size           INT,
   created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+  INDEX idx_uploads_user_id (user_id)
 );
 
 -- --------------------------------------------------------
@@ -325,7 +355,8 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
   reason      VARCHAR(120),
   ref         VARCHAR(64),
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (wallet_id) REFERENCES wallets(id) ON DELETE CASCADE
+  FOREIGN KEY (wallet_id) REFERENCES wallets(id) ON DELETE CASCADE,
+  INDEX idx_wallet_tx_wallet_id (wallet_id)
 );
 
 -- --------------------------------------------------------
@@ -340,7 +371,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
   entity_id   INT,
   meta        JSON,
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_audit_created (created_at)
+  INDEX idx_audit_created (created_at),
+  INDEX idx_audit_actor (actor_id, actor_type),
+  INDEX idx_audit_entity (entity, entity_id),
+  INDEX idx_audit_action (action)
 );
 
 -- --------------------------------------------------------
