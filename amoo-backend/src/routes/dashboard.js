@@ -143,20 +143,20 @@ router.get(
                 b.date, b.time, b.amount, b.payment, b.status
          FROM bookings b JOIN users u ON u.id=b.user_id
          LEFT JOIN experts e ON e.id=b.expert_id JOIN services s ON s.id=b.service_id
-         ORDER BY b.created_at DESC LIMIT 5000`
+         ORDER BY b.created_at DESC LIMIT 50000`
       );
       headers = ["booking_ref", "user", "expert", "service", "date", "time", "amount", "payment", "status"];
       filename = "bookings.csv";
     } else if (type === "users") {
       [rows] = await pool.query(
-        "SELECT id, name, email, phone, role, status, verified, created_at FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 5000"
+        "SELECT id, name, email, phone, role, status, verified, created_at FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 50000"
       );
       headers = ["id", "name", "email", "phone", "role", "status", "verified", "created_at"];
       filename = "users.csv";
     } else if (type === "payments") {
       [rows] = await pool.query(
         `SELECT p.id, u.name AS user, p.amount, p.method, p.status, p.txn_id, p.created_at
-         FROM payments p JOIN users u ON u.id=p.user_id ORDER BY p.created_at DESC LIMIT 5000`
+         FROM payments p JOIN users u ON u.id=p.user_id ORDER BY p.created_at DESC LIMIT 50000`
       );
       headers = ["id", "user", "amount", "method", "status", "txn_id", "created_at"];
       filename = "payments.csv";
