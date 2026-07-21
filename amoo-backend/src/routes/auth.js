@@ -325,7 +325,7 @@ router.post(
   validate("resetPassword"),
   asyncHandler(async (req, res) => {
     const { email, otp, password } = req.body;
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
     const user = rows[0];
     if (!user || !user.reset_otp || user.reset_otp !== otp) throw new HttpError(400, "Invalid OTP");
     if (new Date(user.reset_otp_expires) < new Date()) throw new HttpError(400, "OTP expired");

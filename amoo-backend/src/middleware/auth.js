@@ -4,6 +4,14 @@ const { HttpError } = require("../utils/helpers");
 const { logAudit } = require("../utils/audit");
 const { pool } = require("../config/db");
 
+const USER_TABLES = { admin: "admins", user: "users" };
+
+function resolveTable(kind) {
+  const table = USER_TABLES[kind];
+  if (!table) throw new HttpError(500, "Invalid user kind");
+  return table;
+}
+
 function signAccessToken(payload) {
   return jwt.sign(payload, env.jwt.secret, { expiresIn: env.jwt.expiresIn });
 }
@@ -30,7 +38,7 @@ function extractToken(req, fromCookie = false) {
 // Verify the token's embedded tokenVersion still matches the DB (revocation).
 async function checkTokenVersion(user) {
   if (user.tokenVersion === undefined) return true; // legacy tokens: trust
-  const table = user.kind === "admin" ? "admins" : "users";
+  const table = resolveTable(user.kind);
   const [rows] = await pool.query(`SELECT token_version FROM ${table} WHERE id = ?`, [user.id]);
   if (!rows.length) throw new HttpError(401, "Account no longer exists");
   if (rows[0].token_version !== user.tokenVersion) {
