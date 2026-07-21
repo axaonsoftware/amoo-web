@@ -5,7 +5,7 @@ const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
-const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
+const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
 const env = require("../config/env");
 
 // GET /api/payments (admin: all, user: own) with filters
@@ -99,9 +99,8 @@ router.post(
     if (assertFound(res, payments[0])) return;
     const p = payments[0];
     if (req.user.kind !== "admin" && p.user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
-    if (p.status === "refunded") throw new HttpError(409, "Already refunded");
 
     const conn = await pool.getConnection();
     try {
@@ -158,11 +157,19 @@ router.post(
         .createHmac("sha256", env.payments.webhookSecret)
         .update(raw)
         .digest("hex");
-      if (!sig || sig !== expected) return res.status(401).json({ success: false, error: "Invalid signature" });
+      if (!sig || sig !== expected) return fail(res, 401, "Invalid signature");
     }
 
     const event = req.body && req.body.event;
-    if (!event) return res.status(400).json({ success: false, error: "Unknown event" });
+    if (!event) return fail(res, 400, "Unknown event");
+
+    // Idempotency key: deduplicate webhook events by event+txn_id
+    const idempotencyKey = req.headers["x-idempotency-key"] || `${event}:${req.body.txn_id || req.body.id || "none"}`;
+    if (idempotencyKey) {
+      const [existing] = await pool.query("SELECT id FROM audit_log WHERE meta->>'$.idempotency_key' = ? AND action = 'webhook-received'", [idempotencyKey]);
+      if (existing.length) return res.json({ success: true, received: true, deduplicated: true });
+    }
+
     if (event === "payment.captured" || event === "payment.success" || event === "order.paid") {
       // Prefer matching the booking/subscription directly; fall back to txn_id only when set by gateway.
       const bookingId = req.body.booking_id || req.body.bookingId || req.body.payload?.booking_id;
@@ -170,22 +177,25 @@ router.post(
       const paymentId = req.body.payment_id || req.body.id || req.body.txn_id;
       let p = null;
       if (bookingId) {
-        const [byBooking] = await pool.query("SELECT id, booking_id, subscription_id FROM payments WHERE booking_id = ?", [bookingId]);
+        const [byBooking] = await pool.query("SELECT id, booking_id, subscription_id, status FROM payments WHERE booking_id = ?", [bookingId]);
         if (byBooking.length) p = byBooking[0];
       }
       if (!p && subscriptionId) {
-        const [bySub] = await pool.query("SELECT id, booking_id, subscription_id FROM payments WHERE subscription_id = ?", [subscriptionId]);
+        const [bySub] = await pool.query("SELECT id, booking_id, subscription_id, status FROM payments WHERE subscription_id = ?", [subscriptionId]);
         if (bySub.length) p = bySub[0];
       }
       if (!p && paymentId) {
-        const [byTxn] = await pool.query("SELECT id, booking_id, subscription_id FROM payments WHERE txn_id = ?", [paymentId]);
+        const [byTxn] = await pool.query("SELECT id, booking_id, subscription_id, status FROM payments WHERE txn_id = ?", [paymentId]);
         if (byTxn.length) p = byTxn[0];
       }
       if (p) {
+        // Skip if already processed (idempotent)
+        if (p.status === "success") return res.json({ success: true, received: true, already_processed: true });
+
         const conn = await pool.getConnection();
         try {
           await conn.beginTransaction();
-          await conn.query("UPDATE payments SET status = 'success' WHERE id = ?", [p.id]);
+          await conn.query("UPDATE payments SET status = 'success' WHERE id = ? AND status != 'success'", [p.id]);
           if (p.booking_id) {
             await conn.query("UPDATE bookings SET payment = 'Paid', status = 'upcoming' WHERE id = ?", [p.booking_id]);
           }
@@ -201,7 +211,7 @@ router.post(
             }
           }
           await conn.commit();
-          req.audit("webhook-success", "payment", p.id);
+          req.audit("webhook-received", "payment", p.id, { idempotency_key: idempotencyKey });
         } catch (e) {
           await conn.rollback();
           throw e;
