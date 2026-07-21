@@ -33,6 +33,34 @@ router.get(
   })
 );
 
+// GET /api/reports/stats (user's own stats by type)
+router.get(
+  "/stats",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+    const [[stats]] = await pool.query(
+      `SELECT
+        SUM(CASE WHEN LOWER(type) LIKE '%tarot%' THEN 1 ELSE 0 END) AS tarot_total,
+        SUM(CASE WHEN LOWER(type) LIKE '%tarot%' AND is_favorite = 1 THEN 1 ELSE 0 END) AS tarot_favorites,
+        SUM(CASE WHEN LOWER(type) LIKE '%tarot%' AND downloaded = 1 THEN 1 ELSE 0 END) AS tarot_downloaded,
+        SUM(CASE WHEN LOWER(type) LIKE '%tarot%' AND MONTH(created_at) = MONTH(NOW()) AND YEAR(created_at) = YEAR(NOW()) THEN 1 ELSE 0 END) AS tarot_this_month,
+        SUM(CASE WHEN LOWER(type) LIKE '%numerology%' THEN 1 ELSE 0 END) AS numerology_total,
+        SUM(CASE WHEN LOWER(type) LIKE '%numerology%' AND is_favorite = 1 THEN 1 ELSE 0 END) AS numerology_favorites,
+        SUM(CASE WHEN LOWER(type) LIKE '%numerology%' AND downloaded = 1 THEN 1 ELSE 0 END) AS numerology_downloaded,
+        SUM(CASE WHEN LOWER(type) LIKE '%numerology%' AND YEAR(created_at) = YEAR(NOW()) THEN 1 ELSE 0 END) AS numerology_this_year,
+        SUM(CASE WHEN LOWER(type) LIKE '%kundli%' OR LOWER(type) LIKE '%kundali%' THEN 1 ELSE 0 END) AS kundali_total,
+        SUM(CASE WHEN (LOWER(type) LIKE '%kundli%' OR LOWER(type) LIKE '%kundali%') AND YEAR(created_at) = YEAR(NOW()) THEN 1 ELSE 0 END) AS kundali_this_year,
+        SUM(CASE WHEN (LOWER(type) LIKE '%kundli%' OR LOWER(type) LIKE '%kundali%') AND LOWER(type) LIKE '%compatibility%' THEN 1 ELSE 0 END) AS kundali_compatibility,
+        SUM(CASE WHEN (LOWER(type) LIKE '%kundli%' OR LOWER(type) LIKE '%kundali%') AND downloaded = 1 THEN 1 ELSE 0 END) AS kundali_downloaded,
+        SUM(CASE WHEN LOWER(type) LIKE '%reiki%' AND chakra_data IS NOT NULL THEN 1 ELSE 0 END) AS reiki_has_chakra_data
+       FROM reports WHERE user_id = ? AND deleted_at IS NULL`,
+      [userId]
+    );
+    ok(res, stats);
+  })
+);
+
 // GET /api/reports/:id
 router.get(
   "/:id",
@@ -41,7 +69,7 @@ router.get(
     const [rows] = await pool.query("SELECT * FROM reports WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     ok(res, rows[0]);
   })
@@ -114,10 +142,13 @@ router.get(
     const [rows] = await pool.query("SELECT * FROM reports WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     const fileUrl = rows[0].file_url;
     if (!fileUrl) return fail(res, 404, "No file attached to this report");
+
+    // Mark as downloaded
+    await pool.query("UPDATE reports SET downloaded = 1 WHERE id = ?", [req.params.id]);
 
     // S3 / object storage: redirect to the public/signed URL.
     if (env.storage.enabled && fileUrl.startsWith("http")) {
