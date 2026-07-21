@@ -75,6 +75,9 @@ const logger = require("./utils/logger");
       ["bookings", "slot_id", "INT"],
       ["payments", "gateway", "VARCHAR(40)"],
       ["payments", "subscription_id", "INT"],
+      ["audit_log", "ip_address", "VARCHAR(45)"],
+      ["audit_log", "user_agent", "VARCHAR(512)"],
+      ["audit_log", "page_or_route", "VARCHAR(255)"],
     ];
     for (const [table, col, def] of columnAdds) {
       const [existing] = await conn.query(
@@ -146,6 +149,8 @@ const logger = require("./utils/logger");
       ["idx_audit_actor", "audit_log", "actor_id"],
       ["idx_audit_action", "audit_log", "action"],
       ["idx_audit_entity", "audit_log", "entity"],
+      ["idx_audit_page", "audit_log", "page_or_route"],
+      ["idx_audit_actor_type", "audit_log", "actor_type"],
     ];
     for (const [name, table, col] of indexes) {
       const [existing] = await conn.query(

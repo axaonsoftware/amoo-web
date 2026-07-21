@@ -23,7 +23,7 @@ router.get(
     if (req.query.date_to) { where += " AND created_at <= ?"; params.push(req.query.date_to + " 23:59:59"); }
     const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM audit_log ${where}`, params);
     const [rows] = await pool.query(
-      `SELECT * FROM audit_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+      `SELECT id, actor_id, actor_type, action, entity, entity_id, meta AS action_details, ip_address, user_agent, page_or_route, created_at FROM audit_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
