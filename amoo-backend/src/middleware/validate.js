@@ -134,7 +134,11 @@ const schemas = {
     expert_id: Joi.number().integer().positive().required(),
     date: Joi.date().iso().required(),
     start_time: Joi.string().required(),
-    end_time: optionalString,
+    end_time: Joi.string()
+      .pattern(/^([01]\d|2[0-3]):([0-5]\d)(:[0-5]\d)?$/)
+      .allow("")
+      .allow(null)
+      .messages({ "string.pattern.base": "end_time must be a valid time (HH:MM or HH:MM:SS)" }),
     status: Joi.string().valid("available", "booked", "blocked").default("available"),
   }),
 
@@ -156,14 +160,14 @@ const schemas = {
     service_id: optionalNumber.integer().positive(),
     type: optionalString.max(60),
     title: Joi.string().max(200).required(),
-    content: optionalString,
+    content: Joi.string().max(65535).allow("").allow(null),
     file_url: optionalString.max(512),
   }),
 
   reportUpdate: Joi.object({
     status: Joi.string().valid("pending", "ready", "rejected"),
     title: Joi.string().max(200),
-    content: optionalString,
+    content: Joi.string().max(65535).allow("").allow(null),
     file_url: optionalString.max(512),
   }),
 
@@ -173,6 +177,11 @@ const schemas = {
     phone: optionalString.max(20),
     subject: optionalString.max(200),
     message: Joi.string().min(5).max(4000).required(),
+  }),
+
+  contactUpdate: Joi.object({
+    status: Joi.string().valid("new", "replied", "closed"),
+    reply: optionalString.max(4000),
   }),
 
   testimonial: Joi.object({
