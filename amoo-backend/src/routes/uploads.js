@@ -17,7 +17,7 @@ router.post(
   authRequired,
   upload.single("file"),
   asyncHandler(async (req, res) => {
-    if (!req.file) return res.status(400).json({ success: false, error: "No file uploaded" });
+    if (!req.file) return fail(res, 400, "No file uploaded");
     const ext = path.extname(req.file.originalname).toLowerCase();
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
     const saved = await saveFile(req.file.buffer, unique, req.file.mimetype);
@@ -73,7 +73,7 @@ router.get(
     if (assertFound(res, rows[0])) return;
     const u = rows[0];
     if (req.user.kind !== "admin" && u.user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     if (env.storage.enabled && u.path && u.path.startsWith("http")) {
       return res.redirect(u.path);
@@ -93,7 +93,7 @@ router.delete(
     const [rows] = await pool.query("SELECT * FROM uploads WHERE id = ?", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     await deleteFile(rows[0].stored_name);
     await pool.query("DELETE FROM uploads WHERE id = ?", [req.params.id]);

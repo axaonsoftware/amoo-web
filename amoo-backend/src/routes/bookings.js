@@ -4,7 +4,7 @@ const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, genBookingRef, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
-const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
+const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
 
 const BOOKING_UPDATE_ALLOWED = ["status", "payment", "expert_id", "notes"];
 
@@ -59,7 +59,7 @@ router.get(
     const [rows] = await pool.query(`${LIST_SELECT} WHERE b.id = ?`, [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     ok(res, rows[0]);
   })
@@ -148,7 +148,7 @@ router.delete(
     const [rows] = await pool.query("SELECT user_id, slot_id FROM bookings WHERE id = ?", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     // Release the slot if one was reserved
     if (rows[0].slot_id) {

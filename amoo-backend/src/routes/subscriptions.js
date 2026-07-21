@@ -4,7 +4,7 @@ const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
-const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
+const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
 
 const SUB_UPDATE_ALLOWED = ["status", "auto_renew", "plan_name", "expires_at"];
 
@@ -94,7 +94,7 @@ router.post(
     const [rows] = await pool.query("SELECT * FROM subscriptions WHERE id = ?", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     await pool.query("UPDATE subscriptions SET status = 'cancelled', auto_renew = 0 WHERE id = ?", [req.params.id]);
     req.audit("cancel", "subscription", Number(req.params.id));

@@ -4,7 +4,7 @@ const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
-const { ok, paginated, created, parsePagination } = require("../utils/response");
+const { ok, paginated, created, fail, parsePagination } = require("../utils/response");
 
 // GET /api/notifications (own + broadcast)
 router.get(
@@ -45,7 +45,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const [rows] = await pool.query("SELECT * FROM notifications WHERE id = ?", [req.params.id]);
     if (rows.length && rows[0].user_id && rows[0].user_id !== req.user.id) {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     await pool.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [req.params.id]);
     ok(res, { id: Number(req.params.id), read: true });
@@ -76,10 +76,10 @@ router.delete(
     if (!rows.length) return ok(res, { id: Number(req.params.id), deleted: true });
     const n = rows[0];
     if (n.user_id && n.user_id !== req.user.id && req.user.kind !== "admin") {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     if (!n.user_id && req.user.kind !== "admin") {
-      return res.status(403).json({ success: false, error: "Forbidden" });
+      return fail(res, 403, "Forbidden");
     }
     await pool.query("DELETE FROM notifications WHERE id = ?", [req.params.id]);
     req.audit("delete", "notification", Number(req.params.id));

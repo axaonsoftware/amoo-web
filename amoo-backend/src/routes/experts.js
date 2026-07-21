@@ -29,7 +29,7 @@ router.get(
         } catch (_) { /* token invalid — not admin */ }
       }
       if (!isAdmin) {
-        return res.status(401).json({ success: false, error: "Admin authentication required" });
+        return fail(res, 401, "Admin authentication required");
       }
     }
     const { page, pageSize, offset } = parsePagination(req.query);
