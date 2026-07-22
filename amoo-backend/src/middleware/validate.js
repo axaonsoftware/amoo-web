@@ -69,6 +69,9 @@ const schemas = {
     name: Joi.string().min(2).max(120),
     phone: optionalString.max(20),
     avatar: optionalString.max(512),
+    dob: Joi.date().iso(),
+    tob: Joi.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
+    birthplace: optionalString.max(255),
   }),
 
   booking: Joi.object({

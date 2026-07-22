@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Loader2,
   AlertCircle,
+  RotateCcw,
+  X,
 } from "lucide-react";
 import api from "../../../lib/api";
 
@@ -24,6 +26,7 @@ type Payment = {
   user_name?: string;
   user_email?: string;
   created_at?: string;
+  refund_id?: string;
 };
 
 const methodMeta: Record<string, { Icon: typeof Smartphone; color: string }> = {
@@ -62,23 +65,49 @@ export default function RecentTransactions() {
   const [page, setPage] = useState(1);
   const itemsPerPage = 8;
 
-  useEffect(() => {
-    let cancelled = false;
+  // Refund modal state
+  const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
+  const [refundReason, setRefundReason] = useState("");
+  const [refunding, setRefunding] = useState(false);
+  const [refundResult, setRefundResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  const load = () => {
     setLoading(true);
     api.admin.getPayments()
       .then((res) => {
-        if (cancelled) return;
         const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
         setRows(data);
       })
-      .catch((e) => { if (!cancelled) { setRows([]); setError(e?.message || "Failed to load"); } })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+      .catch((e) => { setRows([]); setError(e?.message || "Failed to load"); })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { load(); }, []);
 
   const totalPages = Math.max(1, Math.ceil(rows.length / itemsPerPage));
   const start = (page - 1) * itemsPerPage;
   const pageRows = rows.slice(start, start + itemsPerPage);
+
+  const openRefund = (p: Payment) => {
+    setRefundTarget(p);
+    setRefundReason("");
+    setRefundResult(null);
+  };
+
+  const confirmRefund = async () => {
+    if (!refundTarget) return;
+    setRefunding(true);
+    setRefundResult(null);
+    try {
+      const res = await api.admin.refundPayment(refundTarget.id, { reason: refundReason || undefined });
+      setRefundResult({ ok: true, msg: `Refunded ${fmtAmount(refundTarget.amount)} — ${res?.gateway_refund_id ? `Gateway ID: ${res.gateway_refund_id}` : "DB only"}` });
+      load(); // refresh the list
+    } catch (e: any) {
+      setRefundResult({ ok: false, msg: e?.message || "Refund failed" });
+    } finally {
+      setRefunding(false);
+    }
+  };
 
   if (error) {
     return (
@@ -100,130 +129,206 @@ export default function RecentTransactions() {
   }
 
   return (
-    <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[14px] font-semibold text-[#1B1630]">
-          Recent Transactions
-        </h2>
-        <button
-          type="button"
-          className="h-[28px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] font-medium text-[#4A3B63] hover:bg-[#FAF9FC]"
-        >
-          View All
-        </button>
-      </div>
+    <>
+      <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
+        <div className="flex items-center justify-between">
+          <h2 className="text-[14px] font-semibold text-[#1B1630]">
+            Recent Transactions
+          </h2>
+          <button
+            type="button"
+            onClick={load}
+            className="h-[28px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] font-medium text-[#4A3B63] hover:bg-[#FAF9FC]"
+          >
+            Refresh
+          </button>
+        </div>
 
-      <div className="mt-4 overflow-x-auto">
-        <table className="w-full min-w-[760px] border-collapse text-left">
-          <thead>
-            <tr className="border-b border-[#EFEDF4]">
-              {["Transaction ID", "Date & Time", "Client", "Service", "Amount", "Payment Method", "Status"].map((h) => (
-                <th key={h} className="pb-[10px] text-[10.5px] font-medium text-[#8B879C]">{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {pageRows.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="py-10 text-center text-[13px] text-[#8B879C]">No transactions found</td>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full min-w-[820px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-[#EFEDF4]">
+                {["Transaction ID", "Date & Time", "Client", "Service", "Amount", "Payment Method", "Status", ""].map((h) => (
+                  <th key={h} className="pb-[10px] text-[10.5px] font-medium text-[#8B879C]">{h}</th>
+                ))}
               </tr>
-            ) : (
-              pageRows.map((r) => {
-                const { date, time } = fmtDate(r.created_at);
-                const method = methodMeta[r.payment_method || ""] || { Icon: Wallet, color: "text-[#8B879C]" };
-                const statusClass = statusColors[r.status || ""] || "bg-[#F1EFF6] text-[#8B879C]";
-                return (
-                  <tr key={r.id} className="border-b border-[#F5F3F9]">
-                    <td className="py-[11px] pr-3 text-[11px] font-medium text-[#4A3B63]">
-                      {r.txn_id || `#${r.id}`}
-                    </td>
-                    <td className="py-[11px] pr-3">
-                      <p className="text-[11px] text-[#4A3B63]">{date}</p>
-                      <p className="text-[10px] text-[#A5A2B5]">{time}</p>
-                    </td>
-                    <td className="py-[11px] pr-3">
-                      <div className="flex items-center gap-[8px]">
-                        <Image
-                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80"
-                          alt={r.user_name || "Client"}
-                          width={28}
-                          height={28}
-                          className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
-                        />
-                        <div className="min-w-0">
-                          <p className="truncate text-[11px] font-medium text-[#1B1630]">
-                            {r.user_name || "Unknown"}
-                          </p>
-                          <p className="truncate text-[9.5px] text-[#A5A2B5]">
-                            {r.user_email || ""}
-                          </p>
+            </thead>
+            <tbody>
+              {pageRows.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-10 text-center text-[13px] text-[#8B879C]">No transactions found</td>
+                </tr>
+              ) : (
+                pageRows.map((r) => {
+                  const { date, time } = fmtDate(r.created_at);
+                  const method = methodMeta[r.payment_method || ""] || { Icon: Wallet, color: "text-[#8B879C]" };
+                  const statusClass = statusColors[r.status || ""] || "bg-[#F1EFF6] text-[#8B879C]";
+                  const canRefund = r.status === "success";
+                  return (
+                    <tr key={r.id} className="border-b border-[#F5F3F9]">
+                      <td className="py-[11px] pr-3 text-[11px] font-medium text-[#4A3B63]">
+                        {r.txn_id || `#${r.id}`}
+                      </td>
+                      <td className="py-[11px] pr-3">
+                        <p className="text-[11px] text-[#4A3B63]">{date}</p>
+                        <p className="text-[10px] text-[#A5A2B5]">{time}</p>
+                      </td>
+                      <td className="py-[11px] pr-3">
+                        <div className="flex items-center gap-[8px]">
+                          <Image
+                            src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80"
+                            alt={r.user_name || "Client"}
+                            width={28}
+                            height={28}
+                            className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
+                          />
+                          <div className="min-w-0">
+                            <p className="truncate text-[11px] font-medium text-[#1B1630]">
+                              {r.user_name || "Unknown"}
+                            </p>
+                            <p className="truncate text-[9.5px] text-[#A5A2B5]">
+                              {r.user_email || ""}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="py-[11px] pr-3 text-[11px] text-[#4A3B63]">
-                      {r.service_name || "\u2014"}
-                    </td>
-                    <td className="py-[11px] pr-3 text-[11px] font-medium text-[#1B1630]">
-                      {fmtAmount(r.amount)}
-                    </td>
-                    <td className="py-[11px] pr-3">
-                      <span className="flex items-center gap-[6px] text-[11px] text-[#4A3B63]">
-                        <method.Icon size={14} className={method.color} />
-                        {r.payment_method || "\u2014"}
-                      </span>
-                    </td>
-                    <td className="py-[11px]">
-                      <span className={`inline-flex h-[20px] items-center rounded-full px-[9px] text-[9.5px] font-medium capitalize ${statusClass}`}>
-                        {r.status || "unknown"}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+                      </td>
+                      <td className="py-[11px] pr-3 text-[11px] text-[#4A3B63]">
+                        {r.service_name || "\u2014"}
+                      </td>
+                      <td className="py-[11px] pr-3 text-[11px] font-medium text-[#1B1630]">
+                        {fmtAmount(r.amount)}
+                      </td>
+                      <td className="py-[11px] pr-3">
+                        <span className="flex items-center gap-[6px] text-[11px] text-[#4A3B63]">
+                          <method.Icon size={14} className={method.color} />
+                          {r.payment_method || "\u2014"}
+                        </span>
+                      </td>
+                      <td className="py-[11px]">
+                        <span className={`inline-flex h-[20px] items-center rounded-full px-[9px] text-[9.5px] font-medium capitalize ${statusClass}`}>
+                          {r.status || "unknown"}
+                        </span>
+                      </td>
+                      <td className="py-[11px] pl-2">
+                        {canRefund ? (
+                          <button
+                            type="button"
+                            onClick={() => openRefund(r)}
+                            className="inline-flex h-[26px] items-center gap-1 rounded-[6px] border border-red-200 bg-red-50 px-2 text-[10px] font-medium text-red-600 hover:bg-red-100"
+                          >
+                            <RotateCcw size={11} />
+                            Refund
+                          </button>
+                        ) : null}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-      {rows.length > itemsPerPage && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-[11px] text-[#8B879C]">
-            Showing 1 to {pageRows.length} of {rows.length} transactions
-          </p>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-[6px]">
+        {rows.length > itemsPerPage && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[11px] text-[#8B879C]">
+              Showing 1 to {pageRows.length} of {rows.length} transactions
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-[6px]">
+                <button
+                  type="button"
+                  aria-label="Previous"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page === 1}
+                  className="grid h-[28px] w-[28px] place-items-center rounded-[7px] border border-[#E7E5EF] text-[#8B879C] hover:bg-[#FAF9FC] disabled:opacity-40"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <span className="px-2 text-[11px] text-[#4A3B63]">
+                  {page} / {totalPages}
+                </span>
+                <button
+                  type="button"
+                  aria-label="Next"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page === totalPages}
+                  className="grid h-[28px] w-[28px] place-items-center rounded-[7px] border border-[#E7E5EF] text-[#8B879C] hover:bg-[#FAF9FC] disabled:opacity-40"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </div>
               <button
                 type="button"
-                aria-label="Previous"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="grid h-[28px] w-[28px] place-items-center rounded-[7px] border border-[#E7E5EF] text-[#8B879C] hover:bg-[#FAF9FC] disabled:opacity-40"
+                className="inline-flex h-[28px] items-center gap-[10px] rounded-[7px] border border-[#E7E5EF] bg-white pl-3 pr-2 text-[11px] text-[#4A3B63]"
               >
-                <ChevronLeft size={14} />
-              </button>
-              <span className="px-2 text-[11px] text-[#4A3B63]">
-                {page} / {totalPages}
-              </span>
-              <button
-                type="button"
-                aria-label="Next"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="grid h-[28px] w-[28px] place-items-center rounded-[7px] border border-[#E7E5EF] text-[#8B879C] hover:bg-[#FAF9FC] disabled:opacity-40"
-              >
-                <ChevronRight size={14} />
+                {itemsPerPage} / page
+                <ChevronDown size={13} className="text-[#8B879C]" />
               </button>
             </div>
-            <button
-              type="button"
-              className="inline-flex h-[28px] items-center gap-[10px] rounded-[7px] border border-[#E7E5EF] bg-white pl-3 pr-2 text-[11px] text-[#4A3B63]"
-            >
-              {itemsPerPage} / page
-              <ChevronDown size={13} className="text-[#8B879C]" />
-            </button>
+          </div>
+        )}
+      </section>
+
+      {/* Refund confirmation modal */}
+      {refundTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-md rounded-[16px] bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold text-[#1B1630]">Confirm Refund</h3>
+              <button type="button" onClick={() => { if (!refunding) setRefundTarget(null); }} className="text-[#8B879C] hover:text-[#1B1630]">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-3 text-[12.5px] text-[#4A3B63]">
+              <div className="rounded-[10px] border border-[#EFEDF4] bg-[#FAF9FC] p-3">
+                <p><span className="font-medium">Transaction:</span> {refundTarget.txn_id || `#${refundTarget.id}`}</p>
+                <p><span className="font-medium">Client:</span> {refundTarget.user_name || "Unknown"}</p>
+                <p><span className="font-medium">Amount:</span> {fmtAmount(refundTarget.amount)}</p>
+                <p><span className="font-medium">Method:</span> {refundTarget.payment_method || "\u2014"}</p>
+              </div>
+
+              <label className="block">
+                <span className="text-[11px] font-medium text-[#8B879C]">Reason (optional)</span>
+                <textarea
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  rows={3}
+                  className="mt-1 w-full rounded-[8px] border border-[#E7E5EF] bg-white p-2.5 text-[12.5px] text-[#1B1630] outline-none focus:border-[#7C3AED]"
+                  placeholder="e.g. Customer requested cancellation..."
+                />
+              </label>
+
+              {refundResult && (
+                <div className={`rounded-[8px] p-2.5 text-[12px] ${refundResult.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                  {refundResult.msg}
+                </div>
+              )}
+
+              <div className="flex items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setRefundTarget(null)}
+                  disabled={refunding}
+                  className="flex-1 rounded-[9px] border border-[#E7E5EF] bg-white py-2.5 text-[12px] font-medium text-[#3D3752] disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmRefund}
+                  disabled={refunding || refundResult?.ok}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-[9px] bg-gradient-to-r from-red-600 to-red-500 py-2.5 text-[12px] font-medium text-white shadow-[0_4px_12px_rgba(220,38,38,.25)] disabled:opacity-60"
+                >
+                  {refunding && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {refunding ? "Refunding..." : "Confirm Refund"}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
-    </section>
+    </>
   );
 }

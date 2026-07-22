@@ -145,6 +145,7 @@ CREATE TABLE IF NOT EXISTS payments (
   gateway       VARCHAR(40),
   status        ENUM('success','pending','failed','refunded') NOT NULL DEFAULT 'pending',
   txn_id        VARCHAR(120),
+  gateway_order_id VARCHAR(255),
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
   FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL,

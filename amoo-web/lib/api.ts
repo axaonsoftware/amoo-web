@@ -51,12 +51,12 @@ export const api = {
     updateService: (id: number, body: unknown) => request("PATCH", `/api/services/${id}`, body, true, "amoo_admin_token"),
     deleteService: (id: number) => request("DELETE", `/api/services/${id}`, null, true, "amoo_admin_token"),
 
-    getUsers: () => request("GET", "/api/users", null, true, "amoo_admin_token"),
+    getUsers: (query = "") => request("GET", `/api/users${query}`, null, true, "amoo_admin_token"),
     getUser: (id: number) => request("GET", `/api/users/${id}`, null, true, "amoo_admin_token"),
     updateUser: (id: number, body: unknown) => request("PATCH", `/api/users/${id}`, body, true, "amoo_admin_token"),
     deleteUser: (id: number) => request("DELETE", `/api/users/${id}`, null, true, "amoo_admin_token"),
 
-    getBookings: () => request("GET", "/api/bookings", null, true, "amoo_admin_token"),
+    getBookings: (query = "") => request("GET", `/api/bookings${query}`, null, true, "amoo_admin_token"),
     getBooking: (id: number) => request("GET", `/api/bookings/${id}`, null, true, "amoo_admin_token"),
     updateBooking: (id: number, body: unknown) => request("PATCH", `/api/bookings/${id}`, body, true, "amoo_admin_token"),
     completeBooking: (id: number) => request("POST", `/api/bookings/${id}/complete`, null, true, "amoo_admin_token"),
@@ -67,14 +67,15 @@ export const api = {
     updatePackage: (id: number, body: unknown) => request("PATCH", `/api/packages/${id}`, body, true, "amoo_admin_token"),
     deletePackage: (id: number) => request("DELETE", `/api/packages/${id}`, null, true, "amoo_admin_token"),
 
-    getReports: () => request("GET", "/api/reports", null, true, "amoo_admin_token"),
+    getReports: (query = "") => request("GET", `/api/reports${query}`, null, true, "amoo_admin_token"),
+    getReport: (id: number) => request("GET", `/api/reports/${id}`, null, true, "amoo_admin_token"),
     createReport: (body: unknown) => request("POST", "/api/reports/admin", body, true, "amoo_admin_token"),
     updateReport: (id: number, body: unknown) => request("PATCH", `/api/reports/${id}`, body, true, "amoo_admin_token"),
     deleteReport: (id: number) => request("DELETE", `/api/reports/${id}`, null, true, "amoo_admin_token"),
 
     getPayments: () => request("GET", "/api/payments", null, true, "amoo_admin_token"),
     refundPayment: (id: number, body: unknown) => request("POST", `/api/payments/${id}/refund`, body, true, "amoo_admin_token"),
-    getPaymentRefunds: () => request("GET", "/api/payments/refunds", null, true, "amoo_admin_token"),
+    getPaymentRefunds: (query = "") => request("GET", `/api/payments/refunds${query}`, null, true, "amoo_admin_token"),
     getPaymentStats: () => request("GET", "/api/payments/stats/overview", null, true, "amoo_admin_token"),
 
     getCoupons: () => request("GET", "/api/coupons", null, true, "amoo_admin_token"),
@@ -184,6 +185,10 @@ export const api = {
 
   // contact (public)
   sendContact: (body: unknown) => request("POST", "/api/contact", body),
+
+  // payment
+  createPaymentOrder: (body: unknown) => request("POST", "/api/payments/create-order", body, true),
+  verifyPayment: (body: unknown) => request("POST", "/api/payments/verify", body, true),
 
   // coupons (public)
   validateCoupon: (code: string) => request("POST", "/api/coupons/validate", { code }),

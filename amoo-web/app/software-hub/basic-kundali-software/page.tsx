@@ -27,7 +27,7 @@ import {
   TargetIcon,
   WhatsAppIcon,
 } from "../../components/icons";
-import { WHATSAPP_URL } from "../../lib/constants";
+import { WHATSAPP_URL } from "../../../lib/constants";
 
 export const metadata: Metadata = {
   title: "Basic Kundali Software",

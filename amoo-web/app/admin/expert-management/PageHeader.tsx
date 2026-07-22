@@ -1,0 +1,54 @@
+import { ChevronRight, Users, Upload, Plus } from "lucide-react";
+
+export default function PageHeader({ onAdd }: { onAdd?: () => void }) {
+  return (
+    <>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-[6px] text-[10.5px]">
+        <span className="text-[#8B879C]">Dashboard</span>
+        <ChevronRight size={12} className="text-[#B7B3C4]" />
+        <span className="text-[#8B879C]">Expert Management</span>
+        <ChevronRight size={12} className="text-[#B7B3C4]" />
+        <span className="font-medium text-[#3D3752]">All Experts</span>
+      </nav>
+
+      {/* Page header */}
+      <div className="mt-[14px] flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-[14px]">
+          <span className="grid h-[52px] w-[52px] shrink-0 place-items-center rounded-[14px] bg-gradient-to-br from-[#5B21B6] to-[#7C3AED] shadow-[0_6px_16px_rgba(109,40,217,.25)]">
+            <Users size={24} strokeWidth={1.8} className="text-white" />
+          </span>
+
+          <div>
+            <h1 className="font-display text-[26px] font-bold leading-none text-[#231640]">
+              Expert Management
+            </h1>
+            <p className="mt-[7px] text-[11px] text-[#8B879C]">
+              Manage all astrologers, numerologists and healing experts on the
+              platform.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-[10px]">
+          <button
+            type="button"
+            className="flex h-[38px] items-center gap-[7px] rounded-[9px] border border-[#7C3AED] bg-white px-[15px] text-[11.5px] font-medium text-[#6D28D9] hover:bg-[#FAF7FF]"
+          >
+            <Upload size={14} strokeWidth={2} />
+            Export Experts
+          </button>
+
+          <button
+            type="button"
+            onClick={onAdd}
+            className="flex h-[38px] items-center gap-[7px] rounded-[9px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-[15px] text-[11.5px] font-medium text-white shadow-[0_6px_16px_rgba(109,40,217,.25)]"
+          >
+            <Plus size={15} strokeWidth={2.4} />
+            Add New Expert
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}

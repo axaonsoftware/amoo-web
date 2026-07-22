@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import OfferBar from "@/app/components/OfferBar";
-import HomeHeader from "@/app/components/HomeHeader";
-import SiteFooter from "@/app/components/SiteFooter";
+import { OfferBar, HomeHeader } from "@/app/components/home-header";
+import { SiteFooter } from "@/app/components/site-footer";
 import { api } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/constants";
 import { ChevronDown } from "lucide-react";

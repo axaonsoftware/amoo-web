@@ -80,6 +80,9 @@ const env = {
     key: required("PAYMENT_KEY", ""),
     secret: required("PAYMENT_SECRET", ""),
     webhookSecret: required("PAYMENT_WEBHOOK_SECRET", ""),
+    // Razorpay-specific keys (required when PAYMENT_GATEWAY=razorpay)
+    razorpayKeyId: required("RAZORPAY_KEY_ID", ""),
+    razorpayKeySecret: required("RAZORPAY_KEY_SECRET", ""),
   },
 
   // OpenTelemetry tracing. Set OTEL_EXPORTER_OTLP_ENDPOINT in production

@@ -1,0 +1,87 @@
+{
+  "mapping": {
+    "1": ["A", "J", "S"],
+    "2": ["B", "K", "T"],
+    "3": ["C", "L", "U"],
+    "4": ["D", "M", "V"],
+    "5": ["E", "N", "W"],
+    "6": ["F", "O", "X"],
+    "7": ["G", "P", "Y"],
+    "8": ["H", "Q", "Z"],
+    "9": ["I", "R"]
+  },
+  "numbers": {
+    "1": {
+      "title": "The Pioneer",
+      "positive": ["Leadership", "ambition", "independence", "originality", "confidence"],
+      "negative": ["Arrogance", "domineering", "loneliness", "impatience"],
+      "description": "Number 1 represents the creator, the individual who forges their own path. Natural-born leaders who are driven, assertive, and innovative. They thrive when they take initiative but must guard against ego and isolation."
+    },
+    "2": {
+      "title": "The Diplomat",
+      "positive": ["Cooperation", "sensitivity", "tact", "patience", "harmony"],
+      "negative": ["Timidity", "oversensitivity", "indecisiveness", "codependency"],
+      "description": "Number 2 embodies balance and partnership. These souls excel at building bridges, mediating conflict, and creating harmony. They are intuitive and supportive but must learn to assert their own needs."
+    },
+    "3": {
+      "title": "The Communicator",
+      "positive": ["Creativity", "optimism", "self-expression", "social charm"],
+      "negative": ["Scattered energy", "superficiality", "dramatic tendencies"],
+      "description": "Number 3 vibrates with creative expression and joy. Artists, writers, and performers thrive here. They inspire others with their enthusiasm but must channel their abundant energy into focused completion."
+    },
+    "4": {
+      "title": "The Builder",
+      "positive": ["Discipline", "practicality", "reliability", "strong work ethic"],
+      "negative": ["Rigidity", "stubbornness", "workaholism", "fear of change"],
+      "description": "Number 4 is the solid foundation. These are the builders who create lasting structures through dedication and methodical effort. Their loyalty is unmatched, though they must embrace flexibility."
+    },
+    "5": {
+      "title": "The Adventurer",
+      "positive": ["Freedom", "versatility", "curiosity", "resourcefulness"],
+      "negative": ["Restlessness", "irresponsibility", "commitment-phobia", "excess"],
+      "description": "Number 5 craves freedom and experience. Agents of change who thrive on variety, travel, and new ideas. They adapt quickly but must ground their restless energy with commitment."
+    },
+    "6": {
+      "title": "The Nurturer",
+      "positive": ["Responsibility", "compassion", "service", "domestic harmony"],
+      "negative": ["Martyr complex", "interference", "anxiety", "over-protectiveness"],
+      "description": "Number 6 radiates love and responsibility. Natural caregivers who prioritize family, community, and service. They create beauty and harmony but must avoid sacrificing their own well-being."
+    },
+    "7": {
+      "title": "The Seeker",
+      "positive": ["Wisdom", "analysis", "spirituality", "introspection"],
+      "negative": ["Isolation", "cynicism", "secretiveness", "detachment"],
+      "description": "Number 7 is the philosopher and mystic. These souls dive deep into life's mysteries, seeking truth through analysis and spiritual exploration. They require solitude but must not withdraw completely."
+    },
+    "8": {
+      "title": "The Achiever",
+      "positive": ["Authority", "abundance", "business acumen", "discernment"],
+      "negative": ["Materialism", "work obsession", "intimidation", "control issues"],
+      "description": "Number 8 commands power and material success. Master executives and visionaries who understand the balance between the spiritual and material worlds. Their challenge is to use power ethically."
+    },
+    "9": {
+      "title": "The Humanitarian",
+      "positive": ["Compassion", "generosity", "artistic talent", "universal love"],
+      "negative": ["Emotional turmoil", "martyrdom", "letting go", "resentment"],
+      "description": "Number 9 represents completion and universal love. Humanitarians who feel deeply connected to all of humanity. They are forgiving and wise but must learn healthy emotional release and boundaries."
+    },
+    "11": {
+      "title": "The Intuitive Master (Master Number)",
+      "positive": ["Enlightenment", "inspiration", "psychic awareness", "idealism"],
+      "negative": ["Nervous tension", "over-sensitivity", "unrealistic expectations"],
+      "description": "Master Number 11 carries the highest spiritual vibration of any number. A divine messenger with profound intuition and the ability to inspire masses. The immense voltage requires grounding to avoid burnout."
+    },
+    "22": {
+      "title": "The Master Builder (Master Number)",
+      "positive": ["Visionary leadership", "practical idealism", "manifestation power"],
+      "negative": ["Overwhelm", "pressure", "unrealized potential", "stress"],
+      "description": "Master Number 22 combines the intuition of 11 with the practicality of 4. The Master Builder can turn the loftiest dreams into concrete reality on a global scale. Must manage the weight of great responsibility."
+    },
+    "33": {
+      "title": "The Master Teacher (Master Number)",
+      "positive": ["Selfless service", "healing through love", "compassion in action"],
+      "negative": ["Burden of others", "self-neglect", "emotional exhaustion"],
+      "description": "Master Number 33 embodies the highest expression of love and service. The Master Teacher uplifts humanity through healing, compassion, and unconditional love. Extremely rare, these souls must prioritize their own healing."
+    }
+  }
+}

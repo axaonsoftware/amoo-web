@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Lock, ArrowRight } from "lucide-react";
+import { ArrowLeft, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { loadRazorpayScript, openRazorpayCheckout } from "@/lib/razorpay";
 
 function parseDisplayDate(display: string): string {
   const months: Record<string, string> = {
@@ -39,6 +40,7 @@ export default function BottomActionBar({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState("");
 
   const svc = service || "Reiki Healing Session";
   const md = mode || "Video Call";
@@ -54,7 +56,9 @@ export default function BottomActionBar({
 
   const handlePay = async () => {
     setBusy(true);
+    setStatus("Creating booking...");
     try {
+      // 1. Find the service
       const services = await api.getServices();
       const match = services.find(
         (s: any) => s.name.toLowerCase() === svc.toLowerCase()
@@ -63,21 +67,57 @@ export default function BottomActionBar({
       );
       const serviceId = match?.id || 4;
 
+      // 2. Create booking as "Pending" (reserve slot, no payment yet)
       const booking = await api.createBooking({
         service_id: serviceId,
         date: parseDisplayDate(dt),
         time: parseDisplayTime(tm),
         mode: md,
         amount: 719,
-        payment: "Paid",
-        method: "card",
+        payment: "Pending",
+        method: "razorpay",
       });
 
+      // 3. Create a Razorpay order for this booking
+      setStatus("Loading payment gateway...");
+      const order = await api.createPaymentOrder({ booking_id: booking.id });
+
+      // 4. Load Razorpay checkout script
+      await loadRazorpayScript();
+
+      // 5. Open Razorpay checkout modal
+      setStatus("Opening payment window...");
+      const paymentResult = await openRazorpayCheckout({
+        key: order.key_id,
+        amount: order.amount,
+        currency: order.currency,
+        order_id: order.order_id,
+        name: "Amoo Guru",
+        description: svc,
+        prefill: { name: "", email: "", contact: "" },
+        theme: { color: "#7C3AED" },
+      });
+
+      // 6. Verify payment on the backend
+      setStatus("Verifying payment...");
+      await api.verifyPayment({
+        booking_id: booking.id,
+        razorpay_payment_id: paymentResult.razorpay_payment_id,
+        razorpay_order_id: paymentResult.razorpay_order_id,
+        razorpay_signature: paymentResult.razorpay_signature,
+      });
+
+      // 7. Redirect to confirmation
       router.push(`/consultation/booking-confirmation?bookingId=${booking.id}`);
     } catch (err: any) {
-      alert(err.message || "Failed to create booking. Please try again.");
+      if (err.message === "Payment cancelled by user") {
+        // User closed the modal — no action needed
+      } else {
+        alert(err.message || "Payment failed. Please try again.");
+      }
     } finally {
       setBusy(false);
+      setStatus("");
     }
   };
 
@@ -94,7 +134,7 @@ export default function BottomActionBar({
 
       <p className="flex items-center gap-2 text-xs text-gray-500 order-3 sm:order-2">
         <Lock size={14} />
-        {busy ? "Processing your booking..." : "You will not be charged until you confirm your payment."}
+        {status || (busy ? "Processing..." : "Secured by Razorpay")}
       </p>
 
       <button
@@ -105,9 +145,18 @@ export default function BottomActionBar({
           background: "linear-gradient(90deg,#F3D07A 0%,#C9932F 100%)",
         }}
       >
-        {busy ? "Creating Booking..." : "Pay \u20b9719 Securely"}
-        <ArrowRight size={16} />
-        <Lock size={14} />
+        {busy ? (
+          <>
+            <Loader2 size={16} className="animate-spin" />
+            {status || "Processing..."}
+          </>
+        ) : (
+          <>
+            Pay ₹719 Securely
+            <ArrowRight size={16} />
+            <Lock size={14} />
+          </>
+        )}
       </button>
     </div>
   );

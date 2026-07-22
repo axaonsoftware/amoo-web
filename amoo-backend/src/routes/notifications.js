@@ -5,6 +5,7 @@ const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, parsePagination } = require("../utils/response");
+const { sendNotificationEmail } = require("../services/email");
 
 // GET /api/notifications (own + broadcast)
 router.get(
@@ -99,6 +100,35 @@ router.post(
       [user_id || null, title, message, type || "info"]
     );
     req.audit("create", "notification", result.insertId, { user_id });
+
+    // Fire-and-forget: send email notification
+    (async () => {
+      try {
+        const emails = [];
+        if (user_id) {
+          // Targeted — fetch that user's email
+          const [[u]] = await pool.query(
+            "SELECT email FROM users WHERE id = ? AND deleted_at IS NULL",
+            [user_id]
+          );
+          if (u?.email) emails.push(u.email);
+        } else {
+          // Broadcast — send to all verified users
+          const [rows] = await pool.query(
+            "SELECT email FROM users WHERE verified = 1 AND deleted_at IS NULL AND email IS NOT NULL AND email != ''"
+          );
+          for (const r of rows) {
+            if (r.email) emails.push(r.email);
+          }
+        }
+        if (emails.length) {
+          await sendNotificationEmail(emails.join(","), title, message);
+        }
+      } catch (err) {
+        // Email failure must never break the API response
+      }
+    })();
+
     created(res, { id: result.insertId });
   })
 );

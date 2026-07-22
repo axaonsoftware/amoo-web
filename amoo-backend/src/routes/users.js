@@ -7,7 +7,7 @@ const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, fail, assertFound, parsePagination } = require("../utils/response");
 
 const USER_UPDATE_ALLOWED = ["name", "email", "phone", "role", "status", "verified"];
-const USER_SELECT = "id, name, email, phone, avatar, role, status, verified, created_at";
+const USER_SELECT = "id, name, email, phone, avatar, role, status, verified, dob, tob, birthplace, created_at";
 
 // GET /api/users (admin) with pagination + search + filters
 router.get(
@@ -71,7 +71,7 @@ router.patch(
   authRequired,
   validate("updateProfile"),
   asyncHandler(async (req, res) => {
-    const { setClause, values } = buildUpdate(req.body, ["name", "phone", "avatar"], [req.user.id]);
+    const { setClause, values } = buildUpdate(req.body, ["name", "phone", "avatar", "dob", "tob", "birthplace"], [req.user.id]);
     await pool.query(`UPDATE users SET ${setClause} WHERE id = ?`, values);
     const [rows] = await pool.query(`SELECT ${USER_SELECT} FROM users WHERE id = ?`, [req.user.id]);
     ok(res, rows[0]);

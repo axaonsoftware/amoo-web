@@ -17,7 +17,7 @@ const TYPE_META: Record<string, { tag: string; tagClass: string; subtitle: strin
 type Report = { id: number; title: string; type: string; created_at: string };
 
 export default function RecentReports() {
-  const { data, loading, error } = useApi<{ data: Report[] }>(() => api.getReports());
+  const { data, loading, error } = useApi<{ data: Report[] }>(() => api.getReports(), [], 10000);
   const rows: Report[] = (data?.data ?? []).slice(0, 5);
 
   return (

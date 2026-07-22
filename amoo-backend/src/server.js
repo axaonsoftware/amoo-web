@@ -27,7 +27,7 @@ const packageRoutes = require("./routes/packages");
 const testimonialRoutes = require("./routes/testimonials");
 const dashboardRoutes = require("./routes/dashboard");
 const walletRoutes = require("./routes/wallet");
-const subscriptionRoutes = require("./routes/subscriptions");
+const { router: subscriptionRoutes, expireSubscriptions } = require("./routes/subscriptions");
 const notificationRoutes = require("./routes/notifications");
 const contactRoutes = require("./routes/contact");
 const uploadRoutes = require("./routes/uploads");
@@ -203,6 +203,14 @@ if (require.main === module) {
   testConnection().then((okDb) => {
     server = app.listen(PORT, () => {
       logger.info(`[server] API listening on http://localhost:${PORT} (db: ${okDb ? "connected" : "UNAVAILABLE"})`);
+      const { startCron } = require("./cron/index");
+      startCron([
+        {
+          name: "expire-subscriptions",
+          schedule: process.env.CRON_SCHEDULE || "0 2 * * *",
+          task: expireSubscriptions,
+        },
+      ]);
     });
   });
 }

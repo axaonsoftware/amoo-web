@@ -1,9 +1,14 @@
+"use client";
+
+import { useRef } from "react";
 import { ChevronRight, Flower2, Upload, Plus } from "lucide-react";
 import StatsRow from "./StatsRow";
 import SessionsPanel from "./SessionsPanel";
 import RightRail from "./RightRail";
 
 export default function ReikiManagementPage() {
+  const panelFns = useRef<{ openCreate: () => void; exportData: () => void } | null>(null);
+
   return (
     <main className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
       {/* Breadcrumb */}
@@ -36,6 +41,7 @@ export default function ReikiManagementPage() {
         <div className="flex flex-wrap items-center gap-[10px]">
           <button
             type="button"
+            onClick={() => panelFns.current?.exportData()}
             className="flex h-[38px] items-center gap-[7px] rounded-[9px] border border-[#7C3AED] bg-white px-[15px] text-[11.5px] font-medium text-[#6D28D9] hover:bg-[#FAF7FF]"
           >
             <Upload size={14} strokeWidth={2} />
@@ -44,6 +50,7 @@ export default function ReikiManagementPage() {
 
           <button
             type="button"
+            onClick={() => panelFns.current?.openCreate()}
             className="flex h-[38px] items-center gap-[7px] rounded-[9px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-[15px] text-[11.5px] font-medium text-white shadow-[0_6px_16px_rgba(109,40,217,.25)]"
           >
             <Plus size={15} strokeWidth={2.4} />
@@ -56,7 +63,11 @@ export default function ReikiManagementPage() {
 
       <div className="mt-5 flex flex-col gap-4 xl:flex-row">
         <div className="min-w-0 flex-1">
-          <SessionsPanel />
+          <SessionsPanel
+            onReady={(fns) => {
+              panelFns.current = fns;
+            }}
+          />
         </div>
         <RightRail />
       </div>

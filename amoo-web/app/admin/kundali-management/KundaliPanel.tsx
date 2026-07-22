@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -11,7 +11,9 @@ import {
   Calendar,
   Eye,
   Download,
-  MoreVertical,
+  Plus,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import {
   kundaliTypeStyles,
@@ -19,6 +21,21 @@ import {
   doshaStyles,
 } from "./data";
 import { api } from "../../../lib/api";
+import AdminModal, { type ModalField } from "../shared/AdminModal";
+import ConfirmDialog from "../shared/ConfirmDialog";
+import { exportCSV } from "../shared/exportCSV";
+
+const statusOptions = [
+  { label: "Pending", value: "pending" },
+  { label: "Active", value: "active" },
+  { label: "Completed", value: "completed" },
+  { label: "Cancelled", value: "cancelled" },
+];
+
+function displayStatusKey(s: string) {
+  if (s === "active") return "in-progress";
+  return s;
+}
 
 function fmtKD(iso: string) {
   if (!iso) return { date: "", time: "" };
@@ -62,345 +79,709 @@ function Checkbox() {
   );
 }
 
+function Toast({
+  message,
+  onClose,
+}: {
+  message: string;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 3000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+
+  return (
+    <div className="fixed right-4 top-4 z-[100] flex items-center gap-2 rounded-[8px] bg-[#16A34A] px-4 py-2.5 text-[12px] font-medium text-white shadow-[0_8px_24px_rgba(22,163,74,.3)]">
+      {message}
+    </div>
+  );
+}
+
+interface RawReport {
+  id: number;
+  user_id?: number;
+  type?: string;
+  title?: string;
+  content?: string;
+  file_url?: string;
+  status?: string;
+  created_at?: string;
+  user?: { name?: string; email?: string };
+  [key: string]: unknown;
+}
+
+interface DisplayRow {
+  id: string;
+  rawId: number;
+  client: { name: string; email: string; phone: string };
+  type: string;
+  astrologer: { name: string; role: string; avatar: string };
+  date: string;
+  time: string;
+  status: string;
+  dosha: null;
+  amount: string;
+  payment: string;
+}
+
+function toRow(r: RawReport): DisplayRow {
+  const { date, time } = fmtKD(r.created_at ?? "");
+  const rawType = (r.type || "").toLowerCase();
+  let typeKey = "janam";
+  if (rawType.includes("match")) typeKey = "match-making";
+  else if (rawType.includes("dasha")) typeKey = "dasha";
+  else if (rawType.includes("varshphal")) typeKey = "varshphal";
+  else if (rawType.includes("child")) typeKey = "child-birth";
+  else if (rawType.includes("prashna")) typeKey = "prashna";
+
+  return {
+    id: `KNDL-${r.id}`,
+    rawId: r.id,
+    client: { name: r.title || "Client", email: r.user?.email || "", phone: "" },
+    type: typeKey,
+    astrologer: { name: "System", role: "Auto-generated", avatar: "" },
+    date,
+    time,
+    status: r.status || "pending",
+    dosha: null,
+    amount: "-",
+    payment: "Paid",
+  };
+}
+
 export default function KundaliPanel() {
-  const [list, setList] = useState<any[] | null>(null);
+  const [list, setList] = useState<DisplayRow[] | null>(null);
+  const [rawReports, setRawReports] = useState<RawReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<RawReport | null>(null);
+  const [formValues, setFormValues] = useState<Record<string, string | number>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
+
+  const [toast, setToast] = useState("");
+
+  const load = useCallback(() => {
+    setLoading(true);
     api.admin
       .getReports()
       .then((data: any) => {
-        const items = data?.data ?? data ?? [];
+        const items = (data?.data ?? data ?? []) as RawReport[];
         if (data?.meta?.total) setTotal(data.meta.total);
-        const rows = items.filter((r: any) =>
+        const filtered = items.filter((r) =>
           (r.type || "").toLowerCase().includes("kundli") ||
           (r.type || "").toLowerCase().includes("kundali")
         );
-        const src = rows.length ? rows : items;
-        if (src.length) {
-          setList(
-            src.map((r: any) => {
-              const { date, time } = fmtKD(r.created_at);
-              return {
-                id: `KNDL-${r.id}`,
-                client: { name: r.title || "Client", email: "", phone: "" },
-                type: "janam",
-                astrologer: {
-                  name: "Astrologer",
-                  role: "Vedic Expert",
-                  avatar: "",
-                },
-                date,
-                time,
-                status: "completed",
-                dosha: null,
-                amount: "-",
-                payment: "Paid",
-              };
-            })
-          );
-        }
+        const src = filtered.length ? filtered : items;
+        setRawReports(src);
+        setList(src.map(toRow));
       })
-      .catch((e) => setError(e.message))
+      .catch((e: any) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    load();
+  }, [load]);
+
   const kundaliRows = list || [];
 
-  if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
+  const addFields: ModalField[] = useMemo(
+    () => [
+      {
+        name: "user_id",
+        label: "User ID",
+        type: "number",
+        placeholder: "Enter user ID",
+        required: true,
+        min: 1,
+      },
+      {
+        name: "title",
+        label: "Title",
+        type: "text",
+        placeholder: "Kundali title",
+        required: true,
+      },
+      {
+        name: "content",
+        label: "Content",
+        type: "textarea",
+        placeholder: "Kundali content...",
+        full: true,
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: statusOptions,
+      },
+    ],
+    []
+  );
+
+  const editFields: ModalField[] = useMemo(
+    () => [
+      {
+        name: "title",
+        label: "Title",
+        type: "text",
+        placeholder: "Kundali title",
+        required: true,
+      },
+      {
+        name: "content",
+        label: "Content",
+        type: "textarea",
+        placeholder: "Kundali content...",
+        full: true,
+      },
+      {
+        name: "status",
+        label: "Status",
+        type: "select",
+        options: statusOptions,
+      },
+      {
+        name: "file_url",
+        label: "File URL",
+        type: "text",
+        placeholder: "https://...",
+        full: true,
+      },
+    ],
+    []
+  );
+
+  const handleAdd = () => {
+    setEditing(null);
+    setFormValues({ user_id: "", title: "", content: "", status: "pending" });
+    setFormErrors({});
+    setModalOpen(true);
+  };
+
+  const handleEdit = (row: DisplayRow) => {
+    const raw = rawReports.find((r) => r.id === row.rawId);
+    if (!raw) return;
+    setEditing(raw);
+    setFormValues({
+      title: raw.title ?? "",
+      content: raw.content ?? "",
+      status: raw.status ?? "pending",
+      file_url: raw.file_url ?? "",
+    });
+    setFormErrors({});
+    setModalOpen(true);
+  };
+
+  const handleDelete = (row: DisplayRow) => {
+    setDeletingId(row.rawId);
+    setConfirmOpen(true);
+  };
+
+  const handleExport = () => {
+    exportCSV(
+      rawReports.map((r) => ({
+        title: r.title ?? "",
+        content: r.content ?? "",
+        status: r.status ?? "",
+        user_name: r.user?.name ?? "",
+        created_at: r.created_at ?? "",
+      })),
+      "kundali-reports.csv"
+    );
+  };
+
+  const validate = (): boolean => {
+    const errs: Record<string, string> = {};
+    if (!editing) {
+      const uid = Number(formValues.user_id);
+      if (!formValues.user_id || isNaN(uid) || uid < 1) {
+        errs.user_id = "Valid user ID is required";
+      }
+    }
+    if (!String(formValues.title ?? "").trim()) {
+      errs.title = "Title is required";
+    }
+    if (Object.keys(errs).length) {
+      setFormErrors(errs);
+      return false;
+    }
+    setFormErrors({});
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      if (editing) {
+        await api.admin.updateReport(editing.id, {
+          title: String(formValues.title),
+          content: String(formValues.content ?? ""),
+          status: String(formValues.status ?? "pending"),
+          file_url: String(formValues.file_url ?? ""),
+        });
+        setSaving(false);
+        setModalOpen(false);
+        load();
+        setToast("Kundali updated successfully");
+      } else {
+        const result = await api.admin.createReport({
+          user_id: Number(formValues.user_id),
+          type: "kundali",
+          title: String(formValues.title),
+          content: String(formValues.content ?? ""),
+        });
+        if (!formValues.content) {
+          const reportId = result?.id || result?.data?.id;
+          if (reportId) {
+            const poll = setInterval(async () => {
+              try {
+                const res = await api.admin.getReport(reportId);
+                const report = res?.data || res;
+                if (report && report.status !== "pending") {
+                  clearInterval(poll);
+                  setSaving(false);
+                  setModalOpen(false);
+                  load();
+                  setToast("Kundali generated successfully");
+                }
+              } catch { /* continue polling */ }
+            }, 2000);
+            setTimeout(() => {
+              clearInterval(poll);
+              setSaving(false);
+              setModalOpen(false);
+              load();
+              setToast("Kundali created — generation still in progress");
+            }, 30000);
+            return;
+          }
+        }
+        setSaving(false);
+        setModalOpen(false);
+        load();
+        setToast("Kundali created successfully");
+      }
+    } catch (e: any) {
+      setFormErrors({ _submit: e.message || "Failed to save" });
+      setSaving(false);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (deletingId == null) return;
+    setSaving(true);
+    try {
+      await api.admin.deleteReport(deletingId);
+      setConfirmOpen(false);
+      setDeletingId(null);
+      load();
+      setToast("Kundali deleted successfully");
+    } catch (e: any) {
+      setToast(e.message || "Failed to delete");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading)
+    return (
+      <div className="flex justify-center py-10">
+        <svg
+          className="h-6 w-6 animate-spin text-[#7C3AED]"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeDasharray="32"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">
+        {error}
+      </div>
+    );
 
   return (
-    <section>
-      {/* Tabs */}
-      <div className="no-scrollbar flex items-center overflow-x-auto pl-[8px]">
-        {tabs.map((t) => (
-          <button
-            key={t.label}
-            type="button"
-            className={`shrink-0 whitespace-nowrap border-b-[3px] px-[18px] pb-[11px] pt-[15px] text-[12px] leading-[18px] ${
-              t.active
-                ? "border-[#4208D1] font-semibold text-[#3A0FD1]"
-                : "border-transparent font-medium text-[#2B2B55] hover:text-[#3A0FD1]"
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
+    <>
+      {toast && <Toast message={toast} onClose={() => setToast("")} />}
 
-      <div className="rounded-[12px] border border-[#F0F1F5] bg-white shadow-[0_1px_2px_rgba(24,20,40,.03)]">
-        {/* Filters */}
-        <div className="no-scrollbar flex flex-nowrap items-center gap-[13px] overflow-x-auto px-[13px] pt-[24px]">
-          <div className="flex h-[33px] w-[198px] shrink-0 items-center gap-[6px] rounded-[8px] border border-[#ECEEF3] bg-white pl-[13px] pr-[12px]">
-            <input
-              type="text"
-              placeholder="Search by name, email or phone..."
-              className="h-full w-full bg-transparent text-[10px] text-[#2E2A3B] outline-none placeholder:text-[#9B9AAC]"
-            />
-            <Search size={15} className="shrink-0 text-[#1E1B5C]" />
-          </div>
-
-          {selects.map((s) => (
+      <section>
+        {/* Tabs */}
+        <div className="no-scrollbar flex items-center overflow-x-auto pl-[8px]">
+          {tabs.map((t) => (
             <button
-              key={s.value}
+              key={t.label}
               type="button"
-              className={`flex h-[33px] ${s.w} shrink-0 items-center justify-between whitespace-nowrap rounded-[8px] border border-[#ECEEF3] bg-white pl-[11px] pr-[9px] text-[10px] font-semibold text-[#14134A]`}
+              className={`shrink-0 whitespace-nowrap border-b-[3px] px-[18px] pb-[11px] pt-[15px] text-[12px] leading-[18px] ${
+                t.active
+                  ? "border-[#4208D1] font-semibold text-[#3A0FD1]"
+                  : "border-transparent font-medium text-[#2B2B55] hover:text-[#3A0FD1]"
+              }`}
             >
-              {s.value}
-              <ChevronDown size={14} className="shrink-0 text-[#6E6A85]" />
+              {t.label}
             </button>
           ))}
-
-          <button
-            type="button"
-            className="flex h-[33px] w-[162px] shrink-0 items-center justify-between whitespace-nowrap rounded-[8px] border border-[#ECEEF3] bg-white pl-[11px] pr-[9px] text-[10px] font-semibold text-[#14134A]"
-          >
-            <span>
-              01 May 2025&nbsp;&nbsp;·&nbsp;&nbsp;18 May 2025
-            </span>
-            <Calendar size={14} className="shrink-0 text-[#6D28D9]" />
-          </button>
-
-          <button
-            type="button"
-            className="inline-flex h-[33px] w-[66px] shrink-0 items-center justify-center gap-[5px] rounded-[8px] border border-[#ECEEF3] bg-white text-[10px] font-semibold text-[#14134A]"
-          >
-            <SlidersHorizontal size={13} className="text-[#4A4869]" />
-            Filters
-          </button>
         </div>
 
-        {/* Table */}
-        <div className="mt-[20px] overflow-x-auto">
-          <table className="w-full min-w-[840px] table-fixed border-collapse">
-            <colgroup>
-              <col className="w-[45px]" />
-              <col className="w-[72px]" />
-              <col className="w-[123px]" />
-              <col className="w-[90px]" />
-              <col className="w-[131px]" />
-              <col className="w-[84px]" />
-              <col className="w-[65px]" />
-              <col className="w-[107px]" />
-              <col className="w-[63px]" />
-              <col className="w-[98px]" />
-            </colgroup>
+        <div className="rounded-[12px] border border-[#F0F1F5] bg-white shadow-[0_1px_2px_rgba(24,20,40,.03)]">
+          {/* Filters */}
+          <div className="no-scrollbar flex flex-nowrap items-center gap-[13px] overflow-x-auto px-[13px] pt-[24px]">
+            <div className="flex h-[33px] w-[198px] shrink-0 items-center gap-[6px] rounded-[8px] border border-[#ECEEF3] bg-white pl-[13px] pr-[12px]">
+              <input
+                type="text"
+                placeholder="Search by name, email or phone..."
+                className="h-full w-full bg-transparent text-[10px] text-[#2E2A3B] outline-none placeholder:text-[#9B9AAC]"
+              />
+              <Search size={15} className="shrink-0 text-[#1E1B5C]" />
+            </div>
 
-            <thead>
-              <tr className="h-[45px] bg-[#FBFBFD]">
-                <th className="pl-[18px] text-left align-middle">
-                  <Checkbox />
-                </th>
-                {headers.map((h) => (
-                  <th
-                    key={h.label}
-                    className={`whitespace-nowrap align-middle text-[10px] font-semibold text-[#14134A] ${h.cls}`}
-                  >
-                    {h.label}
-                  </th>
-                ))}
-                <th className="pr-[20px] text-center align-middle text-[10px] font-semibold text-[#14134A]">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {kundaliRows.map((k) => {
-                const type = kundaliTypeStyles[k.type];
-                const st = statusStyles[k.status];
-                const dosha = k.dosha ? doshaStyles[k.dosha] : null;
-
-                return (
-                  <tr key={k.id} className="h-[61px] border-b border-[#F4F4F8]">
-                    <td className="pl-[18px] align-middle">
-                      <Checkbox />
-                    </td>
-
-                    <td className="whitespace-nowrap align-middle text-[11px] font-semibold text-[#3D17C9]">
-                      {k.id}
-                    </td>
-
-                    <td className="pr-[6px] align-middle">
-                      <p className="whitespace-nowrap text-[11px] font-bold leading-[15.5px] text-[#14134A]">
-                        {k.client.name}
-                      </p>
-                      <p className="whitespace-nowrap text-[9.5px] leading-[15.5px] text-[#8B879C]">
-                        {k.client.email}
-                      </p>
-                      <p className="whitespace-nowrap text-[9.5px] leading-[15.5px] text-[#8B879C]">
-                        {k.client.phone}
-                      </p>
-                    </td>
-
-                    <td className="align-middle">
-                      <span
-                        className={`inline-flex h-[17px] items-center whitespace-nowrap rounded-[6px] px-[6px] text-[9.5px] font-medium ${type.bg} ${type.text}`}
-                      >
-                        {type.label}
-                      </span>
-                    </td>
-
-                    <td className="align-middle">
-                      <div className="flex items-center gap-[10px]">
-                        <Image
-                          src={k.astrologer.avatar}
-                          alt={k.astrologer.name}
-                          width={26}
-                          height={26}
-                          className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
-                        />
-                        <div>
-                          <p className="whitespace-nowrap text-[11px] font-bold leading-[16px] text-[#14134A]">
-                            {k.astrologer.name}
-                          </p>
-                          <p className="whitespace-nowrap text-[10px] leading-[15px] text-[#8B879C]">
-                            {k.astrologer.role}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="align-middle">
-                      <p className="whitespace-nowrap text-[11px] leading-[16px] text-[#2E2A3B]">
-                        {k.date}
-                      </p>
-                      <p className="whitespace-nowrap text-[11px] leading-[16px] text-[#2E2A3B]">
-                        {k.time}
-                      </p>
-                    </td>
-
-                    <td className="text-center align-middle">
-                      <span
-                        className={`inline-flex h-[17px] items-center whitespace-nowrap rounded-[6px] px-[8px] text-[9.5px] font-medium ${st.bg} ${st.text}`}
-                      >
-                        {st.label}
-                      </span>
-                    </td>
-
-                    <td className="text-center align-middle">
-                      {dosha ? (
-                        <span
-                          className={`inline-flex h-[17px] items-center whitespace-nowrap rounded-[6px] px-[8px] text-[9.5px] font-medium ${dosha.bg} ${dosha.text}`}
-                        >
-                          {dosha.label}
-                        </span>
-                      ) : (
-                        <span className="text-[11px] text-[#4A4D89]">-</span>
-                      )}
-                    </td>
-
-                    <td className="align-middle">
-                      <p className="whitespace-nowrap text-[11px] font-bold leading-[16px] text-[#14134A]">
-                        {k.amount}
-                      </p>
-                      <p
-                        className={`whitespace-nowrap text-[10px] font-medium leading-[15px] ${
-                          k.payment === "Paid"
-                            ? "text-[#16A34A]"
-                            : "text-[#F28C1E]"
-                        }`}
-                      >
-                        {k.payment}
-                      </p>
-                    </td>
-
-                    <td className="pr-[20px] align-middle">
-                      <div className="flex items-center justify-center gap-[3px]">
-                        <button
-                          type="button"
-                          aria-label="View"
-                          className="grid h-[22px] w-[24px] place-items-center rounded-[6px] border border-[#ECEEF3] bg-white text-[#4A5085] hover:bg-[#FAF9FC]"
-                        >
-                          <Eye size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="Download"
-                          className="grid h-[22px] w-[24px] place-items-center rounded-[6px] border border-[#ECEEF3] bg-white text-[#4A5085] hover:bg-[#FAF9FC]"
-                        >
-                          <Download size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          aria-label="More"
-                          className="grid h-[22px] w-[24px] place-items-center rounded-[6px] border border-[#ECEEF3] bg-white text-[#4A5085] hover:bg-[#FAF9FC]"
-                        >
-                          <MoreVertical size={13} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="flex flex-wrap items-center gap-4 px-[20px] py-[13px]">
-          <p className="text-[12px] font-semibold text-[#14133F]">
-            Showing 1 to 10 of {(total || kundaliRows.length).toLocaleString("en-IN")} kundalis
-          </p>
-
-          <div className="mx-auto flex items-center gap-[6px]">
-            <button
-              type="button"
-              aria-label="Previous"
-              className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869]"
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            <button
-              type="button"
-              className="grid h-[30px] w-[30px] place-items-center rounded-[8px] bg-gradient-to-b from-[#350687] to-[#2B0372] text-[11.5px] font-semibold text-white"
-            >
-              1
-            </button>
-
-            {["2", "3", "4", "5"].map((p) => (
+            {selects.map((s) => (
               <button
-                key={p}
+                key={s.value}
                 type="button"
-                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] font-medium text-[#14134A]"
+                className={`flex h-[33px] ${s.w} shrink-0 items-center justify-between whitespace-nowrap rounded-[8px] border border-[#ECEEF3] bg-white pl-[11px] pr-[9px] text-[10px] font-semibold text-[#14134A]`}
               >
-                {p}
+                {s.value}
+                <ChevronDown size={14} className="shrink-0 text-[#6E6A85]" />
               </button>
             ))}
 
-            <span className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] text-[#8B879C]">
-              ...
-            </span>
-
             <button
               type="button"
-              className="grid h-[30px] w-[38px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] font-medium text-[#14134A]"
+              className="flex h-[33px] w-[162px] shrink-0 items-center justify-between whitespace-nowrap rounded-[8px] border border-[#ECEEF3] bg-white pl-[11px] pr-[9px] text-[10px] font-semibold text-[#14134A]"
             >
-              569
+              <span>
+                01 May 2025&nbsp;&nbsp;·&nbsp;&nbsp;18 May 2025
+              </span>
+              <Calendar size={14} className="shrink-0 text-[#6D28D9]" />
             </button>
 
             <button
               type="button"
-              aria-label="Next"
-              className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869]"
+              className="inline-flex h-[33px] w-[66px] shrink-0 items-center justify-center gap-[5px] rounded-[8px] border border-[#ECEEF3] bg-white text-[10px] font-semibold text-[#14134A]"
             >
-              <ChevronRight size={15} />
+              <SlidersHorizontal size={13} className="text-[#4A4869]" />
+              Filters
             </button>
+
+            <div className="ml-auto flex shrink-0 items-center gap-[8px]">
+              <button
+                type="button"
+                onClick={handleExport}
+                className="inline-flex h-[33px] items-center gap-[6px] rounded-[8px] border border-[#ECEEF3] bg-white px-[12px] text-[10px] font-semibold text-[#14134A] hover:bg-[#FAF9FC]"
+              >
+                <Download size={13} />
+                Export
+              </button>
+              <button
+                type="button"
+                onClick={handleAdd}
+                className="inline-flex h-[33px] items-center gap-[6px] rounded-[8px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-[12px] text-[10px] font-semibold text-white shadow-[0_2px_8px_rgba(109,40,217,.25)] hover:shadow-[0_4px_12px_rgba(109,40,217,.35)]"
+              >
+                <Plus size={13} />
+                New Kundali
+              </button>
+            </div>
           </div>
 
-          <button
-            type="button"
-            className="flex h-[30px] w-[101px] items-center justify-between rounded-[8px] border border-[#ECEEF3] bg-white pl-[12px] pr-[10px] text-[11.5px] font-semibold text-[#14134A]"
-          >
-            10 / page
-            <ChevronDown size={15} className="shrink-0 text-[#6E6A85]" />
-          </button>
+          {/* Table */}
+          <div className="mt-[20px] overflow-x-auto">
+            <table className="w-full min-w-[840px] table-fixed border-collapse">
+              <colgroup>
+                <col className="w-[45px]" />
+                <col className="w-[72px]" />
+                <col className="w-[123px]" />
+                <col className="w-[90px]" />
+                <col className="w-[131px]" />
+                <col className="w-[84px]" />
+                <col className="w-[65px]" />
+                <col className="w-[107px]" />
+                <col className="w-[63px]" />
+                <col className="w-[98px]" />
+              </colgroup>
+
+              <thead>
+                <tr className="h-[45px] bg-[#FBFBFD]">
+                  <th className="pl-[18px] text-left align-middle">
+                    <Checkbox />
+                  </th>
+                  {headers.map((h) => (
+                    <th
+                      key={h.label}
+                      className={`whitespace-nowrap align-middle text-[10px] font-semibold text-[#14134A] ${h.cls}`}
+                    >
+                      {h.label}
+                    </th>
+                  ))}
+                  <th className="pr-[20px] text-center align-middle text-[10px] font-semibold text-[#14134A]">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {kundaliRows.map((k) => {
+                  const type =
+                    kundaliTypeStyles[k.type as keyof typeof kundaliTypeStyles] ||
+                    kundaliTypeStyles.janam;
+                  const statusKey = displayStatusKey(k.status);
+                  const st =
+                    statusStyles[statusKey as keyof typeof statusStyles] ||
+                    statusStyles.pending;
+                  const dosha = k.dosha
+                    ? doshaStyles[k.dosha as keyof typeof doshaStyles]
+                    : null;
+
+                  return (
+                    <tr
+                      key={k.id}
+                      className="h-[61px] border-b border-[#F4F4F8]"
+                    >
+                      <td className="pl-[18px] align-middle">
+                        <Checkbox />
+                      </td>
+
+                      <td className="whitespace-nowrap align-middle text-[11px] font-semibold text-[#3D17C9]">
+                        {k.id}
+                      </td>
+
+                      <td className="pr-[6px] align-middle">
+                        <p className="whitespace-nowrap text-[11px] font-bold leading-[15.5px] text-[#14134A]">
+                          {k.client.name}
+                        </p>
+                        <p className="whitespace-nowrap text-[9.5px] leading-[15.5px] text-[#8B879C]">
+                          {k.client.email}
+                        </p>
+                        <p className="whitespace-nowrap text-[9.5px] leading-[15.5px] text-[#8B879C]">
+                          {k.client.phone}
+                        </p>
+                      </td>
+
+                      <td className="align-middle">
+                        <span
+                          className={`inline-flex h-[17px] items-center whitespace-nowrap rounded-[6px] px-[6px] text-[9.5px] font-medium ${type.bg} ${type.text}`}
+                        >
+                          {type.label}
+                        </span>
+                      </td>
+
+                      <td className="align-middle">
+                        <div className="flex items-center gap-[10px]">
+                          {k.astrologer.avatar ? (
+                            <Image
+                              src={k.astrologer.avatar}
+                              alt={k.astrologer.name}
+                              width={26}
+                              height={26}
+                              className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[9px] font-bold text-white">
+                              {k.astrologer.name?.slice(0, 2)?.toUpperCase() || "S"}
+                            </span>
+                          )}
+                          <div>
+                            <p className="whitespace-nowrap text-[11px] font-bold leading-[16px] text-[#14134A]">
+                              {k.astrologer.name}
+                            </p>
+                            <p className="whitespace-nowrap text-[10px] leading-[15px] text-[#8B879C]">
+                              {k.astrologer.role}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      <td className="align-middle">
+                        <p className="whitespace-nowrap text-[11px] leading-[16px] text-[#2E2A3B]">
+                          {k.date}
+                        </p>
+                        <p className="whitespace-nowrap text-[11px] leading-[16px] text-[#2E2A3B]">
+                          {k.time}
+                        </p>
+                      </td>
+
+                      <td className="text-center align-middle">
+                        <span
+                          className={`inline-flex h-[17px] items-center whitespace-nowrap rounded-[6px] px-[8px] text-[9.5px] font-medium ${st.bg} ${st.text}`}
+                        >
+                          {st.label}
+                        </span>
+                      </td>
+
+                      <td className="text-center align-middle">
+                        {dosha ? (
+                          <span
+                            className={`inline-flex h-[17px] items-center whitespace-nowrap rounded-[6px] px-[8px] text-[9.5px] font-medium ${dosha.bg} ${dosha.text}`}
+                          >
+                            {dosha.label}
+                          </span>
+                        ) : (
+                          <span className="text-[11px] text-[#4A4D89]">-</span>
+                        )}
+                      </td>
+
+                      <td className="align-middle">
+                        <p className="whitespace-nowrap text-[11px] font-bold leading-[16px] text-[#14134A]">
+                          {k.amount}
+                        </p>
+                        <p
+                          className={`whitespace-nowrap text-[10px] font-medium leading-[15px] ${
+                            k.payment === "Paid"
+                              ? "text-[#16A34A]"
+                              : "text-[#F28C1E]"
+                          }`}
+                        >
+                          {k.payment}
+                        </p>
+                      </td>
+
+                      <td className="pr-[20px] align-middle">
+                        <div className="flex items-center justify-center gap-[3px]">
+                          <button
+                            type="button"
+                            aria-label="View"
+                            className="grid h-[22px] w-[24px] place-items-center rounded-[6px] border border-[#ECEEF3] bg-white text-[#4A5085] hover:bg-[#FAF9FC]"
+                          >
+                            <Eye size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Edit"
+                            onClick={() => handleEdit(k)}
+                            className="grid h-[22px] w-[24px] place-items-center rounded-[6px] border border-[#ECEEF3] bg-white text-[#4A5085] hover:bg-[#FAF9FC]"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            aria-label="Delete"
+                            onClick={() => handleDelete(k)}
+                            className="grid h-[22px] w-[24px] place-items-center rounded-[6px] border border-[#ECEEF3] bg-white text-[#EF4444] hover:bg-[#FEF2F2]"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Pagination */}
+          <div className="flex flex-wrap items-center gap-4 px-[20px] py-[13px]">
+            <p className="text-[12px] font-semibold text-[#14133F]">
+              Showing 1 to 10 of{" "}
+              {(total || kundaliRows.length).toLocaleString("en-IN")} kundalis
+            </p>
+
+            <div className="mx-auto flex items-center gap-[6px]">
+              <button
+                type="button"
+                aria-label="Previous"
+                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869]"
+              >
+                <ChevronLeft size={15} />
+              </button>
+
+              <button
+                type="button"
+                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] bg-gradient-to-b from-[#350687] to-[#2B0372] text-[11.5px] font-semibold text-white"
+              >
+                1
+              </button>
+
+              {["2", "3", "4", "5"].map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] font-medium text-[#14134A]"
+                >
+                  {p}
+                </button>
+              ))}
+
+              <span className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] text-[#8B879C]">
+                ...
+              </span>
+
+              <button
+                type="button"
+                className="grid h-[30px] w-[38px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] font-medium text-[#14134A]"
+              >
+                569
+              </button>
+
+              <button
+                type="button"
+                aria-label="Next"
+                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869]"
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="flex h-[30px] w-[101px] items-center justify-between rounded-[8px] border border-[#ECEEF3] bg-white pl-[12px] pr-[10px] text-[11.5px] font-semibold text-[#14134A]"
+            >
+              10 / page
+              <ChevronDown size={15} className="shrink-0 text-[#6E6A85]" />
+            </button>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <AdminModal
+        open={modalOpen}
+        title={editing ? "Edit Kundali" : "New Kundali"}
+        fields={editing ? editFields : addFields}
+        values={formValues}
+        onChange={(name, value) => {
+          setFormValues((prev) => ({ ...prev, [name]: value }));
+          setFormErrors((prev) => {
+            const next = { ...prev };
+            delete next[name];
+            return next;
+          });
+        }}
+        onSave={handleSave}
+        saving={saving}
+        onClose={() => setModalOpen(false)}
+        errors={formErrors}
+      />
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Delete Kundali"
+        message="Are you sure you want to delete this kundali? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setDeletingId(null);
+        }}
+        saving={saving}
+      />
+    </>
   );
 }

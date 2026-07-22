@@ -9,7 +9,7 @@ import { HomeHeader, OfferBar } from "../../components/home-header";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
 import Stepper from "./Stepper";
-import { WHATSAPP_URL } from "../../lib/constants";
+import { WHATSAPP_URL } from "../../../lib/constants";
 import { saveConsultationData } from "../lib/consultation-storage";
 import { api } from "../../../lib/api";
 import {

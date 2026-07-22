@@ -136,35 +136,42 @@ router.patch(
   })
 );
 
+// Shared expire logic (used by both the HTTP endpoint and the cron job).
+// Returns { expired: number } so callers can log or respond accordingly.
+async function expireSubscriptions() {
+  const [expired] = await pool.query(
+    "SELECT id, user_id FROM subscriptions WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()"
+  );
+  if (expired.length) {
+    const ids = expired.map((e) => e.id);
+    // mysql2 expands an array in `?` to a comma-separated list for IN clauses
+    await pool.query("UPDATE subscriptions SET status = 'expired' WHERE id IN (?)", [ids]);
+    // Downgrade users who have NO remaining active subscription (single query, no N+1)
+    const userIds = [...new Set(expired.map((e) => e.user_id))];
+    // Find users among the expired group that still have an active subscription
+    const [[{ keepActive }]] = await pool.query(
+      "SELECT COUNT(DISTINCT user_id) AS keepActive FROM subscriptions WHERE user_id IN (?) AND status = 'active'",
+      [userIds]
+    );
+    if (keepActive < userIds.length) {
+      await pool.query(
+        "UPDATE users SET role = 'free' WHERE id IN (?) AND role != 'free' AND id NOT IN (SELECT user_id FROM subscriptions WHERE status = 'active')",
+        [userIds]
+      );
+    }
+  }
+  return { expired: expired.length };
+}
+
 // POST /api/subscriptions/expire  (cron: mark expired subs, downgrade users)
 router.post(
   "/expire",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [expired] = await pool.query(
-      "SELECT id, user_id FROM subscriptions WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()"
-    );
-    if (expired.length) {
-      const ids = expired.map((e) => e.id);
-      // mysql2 expands an array in `?` to a comma-separated list for IN clauses
-      await pool.query("UPDATE subscriptions SET status = 'expired' WHERE id IN (?)", [ids]);
-      // Downgrade users who have NO remaining active subscription (single query, no N+1)
-      const userIds = [...new Set(expired.map((e) => e.user_id))];
-      // Find users among the expired group that still have an active subscription
-      const [[{ keepActive }]] = await pool.query(
-        "SELECT COUNT(DISTINCT user_id) AS keepActive FROM subscriptions WHERE user_id IN (?) AND status = 'active'",
-        [userIds]
-      );
-      if (keepActive < userIds.length) {
-        await pool.query(
-          "UPDATE users SET role = 'free' WHERE id IN (?) AND role != 'free' AND id NOT IN (SELECT user_id FROM subscriptions WHERE status = 'active')",
-          [userIds]
-        );
-      }
-    }
-    req.audit("expire-job", "subscription", null, { count: expired.length });
-    ok(res, { expired: expired.length });
+    const result = await expireSubscriptions();
+    req.audit("expire-job", "subscription", null, result);
+    ok(res, result);
   })
 );
 
-module.exports = router;
+module.exports = { router, expireSubscriptions };

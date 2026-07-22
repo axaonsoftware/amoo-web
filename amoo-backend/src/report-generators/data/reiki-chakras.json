@@ -1,0 +1,163 @@
+[
+  {
+    "name": "root",
+    "label": "Root Chakra (Muladhara)",
+    "location": "Base of the spine",
+    "color": "Red",
+    "element": "Earth",
+    "balanced": [
+      "Feel grounded and secure",
+      "Trust in the flow of life",
+      "Strong physical vitality and stamina",
+      "Comfortable with material needs being met",
+      "Sense of belonging and stability"
+    ],
+    "unbalanced": [
+      "Anxiety, fear, and insecurity",
+      "Feeling disconnected or ungrounded",
+      "Financial instability or hoarding",
+      "Lower back pain, sciatica",
+      "Restless legs or poor sleep"
+    ],
+    "affirmation": "I am safe, secure, and grounded. I trust the process of life.",
+    "stones": ["Red jasper", "hematite", "garnet", "obsidian"]
+  },
+  {
+    "name": "sacral",
+    "label": "Sacral Chakra (Svadhisthana)",
+    "location": "Lower abdomen, 2 inches below navel",
+    "color": "Orange",
+    "element": "Water",
+    "balanced": [
+      "Healthy emotional expression",
+      "Creative inspiration flows freely",
+      "Comfortable with pleasure and intimacy",
+      "Passionate about life and relationships",
+      "Adaptable to change"
+    ],
+    "unbalanced": [
+      "Emotional instability or numbness",
+      "Creative blocks",
+      "Guilt or shame around sexuality",
+      "Addictive tendencies",
+      "Lower back or reproductive issues"
+    ],
+    "affirmation": "I embrace my emotions and creativity. I honor my passions.",
+    "stones": ["Carnelian", "orange calcite", "moonstone", "tiger's eye"]
+  },
+  {
+    "name": "solar-plexus",
+    "label": "Solar Plexus Chakra (Manipura)",
+    "location": "Upper abdomen, stomach area",
+    "color": "Yellow",
+    "element": "Fire",
+    "balanced": [
+      "Strong self-esteem and confidence",
+      "Clear personal boundaries",
+      "Motivation and willpower",
+      "Ability to take decisive action",
+      "Healthy digestion and energy"
+    ],
+    "unbalanced": [
+      "Low self-worth or inflated ego",
+      "Control issues or power struggles",
+      "Indigestion, ulcers, fatigue",
+      "Difficulty making decisions",
+      "People-pleasing or aggression"
+    ],
+    "affirmation": "I am powerful, confident, and worthy. I take aligned action.",
+    "stones": ["Citrine", "yellow jasper", "tiger's eye", "pyrite"]
+  },
+  {
+    "name": "heart",
+    "label": "Heart Chakra (Anahata)",
+    "location": "Center of the chest",
+    "color": "Green",
+    "element": "Air",
+    "balanced": [
+      "Unconditional love for self and others",
+      "Compassion and empathy",
+      "Healthy relationships and trust",
+      "Ability to forgive and let go",
+      "Emotional balance and peace"
+    ],
+    "unbalanced": [
+      "Difficulty giving or receiving love",
+      "Codependency or isolation",
+      "Grief, resentment, jealousy",
+      "Heart or respiratory issues",
+      "Poor boundaries in relationships"
+    ],
+    "affirmation": "I give and receive love freely. My heart is open and healing.",
+    "stones": ["Rose quartz", "aventurine", "green jade", "malachite"]
+  },
+  {
+    "name": "throat",
+    "label": "Throat Chakra (Vishuddha)",
+    "location": "Throat area",
+    "color": "Blue",
+    "element": "Ether / Sound",
+    "balanced": [
+      "Clear and authentic communication",
+      "Ability to speak one's truth",
+      "Good listener",
+      "Creative self-expression",
+      "Confidence in public speaking"
+    ],
+    "unbalanced": [
+      "Fear of speaking up",
+      "Lying or gossiping",
+      "Sore throat, thyroid issues",
+      "Feeling unheard or ignored",
+      "Difficulty expressing needs"
+    ],
+    "affirmation": "I speak my truth with clarity and kindness. My voice matters.",
+    "stones": ["Lapis lazuli", "sodalite", "turquoise", "blue lace agate"]
+  },
+  {
+    "name": "third-eye",
+    "label": "Third Eye Chakra (Ajna)",
+    "location": "Forehead, between the eyebrows",
+    "color": "Indigo",
+    "element": "Light",
+    "balanced": [
+      "Strong intuition and inner knowing",
+      "Clear mental vision and insight",
+      "Ability to see the bigger picture",
+      "Imagination and visualization",
+      "Dream recall and psychic awareness"
+    ],
+    "unbalanced": [
+      "Confusion or poor judgment",
+      "Overthinking or rigid beliefs",
+      "Headaches, eye strain",
+      "Disconnection from intuition",
+      "Nightmares or overactive imagination"
+    ],
+    "affirmation": "I trust my inner guidance. I see clearly with wisdom and insight.",
+    "stones": ["Amethyst", "lapis lazuli", "sodalite", "fluorite"]
+  },
+  {
+    "name": "crown",
+    "label": "Crown Chakra (Sahasrara)",
+    "location": "Top of the head",
+    "color": "Violet / White",
+    "element": "Cosmic energy / Thought",
+    "balanced": [
+      "Spiritual connection and awareness",
+      "Sense of unity with all life",
+      "Inner peace and wisdom",
+      "Clarity of purpose",
+      "Access to higher consciousness"
+    ],
+    "unbalanced": [
+      "Spiritual disconnection or cynicism",
+      "Closed-mindedness",
+      "Chronic headaches or neurological issues",
+      "Lack of purpose or direction",
+      "Over-intellectualization"
+    ],
+    "affirmation": "I am connected to the divine source. I am whole and at peace.",
+    "stones": ["Clear quartz", "amethyst", "selenite", "diamond"]
+  }
+]

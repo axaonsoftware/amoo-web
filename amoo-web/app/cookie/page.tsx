@@ -1,8 +1,7 @@
 "use client";
 
-import OfferBar from "@/app/components/OfferBar";
-import HomeHeader from "@/app/components/HomeHeader";
-import SiteFooter from "@/app/components/SiteFooter";
+import { OfferBar, HomeHeader } from "@/app/components/home-header";
+import { SiteFooter } from "@/app/components/site-footer";
 
 const CookiePage = () => {
   return (

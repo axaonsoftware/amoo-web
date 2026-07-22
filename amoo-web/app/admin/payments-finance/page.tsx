@@ -3,6 +3,7 @@ import StatsRow from "./StatsRow";
 import RevenueOverview from "./RevenueOverview";
 import PaymentMethods from "./PaymentMethods";
 import RecentTransactions from "./RecentTransactions";
+import RefundsHistory from "./RefundsHistory";
 import PayoutsSummary from "./PayoutsSummary";
 import InvoicesOverview from "./InvoicesOverview";
 import RevenueByService from "./RevenueByService";
@@ -27,8 +28,9 @@ export default function PaymentsFinancePage() {
       </div>
 
       <div className="mt-[14px] grid grid-cols-1 gap-[14px] lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 flex flex-col gap-[14px]">
           <RecentTransactions />
+          <RefundsHistory />
         </div>
         <div className="flex flex-col gap-[14px]">
           <PayoutsSummary />

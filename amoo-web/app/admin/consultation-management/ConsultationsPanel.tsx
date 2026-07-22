@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -34,10 +34,11 @@ const tabs = [
   { label: "Cancelled / Refunds" },
 ];
 
-const selects = [
-  { label: "Expert", value: "All Experts", w: "w-[128px]" },
-  { label: "Consultation Type", value: "All Types", w: "w-[128px]" },
-  { label: "Status", value: "All Status", w: "w-[122px]" },
+const statusOptions = [
+  { label: "All Status", value: "" },
+  { label: "Upcoming", value: "upcoming" },
+  { label: "Completed", value: "completed" },
+  { label: "Cancelled", value: "cancelled" },
 ];
 
 const typeIcons: Record<TypeKey, React.ComponentType<{ size?: number }>> = {
@@ -60,19 +61,65 @@ const serviceToType: Record<string, TypeKey> = {
   "Name Correction": "name-correction",
 };
 
+function getPageNumbers(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | "...")[] = [1];
+  if (current > 3) pages.push("...");
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+    pages.push(i);
+  }
+  if (current < total - 2) pages.push("...");
+  pages.push(total);
+  return pages;
+}
+
 export default function ConsultationsPanel() {
-  const [list, setList] = useState<any[] | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [status, setStatus] = useState("");
+
+  const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [total, setTotal] = useState(0);
+  const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
+
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  const onSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(value);
+      setPage(1);
+    }, 300);
+  }, []);
 
   useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError("");
+
+    const q = new URLSearchParams();
+    q.set("page", String(page));
+    q.set("pageSize", String(limit));
+    if (debouncedSearch) q.set("search", debouncedSearch);
+    if (status) q.set("status", status);
+
     api.admin
-      .getBookings()
-      .then((data: any) => {
-        const items = data?.data ?? data;
-        if (data?.meta?.total) setTotal(data.meta.total);
-        if (Array.isArray(items) && items.length) {
+      .getBookings(`?${q.toString()}`)
+      .then((res: any) => {
+        if (cancelled) return;
+        const items = (res?.data ?? res) as any[];
+        if (res?.meta) setMeta({ total: res.meta.total, totalPages: res.meta.totalPages });
+        if (Array.isArray(items)) {
           setList(
             items.map((b: any) => {
               const type = serviceToType[b.service_name] || "numerology";
@@ -99,14 +146,21 @@ export default function ConsultationsPanel() {
           );
         }
       })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .catch((e) => {
+        if (!cancelled) setError(e.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  const rows = list || [];
+    return () => { cancelled = true; };
+  }, [page, limit, debouncedSearch, status]);
 
-  if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#6D28D9]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
+  const rows = list;
+
+  const start = meta.total ? (page - 1) * limit + 1 : 0;
+  const end = Math.min(page * limit, meta.total);
+  const totalPages = meta.totalPages || 1;
 
   return (
     <section className="rounded-[14px] border border-[#EDECF3] bg-white shadow-[0_1px_2px_rgba(24,20,40,.04)]">
@@ -138,25 +192,27 @@ export default function ConsultationsPanel() {
           <input
             type="text"
             placeholder="Search by name, email or phone..."
+            value={searchInput}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="h-full w-full bg-transparent text-[11.5px] text-[#2E2A3B] outline-none placeholder:text-[#A5A2B5]"
           />
           <Search size={15} className="shrink-0 text-[#8B879C]" />
         </div>
 
-        {selects.map((s) => (
-          <div key={s.label} className={`relative ${s.w}`}>
-            <span className="absolute -top-[7px] left-[9px] bg-white px-[4px] text-[9.5px] text-[#9C98AC]">
-              {s.label}
-            </span>
-            <button
-              type="button"
-              className="flex h-[38px] w-full items-center justify-between rounded-[8px] border border-[#E7E5EF] bg-white pl-[12px] pr-[10px] text-[11.5px] text-[#2E2A3B]"
-            >
-              {s.value}
-              <ChevronDown size={15} className="shrink-0 text-[#8B879C]" />
-            </button>
-          </div>
-        ))}
+        <div className="relative w-[122px]">
+          <span className="absolute -top-[7px] left-[9px] bg-white px-[4px] text-[9.5px] text-[#9C98AC]">
+            Status
+          </span>
+          <select
+            value={status}
+            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            className="flex h-[38px] w-full appearance-none items-center justify-between rounded-[8px] border border-[#E7E5EF] bg-white pl-[12px] pr-[10px] text-[11.5px] text-[#2E2A3B] outline-none"
+          >
+            {statusOptions.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+        </div>
 
         <button
           type="button"
@@ -164,14 +220,6 @@ export default function ConsultationsPanel() {
         >
           <SlidersHorizontal size={14} className="text-[#6E6A80]" />
           Filters
-        </button>
-
-        <button
-          type="button"
-          className="ml-auto inline-flex h-[38px] items-center gap-[10px] rounded-[8px] border border-[#E7E5EF] bg-white pl-[14px] pr-[12px] text-[11.5px] text-[#2E2A3B]"
-        >
-          01 May 2025&nbsp;&nbsp;-&nbsp;&nbsp;18 May 2025
-          <Calendar size={15} className="shrink-0 text-[#8B879C]" />
         </button>
       </div>
 
@@ -204,112 +252,130 @@ export default function ConsultationsPanel() {
           </thead>
 
           <tbody>
-            {rows.map((c) => {
-              const t = typeStyles[c.type];
-              const s = statusStyles[c.status];
-              const TypeIcon = typeIcons[c.type];
+            {loading ? (
+              <tr>
+                <td colSpan={8} className="py-10 text-center">
+                  <svg className="mx-auto h-6 w-6 animate-spin text-[#6D28D9]" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" />
+                  </svg>
+                </td>
+              </tr>
+            ) : error ? (
+              <tr>
+                <td colSpan={8} className="py-10 text-center text-[13px] text-[#EF4444]">{error}</td>
+              </tr>
+            ) : rows.length === 0 ? (
+              <tr>
+                <td colSpan={8} className="py-10 text-center text-[12px] text-[#8B879C]">No consultations found.</td>
+              </tr>
+            ) : (
+              rows.map((c) => {
+                const t = typeStyles[c.type];
+                const s = statusStyles[c.status];
+                const TypeIcon = typeIcons[c.type];
 
-              return (
-                <tr key={c.id} className="border-b border-[#F3F2F7]">
-                  <td className="py-[13px] pl-5 align-middle">
-                    <span className="block h-[14px] w-[14px] rounded-[4px] border border-[#CFCBDB] bg-white" />
-                  </td>
+                return (
+                  <tr key={c.id} className="border-b border-[#F3F2F7]">
+                    <td className="py-[13px] pl-5 align-middle">
+                      <span className="block h-[14px] w-[14px] rounded-[4px] border border-[#CFCBDB] bg-white" />
+                    </td>
 
-                  <td className="whitespace-nowrap py-[13px] pr-4 text-[11.5px] font-medium text-[#6D28D9]">
-                    {c.id}
-                  </td>
+                    <td className="whitespace-nowrap py-[13px] pr-4 text-[11.5px] font-medium text-[#6D28D9]">
+                      {c.id}
+                    </td>
 
-                  <td className="py-[13px] pr-4">
-                    <div className="flex items-center gap-[10px]">
-                      <Image
-                        src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80"
-                        alt={c.user}
-                        width={30}
-                        height={30}
-                        className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
-                      />
-                      <div className="leading-tight">
-                        <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                          {c.user}
-                        </p>
-                        <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                          {c.phone}
-                        </p>
+                    <td className="py-[13px] pr-4">
+                      <div className="flex items-center gap-[10px]">
+                        <Image
+                          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80"
+                          alt={c.user}
+                          width={30}
+                          height={30}
+                          className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
+                        />
+                        <div className="leading-tight">
+                          <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
+                            {c.user}
+                          </p>
+                          <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
+                            {c.phone}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="py-[13px] pr-4">
-                    <div className="flex items-center gap-[10px]">
-                      <Image
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
-                        alt={c.expert}
-                        width={28}
-                        height={28}
-                        className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
-                      />
-                      <div className="leading-tight">
-                        <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                          {c.expert}
-                        </p>
-                        <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                          {c.expertRole}
-                        </p>
+                    <td className="py-[13px] pr-4">
+                      <div className="flex items-center gap-[10px]">
+                        <Image
+                          src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
+                          alt={c.expert}
+                          width={28}
+                          height={28}
+                          className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
+                        />
+                        <div className="leading-tight">
+                          <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
+                            {c.expert}
+                          </p>
+                          <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
+                            {c.expertRole}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <td className="py-[13px] pr-4">
-                    <span
-                      className={`inline-flex h-[26px] items-center gap-[5px] whitespace-nowrap rounded-[7px] px-[9px] text-[10.5px] font-medium ${t.bg} ${t.text}`}
-                    >
-                      <TypeIcon size={12} />
-                      {t.label}
-                    </span>
-                  </td>
-
-                  <td className="py-[13px] pr-4 leading-tight">
-                    <p className="whitespace-nowrap text-[11.5px] text-[#2E2A3B]">
-                      {c.date}
-                    </p>
-                    <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {c.time}
-                    </p>
-                  </td>
-
-                  <td className="whitespace-nowrap py-[13px] pr-4 text-[11.5px] font-semibold text-[#221C33]">
-                    {c.amount}
-                  </td>
-
-                  <td className="py-[13px] pr-4">
-                    <span
-                      className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${s.bg} ${s.text}`}
-                    >
-                      {s.label}
-                    </span>
-                  </td>
-
-                  <td className="py-[13px] pr-5">
-                    <div className="flex items-center gap-[8px]">
-                      <button
-                        type="button"
-                        aria-label="View"
-                        className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]"
+                    <td className="py-[13px] pr-4">
+                      <span
+                        className={`inline-flex h-[26px] items-center gap-[5px] whitespace-nowrap rounded-[7px] px-[9px] text-[10.5px] font-medium ${t.bg} ${t.text}`}
                       >
-                        <Eye size={15} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="More"
-                        className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]"
+                        <TypeIcon size={12} />
+                        {t.label}
+                      </span>
+                    </td>
+
+                    <td className="py-[13px] pr-4 leading-tight">
+                      <p className="whitespace-nowrap text-[11.5px] text-[#2E2A3B]">
+                        {c.date}
+                      </p>
+                      <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
+                        {c.time}
+                      </p>
+                    </td>
+
+                    <td className="whitespace-nowrap py-[13px] pr-4 text-[11.5px] font-semibold text-[#221C33]">
+                      {c.amount}
+                    </td>
+
+                    <td className="py-[13px] pr-4">
+                      <span
+                        className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${s.bg} ${s.text}`}
                       >
-                        <MoreVertical size={15} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                        {s.label}
+                      </span>
+                    </td>
+
+                    <td className="py-[13px] pr-5">
+                      <div className="flex items-center gap-[8px]">
+                        <button
+                          type="button"
+                          aria-label="View"
+                          className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]"
+                        >
+                          <Eye size={15} />
+                        </button>
+                        <button
+                          type="button"
+                          aria-label="More"
+                          className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]"
+                        >
+                          <MoreVertical size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
@@ -317,61 +383,69 @@ export default function ConsultationsPanel() {
       {/* Pagination */}
       <div className="flex flex-wrap items-center gap-4 px-5 py-[16px]">
         <p className="text-[11.5px] text-[#8B879C]">
-          Showing 1 to 8 of {(total || rows.length).toLocaleString("en-IN")} consultations
+          {meta.total > 0
+            ? `Showing ${start} to ${end} of ${meta.total.toLocaleString("en-IN")} consultations`
+            : "No results"}
         </p>
 
         <div className="ml-auto flex flex-wrap items-center justify-end gap-[6px]">
           <button
             type="button"
             aria-label="Previous"
-            className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#8B879C]"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page <= 1}
+            className={`grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#8B879C] ${
+              page <= 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-[#FAF9FC]"
+            }`}
           >
             <ChevronLeft size={15} />
           </button>
 
-          <button
-            type="button"
-            className="grid h-[30px] w-[30px] place-items-center rounded-[8px] bg-[#5B2497] text-[11.5px] font-semibold text-white"
-          >
-            1
-          </button>
-
-          {["2", "3", "4"].map((p) => (
-            <button
-              key={p}
-              type="button"
-              className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[11.5px] text-[#4A4658]"
-            >
-              {p}
-            </button>
-          ))}
-
-          <span className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[11.5px] text-[#8B879C]">
-            ...
-          </span>
-
-          <button
-            type="button"
-            className="grid h-[30px] w-[38px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[11.5px] text-[#4A4658]"
-          >
-            161
-          </button>
+          {getPageNumbers(page, totalPages).map((p, i) =>
+            p === "..." ? (
+              <span
+                key={`ellipsis-${i}`}
+                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[11.5px] text-[#8B879C]"
+              >
+                ...
+              </span>
+            ) : (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setPage(p)}
+                className={`grid h-[30px] w-[30px] place-items-center rounded-[8px] text-[11.5px] ${
+                  p === page
+                    ? "bg-[#5B2497] font-semibold text-white"
+                    : "border border-[#E7E5EF] bg-white text-[#4A4658] hover:bg-[#FAF9FC]"
+                }`}
+              >
+                {p}
+              </button>
+            )
+          )}
 
           <button
             type="button"
             aria-label="Next"
-            className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#8B879C]"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page >= totalPages}
+            className={`grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#8B879C] ${
+              page >= totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-[#FAF9FC]"
+            }`}
           >
             <ChevronRight size={15} />
           </button>
 
-          <button
-            type="button"
-            className="ml-2 flex h-[32px] w-[104px] items-center justify-between rounded-[8px] border border-[#E7E5EF] bg-white pl-[12px] pr-[10px] text-[11.5px] text-[#4A4658]"
+          <select
+            value={limit}
+            onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+            className="ml-2 flex h-[32px] items-center justify-between rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11.5px] text-[#4A4658] outline-none"
           >
-            10 / page
-            <ChevronDown size={15} className="shrink-0 text-[#8B879C]" />
-          </button>
+            <option value={10}>10 / page</option>
+            <option value={25}>25 / page</option>
+            <option value={50}>50 / page</option>
+          </select>
         </div>
       </div>
     </section>

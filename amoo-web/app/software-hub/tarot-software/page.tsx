@@ -31,7 +31,7 @@ import {
   UsersIcon,
   YearAheadSpreadIcon,
 } from "./components/icons";
-import { WHATSAPP_URL } from "../../lib/constants";
+import { WHATSAPP_URL } from "../../../lib/constants";
 
 export const metadata: Metadata = {
   title: "Tarot Reading Software",

@@ -8,6 +8,7 @@ const { ok, paginated, created, assertFound, parsePagination, fail } = require("
 const env = require("../config/env");
 const fs = require("fs");
 const path = require("path");
+const { getGenerator } = require("../report-generators/index");
 
 const REPORT_UPDATE_ALLOWED = ["status", "title", "content", "file_url"];
 
@@ -86,8 +87,52 @@ router.post(
       "INSERT INTO reports (user_id, service_id, type, title, content, file_url, status) VALUES (?,?,?,?,?,?,'pending')",
       [req.user.id, service_id || null, type || null, title, content || null, file_url || null]
     );
-    req.audit("create", "report", result.insertId, { title });
-    created(res, { id: result.insertId });
+    const reportId = result.insertId;
+
+    // Auto-generate content when none is provided and a generator exists
+    if (!content) {
+      const generator = getGenerator(type);
+      if (generator) {
+        // Do NOT await inside the critical path — fire and forget so the
+        // response returns immediately.  The report status stays "pending"
+        // until generation completes; the frontend polls or refreshes.
+        (async () => {
+          try {
+            // Merge saved birth details from DB as fallback for generators
+            const [[userRow]] = await pool.query(
+              "SELECT name, dob, tob, birthplace FROM users WHERE id = ?",
+              [req.user.id]
+            );
+            const extras = {
+              ...(userRow || {}),
+              ...req.body,
+            };
+            const generated = await generator.generate({
+              userId: req.user.id,
+              serviceId: service_id,
+              userName: userRow?.name || null,
+              extras,
+            });
+            await pool.query(
+              "UPDATE reports SET title = COALESCE(NULLIF(?, ''), title), content = ?, file_url = COALESCE(NULLIF(?, ''), file_url), chakra_data = ?, status = 'ready' WHERE id = ?",
+              [
+                generated.title || null,
+                generated.content || null,
+                generated.file_url || null,
+                generated.chakra_data ? JSON.stringify(generated.chakra_data) : null,
+                reportId,
+              ]
+            );
+          } catch (genErr) {
+            // Generation failed — leave status as "pending" so an admin
+            // knows something went wrong and can manually fill content.
+          }
+        })();
+      }
+    }
+
+    req.audit("create", "report", reportId, { title });
+    created(res, { id: reportId });
   })
 );
 
@@ -103,8 +148,49 @@ router.post(
       "INSERT INTO reports (user_id, service_id, type, title, content, file_url, status) VALUES (?,?,?,?,?,?,'ready')",
       [user_id, service_id || null, type || null, title, content || null, file_url || null]
     );
-    req.audit("create", "report", result.insertId, { title });
-    created(res, { id: result.insertId });
+    const reportId = result.insertId;
+
+    // Auto-generate content when none is provided and a generator exists
+    if (!content) {
+      const generator = getGenerator(type);
+      if (generator) {
+        const [[userRow]] = await pool.query(
+          "SELECT name, dob, tob, birthplace FROM users WHERE id = ?",
+          [user_id]
+        );
+        (async () => {
+          try {
+            // Merge saved birth details from DB as fallback
+            const extras = {
+              ...(userRow || {}),
+              ...req.body,
+            };
+            const generated = await generator.generate({
+              userId: user_id,
+              serviceId: service_id,
+              userName: userRow?.name || null,
+              extras,
+            });
+            await pool.query(
+              "UPDATE reports SET title = COALESCE(NULLIF(?, ''), title), content = ?, file_url = COALESCE(NULLIF(?, ''), file_url), chakra_data = ?, status = 'ready' WHERE id = ?",
+              [
+                generated.title || null,
+                generated.content || null,
+                generated.file_url || null,
+                generated.chakra_data ? JSON.stringify(generated.chakra_data) : null,
+                reportId,
+              ]
+            );
+          } catch (genErr) {
+            // Generation failed — status stays as inserted ("ready" for admin,
+            // "pending" for user).  Admin can manually edit content.
+          }
+        })();
+      }
+    }
+
+    req.audit("create", "report", reportId, { title });
+    created(res, { id: reportId });
   })
 );
 

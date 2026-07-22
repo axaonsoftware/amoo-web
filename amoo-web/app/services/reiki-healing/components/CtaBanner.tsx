@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { WhatsAppIcon } from "../../../components/home-icons";
-import { WHATSAPP_URL } from "../../../lib/constants";
+import { WHATSAPP_URL } from "../../../../lib/constants";
 
 export default function CtaBanner() {
   return (

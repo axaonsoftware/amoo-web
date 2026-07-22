@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { loadConsultationData } from "../lib/consultation-storage";
 import Link from "next/link";
-import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../lib/constants";
+import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../../lib/constants";
 import { HomeHeader, OfferBar } from "../../components/home-header";
 import {
   FacebookIcon,
