@@ -1,0 +1,162 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { AlertCircle } from "lucide-react";
+import { saveConsultationData } from "../lib/consultation-storage";
+import { SiteFooter } from "../../components/site-footer";
+import { SectionHeading } from "../../components/ornament";
+import { ArrowRightIcon } from "../../components/icons";
+import { HomeHeader, OfferBar } from "../../components/home-header";
+import Stepper from "./Stepper";
+import DateTimeCard from "./DateTimeCard";
+import SummaryCard from "./SummaryCard";
+import TrustStrip from "./TrustStrip";
+import { LockIcon, ShieldTickIcon } from "./icons";
+
+function SelectDateTimeInner() {
+  const router = useRouter();
+  const [service, setService] = useState("Selected Service");
+  const [mode, setMode] = useState("Selected Mode");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setService(params.get("service") || "Selected Service");
+    setMode(params.get("mode") || "Selected Mode");
+  }, []);
+
+  const [selectedDate, setSelectedDate] = useState<number>(10);
+  const [selectedPeriod, setSelectedPeriod] = useState("Morning");
+  const [selectedSlot, setSelectedSlot] = useState("");
+  const [validationError, setValidationError] = useState("");
+
+  const handleBack = () => {
+    router.push(`/consultation/consultation-mode?service=${encodeURIComponent(service)}`);
+  };
+
+  const handleContinue = () => {
+    setValidationError("");
+    if (!selectedSlot) {
+      setValidationError("Please select a time slot before continuing.");
+      return;
+    }
+    const dateStr = `Tuesday, ${selectedDate} June 2026`;
+    saveConsultationData({ date: dateStr, time: selectedSlot });
+    router.push(
+      `/consultation/consultation-booking?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(selectedSlot)}`
+    );
+  };
+
+  return (
+    <>
+      <OfferBar />
+      <HomeHeader absolute={false} />
+
+      {/* ═══ Dark band: curved cream stepper shelf ═══ */}
+      <div className="relative overflow-hidden bg-[radial-gradient(120%_150%_at_50%_35%,#2e1150_0%,#210a38_55%,#190429_100%)]">
+        <div className="stars pointer-events-none absolute inset-0 opacity-60" />
+        <Image
+          src="/images/deco-chakra-left.png"
+          alt=""
+          width={174}
+          height={438}
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[140px] object-cover opacity-90 md:block"
+        />
+        <Image
+          src="/images/deco-chakra-right.png"
+          alt=""
+          width={174}
+          height={438}
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[140px] object-cover opacity-90 md:block"
+        />
+        <div className="relative">
+          <div className="absolute inset-0 bg-cream rounded-tl-[270px_100px] rounded-tr-[270px_100px]" />
+          <Stepper />
+        </div>
+      </div>
+
+      <main className="flex-1 bg-cream">
+        {/* ═══ Heading ═══ */}
+        <div className="mx-auto w-full max-w-[1440px] px-4 pt-[14px]">
+          <SectionHeading>Select Date &amp; Time</SectionHeading>
+          <p className="mt-[8px] text-center text-[14px] text-body">
+            Choose a convenient date and time for your consultation.
+          </p>
+
+          {/* IST notice */}
+          <div className="mt-[14px] flex justify-center">
+            <div className="flex min-h-[42px] max-w-full items-center gap-2.5 rounded-full border border-[#ecdfc4] bg-[#fdf6e6] px-5 py-2 sm:px-[22px]">
+              <ShieldTickIcon className="h-[17px] w-[17px] shrink-0 text-gold-3" />
+              <p className="text-[13.5px] text-[#4a4553]">
+                All times are shown in Indian Standard Time (IST)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ═══ Picker + Summary ═══ */}
+        <div className="mx-auto w-full max-w-[1440px] px-4 pt-5">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_368px] lg:items-start">
+            <DateTimeCard
+              selectedDate={selectedDate}
+              selectedPeriod={selectedPeriod}
+              selectedSlot={selectedSlot}
+              onSelectDate={setSelectedDate}
+              onSelectPeriod={setSelectedPeriod}
+              onSelectSlot={setSelectedSlot}
+            />
+            <SummaryCard service={service} mode={mode} date={selectedDate} time={selectedSlot} />
+          </div>
+        </div>
+
+        {/* ═══ Trust strip ═══ */}
+        <div className="mx-auto w-full max-w-[1440px] px-4 pt-5">
+          <TrustStrip />
+        </div>
+
+        {/* ═══ Bottom actions ═══ */}
+        <div className="mx-auto w-full max-w-[1440px] px-4 pt-5 pb-7">
+          <div className="flex flex-col items-center gap-5 md:flex-row md:justify-between">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="order-2 flex h-[50px] items-center gap-2.5 rounded-xl border border-line bg-white px-7 text-[14.5px] font-medium text-[#2f1a52] transition-colors hover:bg-cream md:order-1"
+            >
+              <ArrowRightIcon className="h-[17px] w-[17px] rotate-180" />
+              Back
+            </button>
+
+            <p className="order-3 flex items-center gap-2.5 text-[13px] text-body md:order-2">
+              <LockIcon className="h-[17px] w-[17px] shrink-0 text-grape-2" />
+              Your booking is safe and secure with end-to-end encryption.
+            </p>
+
+            {validationError && (
+              <div className="order-1 flex w-full items-center justify-center gap-2 text-[13px] text-red-600 md:order-3">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                {validationError}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={handleContinue}
+              className="order-1 flex h-[56px] w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-b from-gold-2 to-gold-3 px-8 text-[15px] font-semibold text-[#2f1a52] shadow-[0_6px_20px_rgba(208,155,56,0.32)] transition-shadow hover:shadow-[0_8px_24px_rgba(208,155,56,0.42)] md:order-3 md:w-auto"
+            >
+              Continue to Details
+              <ArrowRightIcon className="h-[17px] w-[17px]" />
+            </button>
+          </div>
+        </div>
+      </main>
+
+      <SiteFooter />
+    </>
+  );
+}
+
+export default function SelectDateTimePage() {
+  return <SelectDateTimeInner />;
+}
