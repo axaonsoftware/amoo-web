@@ -4,7 +4,7 @@ const { pool } = require("../config/db");
 const { authRequired } = require("../middleware/auth");
 const { asyncHandler } = require("../utils/helpers");
 const { logAudit } = require("../utils/audit");
-const { ok, paginated, parsePagination } = require("../utils/response");
+const { ok, fail, paginated, parsePagination } = require("../utils/response");
 
 // POST /api/activity/log — fire-and-forget activity logging from the frontend.
 // Accepts: { action, action_details (JSON object), page_or_route }

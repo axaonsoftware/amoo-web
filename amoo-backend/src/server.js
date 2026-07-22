@@ -35,6 +35,8 @@ const chatRoutes = require("./routes/chat");
 const couponRoutes = require("./routes/coupons");
 const auditRoutes = require("./routes/audit");
 const activityRoutes = require("./routes/activity");
+const blogRoutes = require("./routes/blogs");
+const faqRoutes = require("./routes/faqs");
 
 const app = express();
 const PORT = env.port;
@@ -127,6 +129,8 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/activity", activityRoutes);
+app.use("/api/blogs", blogRoutes);
+app.use("/api/faqs", faqRoutes);
 
 // 404
 app.use((req, res) => fail(res, 404, "Not found"));

@@ -360,6 +360,47 @@ CREATE TABLE IF NOT EXISTS wallet_transactions (
 );
 
 -- --------------------------------------------------------
+-- Blogs
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS blogs (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  slug          VARCHAR(255) NOT NULL UNIQUE,
+  title         VARCHAR(500) NOT NULL,
+  excerpt       TEXT,
+  content       LONGTEXT,
+  category      VARCHAR(100),
+  image         VARCHAR(500),
+  author        VARCHAR(255),
+  author_avatar VARCHAR(500),
+  read_time     VARCHAR(50),
+  views         INT NOT NULL DEFAULT 0,
+  status        ENUM('draft','published') NOT NULL DEFAULT 'published',
+  deleted_at    DATETIME,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_blogs_slug (slug),
+  INDEX idx_blogs_category (category),
+  INDEX idx_blogs_status (status, deleted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+-- FAQs
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS faqs (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  question VARCHAR(500) NOT NULL,
+  answer TEXT NOT NULL,
+  category VARCHAR(100) NOT NULL DEFAULT 'General',
+  sort_order INT NOT NULL DEFAULT 0,
+  active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  KEY idx_faqs_category (category),
+  KEY idx_faqs_active_sort (active, sort_order)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
 -- Audit log
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (

@@ -218,6 +218,27 @@ const schemas = {
     reason: optionalString.max(120),
   }),
 
+  blog: Joi.object({
+    slug: Joi.string().max(255).required(),
+    title: Joi.string().max(500).required(),
+    excerpt: Joi.string().max(4000).allow("").allow(null),
+    content: Joi.string().max(65535).allow("").allow(null),
+    category: optionalString.max(100),
+    image: optionalString.max(500),
+    author: optionalString.max(255),
+    author_avatar: optionalString.max(500),
+    read_time: optionalString.max(50),
+    status: Joi.string().valid("draft", "published"),
+  }),
+
+  faq: Joi.object({
+    question: Joi.string().max(500).required(),
+    answer: Joi.string().required(),
+    category: Joi.string().max(100).default("General"),
+    sort_order: Joi.number().integer().min(0).default(0),
+    active: Joi.boolean().default(true),
+  }),
+
   userUpdateAdmin: Joi.object({
     name: Joi.string().min(2).max(120),
     email: Joi.string().email(),
