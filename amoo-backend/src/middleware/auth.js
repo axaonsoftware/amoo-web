@@ -47,6 +47,23 @@ async function checkTokenVersion(user) {
   return true;
 }
 
+// Require that the authenticated user's email is verified.
+// Must be placed after authRequired so req.user exists.
+function verifiedRequired(req, res, next) {
+  if (req.user.kind === "admin") return next(); // admins always pass
+  const finish = (row) => {
+    if (!row || !row.verified) return next(new HttpError(403, "Email not verified. Please verify your email first."));
+    next();
+  };
+  if (req._verifiedUser) return finish(req._verifiedUser);
+  pool.query("SELECT verified FROM users WHERE id = ?", [req.user.id])
+    .then(([rows]) => {
+      req._verifiedUser = rows[0] || null;
+      finish(req._verifiedUser);
+    })
+    .catch((e) => next(e));
+}
+
 // Generic require-auth; sets req.user from a verified access token.
 function authRequired(req, res, next) {
   const token = extractToken(req);
@@ -105,6 +122,7 @@ module.exports = {
   verifyRefreshToken,
   extractToken,
   authRequired,
+  verifiedRequired,
   adminRequired,
   withAudit,
 };

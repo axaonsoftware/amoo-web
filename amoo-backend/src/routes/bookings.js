@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
-const { authRequired, adminRequired } = require("../middleware/auth");
+const { authRequired, verifiedRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, genBookingRef, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
@@ -69,6 +69,7 @@ router.get(
 router.post(
   "/",
   authRequired,
+  verifiedRequired,
   validate("booking"),
   asyncHandler(async (req, res) => {
     const { service_id, expert_id, slot_id, date, time, mode, amount, payment, method, notes } = req.body;

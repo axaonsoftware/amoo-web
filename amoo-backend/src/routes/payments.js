@@ -3,7 +3,7 @@ const router = express.Router();
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const { pool } = require("../config/db");
-const { authRequired, adminRequired } = require("../middleware/auth");
+const { authRequired, verifiedRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
@@ -51,6 +51,7 @@ router.get(
 router.post(
   "/",
   authRequired,
+  verifiedRequired,
   validate("payment"),
   asyncHandler(async (req, res) => {
     const { booking_id, subscription_id, method, txn_id, gateway } = req.body;
@@ -107,6 +108,7 @@ router.post(
 router.post(
   "/create-order",
   authRequired,
+  verifiedRequired,
   asyncHandler(async (req, res) => {
     const { booking_id, subscription_id } = req.body;
     if (!booking_id && !subscription_id) {

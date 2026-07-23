@@ -1,5 +1,6 @@
 // Integration tests — uses monkey-patched DB pool (no experimental flags needed)
 // Run with: node --test tests/integration.test.js
+process.env.NODE_ENV = "test";
 const { describe, it, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert");
 
