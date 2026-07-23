@@ -1,4 +1,4 @@
-type StatusTone = "upcoming" | "completed" | "cancelled";
+export type StatusTone = "upcoming" | "completed" | "cancelled";
 
 export type TypeKey =
   | "kundli-reading"

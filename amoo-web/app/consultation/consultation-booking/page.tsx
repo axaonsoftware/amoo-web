@@ -5,6 +5,14 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { saveConsultationData, loadConsultationData } from "../lib/consultation-storage";
+import {
+  resolveService,
+  toApiMode,
+  modeNote,
+  parseDisplayDate,
+  parseDisplayTime,
+  type ConsultationService,
+} from "../lib/services";
 import { api } from "../../../lib/api";
 import { HomeHeader, OfferBar } from "../../components/home-header";
 import { SiteFooter } from "../../components/site-footer";
@@ -148,6 +156,7 @@ function BookingForm() {
   const [couponError, setCouponError] = useState("");
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [svcRow, setSvcRow] = useState<ConsultationService | null>(null);
 
   useEffect(() => {
     const stored = loadConsultationData();
@@ -161,6 +170,21 @@ function BookingForm() {
   }, []);
 
   const { service, mode, date, time } = params;
+
+  // Price comes from the services table, never from a constant in this file —
+  // it's also what the API cross-checks the booking amount against.
+  useEffect(() => {
+    let live = true;
+    resolveService(service)
+      .then((row) => { if (live) setSvcRow(row); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [service]);
+
+  const price = svcRow ? `₹${svcRow.price.toLocaleString("en-IN")}` : "—";
+  const total = svcRow
+    ? `₹${Math.max(0, svcRow.price - couponDiscount).toLocaleString("en-IN")}`
+    : "—";
 
   const handleBack = () => {
     router.push(`/consultation/select-date-time?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}`);
@@ -184,18 +208,25 @@ function BookingForm() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      const amount = mode === "Video Call" ? 999 : mode === "Audio Call" ? 499 : 349;
+      // POST /api/bookings takes service_id (required) — not a service name —
+      // and no name/email/phone: those already live on the authenticated user.
+      // amount 0 marks it unpaid; the API stores the real services.price and
+      // only /payments/verify may ever mark it Paid.
+      const match = svcRow ?? (await resolveService(service));
+      setSvcRow(match);
+
+      const notes = [modeNote(mode), concern.trim(), specialRequests.trim()]
+        .filter(Boolean)
+        .join("\n\n")
+        .slice(0, 2000);
+
       await api.createBooking({
-        service_name: service,
-        user_name: fullName.trim(),
-        email: email.trim(),
-        phone: phone.trim(),
-        date: date.replace(/,.*/, "").trim(),
-        time,
-        amount,
-        status: "pending-payment",
-        payment: "Pending",
-        mode,
+        service_id: match.id,
+        date: parseDisplayDate(date),
+        time: parseDisplayTime(time),
+        mode: toApiMode(mode),
+        amount: 0,
+        ...(notes ? { notes } : {}),
       });
       saveConsultationData({ service, mode, date, time });
       router.push(`/consultation/booking-summary?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`);
@@ -452,7 +483,7 @@ function BookingForm() {
                       <p className="text-[14.5px] font-semibold text-grape">{service}</p>
                       <p className="mt-0.5 text-[12.5px] text-body">Selected consultation service</p>
                     </div>
-                    <span className="text-[18px] font-bold text-grape">₹799</span>
+                    <span className="text-[18px] font-bold text-grape">{price}</span>
                   </div>
                 </div>
 
@@ -655,12 +686,12 @@ function BookingForm() {
                     <div className="flex items-center gap-3">
                       <ClockIcon className="h-[18px] w-[18px] shrink-0 text-grape-2" />
                       <span className="flex-1 text-[12.5px] text-body">Duration</span>
-                      <span className="text-[12.5px] font-medium text-ink">60 Minutes</span>
+                      <span className="text-[12.5px] font-medium text-ink">{svcRow?.duration || "—"}</span>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="flex h-[18px] w-[18px] shrink-0 items-center justify-center text-[14px] font-bold text-grape-2">₹</span>
                       <span className="flex-1 text-[12.5px] text-body">Price</span>
-                      <span className="text-[14px] font-bold text-grape">₹799</span>
+                      <span className="text-[14px] font-bold text-grape">{price}</span>
                     </div>
                   </div>
 
@@ -704,7 +735,7 @@ function BookingForm() {
                   {/* Total */}
                   <div className="flex items-center justify-between">
                     <span className="text-[16px] font-semibold text-grape">Total Amount</span>
-                    <span className="text-[22px] font-bold text-grape">₹799</span>
+                    <span className="text-[22px] font-bold text-grape">{total}</span>
                   </div>
 
                   {/* Divider */}

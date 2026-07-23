@@ -228,7 +228,7 @@ export default function UserRightPanel() {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Don&apos;t have an account?{" "}
-          <Link href="/user-login" className="text-[#5B2A9D] font-semibold hover:underline">
+          <Link href="/signup" className="text-[#5B2A9D] font-semibold hover:underline">
             Sign Up
           </Link>
         </p>

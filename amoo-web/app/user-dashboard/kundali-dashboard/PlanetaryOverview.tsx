@@ -15,9 +15,7 @@ import {
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
-type Report = { id: number; title: string; type: string; created_at: string };
-
-const PLANET_ICONS = [SunGlyph, MoonGlyph, MarsGlyph, MercuryGlyph, JupiterGlyph, VenusGlyph, SaturnGlyph, RahuGlyph, KetuGlyph];
+const PLANET_ICONS =[SunGlyph, MoonGlyph, MarsGlyph, MercuryGlyph, JupiterGlyph, VenusGlyph, SaturnGlyph, RahuGlyph, KetuGlyph];
 const PLANET_NAMES = ["Sun", "Moon", "Mars", "Mercury", "Jupiter", "Venus", "Saturn", "Rahu", "Ketu"];
 const BG_COLORS = ["bg-[#fdf0dc]", "bg-[#e7effb]", "bg-[#fdeaea]", "bg-[#e6f6ea]", "bg-[#fdf0dc]", "bg-[#fdeaf0]", "bg-[#e7effb]", "bg-[#e7effb]", "bg-[#f1e9fc]"];
 const TEXT_COLORS = ["text-[#e0952e]", "text-[#3f5bd0]", "text-[#e0384e]", "text-[#2f9e56]", "text-[#e0952e]", "text-[#e0384e]", "text-[#3f5bd0]", "text-[#2f7fd8]", "text-[#7c3fc4]"];

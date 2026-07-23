@@ -1,4 +1,4 @@
-type ServiceRow = {
+export type ServiceRow = {
   name: string;
   sub: string;
   img: string;

@@ -9,21 +9,13 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
-import AdminModal from "../shared/AdminModal";
+import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
 import { specializationTone, statusTone } from "./data";
 
-const expertFields: {
-  name: string;
-  label: string;
-  type?: string;
-  required?: boolean;
-  full?: boolean;
-  placeholder?: string;
-  options?: { label: string; value: string }[];
-}[] = [
+const expertFields: ModalField[] = [
   { name: "name", label: "Full Name", required: true, placeholder: "Full name" },
   { name: "email", label: "Email", type: "email", required: true, placeholder: "Email address" },
   { name: "phone", label: "Phone", placeholder: "+91 phone number" },

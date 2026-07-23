@@ -22,6 +22,7 @@ import {
 import {
   statusStyles,
   typeStyles,
+  type StatusTone,
   type TypeKey,
 } from "./data";
 import { api } from "../../../lib/api";
@@ -271,9 +272,19 @@ export default function ConsultationsPanel() {
               </tr>
             ) : (
               rows.map((c) => {
-                const t = typeStyles[c.type];
-                const s = statusStyles[c.status];
-                const TypeIcon = typeIcons[c.type];
+                // API rows are untyped, so fall back to a neutral tone for
+                // any type/status the style maps don't know about.
+                const t = typeStyles[c.type as TypeKey] ?? {
+                  label: c.type ?? "—",
+                  bg: "bg-[#F5F4F9]",
+                  text: "text-[#6B6480]",
+                };
+                const s = statusStyles[c.status as StatusTone] ?? {
+                  label: c.status ?? "—",
+                  bg: "bg-[#F5F4F9]",
+                  text: "text-[#6B6480]",
+                };
+                const TypeIcon = typeIcons[c.type as TypeKey] ?? Grid2x2;
 
                 return (
                   <tr key={c.id} className="border-b border-[#F3F2F7]">

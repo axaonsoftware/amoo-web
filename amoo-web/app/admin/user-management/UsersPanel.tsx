@@ -16,7 +16,7 @@ import {
   Trash2,
   Ban,
 } from "lucide-react";
-import { roleStyles, statusStyles } from "./data";
+import { roleStyles, statusStyles, type RoleKey, type StatusKey } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
@@ -252,8 +252,16 @@ export default function UsersPanel() {
 
           <tbody>
             {userRows.map((u) => {
-              const role = roleStyles[u.role];
-              const st = statusStyles[u.status];
+              const role = roleStyles[u.role as RoleKey] ?? {
+                label: u.role ?? "—",
+                bg: "bg-[#F5F4F9]",
+                text: "text-[#6B6480]",
+              };
+              const st = statusStyles[u.status as StatusKey] ?? {
+                label: u.status ?? "—",
+                bg: "bg-[#F5F4F9]",
+                text: "text-[#6B6480]",
+              };
 
               return (
                 <tr

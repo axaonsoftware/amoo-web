@@ -12,6 +12,8 @@ import {
   Trash2,
   Plus,
   Download,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { typeTone } from "./data";
 import { api } from "../../../lib/api";
@@ -20,7 +22,7 @@ import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
 
 type Package = {
-  id: string | number;
+  id: number;
   name: string;
   description: string;
   price: number;
@@ -30,7 +32,7 @@ type Package = {
 };
 
 type Row = {
-  id: string | number;
+  id: number;
   name: string;
   sub: string;
   img: string;
@@ -76,7 +78,7 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
   const [saving, setSaving] = useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
@@ -96,7 +98,7 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
       if (Array.isArray(items) && items.length) {
         setList(
           items.map((p: any) => ({
-            id: p.id,
+            id: Number(p.id),
             name: p.name,
             sub: p.description,
             img: "/imagesP/aura_scanner.png",
@@ -108,7 +110,7 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
             validity: p.duration_days ? `${p.duration_days} days` : "-",
             status: p.status,
             _raw: {
-              id: p.id,
+              id: Number(p.id),
               name: p.name,
               description: p.description ?? "",
               price: Number(p.price),

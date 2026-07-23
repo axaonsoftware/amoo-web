@@ -6,7 +6,7 @@ import { useEffect } from "react";
 export type ModalField = {
   name: string;
   label: string;
-  type?: "text" | "number" | "select" | "textarea";
+  type?: "text" | "email" | "number" | "select" | "textarea";
   placeholder?: string;
   required?: boolean;
   options?: { label: string; value: string }[];

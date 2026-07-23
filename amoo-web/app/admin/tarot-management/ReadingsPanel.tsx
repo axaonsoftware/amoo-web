@@ -13,7 +13,7 @@ import {
   Pencil,
   MoreVertical,
 } from "lucide-react";
-import { statusStyles } from "./data";
+import { statusStyles, type StatusKey } from "./data";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
 
@@ -205,7 +205,11 @@ export default function ReadingsPanel() {
 
             <tbody>
               {readingRows.map((r) => {
-                const st = statusStyles[r.status];
+                const st = statusStyles[r.status as StatusKey] ?? {
+                  label: r.status ?? "—",
+                  bg: "bg-[#F5F4F9]",
+                  text: "text-[#6B6480]",
+                };
 
                 return (
                   <tr key={r.id} className="h-[67px] border-b border-[#F4F4F8]">

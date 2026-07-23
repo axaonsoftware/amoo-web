@@ -253,7 +253,6 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         label: "User",
         type: "text",
         placeholder: "Select user...",
-        value: formValues.user_id,
       });
     }
     if (!editing) {
@@ -262,16 +261,15 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         label: "Report Type",
         type: "select",
         options: reportTypeOptions,
-        value: formValues.type,
       });
     }
     cols.push(
-      { name: "title", label: "Title", type: "text", placeholder: "Report title", value: formValues.title },
-      { name: "content", label: "Content (leave blank to auto-generate)", type: "textarea", value: formValues.content },
-      { name: "file_url", label: "File URL (optional)", type: "text", placeholder: "https://...", value: formValues.file_url },
+      { name: "title", label: "Title", type: "text", placeholder: "Report title" },
+      { name: "content", label: "Content (leave blank to auto-generate)", type: "textarea" },
+      { name: "file_url", label: "File URL (optional)", type: "text", placeholder: "https://..." },
     );
     return cols;
-  }, [editing, formValues]);
+  }, [editing]);
 
   return (
     <>
@@ -468,9 +466,9 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         fields={
           editing
             ? [
-                { name: "title", label: "Title", type: "text", placeholder: "Report title", value: formValues.title },
-                { name: "content", label: "Content", type: "textarea", value: formValues.content },
-                { name: "file_url", label: "File URL (optional)", type: "text", placeholder: "https://...", value: formValues.file_url },
+                { name: "title", label: "Title", type: "text", placeholder: "Report title" },
+                { name: "content", label: "Content", type: "textarea" },
+                { name: "file_url", label: "File URL (optional)", type: "text", placeholder: "https://..." },
                 {
                   name: "status",
                   label: "Status",
@@ -480,11 +478,11 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
                     { label: "Ready", value: "ready" },
                     { label: "Rejected", value: "rejected" },
                   ],
-                  value: formValues.status,
                 },
               ]
             : modalFields
         }
+        values={formValues}
         errors={formErrors}
         saving={saving}
         onChange={(name, value) => setFormValues((prev) => ({ ...prev, [name]: value }))}

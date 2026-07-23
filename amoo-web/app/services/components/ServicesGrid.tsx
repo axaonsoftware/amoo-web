@@ -21,7 +21,7 @@ const COPY: Record<string, { tagline: string; accent: string; desc: string; poin
 export default function ServicesGrid() {
     const { data: services, loading } = useApi(() => api.getServices());
 
-  const items = services?.data ?? [];
+  const items: any[] = services?.data ?? [];
   const rows = items.map((s: any) => {
     const c = COPY[s.category] || COPY[s.category === "Astrology" ? "Astrology" : "Spiritual"];
     return {

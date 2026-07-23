@@ -12,7 +12,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
-import { categoryTone, typeTone } from "./data";
+import { categoryTone, typeTone, type ServiceRow } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
@@ -197,7 +197,7 @@ export default function ServicesPanel() {
 
                 <td className="px-2 py-[13px]">
                   <span
-                    className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${categoryTone[r.category]}`}
+                    className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${categoryTone[r.category as ServiceRow["category"]] || "bg-[#F5F4F9] text-[#6B6480]"}`}
                   >
                     {r.category}
                   </span>
@@ -205,7 +205,7 @@ export default function ServicesPanel() {
 
                 <td className="px-2 py-[13px]">
                   <span
-                    className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${typeTone[r.type]}`}
+                    className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${typeTone[r.type as ServiceRow["type"]] || "bg-[#F5F4F9] text-[#6B6480]"}`}
                   >
                     {r.type}
                   </span>

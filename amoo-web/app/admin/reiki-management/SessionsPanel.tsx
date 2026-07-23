@@ -15,7 +15,14 @@ import {
   CheckCircle2,
   XCircle,
 } from "lucide-react";
-import { sessionTypeStyles, statusStyles, paymentStyles } from "./data";
+import {
+  sessionTypeStyles,
+  statusStyles,
+  paymentStyles,
+  type SessionType,
+  type SessionStatus,
+  type PaymentStatus,
+} from "./data";
 import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
@@ -392,7 +399,10 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
 
           <tbody>
             {sessionRows.map((s) => {
-              const type = sessionTypeStyles[s.type];
+              const type = sessionTypeStyles[s.type as SessionType] ?? {
+                label: s.type ?? "—",
+                className: "border-[#E7E5EF] bg-[#F5F4F9] text-[#6B6480]",
+              };
               return (
                 <tr
                   key={s.id}
@@ -462,7 +472,7 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
                   <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
                     <span
                       className={`inline-flex items-center justify-center rounded-[6px] px-[10px] py-[5px] text-[10.5px] font-semibold ${
-                        statusStyles[s.status] || "bg-[#F3F0FA] text-[#6D28D9]"
+                        statusStyles[s.status as SessionStatus] || "bg-[#F3F0FA] text-[#6D28D9]"
                       }`}
                     >
                       {s.status}
@@ -475,7 +485,7 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
                     </p>
                     <p
                       className={`mt-[1px] text-[10px] font-medium ${
-                        paymentStyles[s.payment] || "text-[#8B879C]"
+                        paymentStyles[s.payment as PaymentStatus] || "text-[#8B879C]"
                       }`}
                     >
                       {s.payment}

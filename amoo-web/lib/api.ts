@@ -7,6 +7,48 @@ interface ApiError extends Error {
   details?: unknown;
 }
 
+// The API sets a `csrf_token` cookie and requires it echoed back in the
+// X-CSRF-Token header on every state-changing request (double-submit). The
+// browser sends the cookie on its own; we only have to supply the header.
+const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+let csrfToken: string | null = null;
+
+// document.cookie is origin-scoped, so when the API is on a different origin we
+// can't read the cookie — the API also echoes the token in a CORS-exposed
+// response header. Prefer the header, fall back to the cookie for same-origin
+// or same-site local development.
+function rememberCsrfToken(res: Response): void {
+  const fromHeader = res.headers.get("X-CSRF-Token");
+  if (fromHeader) csrfToken = fromHeader;
+}
+
+function readCsrfCookie(): string | null {
+  if (typeof document === "undefined") return null; // SSR: no cookie jar
+  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]*)/);
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+// A mutating call can be the first request of the session, before any response
+// has handed us a token. One cheap GET makes the API issue one.
+async function ensureCsrfToken(): Promise<string | null> {
+  const known = csrfToken || readCsrfCookie();
+  if (known) return known;
+  try {
+    const res = await fetch(`${API_URL}/api/health`, { credentials: "include" });
+    rememberCsrfToken(res);
+  } catch {
+    return null;
+  }
+  return csrfToken || readCsrfCookie();
+}
+
+async function buildHeaders(method: string, base: Headers = {}): Promise<Headers> {
+  if (!MUTATING_METHODS.has(method.toUpperCase())) return base;
+  const token = await ensureCsrfToken();
+  return token ? { ...base, "X-CSRF-Token": token } : base;
+}
+
 let refreshPromise: Promise<boolean> | null = null;
 
 async function refreshAccessToken(): Promise<boolean> {
@@ -16,9 +58,10 @@ async function refreshAccessToken(): Promise<boolean> {
     try {
       const res = await fetch(`${API_URL}/api/auth/refresh`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: await buildHeaders("POST", { "Content-Type": "application/json" }),
         credentials: "include",
       });
+      rememberCsrfToken(res);
       return res.ok;
     } catch {
       return false;
@@ -46,7 +89,7 @@ async function handleResponse(res: Response): Promise<any> {
 }
 
 async function request(method: string, path: string, body?: unknown): Promise<any> {
-  const headers: Headers = { "Content-Type": "application/json" };
+  const headers = await buildHeaders(method, { "Content-Type": "application/json" });
 
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -54,16 +97,19 @@ async function request(method: string, path: string, body?: unknown): Promise<an
     credentials: "include",
     body: body ? JSON.stringify(body) : undefined,
   });
+  rememberCsrfToken(res);
 
   if (res.status === 401 && path !== "/api/auth/refresh") {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       const retryRes = await fetch(`${API_URL}${path}`, {
         method,
-        headers,
+        // Rebuild: the refresh round-trip may have handed us a newer token.
+        headers: await buildHeaders(method, { "Content-Type": "application/json" }),
         credentials: "include",
         body: body ? JSON.stringify(body) : undefined,
       });
+      rememberCsrfToken(retryRes);
       return handleResponse(retryRes);
     }
     if (typeof window !== "undefined" && !window.location.pathname.startsWith("/user-login")) {
@@ -81,8 +127,11 @@ export const api = {
   adminLogin: (body: unknown) => request("POST", "/api/auth/admin/login", body),
   me: () => request("GET", "/api/auth/me"),
   logout: () => request("POST", "/api/auth/logout"),
-  verifyEmailSend: () => request("POST", "/api/auth/verify-email/send", null, true),
+  verifyEmailSend: () => request("POST", "/api/auth/verify-email/send"),
   verifyEmail: (body: { email: string; token: string }) => request("POST", "/api/auth/verify-email", body),
+  forgotPassword: (body: { email: string }) => request("POST", "/api/auth/forgot-password", body),
+  resetPassword: (body: { email: string; otp: string; password: string }) =>
+    request("POST", "/api/auth/reset-password", body),
 
   // admin-scoped requests
   admin: {
@@ -190,7 +239,7 @@ export const api = {
   },
 
   // public reads
-  getServices: () => request("GET", "/api/services"),
+  getServices: (query = "") => request("GET", `/api/services${query}`),
   getService: (id: number) => request("GET", `/api/services/${id}`),
   getExperts: () => request("GET", "/api/experts"),
   getTestimonials: () => request("GET", "/api/testimonials"),
@@ -238,9 +287,12 @@ export const api = {
     form.append("file", file);
     const res = await fetch(`${API_URL}/api/uploads`, {
       method: "POST",
+      // No Content-Type: the browser must set the multipart boundary itself.
+      headers: await buildHeaders("POST"),
       credentials: "include",
       body: form,
     });
+    rememberCsrfToken(res);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data && (data as any).error) || "Upload failed");
     return data;

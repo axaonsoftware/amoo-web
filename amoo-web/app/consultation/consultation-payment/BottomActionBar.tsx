@@ -1,31 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/lib/razorpay";
-
-function parseDisplayDate(display: string): string {
-  const months: Record<string, string> = {
-    January: "01", February: "02", March: "03", April: "04",
-    May: "05", June: "06", July: "07", August: "08",
-    September: "09", October: "10", November: "11", December: "12",
-  };
-  const m = display.match(/(\d{1,2})\s+(\w+)\s+(\d{4})/);
-  if (!m) return new Date().toISOString().slice(0, 10);
-  const [, day, monthName, year] = m;
-  return `${year}-${months[monthName] || "01"}-${day.padStart(2, "0")}`;
-}
-
-function parseDisplayTime(display: string): string {
-  const m = display.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
-  if (!m) return "09:00:00";
-  let h = parseInt(m[1], 10);
-  if (m[3].toUpperCase() === "PM" && h !== 12) h += 12;
-  if (m[3].toUpperCase() === "AM" && h === 12) h = 0;
-  return `${String(h).padStart(2, "0")}:${m[2]}:00`;
-}
+import {
+  resolveService,
+  toApiMode,
+  modeNote,
+  parseDisplayDate,
+  parseDisplayTime,
+  type ConsultationService,
+} from "../lib/services";
 
 export default function BottomActionBar({
   service,
@@ -41,6 +28,7 @@ export default function BottomActionBar({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+  const [svcRow, setSvcRow] = useState<ConsultationService | null>(null);
 
   const svc = service || "Reiki Healing Session";
   const md = mode || "Video Call";
@@ -54,28 +42,38 @@ export default function BottomActionBar({
   backParams.set("time", tm);
   const qs = backParams.toString();
 
+  // Show the real price on the button rather than a constant that can drift
+  // from the services table. Silent on failure — handlePay surfaces the error.
+  useEffect(() => {
+    let live = true;
+    resolveService(svc)
+      .then((row) => { if (live) setSvcRow(row); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [svc]);
+
   const handlePay = async () => {
     setBusy(true);
     setStatus("Creating booking...");
     try {
-      // 1. Find the service
-      const services = await api.getServices();
-      const match = services.find(
-        (s: any) => s.name.toLowerCase() === svc.toLowerCase()
-      ) || services.find((s: any) =>
-        s.name.toLowerCase().includes(svc.toLowerCase().split(" ").slice(0, 2).join(" "))
-      );
-      const serviceId = match?.id || 4;
+      // 1. Resolve the picked service to its row — service_id is required and
+      //    the price is the server's, not ours.
+      const match = svcRow ?? (await resolveService(svc));
+      setSvcRow(match);
 
-      // 2. Create booking as "Pending" (reserve slot, no payment yet)
+      // 2. Create the booking. amount 0 means "pay later": the API stores the
+      //    real services.price and rejects any non-zero amount that disagrees
+      //    with it. `payment` is not an accepted field — only /payments/verify
+      //    may mark a booking paid.
+      const note = modeNote(md);
       const booking = await api.createBooking({
-        service_id: serviceId,
+        service_id: match.id,
         date: parseDisplayDate(dt),
         time: parseDisplayTime(tm),
-        mode: md,
-        amount: 719,
-        payment: "Pending",
+        mode: toApiMode(md),
+        amount: 0,
         method: "razorpay",
+        ...(note ? { notes: note } : {}),
       });
 
       // 3. Create a Razorpay order for this booking
@@ -152,7 +150,7 @@ export default function BottomActionBar({
           </>
         ) : (
           <>
-            Pay ₹719 Securely
+            {svcRow ? `Pay ₹${svcRow.price.toLocaleString("en-IN")} Securely` : "Pay Securely"}
             <ArrowRight size={16} />
             <Lock size={14} />
           </>
