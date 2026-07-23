@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+# A new push to the same branch cancels the run still in flight for it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: amoo-backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: amoo-backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20" # matches amoo-backend/Dockerfile
+          cache: npm
+          cache-dependency-path: amoo-backend/package-lock.json
+
+      - run: npm ci
+
+      # The backend has no build step; --if-present keeps this honest
+      # rather than green-by-accident if one is added later.
+      - run: npm run build --if-present
+
+      - run: npm test
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci-access-secret-not-used-outside-ci
+          JWT_REFRESH_SECRET: ci-refresh-secret-not-used-outside-ci
+
+  frontend:
+    name: amoo-web
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: amoo-web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20" # matches amoo-web/Dockerfile
+          cache: npm
+          cache-dependency-path: amoo-web/package-lock.json
+
+      - run: npm ci
+
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_TELEMETRY_DISABLED: "1"
+
+      # No frontend test runner is installed yet (AUDIT.md, Infrastructure
+      # table). The script is a placeholder so this step starts failing for
+      # real the moment tests land.
+      - run: npm test
