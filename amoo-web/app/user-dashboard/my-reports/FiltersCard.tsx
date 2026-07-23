@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, Calendar, Loader2 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 const sortOptions = ["Newest First", "Oldest First", "A – Z", "Z – A"];
@@ -10,9 +10,10 @@ const fieldBase =
   "h-[42px] w-full appearance-none rounded-[10px] border border-[#e7ddcb] bg-white pl-[14px] pr-[38px] text-[13px] text-[#2b0f47] focus:outline-none";
 
 export default function FiltersCard() {
-  const { data: services, loading, error } = useApi<any[]>(() => api.getServices());
+  // /api/services is paginated -> `{ data, meta }`, never a bare array.
+  const { items: services, loading, error } = useApiList<any>(() => api.getServices());
   const typeSet = new Set<string>();
-  (services ?? []).forEach((s: any) => {
+  services.forEach((s: any) => {
     const cat = s.category || s.type;
     if (cat) typeSet.add(cat);
   });

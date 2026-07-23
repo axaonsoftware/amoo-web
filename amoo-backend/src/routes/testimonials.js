@@ -75,6 +75,7 @@ router.post(
 router.patch(
   "/:id",
   adminRequired,
+  validate("testimonialUpdate"),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, TESTIMONIAL_UPDATE_ALLOWED, [req.params.id]);
     await pool.query(`UPDATE testimonials SET ${setClause} WHERE id = ?`, values);

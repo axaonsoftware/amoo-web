@@ -27,24 +27,60 @@ function getTransport() {
  * Errors are logged but never thrown — callers should never await this
  * in the critical request path.
  */
-async function send({ to, subject, html, text }) {
+async function send({ to, bcc, subject, html, text }) {
   const transport = getTransport();
+  // Recipient addresses are personal data — never write them to the log.
+  const label = bcc ? `${countRecipients(bcc)} bcc recipient(s)` : redact(to);
   if (!transport) {
-    logger.info(`[email] Skipped send to ${to} (EMAIL_ENABLED=false)`);
+    logger.info(`[email] Skipped send to ${label} (EMAIL_ENABLED=false)`);
     return;
   }
   try {
     const info = await transport.sendMail({
       from: env.email.from,
-      to,
+      // A bulk send addresses the envelope to ourselves and puts the real
+      // recipients in Bcc, so no recipient can see any other recipient.
+      to: bcc ? env.email.from : to,
+      bcc: bcc || undefined,
       subject,
       html: html || undefined,
       text: text || undefined,
     });
-    logger.info(`[email] Sent to ${to} (msgId: ${info.messageId})`);
+    logger.info(`[email] Sent to ${label} (msgId: ${info.messageId})`);
   } catch (err) {
-    logger.error(`[email] Failed to send to ${to}: ${err.message}`);
+    logger.error(`[email] Failed to send to ${label}: ${err.message}`);
   }
+}
+
+// "alice@example.com" -> "a***@example.com"
+function redact(address) {
+  const first = String(address || "").split(",")[0].trim();
+  const at = first.indexOf("@");
+  if (at < 1) return "<recipient>";
+  return `${first[0]}***${first.slice(at)}`;
+}
+
+function countRecipients(list) {
+  return Array.isArray(list) ? list.length : String(list).split(",").filter(Boolean).length;
+}
+
+/**
+ * Send one message to many recipients without disclosing the list.
+ *
+ * Recipients go in Bcc and are chunked, because most SMTP providers cap
+ * recipients per message (SES 50, SendGrid 1000, Gmail 100). A single
+ * comma-joined header both leaks every address and is rejected past the cap.
+ */
+async function sendBulk({ recipients, subject, html, text, chunkSize = 50 }) {
+  const unique = [...new Set((recipients || []).map((r) => String(r).trim()).filter(Boolean))];
+  if (!unique.length) return { sent: 0, batches: 0 };
+
+  let batches = 0;
+  for (let i = 0; i < unique.length; i += chunkSize) {
+    await send({ bcc: unique.slice(i, i + chunkSize), subject, html, text });
+    batches++;
+  }
+  return { sent: unique.length, batches };
 }
 
 /**
@@ -56,7 +92,7 @@ async function send({ to, subject, html, text }) {
  * @param {object} [opts]    - { appUrl, unsubscribeHref }
  */
 async function sendNotificationEmail(to, title, message, opts = {}) {
-  const appUrl = opts.appUrl || env.appUrl || "https://amooguru.com";
+  const appUrl = opts.appUrl || env.clientUrl || "https://amooguru.com";
   const html = [
     `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">`,
     `<style>`,
@@ -85,12 +121,16 @@ async function sendNotificationEmail(to, title, message, opts = {}) {
     `</div></body></html>`,
   ].join("\n");
 
-  await send({
-    to,
+  const payload = {
     subject: title,
     html,
     text: `${title}\n\n${message}\n\n— Amoo Guru\n${appUrl}/user-dashboard`,
-  });
+  };
+
+  // An array of recipients is a broadcast: fan it out over Bcc batches rather
+  // than exposing every address in a shared To: header.
+  if (Array.isArray(to)) return sendBulk({ recipients: to, ...payload });
+  return send({ to, ...payload });
 }
 
 function escapeHtml(s) {
@@ -102,4 +142,4 @@ function escapeHtml(s) {
     .replace(/"/g, "&quot;");
 }
 
-module.exports = { send, sendNotificationEmail, getTransport };
+module.exports = { send, sendBulk, sendNotificationEmail, getTransport };

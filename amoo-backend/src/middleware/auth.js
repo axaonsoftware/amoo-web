@@ -4,7 +4,7 @@ const { HttpError } = require("../utils/helpers");
 const { logAudit } = require("../utils/audit");
 const { pool } = require("../config/db");
 
-const USER_TABLES = { admin: "admins", user: "users" };
+const USER_TABLES = { admin: "admins", user: "users", expert: "experts" };
 
 function resolveTable(kind) {
   const table = USER_TABLES[kind];
@@ -53,14 +53,30 @@ async function checkTokenVersion(user) {
 
 // Require that the authenticated user's email is verified.
 // Must be placed after authRequired so req.user exists.
+//
+// The lookup table is chosen from req.user.kind. It used to always read
+// `users`, so an expert's token (whose id indexes the `experts` table) was
+// checked against whichever unrelated user happened to share that id —
+// admitting or rejecting them at random.
 function verifiedRequired(req, res, next) {
   if (req.user.kind === "admin") return next(); // admins always pass
+
   const finish = (row) => {
-    if (!row || !row.verified) return next(new HttpError(403, "Email not verified. Please verify your email first."));
+    if (!row || !row.verified) {
+      return next(new HttpError(403, "Email not verified. Please verify your email first."));
+    }
     next();
   };
-  if (req._verifiedUser) return finish(req._verifiedUser);
-  pool.query("SELECT verified FROM users WHERE id = ?", [req.user.id])
+  if (req._verifiedUser !== undefined) return finish(req._verifiedUser);
+
+  let table;
+  try {
+    table = resolveTable(req.user.kind);
+  } catch (e) {
+    return next(e);
+  }
+
+  pool.query(`SELECT verified FROM ${table} WHERE id = ?`, [req.user.id])
     .then(([rows]) => {
       req._verifiedUser = rows[0] || null;
       finish(req._verifiedUser);
@@ -86,6 +102,26 @@ function authRequired(req, res, next) {
 function adminRequired(req, res, next) {
   const finish = (decoded) => {
     if (decoded.kind !== "admin") return next(new HttpError(403, "Admin access required"));
+    req.user = decoded;
+    next();
+  };
+  if (req.user) return finish(req.user);
+  const token = extractToken(req);
+  if (!token) return next(new HttpError(401, "No token provided"));
+  try {
+    const decoded = verifyAccessToken(token);
+    checkTokenVersion(decoded)
+      .then(() => finish(decoded))
+      .catch((e) => next(e));
+  } catch (e) {
+    next(new HttpError(401, "Invalid or expired token"));
+  }
+}
+
+// Require expert-kind token. Self-verifies if a previous authRequired didn't run.
+function expertRequired(req, res, next) {
+  const finish = (decoded) => {
+    if (decoded.kind !== "expert") return next(new HttpError(403, "Expert access required"));
     req.user = decoded;
     next();
   };
@@ -128,5 +164,6 @@ module.exports = {
   authRequired,
   verifiedRequired,
   adminRequired,
+  expertRequired,
   withAudit,
 };

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Users, CalendarDays, IndianRupee, Activity, ArrowDown, ChevronDown } from "lucide-react";
+import { Users, CalendarDays, IndianRupee, Activity, ChevronDown } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import { ChartSkeleton, ErrorState } from "@/app/components/states";
+import { formatCompact, formatCurrency, formatNumber, toNumber } from "@/lib/format";
 
 const W = 700;
 const H = 250;
@@ -11,10 +13,35 @@ const PAD_L = 52;
 const PAD_R = 46;
 const PAD_T = 16;
 const PAD_B = 42;
+const TICKS = 5;
 
-function smooth(values: number[], xs: number[]) {
+const px = (i: number, n: number) =>
+  n <= 1 ? (W - PAD_L - PAD_R) / 2 + PAD_L : PAD_L + (i * (W - PAD_L - PAD_R)) / (n - 1);
+
+/**
+ * Round a domain up to a readable tick step (1/2/5 x 10^n) so the axis labels
+ * land on round numbers. Previously the chart hardcoded a 0-1500 left axis and
+ * a 0-5L right axis, and plotted ALL THREE series — including rupee revenue —
+ * through one `py()` clamped at 1500. Any revenue above ₹1,500 pinned flat
+ * against the top gridline, and both axis label sets were unrelated to the
+ * data being drawn.
+ */
+function niceMax(value: number): number {
+  if (value <= 0) return TICKS;
+  const step = value / TICKS;
+  const mag = Math.pow(10, Math.floor(Math.log10(step)));
+  const norm = step / mag;
+  const niceStep = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 5 ? 5 : 10) * mag;
+  return niceStep * TICKS;
+}
+
+function scaleY(max: number) {
+  return (v: number) => PAD_T + (1 - (max === 0 ? 0 : v / max)) * (H - PAD_T - PAD_B);
+}
+
+function smoothPath(values: number[], n: number, y: (v: number) => number) {
   if (values.length < 2) return "";
-  const pts = values.map((v, i) => [xs[i], py(v)] as const);
+  const pts = values.map((v, i) => [px(i, n), y(v)] as const);
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[i - 1] ?? pts[i];
@@ -29,13 +56,6 @@ function smooth(values: number[], xs: number[]) {
   }
   return d;
 }
-
-const yLeft = [1500, 1200, 900, 600, 300, 0];
-const yRight = ["5L", "4L", "3L", "2L", "1L", "0"];
-const MAX = 1500;
-
-const px = (i: number, n: number) => (n <= 1 ? (W - PAD_L - PAD_R) / 2 + PAD_L : PAD_L + (i * (W - PAD_L - PAD_R)) / (n - 1));
-const py = (v: number) => PAD_T + (1 - Math.min(v, MAX) / MAX) * (H - PAD_T - PAD_B);
 
 export default function OverviewAnalytics() {
   const [period, setPeriod] = useState("month");
@@ -63,27 +83,52 @@ export default function OverviewAnalytics() {
   const bookingsVals = byLabel(bRows, "count");
   const revenueVals = byLabel(rRows, "revenue");
 
+  // Counts and rupees differ by orders of magnitude, so they get their own
+  // axes: counts on the left, revenue on the right.
+  const countMax = niceMax(Math.max(0, ...usersVals, ...bookingsVals));
+  const revenueMax = niceMax(Math.max(0, ...revenueVals));
+  const yCount = scaleY(countMax);
+  const yRevenue = scaleY(revenueMax);
+
   const series = [
-    { label: "Users", color: "#7c3aed", values: usersVals },
-    { label: "Bookings", color: "#f0b429", values: bookingsVals },
-    { label: "Revenue (₹)", color: "#ec4899", values: revenueVals },
+    { label: "Users", color: "#7c3aed", values: usersVals, y: yCount },
+    { label: "Bookings", color: "#f0b429", values: bookingsVals, y: yCount },
+    { label: "Revenue (₹)", color: "#ec4899", values: revenueVals, y: yRevenue },
   ];
+
+  // Ticks run top-down so index 0 is the highest gridline.
+  const ticks = Array.from({ length: TICKS + 1 }, (_, i) => (TICKS - i) / TICKS);
 
   const totalRevenue = revenueVals.reduce((a, b) => a + b, 0);
   const totalBookings = bookingsVals.reduce((a, b) => a + b, 0);
   const totalUsers = usersVals.reduce((a, b) => a + b, 0);
 
   const metrics = [
-    { label: "Users", value: totalUsers.toLocaleString("en-IN"), Icon: Users, bg: "bg-[#f3ecfe]", fg: "text-[#7c3aed]" },
-    { label: "Bookings", value: totalBookings.toLocaleString("en-IN"), Icon: CalendarDays, bg: "bg-[#fdf3e2]", fg: "text-[#dda43c]" },
-    { label: "Revenue", value: "₹" + totalRevenue.toLocaleString("en-IN"), Icon: IndianRupee, bg: "bg-[#fdeaf3]", fg: "text-[#ec4899]", down: true },
-    { label: "Conversion Rate", value: (totalBookings ? ((totalBookings / (totalUsers || 1)) * 100).toFixed(2) : "0.00") + "%", Icon: Activity, bg: "bg-[#e7f7ee]", fg: "text-[#16a34a]" },
+    { label: "Users", value: formatNumber(totalUsers), Icon: Users, bg: "bg-[#f3ecfe]", fg: "text-[#7c3aed]" },
+    { label: "Bookings", value: formatNumber(totalBookings), Icon: CalendarDays, bg: "bg-[#fdf3e2]", fg: "text-[#dda43c]" },
+    { label: "Revenue", value: formatCurrency(totalRevenue), Icon: IndianRupee, bg: "bg-[#fdeaf3]", fg: "text-[#ec4899]" },
+    {
+      label: "Bookings per New User",
+      value: totalUsers ? (totalBookings / totalUsers).toFixed(2) : "—",
+      Icon: Activity,
+      bg: "bg-[#e7f7ee]",
+      fg: "text-[#16a34a]",
+    },
   ];
+
+  const retry = () => {
+    bookings.refetch();
+    users.refetch();
+    revenue.refetch();
+  };
 
   if (loading) {
     return (
       <section className="rounded-[16px] border border-[#f0eaf8] bg-white p-5 shadow-[0_1px_3px_rgba(42,17,72,.05)]">
-        <div className="flex items-center justify-center py-16 text-[13px] text-[#8b8397]">Loading analytics...</div>
+        <div className="h-[17px] w-[160px] animate-pulse rounded bg-[#f0eaf8]" />
+        <div className="mt-6">
+          <ChartSkeleton height={200} />
+        </div>
       </section>
     );
   }
@@ -91,7 +136,7 @@ export default function OverviewAnalytics() {
   if (error) {
     return (
       <section className="rounded-[16px] border border-[#f0eaf8] bg-white p-5 shadow-[0_1px_3px_rgba(42,17,72,.05)]">
-        <div className="rounded-lg bg-red-50 p-4 text-[12.5px] text-red-700">Failed to load analytics data.</div>
+        <ErrorState message={error} onRetry={retry} />
       </section>
     );
   }
@@ -130,25 +175,56 @@ export default function OverviewAnalytics() {
           <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full">
             <text x={PAD_L - 46} y={PAD_T - 4} className="fill-[#a49bb1] text-[9px]">Users / Bookings</text>
             <text x={W - PAD_R - 34} y={PAD_T - 4} className="fill-[#a49bb1] text-[9px]">Revenue (₹)</text>
-            {yLeft.map((v, i) => {
-              const y = py(v);
+            {ticks.map((t, i) => {
+              const y = yCount(countMax * t);
               return (
-                <g key={v}>
-                  <line x1={PAD_L} x2={W - PAD_R} y1={y} y2={y} stroke="#f1ecf7" strokeWidth={1} strokeDasharray={i === yLeft.length - 1 ? "0" : "3 4"} />
+                <g key={t}>
+                  <line
+                    x1={PAD_L}
+                    x2={W - PAD_R}
+                    y1={y}
+                    y2={y}
+                    stroke="#f1ecf7"
+                    strokeWidth={1}
+                    strokeDasharray={i === ticks.length - 1 ? "0" : "3 4"}
+                  />
                   <text x={PAD_L - 10} y={y + 3} textAnchor="end" className="fill-[#a49bb1] text-[9px]">
-                    {v === 1500 ? "1.5K" : v === 1200 ? "1.2K" : String(v)}
+                    {formatCompact(Math.round(countMax * t))}
                   </text>
-                  <text x={W - PAD_R + 10} y={y + 3} className="fill-[#a49bb1] text-[9px]">{yRight[i]}</text>
+                  <text x={W - PAD_R + 10} y={y + 3} className="fill-[#a49bb1] text-[9px]">
+                    {formatCompact(Math.round(revenueMax * t))}
+                  </text>
                 </g>
               );
             })}
-            <line x1={PAD_L} x2={PAD_L} y1={PAD_T} y2={py(0)} stroke="#ece5f4" strokeWidth={1} />
+            <line x1={PAD_L} x2={PAD_L} y1={PAD_T} y2={yCount(0)} stroke="#ece5f4" strokeWidth={1} />
             {series.map((s) => (
-              <path key={s.label} d={smooth(s.values, s.values.map((_, i) => px(i, n)))} fill="none" stroke={s.color} strokeWidth={2} strokeLinecap="round" />
+              <path
+                key={s.label}
+                d={smoothPath(s.values, n, s.y)}
+                fill="none"
+                stroke={s.color}
+                strokeWidth={2}
+                strokeLinecap="round"
+              />
             ))}
-            {series.map((s) => s.values.map((v, i) => <circle key={`${s.label}-${i}`} cx={px(i, n)} cy={py(v)} r={3.5} fill={s.color} />))}
+            {series.map((s) =>
+              s.values.map((v, i) => (
+                <circle key={`${s.label}-${i}`} cx={px(i, n)} cy={s.y(v)} r={3.5} fill={s.color}>
+                  <title>{`${s.label} · ${labels[i]}: ${
+                    s.label.startsWith("Revenue") ? formatCurrency(v) : formatNumber(v)
+                  }`}</title>
+                </circle>
+              ))
+            )}
             {labels.map((d, i) => (
-              <text key={d} x={px(i, n)} y={py(0) + 18} textAnchor="middle" className="fill-[#a49bb1] text-[9.5px]">
+              <text
+                key={d}
+                x={px(i, n)}
+                y={yCount(0) + 18}
+                textAnchor="middle"
+                className="fill-[#a49bb1] text-[9.5px]"
+              >
                 {d}
               </text>
             ))}
@@ -157,16 +233,17 @@ export default function OverviewAnalytics() {
       </div>
 
       <div className="mt-2 grid grid-cols-1 gap-3 border-t border-[#f2ecf9] pt-4 sm:grid-cols-2 md:grid-cols-4">
-        {metrics.map(({ label, value, Icon, bg, fg, down }) => (
+        {metrics.map(({ label, value, Icon, bg, fg }) => (
           <div key={label} className="flex items-center gap-2.5">
             <span className={`flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full ${bg} ${fg}`}>
               <Icon className="h-[17px] w-[17px]" strokeWidth={1.9} />
             </span>
             <div className="min-w-0">
-              <p className="flex items-center gap-1 text-[11px] font-medium text-[#8b8397]">
-                {label}
-                {down ? <ArrowDown className="h-3 w-3 text-[#ec4899]" strokeWidth={2.6} /> : null}
-              </p>
+              {/* The down-arrow here was hardcoded onto Revenue, so the tile
+                  always claimed a decline. /api/dashboard/revenue returns a
+                  per-period series with no trend flag; the period-over-period
+                  deltas live on the reports-analytics StatsRow. */}
+              <p className="text-[11px] font-medium text-[#8b8397]">{label}</p>
               <p className="truncate text-[14px] font-bold text-[#2a1148]">{value}</p>
             </div>
           </div>

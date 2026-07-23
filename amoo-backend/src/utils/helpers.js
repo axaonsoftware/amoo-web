@@ -30,6 +30,16 @@ function buildUpdate(fields, allowed, startingValues = []) {
   return { setClause, values, keys };
 }
 
+// Constant-time string comparison for secrets (OTPs, verification tokens).
+// crypto.timingSafeEqual throws on a length mismatch, which would itself leak
+// the length, so hash both sides to a fixed width first and compare those.
+function timingSafeEqualStr(a, b) {
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  const ha = crypto.createHash("sha256").update(a).digest();
+  const hb = crypto.createHash("sha256").update(b).digest();
+  return crypto.timingSafeEqual(ha, hb);
+}
+
 class HttpError extends Error {
   constructor(status, message, details) {
     super(message);
@@ -38,4 +48,4 @@ class HttpError extends Error {
   }
 }
 
-module.exports = { asyncHandler, genBookingRef, genOtp, buildUpdate, HttpError };
+module.exports = { asyncHandler, genBookingRef, genOtp, buildUpdate, timingSafeEqualStr, HttpError };

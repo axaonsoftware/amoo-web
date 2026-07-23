@@ -56,6 +56,7 @@ router.post(
 router.patch(
   "/:id",
   adminRequired,
+  validate("packageUpdate"),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, PACKAGE_UPDATE_ALLOWED, [req.params.id]);
     await pool.query(`UPDATE packages SET ${setClause} WHERE id = ?`, values);

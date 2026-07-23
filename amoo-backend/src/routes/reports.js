@@ -9,6 +9,7 @@ const env = require("../config/env");
 const fs = require("fs");
 const path = require("path");
 const { getGenerator } = require("../report-generators/index");
+const { resolveStoredFile } = require("../utils/paths");
 
 const REPORT_UPDATE_ALLOWED = ["status", "title", "content", "file_url"];
 
@@ -83,6 +84,20 @@ router.post(
   validate("report"),
   asyncHandler(async (req, res) => {
     const { service_id, type, title, content, file_url } = req.body;
+
+    // SECURITY: `file_url` is echoed back by GET /api/reports/:id/download, which
+    // streams the file to whoever owns the *report*. Without this check a user
+    // could point a report of their own at someone else's "/uploads/<name>" and
+    // read it — sidestepping the ownership check on /api/uploads/:id/download.
+    // The Joi `fileRef` rule already blocks traversal; this blocks borrowing.
+    if (file_url) {
+      const [owned] = await pool.query(
+        "SELECT id FROM uploads WHERE path = ? AND user_id = ? LIMIT 1",
+        [file_url, req.user.id]
+      );
+      if (!owned.length) throw new HttpError(403, "file_url must reference a file you uploaded");
+    }
+
     const [result] = await pool.query(
       "INSERT INTO reports (user_id, service_id, type, title, content, file_url, status) VALUES (?,?,?,?,?,?,'pending')",
       [req.user.id, service_id || null, type || null, title, content || null, file_url || null]
@@ -233,16 +248,21 @@ router.get(
     const fileUrl = rows[0].file_url;
     if (!fileUrl) return fail(res, 404, "No file attached to this report");
 
-    // Mark as downloaded
-    await pool.query("UPDATE reports SET downloaded = 1 WHERE id = ?", [req.params.id]);
-
     // S3 / object storage: redirect to the public/signed URL.
-    if (env.storage.enabled && fileUrl.startsWith("http")) {
+    if (env.storage.enabled && /^https?:\/\//i.test(fileUrl)) {
+      await pool.query("UPDATE reports SET downloaded = 1 WHERE id = ?", [req.params.id]);
       return res.redirect(fileUrl);
     }
-    // Local disk: stream the file.
-    const filePath = path.join(__dirname, "..", "..", fileUrl);
+
+    // Local disk. `file_url` is client-supplied (POST /api/reports accepts it),
+    // so it must be resolved inside the uploads directory and rejected if it
+    // escapes — otherwise "../../.env" would hand out the JWT secrets.
+    const filePath = resolveStoredFile(fileUrl);
+    if (!filePath) return fail(res, 400, "Invalid file reference");
     if (!fs.existsSync(filePath)) return fail(res, 404, "File not found on disk");
+
+    await pool.query("UPDATE reports SET downloaded = 1 WHERE id = ?", [req.params.id]);
+    res.setHeader("X-Content-Type-Options", "nosniff");
     res.download(filePath, path.basename(filePath));
   })
 );

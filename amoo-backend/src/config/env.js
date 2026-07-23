@@ -48,8 +48,20 @@ const env = {
   maxFileSize: Number(required("MAX_FILE_SIZE", "5242880")),
   logLevel: required("LOG_LEVEL", "info"),
 
-  // Public base URL of this API (used for links in emails, webhooks, etc.)
+  // Public base URL of this API (webhook callbacks, absolute asset URLs).
   appUrl: required("APP_URL", `http://localhost:${required("PORT", 4000)}`),
+
+  // Public base URL of the Next.js frontend. Every link a human clicks in an
+  // email must point here, NOT at appUrl: pages like /verify-email and
+  // /user-dashboard are served by the frontend, so building them on the API
+  // origin produced a 404 for every recipient. Defaults to the first configured
+  // CLIENT_ORIGIN so a correct CORS setup gives a correct link for free.
+  clientUrl: (process.env.CLIENT_URL ||
+    (required("CLIENT_ORIGIN", "*")
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s && s !== "*")[0]) ||
+    "http://localhost:3000").replace(/\/$/, ""),
 
   // Object storage (S3-compatible). When configured, uploads go here instead
   // of the local disk and files are served via signed URLs.
@@ -116,6 +128,14 @@ if (env.isProd && env.payments.gateway === "mock") {
 
 if (env.isProd && !env.payments.webhookSecret) {
   throw new Error("PAYMENT_WEBHOOK_SECRET is required in production");
+}
+
+// Email links are built on clientUrl. A localhost value in production means
+// every verification and password link mailed to a real user is dead.
+if (env.isProd && /localhost|127\.0\.0\.1/.test(env.clientUrl)) {
+  throw new Error(
+    "CLIENT_URL (or the first CLIENT_ORIGIN entry) must be the public frontend URL in production, not localhost"
+  );
 }
 
 module.exports = env;

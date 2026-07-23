@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+"use client";
+
 import Link from "next/link";
 import { SiteFooter } from "../../components/site-footer";
 import { WhatsAppIcon } from "../../components/home-icons";
@@ -11,17 +12,6 @@ import { WHATSAPP_URL } from "../../../lib/constants";
 import Packages from "./components/Packages";
 import ServicesGrid from "./components/ServicesGrid";
 import Testimonials from "./components/Testimonials";
-
-export const metadata: Metadata = {
-  title: "Reiki Healing",
-  description:
-    "Experience powerful Reiki healing for stress relief, emotional balance, chakra balancing and spiritual growth with certified Reiki Grand Master Surinder Kaur Sehgal.",
-  openGraph: {
-    title: "Reiki Healing | Amoo Guru",
-    description:
-      "Experience powerful Reiki healing for stress relief, emotional balance, chakra balancing and spiritual growth with certified Reiki Grand Master Surinder Kaur Sehgal.",
-  },
-};
 
 export default function ReikiHealingPage() {
   return (

@@ -55,20 +55,6 @@ const STEPS = [
   { label: "Confirmation", status: "upcoming", number: 7 },
 ];
 
-const PERSONAL_INFO_LEFT = [
-  { label: "Full Name", value: "Neha Sharma" },
-  { label: "Email Address", value: "neha.sharma@gmail.com" },
-  { label: "Mobile Number", value: CONTACT_PHONE },
-  { label: "Date of Birth", value: "15 March 1992" },
-];
-
-const PERSONAL_INFO_RIGHT = [
-  { label: "Gender", value: "Female" },
-  { label: "Marital Status", value: "Married" },
-  { label: "Preferred Language", value: "English" },
-  { label: "How did you find us?", value: "Instagram" },
-];
-
 const WHY_BOOK = [
   {
     icon: ShieldCheck,
@@ -223,6 +209,16 @@ function BookingSummaryContent() {
         mode: stored.mode || params.get("mode") || "Video Call",
         date: stored.date || params.get("date") || "Tuesday, 10 June 2026",
         time: stored.time || params.get("time") || "08:00 AM",
+        fullName: stored.fullName || "",
+        email: stored.email || "",
+        phone: stored.phone || "",
+        dob: stored.dob || "",
+        gender: stored.gender || "",
+        maritalStatus: stored.maritalStatus || "",
+        language: stored.language || "",
+        foundUs: stored.foundUs || "",
+        concern: stored.concern || "",
+        specialRequests: stored.specialRequests || "",
       };
     } catch {
       return {
@@ -230,6 +226,16 @@ function BookingSummaryContent() {
         mode: "Video Call",
         date: "Tuesday, 10 June 2026",
         time: "08:00 AM",
+        fullName: "",
+        email: "",
+        phone: "",
+        dob: "",
+        gender: "",
+        maritalStatus: "",
+        language: "",
+        foundUs: "",
+        concern: "",
+        specialRequests: "",
       };
     }
   });
@@ -259,7 +265,21 @@ function BookingSummaryContent() {
     );
   }
 
-  const { service, mode, date, time } = data;
+  const { service, mode, date, time, fullName, email, phone, dob, gender, maritalStatus, language, foundUs, concern, specialRequests } = data;
+
+  const personalInfoLeft = [
+    { label: "Full Name", value: fullName || "—" },
+    { label: "Email Address", value: email || "—" },
+    { label: "Mobile Number", value: phone || "—" },
+    { label: "Date of Birth", value: dob || "—" },
+  ];
+
+  const personalInfoRight = [
+    { label: "Gender", value: gender || "—" },
+    { label: "Marital Status", value: maritalStatus || "—" },
+    { label: "Preferred Language", value: language || "—" },
+    { label: "How did you find us?", value: foundUs || "—" },
+  ];
 
   const pricing = MODE_PRICES[mode] || MODE_PRICES["Video Call"];
   const total = pricing.price - pricing.discount;
@@ -382,12 +402,12 @@ function BookingSummaryContent() {
             />
             <div className="grid sm:grid-cols-2 gap-x-8">
               <div>
-                {PERSONAL_INFO_LEFT.map((f) => (
+                {personalInfoLeft.map((f) => (
                   <FieldRow key={f.label} label={f.label} value={f.value} />
                 ))}
               </div>
               <div>
-                {PERSONAL_INFO_RIGHT.map((f) => (
+                {personalInfoRight.map((f) => (
                   <FieldRow key={f.label} label={f.label} value={f.value} />
                 ))}
               </div>
@@ -448,8 +468,7 @@ function BookingSummaryContent() {
               Your Concern / Question
             </p>
             <p className="text-sm text-purple-950 leading-relaxed">
-              I have been feeling stressed and anxious for the past few months.
-              I want guidance and healing to improve my mental peace and energy.
+              {concern || "No concern provided."}
             </p>
           </div>
 
@@ -478,7 +497,7 @@ function BookingSummaryContent() {
                   Special Requests
                 </p>
                 <p className="text-sm text-purple-950 leading-relaxed">
-                  Please share any pre-session preparation instructions.
+                  {specialRequests || "No special requests."}
                 </p>
               </div>
             </div>

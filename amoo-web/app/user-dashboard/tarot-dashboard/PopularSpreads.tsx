@@ -8,7 +8,7 @@ import {
   CareerPathArt,
   CelticCrossArt,
 } from "./icons";
-import { useApi } from "@/lib/useApi";
+import { useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 const ART_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -20,8 +20,9 @@ const ART_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 };
 
 export default function PopularSpreads() {
-  const { data: services, loading, error } = useApi<any[]>(() => api.getServices());
-  const tarotServices = (services ?? []).filter(
+  // /api/services is paginated -> `{ data, meta }`, never a bare array.
+  const { items: services, loading, error } = useApiList<any>(() => api.getServices());
+  const tarotServices = services.filter(
     (s: any) => s.category === "Tarot" || (s.type || "").toLowerCase() === "tarot"
   );
   return (

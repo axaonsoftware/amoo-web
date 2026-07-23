@@ -48,6 +48,7 @@ async function seed() {
   }
 
   // Experts
+  const expertHash = await bcrypt.hash("expert123", 12);
   const experts = [
     ["Ast. Neha Sharma", "neha@amooguru.com", "Vedic Astrology", "vedic", 4.8],
     ["Ast. Pooja Mehta", "pooja@amooguru.com", "Tarot Expert", "tarot", 4.7],
@@ -56,9 +57,9 @@ async function seed() {
   ];
   for (const e of experts) {
     await pool.query(
-      `INSERT INTO experts (name, email, role_title, specialties, rating)
-       VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE name = VALUES(name)`,
-      e
+      `INSERT INTO experts (name, email, password_hash, verified, role_title, specialties, rating)
+       VALUES (?,?,?,1,?,?,?) ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), verified = 1`,
+      [e[0], e[1], expertHash, e[2], e[3], e[4]]
     );
   }
 
@@ -202,8 +203,9 @@ async function seed() {
   }
 
   logger.info("Seed complete.");
-  logger.info("Admin login: admin@amooguru.com / admin123");
-  logger.info("User  login: vedika.desai@gmail.com / user123");
+  logger.info("Admin login:   admin@amooguru.com / admin123");
+  logger.info("User login:    vedika.desai@gmail.com / user123");
+  logger.info("Expert login:  neha@amooguru.com / expert123");
 }
 
 (async () => {

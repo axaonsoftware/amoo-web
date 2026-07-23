@@ -17,23 +17,51 @@ import {
   Ban,
 } from "lucide-react";
 import { roleStyles, statusStyles, type RoleKey, type StatusKey } from "./data";
-import { api } from "../../../lib/api";
+import { api, qs, unwrapList, unwrapMeta } from "../../../lib/api";
+import { EmptyRow, ErrorRow, TableSkeletonRows } from "../../components/states";
+import { useToast } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import { sanitize } from "../../../lib/sanitize";
 
-const tabs = [
-  { label: "All Users", active: true },
-  { label: "Active Users" },
-  { label: "New Users" },
-  { label: "Blocked Users" },
-  { label: "Verified Users" },
+// Each tab is a preset over the filters `GET /api/users` actually parses:
+// search, status, role, verified, date_from, date_to, page, limit|pageSize.
+// These were previously decorative — `active` was hardcoded on the first tab
+// and clicking any of them did nothing.
+type Filters = { status: string; role: string; verified: string; date_from: string };
+const NO_FILTERS: Filters = { status: "", role: "", verified: "", date_from: "" };
+
+function daysAgo(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+const tabs: { label: string; filters: () => Filters }[] = [
+  { label: "All Users", filters: () => ({ ...NO_FILTERS }) },
+  { label: "Active Users", filters: () => ({ ...NO_FILTERS, status: "active" }) },
+  { label: "New Users", filters: () => ({ ...NO_FILTERS, date_from: daysAgo(30) }) },
+  { label: "Blocked Users", filters: () => ({ ...NO_FILTERS, status: "blocked" }) },
+  { label: "Verified Users", filters: () => ({ ...NO_FILTERS, verified: "1" }) },
 ];
 
-const selects = [
-  { caption: "Role", value: "All Roles", w: "w-[124px]" },
-  { caption: "Status", value: "All Status", w: "w-[124px]" },
-  { caption: "Verification", value: "All", w: "w-[124px]" },
+// users.role ENUM('free','premium','consultant'); users.status ENUM('active','blocked','pending')
+const ROLE_OPTIONS = [
+  { label: "All Roles", value: "" },
+  { label: "Free", value: "free" },
+  { label: "Premium", value: "premium" },
+  { label: "Consultant", value: "consultant" },
+];
+const STATUS_OPTIONS = [
+  { label: "All Status", value: "" },
+  { label: "Active", value: "active" },
+  { label: "Blocked", value: "blocked" },
+  { label: "Pending", value: "pending" },
+];
+const VERIFIED_OPTIONS = [
+  { label: "All", value: "" },
+  { label: "Verified", value: "1" },
+  { label: "Unverified", value: "0" },
 ];
 
 function fmtDate(iso: string) {
@@ -49,8 +77,9 @@ export default function UsersPanel() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState("");
-  const [role, setRole] = useState("");
-  const [status, setStatus] = useState("");
+  const [activeTab, setActiveTab] = useState(0);
+  const [{ status, role, verified, date_from: dateFrom }, setFilters] =
+    useState<Filters>(NO_FILTERS);
   const [list, setList] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -62,7 +91,7 @@ export default function UsersPanel() {
   const [editSaving, setEditSaving] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; type: "delete" | "block"; user: any }>({ open: false, type: "delete", user: null });
   const [confirmSaving, setConfirmSaving] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; kind: "success" | "error" } | null>(null);
+  const { showToast, Toast } = useToast();
 
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -73,71 +102,72 @@ export default function UsersPanel() {
     timerRef.current = setTimeout(() => setDebouncedSearch(val), 300);
   }, []);
 
-  const buildQuery = useCallback(() => {
-    const params = new URLSearchParams();
-    params.set("page", String(page));
-    params.set("pageSize", String(limit));
-    if (debouncedSearch) params.set("search", debouncedSearch);
-    if (role) params.set("role", role);
-    if (status) params.set("status", status);
-    return params.toString();
-  }, [page, limit, debouncedSearch, role, status]);
+  const buildQuery = useCallback(
+    () =>
+      // `qs` emits the leading "?" — without it the path became
+      // "/api/userspage=1&pageSize=10", which 404s. Every load of this table
+      // was failing before this fix.
+      qs({
+        page,
+        pageSize: limit,
+        search: debouncedSearch,
+        role,
+        status,
+        verified,
+        date_from: dateFrom,
+      }),
+    [page, limit, debouncedSearch, role, status, verified, dateFrom]
+  );
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     setError("");
     api.admin
       .getUsers(buildQuery())
-      .then((data: any) => {
-        const items = data?.data ?? data;
-        if (data?.meta) setMeta({ total: data.meta.total, totalPages: data.meta.totalPages });
-        if (Array.isArray(items)) {
-          setList(
-            items.map((u: any) => {
-              const { date, time } = fmtDate(u.created_at);
-              return {
-                id: u.id,
-                name: u.name,
-                avatar: u.avatar || "",
-                verified: !!u.verified,
-                email: u.email,
-                phone: u.phone,
-                role: u.role,
-                status: u.status,
-                date,
-                time,
-              };
-            })
-          );
-        }
+      .then((res: unknown) => {
+        const meta = unwrapMeta(res);
+        if (meta) setMeta({ total: meta.total, totalPages: meta.totalPages });
+        setList(
+          unwrapList<any>(res).map((u: any) => {
+            const { date, time } = fmtDate(u.created_at);
+            return {
+              id: u.id,
+              name: u.name,
+              avatar: u.avatar || "",
+              verified: !!u.verified,
+              email: u.email,
+              phone: u.phone,
+              role: u.role,
+              status: u.status,
+              date,
+              time,
+            };
+          })
+        );
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
-  }, [page, limit, debouncedSearch, role, status]);
+  }, [buildQuery]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, role, status]);
+  }, [debouncedSearch, role, status, verified, dateFrom]);
 
-  const showToast = (msg: string, kind: "success" | "error" = "success") => {
-    setToast({ msg, kind });
-    setTimeout(() => setToast(null), 3000);
+  const applyTab = (index: number) => {
+    setActiveTab(index);
+    setFilters(tabs[index].filters());
+  };
+  const setFilter = (key: keyof Filters, value: string) => {
+    // Choosing a dropdown value leaves the tab presets behind.
+    setActiveTab(0);
+    setFilters((f) => ({ ...f, [key]: value }));
   };
 
-  const reload = () => {
-    setLoading(true);
-    api.admin.getUsers(buildQuery()).then((data: any) => {
-      const items = data?.data ?? data;
-      if (data?.meta) setMeta({ total: data.meta.total, totalPages: data.meta.totalPages });
-      if (Array.isArray(items)) {
-        setList(items.map((u: any) => {
-          const { date, time } = fmtDate(u.created_at);
-          return { id: u.id, name: u.name, avatar: u.avatar || "", verified: !!u.verified, email: u.email, phone: u.phone, role: u.role, status: u.status, date, time };
-        }));
-      }
-    }).catch(() => {}).finally(() => setLoading(false));
-  };
-
+  const reload = load;
   const userRows = list;
   const totalPages = meta.totalPages || 1;
   const total = meta.total;
@@ -160,24 +190,25 @@ export default function UsersPanel() {
     return pages;
   };
 
-  if (loading && userRows.length === 0)
-    return (
-      <div className="flex justify-center py-10">
-        <Loader2 className="h-6 w-6 animate-spin text-[#6D28D9]" />
-      </div>
-    );
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
+  const hasFilters = Boolean(debouncedSearch || status || role || verified || dateFrom);
+  const clearFilters = () => {
+    setSearch("");
+    setDebouncedSearch("");
+    applyTab(0);
+  };
 
   return (
     <section className="rounded-[14px] border border-[#EDECF3] bg-white shadow-[0_1px_2px_rgba(24,20,40,.04)]">
       {/* Tabs */}
       <div className="flex items-center gap-6 overflow-x-auto border-b border-[#EFEEF4] px-5">
-        {tabs.map((t) => (
+        {tabs.map((t, i) => (
           <button
             key={t.label}
             type="button"
+            onClick={() => applyTab(i)}
+            aria-pressed={activeTab === i}
             className={`flex shrink-0 items-center gap-[6px] whitespace-nowrap border-b-2 py-[14px] text-[12.5px] ${
-              t.active
+              activeTab === i
                 ? "border-[#6D28D9] font-semibold text-[#6D28D9]"
                 : "border-transparent font-normal text-[#7C7890] hover:text-[#2E2A3B]"
             }`}
@@ -200,24 +231,43 @@ export default function UsersPanel() {
           <Search size={15} className="shrink-0 text-[#8B879C]" />
         </div>
 
-        {selects.map((s) => (
+        {(
+          [
+            { caption: "Role", key: "role" as const, value: role, options: ROLE_OPTIONS },
+            { caption: "Status", key: "status" as const, value: status, options: STATUS_OPTIONS },
+            { caption: "Verification", key: "verified" as const, value: verified, options: VERIFIED_OPTIONS },
+          ]
+        ).map((s) => (
           <div key={s.caption}>
-            <span className="mb-[4px] block text-[10px] text-[#8B879C]">
+            <label htmlFor={`filter-${s.key}`} className="mb-[4px] block text-[10px] text-[#8B879C]">
               {s.caption}
-            </span>
-            <button
-              type="button"
-              className={`flex h-[38px] ${s.w} items-center justify-between rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[9px] text-[11px] text-[#2E2A3B]`}
-            >
-              {s.value}
-              <ChevronDown size={14} className="shrink-0 text-[#8B879C]" />
-            </button>
+            </label>
+            <div className="relative">
+              <select
+                id={`filter-${s.key}`}
+                value={s.value}
+                onChange={(e) => setFilter(s.key, e.target.value)}
+                className="flex h-[38px] w-[124px] appearance-none items-center rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[26px] text-[11px] text-[#2E2A3B] outline-none"
+              >
+                {s.options.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={14}
+                className="pointer-events-none absolute right-[9px] top-1/2 -translate-y-1/2 text-[#8B879C]"
+              />
+            </div>
           </div>
         ))}
 
         <button
           type="button"
-          className="inline-flex h-[38px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] bg-white px-[12px] text-[11px] font-medium text-[#4A4658]"
+          onClick={clearFilters}
+          disabled={!hasFilters}
+          className="inline-flex h-[38px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] bg-white px-[12px] text-[11px] font-medium text-[#4A4658] disabled:opacity-50"
         >
           <SlidersHorizontal size={14} className="text-[#6E6A80]" />
           Filters
@@ -251,8 +301,23 @@ export default function UsersPanel() {
           </thead>
 
           <tbody>
+            {error ? (
+              <ErrorRow colSpan={7} message={error} onRetry={load} />
+            ) : loading && userRows.length === 0 ? (
+              <TableSkeletonRows rows={limit > 10 ? 10 : limit} cols={7} />
+            ) : userRows.length === 0 ? (
+              <EmptyRow
+                colSpan={7}
+                title={hasFilters ? "No users match these filters" : "No users yet"}
+                message={
+                  hasFilters
+                    ? "Try clearing the search or filters to widen the results."
+                    : "Registered users will appear here."
+                }
+              />
+            ) : null}
             {userRows.map((u) => {
-              const role = roleStyles[u.role as RoleKey] ?? {
+              const roleStyle = roleStyles[u.role as RoleKey] ?? {
                 label: u.role ?? "—",
                 bg: "bg-[#F5F4F9]",
                 text: "text-[#6B6480]",
@@ -328,9 +393,9 @@ export default function UsersPanel() {
 
                   <td className="py-[11px] pr-3">
                     <span
-                      className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${role.bg} ${role.text}`}
+                      className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${roleStyle.bg} ${roleStyle.text}`}
                     >
-                      {role.label}
+                      {roleStyle.label}
                     </span>
                   </td>
 
@@ -503,11 +568,7 @@ export default function UsersPanel() {
         saving={confirmSaving}
       />
 
-      {toast && (
-        <div className={`fixed right-4 top-4 z-[999] rounded-[8px] px-4 py-3 text-[12px] font-medium text-white shadow-lg ${toast.kind === "success" ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}>
-          {toast.msg}
-        </div>
-      )}
+      <Toast />
     </section>
   );
 }

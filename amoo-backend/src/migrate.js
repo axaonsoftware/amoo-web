@@ -64,6 +64,13 @@ const logger = require("./utils/logger");
       ["admins", "failed_attempts", "INT NOT NULL DEFAULT 0"],
       ["admins", "locked_until", "DATETIME"],
       ["experts", "deleted_at", "DATETIME"],
+      ["experts", "password_hash", "VARCHAR(255)"],
+      ["experts", "token_version", "INT NOT NULL DEFAULT 0"],
+      ["experts", "verified", "TINYINT(1) NOT NULL DEFAULT 0"],
+      ["experts", "verify_token", "VARCHAR(64)"],
+      ["experts", "verify_token_expires", "DATETIME"],
+      ["experts", "failed_attempts", "INT NOT NULL DEFAULT 0"],
+      ["experts", "locked_until", "DATETIME"],
       ["services", "deleted_at", "DATETIME"],
       ["packages", "deleted_at", "DATETIME"],
       ["testimonials", "deleted_at", "DATETIME"],
@@ -81,6 +88,12 @@ const logger = require("./utils/logger");
       ["users", "dob", "DATE"],
       ["users", "tob", "TIME"],
       ["users", "birthplace", "VARCHAR(255)"],
+      ["users", "gender", "VARCHAR(20)"],
+      ["users", "language", "VARCHAR(40)"],
+      ["users", "country", "VARCHAR(80)"],
+      ["users", "state", "VARCHAR(80)"],
+      ["users", "city", "VARCHAR(80)"],
+      ["users", "address", "VARCHAR(255)"],
       ["audit_log", "ip_address", "VARCHAR(45)"],
       ["audit_log", "user_agent", "VARCHAR(512)"],
       ["audit_log", "page_or_route", "VARCHAR(255)"],
@@ -92,6 +105,63 @@ const logger = require("./utils/logger");
       );
       if (existing.length) continue;
       await conn.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+    }
+
+    // ── Chat participant model (migration 006) ────────────────────────────
+    // The original `conversations` modelled both sides as `users` rows, but the
+    // route passes an `experts.id` as the participant. Those are separate id
+    // sequences, so every insert either violated the FK or silently attached the
+    // thread to an unrelated user. Rebuild as (user_id, expert_id).
+    //
+    // Rows in the old table are, by construction, either absent or pointing at
+    // the wrong person — so they are never migrated. If any exist we stop and
+    // ask for a human decision rather than destroy data unattended.
+    const [convCols] = await conn.query(
+      "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'conversations'"
+    );
+    const hasLegacyChat = convCols.some((c) => c.COLUMN_NAME === "user_a");
+    if (hasLegacyChat) {
+      const [[{ n }]] = await conn.query("SELECT COUNT(*) AS n FROM conversations");
+      if (n > 0) {
+        logger.error(
+          `Refusing to rebuild 'conversations': ${n} legacy row(s) present. ` +
+          "Those rows reference users.id where an experts.id was intended and cannot be " +
+          "reliably remapped. Inspect them, then drop the tables manually and re-run: " +
+          "DROP TABLE messages; DROP TABLE conversations;"
+        );
+        process.exit(1);
+      }
+      logger.info("Rebuilding empty legacy chat tables (user_a/user_b -> user_id/expert_id)...");
+      await conn.query("DROP TABLE IF EXISTS messages");
+      await conn.query("DROP TABLE IF EXISTS conversations");
+      await conn.query(`
+        CREATE TABLE conversations (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT NOT NULL,
+          expert_id INT NOT NULL,
+          last_message_at DATETIME,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+          FOREIGN KEY (expert_id) REFERENCES experts(id) ON DELETE CASCADE,
+          UNIQUE KEY uniq_conversation_pair (user_id, expert_id),
+          INDEX idx_conversations_user (user_id),
+          INDEX idx_conversations_expert (expert_id),
+          INDEX idx_conversations_last_message (last_message_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+      await conn.query(`
+        CREATE TABLE messages (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          conversation_id INT NOT NULL,
+          sender_type ENUM('user','expert','admin') NOT NULL,
+          sender_id INT NOT NULL,
+          content TEXT NOT NULL,
+          is_read TINYINT(1) NOT NULL DEFAULT 0,
+          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
+          INDEX idx_messages_conversation (conversation_id, created_at),
+          INDEX idx_messages_unread (conversation_id, is_read, sender_type)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+      logger.info("Chat tables rebuilt.");
     }
 
     // Extend the subscriptions `status` ENUM to allow 'pending-payment'

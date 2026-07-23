@@ -11,7 +11,7 @@ export type User = {
   phone?: string;
   role?: string;
   avatar?: string;
-  kind: "user" | "admin";
+  kind: "user" | "admin" | "expert";
   verified?: boolean;
 };
 
@@ -19,6 +19,7 @@ type AuthContextType = {
   user: User | null;
   loading: boolean;
   isAdmin: boolean;
+  isExpert: boolean;
   isAuthenticated: boolean;
   loginUser: (userData: User) => void;
   logout: () => void;
@@ -54,14 +55,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(() => {
+    const wasExpert = user?.kind === "expert";
     api.logout().catch(() => {});
     setUser(null);
-    router.push("/user-login");
-  }, [router]);
+    router.push(wasExpert ? "/astrologer-login" : "/user-login");
+  }, [router, user]);
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAdmin: user?.kind === "admin", isAuthenticated: !!user, loginUser, logout }}
+      value={{ user, loading, isAdmin: user?.kind === "admin", isExpert: user?.kind === "expert", isAuthenticated: !!user, loginUser, logout }}
     >
       {children}
     </AuthContext.Provider>
@@ -101,5 +103,25 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
 
   if (loading) return null;
   if (!isAdmin) return null;
+  return <>{children}</>;
+}
+
+export function RequireExpert({ children, fallbackPath = "/" }: { children: React.ReactNode; fallbackPath?: string }) {
+  const { isExpert, isAdmin, loading, isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (loading) return;
+    if (!isAuthenticated) {
+      router.replace("/astrologer-login");
+    } else if (!isExpert && !isAdmin) {
+      // Regular users hitting an expert-only route get sent home
+      router.replace(fallbackPath);
+    }
+  }, [loading, isAuthenticated, isExpert, isAdmin, router, fallbackPath]);
+
+  if (loading) return null;
+  if (!isAuthenticated) return null;
+  if (!isExpert && !isAdmin) return null;
   return <>{children}</>;
 }

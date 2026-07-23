@@ -53,6 +53,7 @@ const STATIC_CATEGORIES = [
 ];
 
 type Service = {
+  id: number;
   name: string;
   desc: string;
   price: string;
@@ -162,7 +163,7 @@ export default function SelectServicePage() {
   useEffect(() => {
     setLoadingServices(true);
     setServicesError("");
-    api.getServices().then((res: any) => {
+    api.getServices("?pageSize=100").then((res: any) => {
       const items = res?.data ?? [];
       if (Array.isArray(items) && items.length) {
         setApiServices(items);
@@ -192,6 +193,7 @@ export default function SelectServicePage() {
       return apiServices.map((s: any) => {
         const v = CATEGORY_VISUALS[s.category] || CATEGORY_VISUALS["Spiritual Guidance"];
         return {
+          id: Number(s.id),
           name: s.name,
           desc: CATEGORY_DESCS[s.category] || s.description || "",
           price: `₹${Number(s.price).toLocaleString("en-IN")}`,
@@ -420,7 +422,7 @@ export default function SelectServicePage() {
                     const isSelected = selectedService === s.name;
                     return (
                       <article
-                        key={s.name}
+                        key={s.id}
                         onClick={() => setSelectedService(s.name)}
                         className={`relative flex h-full cursor-pointer flex-col items-center rounded-2xl border bg-white px-3.5 pb-4 pt-5 text-center shadow-[0_1px_2px_rgba(75,37,131,0.04)] transition-all ${
                           isSelected

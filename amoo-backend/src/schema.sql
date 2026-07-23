@@ -1,7 +1,21 @@
 -- ============================================================
 --  Amoo Guru — consolidated production schema
---  Run once:  mysql -u root -p < src/schema.sql
---  Idempotent: uses CREATE TABLE IF NOT EXISTS and IF NOT EXISTS indexes.
+--
+--  PREFERRED:  npm run migrate
+--    Applies this file AND the incremental column/index/structural steps in
+--    src/migrate.js, idempotently, against a new OR an existing database.
+--
+--  Direct use:  mysql -u root -p < src/schema.sql
+--    Only valid for a brand-new database. CREATE TABLE IF NOT EXISTS does not
+--    alter an existing table, so running this against a database created by an
+--    earlier version silently leaves it missing newer columns.
+--
+--  This file is now self-sufficient for a fresh install: it previously omitted
+--  experts' auth columns, users.dob/tob/birthplace, payments.refund_id /
+--  refunded_at and audit_log's request-context columns, all of which the
+--  application writes to — so a database built from this file alone crashed on
+--  expert login, profile saves, refunds and every audit write.
+--  Idempotent: uses CREATE TABLE IF NOT EXISTS.
 -- ============================================================
 
 CREATE DATABASE IF NOT EXISTS amoo_db
@@ -21,6 +35,19 @@ CREATE TABLE IF NOT EXISTS users (
   avatar          VARCHAR(512),
   role            ENUM('free','premium','consultant') NOT NULL DEFAULT 'free',
   status          ENUM('active','blocked','pending') NOT NULL DEFAULT 'pending',
+  -- Birth details, used by the report generators (kundali/numerology).
+  dob             DATE,
+  tob             TIME,
+  birthplace      VARCHAR(255),
+  -- Profile fields surfaced by the account-profile form. Free-text rather than
+  -- ENUMs: the UI offers a fixed list today, but adding an option must not
+  -- require a schema migration.
+  gender          VARCHAR(20),
+  language        VARCHAR(40),
+  country         VARCHAR(80),
+  state           VARCHAR(80),
+  city            VARCHAR(80),
+  address         VARCHAR(255),
   verified        TINYINT(1) NOT NULL DEFAULT 0,
   token_version   INT NOT NULL DEFAULT 0,
   verify_token    VARCHAR(64),
@@ -58,6 +85,17 @@ CREATE TABLE IF NOT EXISTS experts (
   email         VARCHAR(160) NOT NULL UNIQUE,
   phone         VARCHAR(20),
   avatar        VARCHAR(512),
+  -- Auth columns. Experts sign in at /astrologer-login; an admin sets the
+  -- password via POST /api/experts/:id/set-password. Previously these lived
+  -- only in migrations/004, so a database built from this file alone had no
+  -- experts.password_hash and every expert login crashed.
+  password_hash VARCHAR(255),
+  token_version INT NOT NULL DEFAULT 0,
+  verified      TINYINT(1) NOT NULL DEFAULT 0,
+  verify_token  VARCHAR(64),
+  verify_token_expires DATETIME,
+  failed_attempts INT NOT NULL DEFAULT 0,
+  locked_until  DATETIME,
   role_title    VARCHAR(120),
   bio           TEXT,
   specialties   VARCHAR(255),
@@ -181,6 +219,9 @@ CREATE TABLE IF NOT EXISTS payments (
   status        ENUM('success','pending','failed','refunded') NOT NULL DEFAULT 'pending',
   txn_id        VARCHAR(120),
   gateway_order_id VARCHAR(255),
+  -- Refund bookkeeping, written by POST /api/payments/:id/refund.
+  refund_id     VARCHAR(255),
+  refunded_at   DATETIME,
   created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE SET NULL,
   FOREIGN KEY (subscription_id) REFERENCES subscriptions(id) ON DELETE SET NULL,
@@ -188,7 +229,10 @@ CREATE TABLE IF NOT EXISTS payments (
   INDEX idx_payments_booking_id (booking_id),
   INDEX idx_payments_user_id (user_id),
   INDEX idx_payments_status (status),
-  INDEX idx_payments_txn_id (txn_id)
+  INDEX idx_payments_txn_id (txn_id),
+  -- POST /api/payments/verify and the gateway webhook both look a payment up by
+  -- this column; without an index each settlement was a full table scan.
+  INDEX idx_payments_gateway_order (gateway_order_id)
 );
 
 -- --------------------------------------------------------
@@ -274,30 +318,41 @@ CREATE TABLE IF NOT EXISTS reports (
 -- --------------------------------------------------------
 -- Conversations & Messages (chat)
 -- --------------------------------------------------------
+-- A conversation is explicitly (customer, expert) — the only pairing
+-- POST /api/chat/conversations has ever allowed. It was previously modelled as
+-- two `users` rows, but the route passes an `experts.id` as the second
+-- participant, and those are separate id sequences: every insert either
+-- violated the FK or attached the thread to an unrelated user who happened to
+-- share the number. See migrations/006_fix_chat_participants.sql.
 CREATE TABLE IF NOT EXISTS conversations (
   id               INT AUTO_INCREMENT PRIMARY KEY,
-  user_a           INT NOT NULL,
-  user_b           INT NOT NULL,
+  user_id          INT NOT NULL,
+  expert_id        INT NOT NULL,
   last_message_at  DATETIME,
   created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_a) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_b) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_conversations_user_a (user_a),
-  INDEX idx_conversations_user_b (user_b),
+  FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+  FOREIGN KEY (expert_id) REFERENCES experts(id) ON DELETE CASCADE,
+  -- Makes "start or resume a conversation" idempotent without a lock.
+  UNIQUE KEY uniq_conversation_pair (user_id, expert_id),
+  INDEX idx_conversations_user (user_id),
+  INDEX idx_conversations_expert (expert_id),
   INDEX idx_conversations_last_message (last_message_at)
 );
 
+-- sender_id has no FK: the sender may live in `users`, `experts` or `admins`,
+-- which a single foreign key cannot express. The (sender_type, sender_id) pair
+-- is validated in the route before insert.
 CREATE TABLE IF NOT EXISTS messages (
   id               INT AUTO_INCREMENT PRIMARY KEY,
   conversation_id  INT NOT NULL,
+  sender_type      ENUM('user','expert','admin') NOT NULL,
   sender_id        INT NOT NULL,
   content          TEXT NOT NULL,
   is_read          TINYINT(1) NOT NULL DEFAULT 0,
   created_at       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-  FOREIGN KEY (sender_id)        REFERENCES users(id)        ON DELETE CASCADE,
-  INDEX idx_messages_conversation_id (conversation_id),
-  INDEX idx_messages_sender_id (sender_id)
+  INDEX idx_messages_conversation (conversation_id, created_at),
+  INDEX idx_messages_unread (conversation_id, is_read, sender_type)
 );
 
 -- --------------------------------------------------------
@@ -429,6 +484,29 @@ CREATE TABLE IF NOT EXISTS faqs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
+-- Webhook event ledger (payment gateway idempotency)
+--
+-- Deduplication used to be done by scanning audit_log with
+-- `meta->>'$.idempotency_key' = ?`, which has no index (a JSON path expression
+-- cannot use one without a generated column) — a full table scan on every
+-- webhook, against a table that grows forever. Worse, the audit write was
+-- fire-and-forget, so two concurrent retries could both find nothing and both
+-- settle the payment.
+--
+-- The UNIQUE key here makes the check atomic: the second INSERT fails with
+-- ER_DUP_ENTRY and that caller stops, with no read-then-write race.
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id             INT AUTO_INCREMENT PRIMARY KEY,
+  idempotency_key VARCHAR(255) NOT NULL,
+  event          VARCHAR(120),
+  payment_id     INT,
+  received_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_webhook_idempotency (idempotency_key),
+  INDEX idx_webhook_received (received_at)
+);
+
+-- --------------------------------------------------------
 -- Audit log
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS audit_log (
@@ -439,6 +517,12 @@ CREATE TABLE IF NOT EXISTS audit_log (
   entity      VARCHAR(60),
   entity_id   INT,
   meta        JSON,
+  -- Request context captured by utils/audit.js. These were written by the code
+  -- but existed only in migrate.js, so a database built from this file alone
+  -- failed every audit insert with "Unknown column 'ip_address'".
+  ip_address  VARCHAR(45),
+  user_agent  VARCHAR(512),
+  page_or_route VARCHAR(255),
   created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_audit_created (created_at),
   INDEX idx_audit_actor (actor_id, actor_type),

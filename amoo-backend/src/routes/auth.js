@@ -9,7 +9,7 @@ const {
   verifyRefreshToken,
   authRequired,
 } = require("../middleware/auth");
-const { asyncHandler, HttpError, genOtp } = require("../utils/helpers");
+const { asyncHandler, HttpError, genOtp, timingSafeEqualStr } = require("../utils/helpers");
 const { validate, schemas } = require("../middleware/validate");
 const { ok, created, raw, fail } = require("../utils/response");
 const env = require("../config/env");
@@ -48,8 +48,29 @@ function publicUser(u) {
   };
 }
 
+function publicExpert(u) {
+  return {
+    id: u.id,
+    name: u.name,
+    email: u.email,
+    phone: u.phone,
+    avatar: u.avatar,
+    role_title: u.role_title,
+    specialties: u.specialties,
+    verified: !!u.verified,
+    created_at: u.created_at,
+  };
+}
+
 function issueTokens(user) {
   const payload = { id: user.id, kind: "user", tokenVersion: user.token_version || 0 };
+  const access = signAccessToken(payload);
+  const refresh = signRefreshToken(payload);
+  return { access, refresh };
+}
+
+function issueExpertTokens(expert) {
+  const payload = { id: expert.id, kind: "expert", tokenVersion: expert.token_version || 0 };
   const access = signAccessToken(payload);
   const refresh = signRefreshToken(payload);
   return { access, refresh };
@@ -176,6 +197,31 @@ router.post(
   })
 );
 
+// POST /api/auth/expert/login
+router.post(
+  "/expert/login",
+  validate("expertLogin"),
+  asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    const [rows] = await pool.query("SELECT * FROM experts WHERE email = ? AND deleted_at IS NULL", [email]);
+    const expert = rows[0];
+    if (!expert || !expert.password_hash) throw new HttpError(401, "Invalid credentials");
+    if (expert.status !== "active") throw new HttpError(403, "Account is not active");
+
+    await checkLockout("experts", expert.id);
+    const okPw = await bcrypt.compare(password, expert.password_hash);
+    if (!okPw) {
+      await recordFailedAttempt("experts", expert.id);
+      throw new HttpError(401, "Invalid credentials");
+    }
+    await resetFailedAttempts("experts", expert.id);
+
+    const { access, refresh } = issueExpertTokens(expert);
+    setAuthCookies(res, access, refresh);
+    raw(res, 200, { token: access, expert: publicExpert(expert) });
+  })
+);
+
 // POST /api/auth/refresh  (rotate refresh -> new access+refresh)
 router.post(
   "/refresh",
@@ -189,7 +235,7 @@ router.post(
     } catch (e) {
       throw new HttpError(401, "Invalid or expired refresh token");
     }
-    const table = payload.kind === "admin" ? "admins" : "users";
+    const table = payload.kind === "admin" ? "admins" : payload.kind === "expert" ? "experts" : "users";
     const [rows] = await pool.query(`SELECT id, token_version FROM ${table} WHERE id = ?`, [payload.id]);
     if (!rows.length) throw new HttpError(401, "Account no longer exists");
     if (rows[0].token_version !== payload.tokenVersion) {
@@ -218,7 +264,7 @@ router.post(
   "/logout-all",
   authRequired,
   asyncHandler(async (req, res) => {
-    const table = req.user.kind === "admin" ? "admins" : "users";
+    const table = req.user.kind === "admin" ? "admins" : req.user.kind === "expert" ? "experts" : "users";
     await pool.query(`UPDATE ${table} SET token_version = token_version + 1 WHERE id = ?`, [req.user.id]);
     clearAuthCookies(res);
     req.audit("logout-all", req.user.kind, req.user.id);
@@ -259,7 +305,9 @@ router.post(
     const user = rows[0];
     if (!user) throw new HttpError(404, "Account not found");
     if (user.verified) return ok(res, { verified: true, message: "Already verified" });
-    if (!user.verify_token || user.verify_token !== token) throw new HttpError(400, "Invalid verification token");
+    if (!user.verify_token || !timingSafeEqualStr(user.verify_token, token)) {
+      throw new HttpError(400, "Invalid verification token");
+    }
     if (user.verify_token_expires && new Date(user.verify_token_expires) < new Date()) {
       throw new HttpError(400, "Verification token expired");
     }
@@ -293,7 +341,10 @@ router.post(
       "UPDATE users SET verify_token = ?, verify_token_expires = ? WHERE id = ?",
       [token, expires, user.id]
     );
-    const link = `${env.appUrl}/verify-email?email=${encodeURIComponent(user.email)}&token=${token}`;
+    // The /verify-email page is served by the Next.js frontend, not this API.
+    // Building it on env.appUrl produced a link to the API origin, where the
+    // path does not exist — every verification email was a dead 404.
+    const link = `${env.clientUrl}/verify-email?email=${encodeURIComponent(user.email)}&token=${token}`;
     await sendMail({
       to: user.email,
       subject: "Amoo Guru — Verify your email",
@@ -340,15 +391,34 @@ router.post(
     const { email, otp, password } = req.body;
     const [rows] = await pool.query("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
     const user = rows[0];
-    if (!user || !user.reset_otp || user.reset_otp !== otp) throw new HttpError(400, "Invalid OTP");
-    if (new Date(user.reset_otp_expires) < new Date()) throw new HttpError(400, "OTP expired");
+    // Compare in constant time so the response duration can't be used to
+    // brute-force the OTP digit by digit.
+    if (!user || !user.reset_otp || !timingSafeEqualStr(user.reset_otp, otp)) {
+      throw new HttpError(400, "Invalid OTP");
+    }
+    if (!user.reset_otp_expires || new Date(user.reset_otp_expires) < new Date()) {
+      throw new HttpError(400, "OTP expired");
+    }
 
     const hash = await bcrypt.hash(password, 12);
+    // A reset is the recovery path after a compromise, so every existing
+    // session must die with it. Without the token_version bump the attacker's
+    // refresh token stays valid for its full 30-day lifetime and they simply
+    // mint a new access token — the reset would lock out the owner, not the
+    // attacker. /change-password already did this; /reset-password did not.
+    // failed_attempts/locked_until are cleared too, so a user who reset
+    // *because* they were locked out can actually log back in.
     await pool.query(
-      "UPDATE users SET password_hash = ?, reset_otp = NULL, reset_otp_expires = NULL WHERE id = ?",
+      `UPDATE users
+          SET password_hash = ?, reset_otp = NULL, reset_otp_expires = NULL,
+              token_version = token_version + 1,
+              failed_attempts = 0, locked_until = NULL
+        WHERE id = ?`,
       [hash, user.id]
     );
-    ok(res, { message: "Password updated" });
+    clearAuthCookies(res);
+    req.audit("reset-password", "user", user.id);
+    ok(res, { message: "Password updated. Please login again." });
   })
 );
 
@@ -361,6 +431,11 @@ router.get(
       const [rows] = await pool.query("SELECT id, name, email, role FROM admins WHERE id = ?", [req.user.id]);
       if (!rows.length) throw new HttpError(404, "Admin not found");
       return ok(res, { kind: "admin", data: rows[0] });
+    }
+    if (req.user.kind === "expert") {
+      const [rows] = await pool.query("SELECT * FROM experts WHERE id = ? AND deleted_at IS NULL", [req.user.id]);
+      if (!rows.length) throw new HttpError(404, "Expert not found");
+      return ok(res, { kind: "expert", data: publicExpert(rows[0]) });
     }
     const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [req.user.id]);
     if (!rows.length) throw new HttpError(404, "User not found");

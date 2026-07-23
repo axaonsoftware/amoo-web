@@ -6,6 +6,7 @@ const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, parsePagination } = require("../utils/response");
 const { sendNotificationEmail } = require("../services/email");
+const logger = require("../utils/logger");
 
 // GET /api/notifications (own + broadcast)
 router.get(
@@ -104,28 +105,35 @@ router.post(
     // Fire-and-forget: send email notification
     (async () => {
       try {
-        const emails = [];
         if (user_id) {
-          // Targeted — fetch that user's email
+          // Targeted — one recipient, addressed normally.
           const [[u]] = await pool.query(
             "SELECT email FROM users WHERE id = ? AND deleted_at IS NULL",
             [user_id]
           );
-          if (u?.email) emails.push(u.email);
-        } else {
-          // Broadcast — send to all verified users
-          const [rows] = await pool.query(
-            "SELECT email FROM users WHERE verified = 1 AND deleted_at IS NULL AND email IS NOT NULL AND email != ''"
-          );
-          for (const r of rows) {
-            if (r.email) emails.push(r.email);
-          }
+          if (u?.email) await sendNotificationEmail(u.email, title, message);
+          return;
         }
+
+        // Broadcast to all verified users.
+        //
+        // PRIVACY: these used to be joined into a single To: header, which
+        // showed every user the full address list of every other user — a
+        // personal-data breach on the first broadcast. An array routes through
+        // sendBulk(), which chunks the list into Bcc batches instead.
+        const [rows] = await pool.query(
+          "SELECT email FROM users WHERE verified = 1 AND deleted_at IS NULL AND email IS NOT NULL AND email != ''"
+        );
+        const emails = rows.map((r) => r.email).filter(Boolean);
         if (emails.length) {
-          await sendNotificationEmail(emails.join(","), title, message);
+          const result = await sendNotificationEmail(emails, title, message);
+          logger.info(
+            `[notifications] broadcast ${result?.sent ?? 0} recipient(s) in ${result?.batches ?? 0} batch(es)`
+          );
         }
       } catch (err) {
         // Email failure must never break the API response
+        logger.warn(`[notifications] email dispatch failed: ${err.message}`);
       }
     })();
 

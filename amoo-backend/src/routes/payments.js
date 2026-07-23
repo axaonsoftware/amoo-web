@@ -217,29 +217,46 @@ router.post(
       return fail(res, 400, "Invalid payment signature");
     }
 
-    // Find the payment record by gateway_order_id
-    const [p] = await pool.query(
-      "SELECT id, booking_id, subscription_id, status, amount FROM payments WHERE gateway_order_id = ?",
-      [razorpay_order_id]
-    );
-    if (!p.length) {
-      return fail(res, 404, "Payment order not found");
-    }
-    const payment = p[0];
-
-    if (payment.status === "success") {
-      return ok(res, { id: payment.id, status: "success", already_processed: true });
-    }
-
-    // Update transaction ID
-    await pool.query(
-      "UPDATE payments SET status = 'success', txn_id = ? WHERE id = ? AND status != 'success'",
-      [razorpay_payment_id, payment.id]
-    );
-
+    // Everything below runs in ONE transaction. Previously the payment row was
+    // flipped to 'success' with a bare pool.query BEFORE beginTransaction(), so
+    // if the booking/subscription update then failed, the rollback could not
+    // undo it: the customer was charged and the payment recorded as successful
+    // while the booking stayed 'pending-payment' and unpaid.
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
+
+      // Lock the payment row so two concurrent verify calls (double-click, or
+      // verify racing the webhook) cannot both pass the status check and
+      // double-activate a subscription.
+      const [p] = await conn.query(
+        "SELECT id, user_id, booking_id, subscription_id, status, amount FROM payments WHERE gateway_order_id = ? FOR UPDATE",
+        [razorpay_order_id]
+      );
+      if (!p.length) {
+        await conn.rollback();
+        return fail(res, 404, "Payment order not found");
+      }
+      const payment = p[0];
+
+      // The signature proves the gateway authorised this order, but not that
+      // the caller owns it. Without this an authenticated user who observed
+      // another customer's checkout response could settle their booking.
+      if (req.user.kind !== "admin" && payment.user_id && payment.user_id !== req.user.id) {
+        await conn.rollback();
+        return fail(res, 403, "Forbidden");
+      }
+
+      if (payment.status === "success") {
+        await conn.rollback();
+        return ok(res, { id: payment.id, status: "success", already_processed: true });
+      }
+
+      await conn.query(
+        "UPDATE payments SET status = 'success', txn_id = ? WHERE id = ? AND status != 'success'",
+        [razorpay_payment_id, payment.id]
+      );
+
       if (payment.booking_id) {
         await conn.query("UPDATE bookings SET payment = 'Paid', status = 'upcoming' WHERE id = ?", [payment.booking_id]);
       }
@@ -253,6 +270,7 @@ router.post(
           await conn.query("UPDATE users SET role = 'premium' WHERE id = ? AND role != 'premium'", [sub.user_id]);
         }
       }
+
       await conn.commit();
       req.audit("verify-payment", "payment", payment.id, { razorpay_order_id, razorpay_payment_id });
       ok(res, { id: payment.id, status: "success" });
@@ -388,11 +406,32 @@ router.post(
     const event = req.body && req.body.event;
     if (!event) return fail(res, 400, "Unknown event");
 
-    // Idempotency key: deduplicate webhook events by event+txn_id
-    const idempotencyKey = req.headers["x-idempotency-key"] || `${event}:${req.body.txn_id || req.body.id || "none"}`;
-    if (idempotencyKey) {
-      const [existing] = await pool.query("SELECT id FROM audit_log WHERE meta->>'$.idempotency_key' = ? AND action = 'webhook-received'", [idempotencyKey]);
-      if (existing.length) return res.json({ success: true, received: true, deduplicated: true });
+    // Idempotency. Gateways retry aggressively (Razorpay resends for up to 24h
+    // until it sees a 2xx), so the same event arrives repeatedly and must settle
+    // a payment exactly once.
+    //
+    // This used to scan audit_log with `meta->>'$.idempotency_key' = ?` — an
+    // unindexable JSON path expression, so a full table scan on every webhook
+    // against an ever-growing table. It was also a read-then-write race: the
+    // audit row was written fire-and-forget (never awaited), so two concurrent
+    // retries could both see nothing and both settle the payment.
+    //
+    // The UNIQUE key on webhook_events.idempotency_key makes the claim atomic:
+    // whoever inserts first proceeds, everyone else gets ER_DUP_ENTRY and stops.
+    const idempotencyKey = String(
+      req.headers["x-idempotency-key"] ||
+        `${event}:${req.body.txn_id || req.body.id || "none"}`
+    ).slice(0, 255);
+    try {
+      await pool.query(
+        "INSERT INTO webhook_events (idempotency_key, event) VALUES (?, ?)",
+        [idempotencyKey, String(event).slice(0, 120)]
+      );
+    } catch (e) {
+      if (e.code === "ER_DUP_ENTRY") {
+        return res.json({ success: true, received: true, deduplicated: true });
+      }
+      throw e;
     }
 
     if (event === "payment.captured" || event === "payment.success" || event === "order.paid") {
@@ -456,6 +495,11 @@ router.post(
             }
           }
           await conn.commit();
+          // Link the ledger row to the payment it settled, for reconciliation.
+          await pool.query(
+            "UPDATE webhook_events SET payment_id = ? WHERE idempotency_key = ?",
+            [p.id, idempotencyKey]
+          );
           req.audit("webhook-received", "payment", p.id, { idempotency_key: idempotencyKey });
         } catch (e) {
           await conn.rollback();
@@ -480,7 +524,12 @@ router.get(
          COALESCE(SUM(amount),0) AS total_revenue,
          COALESCE(SUM(CASE WHEN status = 'success' THEN amount ELSE 0 END),0) AS collected,
          COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END),0) AS pending,
-         COALESCE(SUM(CASE WHEN status = 'refunded' THEN amount ELSE 0 END),0) AS refunded
+         COALESCE(SUM(CASE WHEN status = 'refunded' THEN amount ELSE 0 END),0) AS refunded,
+         COALESCE(SUM(CASE WHEN status = 'failed' THEN amount ELSE 0 END),0) AS failed,
+         SUM(CASE WHEN status = 'success'  THEN 1 ELSE 0 END) AS success_count,
+         SUM(CASE WHEN status = 'pending'  THEN 1 ELSE 0 END) AS pending_count,
+         SUM(CASE WHEN status = 'refunded' THEN 1 ELSE 0 END) AS refunded_count,
+         SUM(CASE WHEN status = 'failed'   THEN 1 ELSE 0 END) AS failed_count
        FROM payments`
     );
     const [[refunds]] = await pool.query("SELECT COUNT(*) AS total, COALESCE(SUM(amount),0) AS amount FROM refunds WHERE status='processed'");

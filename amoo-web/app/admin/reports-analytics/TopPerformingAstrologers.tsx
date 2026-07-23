@@ -1,122 +1,132 @@
 "use client";
-import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Star, Loader2, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { Star } from "lucide-react";
 import api from "../../../lib/api";
+import { useApi } from "../../../lib/useApi";
+import { EmptyState, ErrorState, TableSkeletonRows } from "../../components/states";
+import { formatCurrency, formatNumber, initials, toNumber } from "../../../lib/format";
 
-type Expert = {
-  id?: number;
-  name?: string;
-  total_bookings?: number;
-  completed_bookings?: number;
-  total_revenue?: number;
-  revenue?: number;
-  avg_rating?: number;
-  rating?: number;
-  new_clients?: number;
-  repeat_clients?: number;
-  total_consultations?: number;
+type TopExpert = {
+  id: number;
+  name: string;
+  avatar: string | null;
+  rating: number | string | null;
+  bookings: number | string;
+  completed: number | string | null;
+  revenue: number | string;
+  clients: number | string;
 };
 
-function fmtAmount(n?: number): string {
-  if (!n) return "₹ 0";
-  return `₹ ${n.toLocaleString("en-IN")}`;
-}
+const HEADERS = ["#", "Astrologer", "Bookings", "Completed", "Revenue", "Rating", "Clients"];
 
-const fallback: Expert[] = [
-  { name: "Asha Verma", total_consultations: 286, completed_bookings: 268, total_revenue: 245780, avg_rating: 4.9, new_clients: 156, repeat_clients: 132 },
-  { name: "Meera Iyer", total_consultations: 242, completed_bookings: 231, total_revenue: 210340, avg_rating: 4.8, new_clients: 118, repeat_clients: 113 },
-  { name: "Vikram Joshi", total_consultations: 198, completed_bookings: 187, total_revenue: 178950, avg_rating: 4.8, new_clients: 94, repeat_clients: 93 },
-  { name: "Raghavendra", total_consultations: 176, completed_bookings: 165, total_revenue: 142600, avg_rating: 4.7, new_clients: 82, repeat_clients: 83 },
-  { name: "Neha Patel", total_consultations: 162, completed_bookings: 154, total_revenue: 128760, avg_rating: 4.7, new_clients: 76, repeat_clients: 78 },
-];
-
+/**
+ * Backed by `GET /api/dashboard/experts/top`, extended in this phase to also
+ * return avatar, completed, revenue and clients.
+ *
+ * The table previously declared columns for `total_consultations`,
+ * `completed_bookings`, `total_revenue`, `new_clients` and `repeat_clients` —
+ * none of which the endpoint returned — so on real data every one of them
+ * rendered 0 while a hardcoded five-row list of invented astrologers stood in
+ * whenever the response was empty. Every row also used the same hardcoded
+ * Unsplash portrait; `experts.avatar` is now used instead.
+ *
+ * GAP: new-vs-repeat client split needs first-booking-per-user attribution the
+ * schema does not record. Replaced with a real distinct-client count.
+ */
 export default function TopPerformingAstrologers() {
-  const [rows, setRows] = useState<Expert[]>(fallback);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
+  const { data, loading, error, refetch } = useApi<TopExpert[]>(() =>
     api.admin.getTopExperts(5)
-      .then((res) => {
-        if (cancelled) return;
-        const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        if (data.length > 0) setRows(data);
-      })
-      .catch((err) => { if (!cancelled) setError(err?.message || "Failed to load top astrologers"); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, []);
+  );
+
+  const rows = data ?? [];
 
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
-      <h2 className="text-[14px] font-semibold text-[#1B1630]">
-        Top Performing Astrologers
-      </h2>
+      <h2 className="text-[14px] font-semibold text-[#1B1630]">Top Performing Astrologers</h2>
 
       {error ? (
-        <div className="flex items-center gap-2 rounded-[10px] bg-red-50 p-3 text-[12px] text-red-700">
-          <AlertCircle size={16} className="shrink-0" />
-          <span>{error}</span>
-        </div>
-      ) : loading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
-        </div>
+        <ErrorState className="mt-[14px]" message={error} onRetry={refetch} />
+      ) : !loading && rows.length === 0 ? (
+        <EmptyState
+          title="No astrologers ranked yet"
+          message="Rankings appear once experts start taking bookings."
+        />
       ) : (
         <div className="mt-4 -mx-[2px] overflow-x-auto">
           <table className="w-full min-w-[560px] border-collapse">
             <thead>
               <tr className="border-y border-[#F1EFF6] bg-[#FAFAFC]">
-                {["#", "Astrologer", "Total Consultations", "Completed", "Revenue", "Rating", "New Clients", "Repeat Clients"].map((h) => (
-                  <th key={h} className="py-[9px] px-2 text-left text-[9.5px] font-semibold whitespace-nowrap text-[#8B879C]">{h}</th>
+                {HEADERS.map((h) => (
+                  <th
+                    key={h}
+                    className="whitespace-nowrap px-2 py-[9px] text-left text-[9.5px] font-semibold text-[#8B879C]"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, i) => (
-                <tr key={r.name || r.id || i} className="border-b border-[#F5F3F9]">
-                  <td className="py-[10px] pl-2 pr-2 text-[11px] text-[#8B879C]">{i + 1}</td>
-                  <td className="py-[10px] pr-2">
-                    <div className="flex items-center gap-[8px]">
-                      <Image
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
-                        alt={r.name || "Astrologer"}
-                        className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
-                        width={26}
-                        height={26}
-                      />
-                      <span className="whitespace-nowrap text-[11px] text-[#2E2A3B]">{r.name || "Unknown"}</span>
-                    </div>
-                  </td>
-                  <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">{r.total_consultations || r.total_bookings || 0}</td>
-                  <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">{r.completed_bookings || 0}</td>
-                  <td className="py-[10px] pr-2 text-center text-[11px] font-medium whitespace-nowrap text-[#1B1630]">
-                    {fmtAmount(r.total_revenue || r.revenue)}
-                  </td>
-                  <td className="py-[10px] pr-2">
-                    <span className="flex items-center justify-center gap-[3px] text-[11px] font-medium text-[#1B1630]">
-                      {r.avg_rating?.toFixed(1) || r.rating?.toFixed(1) || "0.0"}
-                      <Star size={11} className="fill-[#F59E0B] text-[#F59E0B]" />
-                    </span>
-                  </td>
-                  <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">{r.new_clients || 0}</td>
-                  <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">{r.repeat_clients || 0}</td>
-                </tr>
-              ))}
+              {loading ? (
+                <TableSkeletonRows rows={5} cols={HEADERS.length} />
+              ) : (
+                rows.map((r, i) => (
+                  <tr key={r.id} className="border-b border-[#F5F3F9]">
+                    <td className="py-[10px] pl-2 pr-2 text-[11px] text-[#8B879C]">{i + 1}</td>
+                    <td className="py-[10px] pr-2">
+                      <div className="flex items-center gap-[8px]">
+                        {r.avatar ? (
+                          <Image
+                            src={r.avatar}
+                            alt={r.name}
+                            className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
+                            width={26}
+                            height={26}
+                          />
+                        ) : (
+                          <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[9px] font-bold text-white">
+                            {initials(r.name)}
+                          </span>
+                        )}
+                        <span className="whitespace-nowrap text-[11px] text-[#2E2A3B]">
+                          {r.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">
+                      {formatNumber(r.bookings)}
+                    </td>
+                    <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">
+                      {formatNumber(r.completed ?? 0)}
+                    </td>
+                    <td className="whitespace-nowrap py-[10px] pr-2 text-center text-[11px] font-medium text-[#1B1630]">
+                      {formatCurrency(r.revenue)}
+                    </td>
+                    <td className="py-[10px] pr-2">
+                      <span className="flex items-center justify-center gap-[3px] text-[11px] font-medium text-[#1B1630]">
+                        {toNumber(r.rating).toFixed(1)}
+                        <Star size={11} className="fill-[#F59E0B] text-[#F59E0B]" />
+                      </span>
+                    </td>
+                    <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">
+                      {formatNumber(r.clients)}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       )}
 
       <div className="mt-4 flex justify-center">
-        <button
-          type="button"
+        <Link
+          href="/admin/expert-management"
           className="inline-flex h-[30px] items-center rounded-full bg-[#F1EAFE] px-4 text-[10.5px] font-medium text-[#5B21B6]"
         >
           View All Astrologers
-        </button>
+        </Link>
       </div>
     </section>
   );

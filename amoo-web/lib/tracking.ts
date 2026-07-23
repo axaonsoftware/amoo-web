@@ -1,25 +1,38 @@
 "use client";
 
 import { useCallback } from "react";
+import api from "./api";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
+/**
+ * Record a user action in the backend activity log.
+ *
+ * Fire-and-forget by design — tracking must never block or break a UI flow —
+ * but it goes through `lib/api.ts` rather than a bare `fetch`. A raw fetch here
+ * sent no `X-CSRF-Token`, and `POST /api/activity/log` is not in the backend's
+ * CSRF exempt list, so every single call was rejected with 403. The `.catch()`
+ * swallowed it and a non-2xx response does not reject anyway, so the failure
+ * was completely silent: `/user-dashboard/activity` and `/admin/activity-logs`
+ * could only ever render "No activity recorded yet".
+ *
+ * `api.logActivity` also supplies `credentials: "include"` and the single-flight
+ * 401→refresh→retry, neither of which the bare fetch had.
+ */
 export function trackEvent(
   action: string,
   actionDetails?: Record<string, unknown>,
   pageOrRoute?: string
-) {
+): void {
   if (typeof window === "undefined") return;
-  const body: Record<string, unknown> = { action };
-  if (actionDetails) body.action_details = actionDetails;
-  body.page_or_route = pageOrRoute || window.location.pathname;
 
-  fetch(`${API_URL}/api/activity/log`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify(body),
-  }).catch(() => {});
+  api
+    .logActivity({
+      action,
+      ...(actionDetails ? { action_details: actionDetails } : {}),
+      page_or_route: pageOrRoute || window.location.pathname,
+    })
+    .catch(() => {
+      // Analytics is best-effort: a failure here must never surface to the user.
+    });
 }
 
 export function useTrackActivity() {

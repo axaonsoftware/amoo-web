@@ -3,12 +3,13 @@
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import Mandala from "./Mandala";
-import { useApi } from "@/lib/useApi";
+import { useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 export default function PremiumBanner() {
-  const { data: subs } = useApi<any[]>(() => api.getSubscriptions());
-  const hasPremium = Array.isArray(subs) ? subs.some((s: any) => s.status === "active") : false;
+  // /api/subscriptions is paginated -> `{ data, meta }`, never a bare array.
+  const { items: subs } = useApiList<any>(() => api.getSubscriptions());
+  const hasPremium = subs.some((s: any) => s.status === "active");
   if (hasPremium) return null;
   return (
     <div className="relative overflow-hidden rounded-[16px] bg-gradient-to-r from-[#2a0d47] via-[#1d0836] to-[#3a1560] px-6 py-6 shadow-[0_10px_30px_rgba(0,0,0,.25)]">

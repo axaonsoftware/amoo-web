@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { LayoutDashboard, ArrowRight } from "lucide-react";
+import { Home, ArrowRight } from "lucide-react";
 
 export default function ActionButtons() {
   return (
     <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
       <Link
-        href="/user-dashboard"
+        href="/"
         className="flex items-center gap-2 border border-gray-200 rounded-lg px-6 py-3 text-sm font-medium text-gray-700 bg-white w-full sm:w-auto justify-center"
       >
-        <LayoutDashboard size={16} />
-        Go to Dashboard
+        <Home size={16} />
+        Back to Home
       </Link>
       <Link
         href="/consultation/booking-summary"

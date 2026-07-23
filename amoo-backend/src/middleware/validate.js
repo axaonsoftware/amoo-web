@@ -4,6 +4,26 @@ const Joi = require("joi");
 const optionalString = Joi.string().allow("").allow(null);
 const optionalNumber = Joi.number().allow(null);
 
+// A stored file reference: either an "/uploads/<name>" path produced by
+// config/storage.js, or an absolute http(s) URL when S3 is enabled.
+//
+// SECURITY: reports.file_url is written straight into the download handler's
+// path resolution. utils/paths.js refuses anything that escapes the uploads
+// directory, but rejecting traversal at the edge as well means a bad value
+// never reaches the database in the first place. No "..", no backslashes, no
+// nested directories — filenames here are always flat and server-generated.
+const fileRef = Joi.alternatives()
+  .try(
+    Joi.string().pattern(/^\/uploads\/[A-Za-z0-9][A-Za-z0-9._-]{0,250}$/),
+    Joi.string().uri({ scheme: ["http", "https"] }).max(512)
+  )
+  .allow("")
+  .allow(null)
+  .messages({
+    "alternatives.match":
+      "file_url must be an /uploads/<filename> path or an http(s) URL",
+  });
+
 const schemas = {
   register: Joi.object({
     name: Joi.string().min(2).max(120).required(),
@@ -18,6 +38,11 @@ const schemas = {
   }),
 
   adminLogin: Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().required(),
+  }),
+
+  expertLogin: Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
   }),
@@ -67,6 +92,8 @@ const schemas = {
     token: Joi.string().required(),
   }),
 
+  // NOTE: `email` is deliberately absent. Changing the address that identifies
+  // the account must go through a re-verification flow, not a profile PATCH.
   updateProfile: Joi.object({
     name: Joi.string().min(2).max(120),
     phone: optionalString.max(20),
@@ -74,6 +101,12 @@ const schemas = {
     dob: Joi.date().iso(),
     tob: Joi.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
     birthplace: optionalString.max(255),
+    gender: optionalString.max(20),
+    language: optionalString.max(40),
+    country: optionalString.max(80),
+    state: optionalString.max(80),
+    city: optionalString.max(80),
+    address: optionalString.max(255),
   }),
 
   // SECURITY: `payment` is deliberately NOT accepted here. A booking always
@@ -125,9 +158,44 @@ const schemas = {
     status: Joi.string().valid("Active", "Inactive"),
   }),
 
+  // PATCH variant — see expertUpdate.
+  serviceUpdate: Joi.object({
+    name: Joi.string().max(160),
+    sub: optionalString.max(255),
+    img: optionalString.max(512),
+    category: Joi.string().valid(
+      "Numerology", "Tarot", "Astrology", "Healing", "Vastu", "AI Services", "Spiritual"
+    ),
+    type: Joi.string().valid("Report", "Consultation", "Chat"),
+    price: Joi.number().min(0),
+    duration: optionalString.max(40),
+    status: Joi.string().valid("Active", "Inactive"),
+  }),
+
+  setExpertPassword: Joi.object({
+    password: Joi.string().min(8).max(128).required(),
+  }),
+
   expert: Joi.object({
     name: Joi.string().max(120).required(),
     email: Joi.string().email().required(),
+    phone: optionalString.max(20),
+    avatar: optionalString.max(512),
+    role_title: optionalString.max(120),
+    bio: optionalString.max(4000),
+    specialties: optionalString.max(255),
+    rating: Joi.number().min(0).max(5),
+    status: Joi.string().valid("active", "inactive"),
+  }),
+
+  // PATCH variant — nothing required, so a partial update does not have to
+  // resend name+email. Without this the route ran with NO validation at all:
+  // buildUpdate() whitelists column names (so it was never injectable) but
+  // nothing checked types, lengths or enum membership, so a PATCH could push a
+  // 10 MB string at a VARCHAR(120) or set rating to 999.
+  expertUpdate: Joi.object({
+    name: Joi.string().max(120),
+    email: Joi.string().email(),
     phone: optionalString.max(20),
     avatar: optionalString.max(512),
     role_title: optionalString.max(120),
@@ -157,10 +225,44 @@ const schemas = {
     status: Joi.string().valid("Active", "Inactive"),
   }),
 
+  // PATCH variant — see expertUpdate.
+  packageUpdate: Joi.object({
+    name: Joi.string().max(160),
+    description: optionalString.max(2000),
+    price: Joi.number().min(0),
+    duration_days: optionalNumber.integer().positive(),
+    status: Joi.string().valid("Active", "Inactive"),
+  }),
+
+  // `auto_renew` was read by the POST /api/subscriptions handler but was NOT
+  // declared here, and validate() runs with stripUnknown:true — so Joi deleted
+  // the key before the handler saw it and the column was always stored as 0.
+  // A user could never enable auto-renew.
   subscription: Joi.object({
     package_id: optionalNumber.integer().positive(),
     plan_name: optionalString.max(120),
     duration_days: optionalNumber.integer().positive(),
+    auto_renew: Joi.boolean().default(false),
+  }),
+
+  // Admin PATCH on a subscription. `expires_at` is an ISO datetime; `status`
+  // must match the ENUM exactly or MySQL silently coerces it to ''.
+  subscriptionUpdate: Joi.object({
+    status: Joi.string().valid("active", "expired", "cancelled", "pending-payment"),
+    auto_renew: Joi.boolean(),
+    plan_name: Joi.string().max(120),
+    expires_at: Joi.date().iso(),
+  }),
+
+  slotUpdate: Joi.object({
+    status: Joi.string().valid("available", "booked", "blocked").required(),
+  }),
+
+  testimonialUpdate: Joi.object({
+    status: Joi.string().valid("Active", "Inactive"),
+    comment: Joi.string().min(2).max(2000),
+    rating: Joi.number().integer().min(1).max(5),
+    name: Joi.string().max(120),
   }),
 
   report: Joi.object({
@@ -173,14 +275,14 @@ const schemas = {
     type: optionalString.max(60),
     title: Joi.string().max(200).required(),
     content: Joi.string().max(65535).allow("").allow(null),
-    file_url: optionalString.max(512),
+    file_url: fileRef,
   }),
 
   reportUpdate: Joi.object({
     status: Joi.string().valid("pending", "ready", "rejected"),
     title: Joi.string().max(200),
     content: Joi.string().max(65535).allow("").allow(null),
-    file_url: optionalString.max(512),
+    file_url: fileRef,
   }),
 
   contact: Joi.object({
@@ -282,6 +384,17 @@ const schemas = {
     role: Joi.string().valid("free", "premium", "consultant"),
     status: Joi.string().valid("active", "blocked", "pending"),
     verified: Joi.boolean(),
+  }),
+
+  // Frontend activity beacon. This route had no validation at all, which
+  // mattered little while every call was being rejected by the CSRF guard — but
+  // now that it actually receives traffic, an unbounded `action_details` object
+  // would be serialised straight into audit_log.meta (a JSON column) on every
+  // page view. `action` is capped to the column width (VARCHAR(60)).
+  activityLog: Joi.object({
+    action: Joi.string().min(1).max(60).required(),
+    action_details: Joi.object().max(30).unknown(true).default({}),
+    page_or_route: optionalString.max(255),
   }),
 
   query: Joi.object({

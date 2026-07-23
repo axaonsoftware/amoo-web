@@ -128,6 +128,7 @@ router.get(
 router.patch(
   "/:id",
   adminRequired,
+  validate("subscriptionUpdate"),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, SUB_UPDATE_ALLOWED, [req.params.id]);
     await pool.query(`UPDATE subscriptions SET ${setClause} WHERE id = ?`, values);

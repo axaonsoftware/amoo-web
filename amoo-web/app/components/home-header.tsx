@@ -5,8 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDownIcon, GiftIcon, WhatsAppIcon } from "./home-icons";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { WHATSAPP_URL, SITE_NAME } from "../../lib/constants";
+import { useAuth } from "../../lib/auth-context";
 
 type DropdownItem = { label: string; href: string };
 type NavItem = {
@@ -67,6 +68,7 @@ const NAV: NavItem[] = [
     href: "/user-login",
     dropdown: [
       { label: "User Login", href: "/user-login" },
+      { label: "Astrologer Login", href: "/astrologer-login" },
       { label: "Admin Login", href: "/admin-login" },
     ],
   },
@@ -99,6 +101,7 @@ export function OfferBar() {
 
 export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
   const pathname = usePathname();
+  const { isAuthenticated, logout } = useAuth();
   const [desktopOpen, setDesktopOpen] = useState<string | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mobileSubOpen, setMobileSubOpen] = useState<string | null>(null);
@@ -137,7 +140,7 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
         </Link>
 
         <nav className="hidden items-center gap-[26px] lg:flex">
-          {NAV.map((item) => {
+          {NAV.filter((item) => !isAuthenticated || item.label !== "Login").map((item) => {
             const active = isActive(item.href);
             const hasDropdown = !!item.dropdown;
             const isOpen = desktopOpen === item.label;
@@ -188,6 +191,15 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
               </div>
             );
           })}
+          {isAuthenticated && (
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 text-[14px] font-normal text-white hover:text-gold transition-colors"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          )}
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
@@ -202,12 +214,22 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
             </span>
             <span className="hidden sm:inline">WhatsApp Us</span>
           </a>
-          <Link
-            href="/user-login"
-            className="flex h-[40px] items-center rounded-[6px] bg-gradient-to-b from-gold-2 to-gold px-5 text-[13px] font-medium text-ink"
-          >
-            Login / Register
-          </Link>
+          {isAuthenticated ? (
+            <button
+              onClick={logout}
+              className="flex h-[40px] items-center gap-2 rounded-[6px] bg-gradient-to-b from-gold-2 to-gold px-5 text-[13px] font-medium text-ink"
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </button>
+          ) : (
+            <Link
+              href="/user-login"
+              className="flex h-[40px] items-center rounded-[6px] bg-gradient-to-b from-gold-2 to-gold px-5 text-[13px] font-medium text-ink"
+            >
+              Login / Register
+            </Link>
+          )}
 
           <button
             type="button"
@@ -227,7 +249,7 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
       {mobileOpen && (
         <div className="border-t border-white/10 bg-[#170426] lg:hidden">
           <div className="mx-auto max-w-[1336px] px-5 py-4 space-y-1">
-            {NAV.map((item) => {
+            {NAV.filter((item) => !isAuthenticated || item.label !== "Login").map((item) => {
               const active = isActive(item.href);
               const hasDropdown = !!item.dropdown;
               const isSubOpen = mobileSubOpen === item.label;
@@ -283,6 +305,15 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
                 </div>
               );
             })}
+            {isAuthenticated && (
+              <button
+                onClick={() => { setMobileOpen(false); logout(); }}
+                className="flex w-full items-center gap-2 py-2.5 text-[14px] text-white/80 hover:text-gold transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            )}
           </div>
         </div>
       )}

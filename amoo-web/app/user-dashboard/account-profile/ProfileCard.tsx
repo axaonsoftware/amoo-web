@@ -16,7 +16,7 @@ import {
   Power,
   Loader2,
 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useApi, useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 const settingsNav = [
@@ -31,9 +31,10 @@ const settingsNav = [
 
 export default function ProfileCard() {
   const { data: profile, loading, error } = useApi<any>(() => api.getProfile());
-  const { data: subs } = useApi<any[]>(() => api.getSubscriptions());
+  // /api/subscriptions is paginated -> `{ data, meta }`, never a bare array.
+  const { items: subs } = useApiList<any>(() => api.getSubscriptions());
   const user = profile?.user || profile || {};
-  const hasPremium = Array.isArray(subs) ? subs.some((s: any) => s.status === "active") : false;
+  const hasPremium = subs.some((s: any) => s.status === "active");
   return (
     <div className="overflow-hidden rounded-[16px] border border-[#efe6d6] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       {loading ? (

@@ -80,6 +80,7 @@ router.post(
 router.patch(
   "/:id",
   adminRequired,
+  validate("serviceUpdate"),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, SERVICE_UPDATE_ALLOWED, [req.params.id]);
     await pool.query(`UPDATE services SET ${setClause} WHERE id = ?`, values);

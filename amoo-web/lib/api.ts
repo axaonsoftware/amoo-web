@@ -112,12 +112,56 @@ async function request(method: string, path: string, body?: unknown): Promise<an
       rememberCsrfToken(retryRes);
       return handleResponse(retryRes);
     }
-    if (typeof window !== "undefined" && !window.location.pathname.startsWith("/user-login")) {
-      window.location.href = "/user-login";
+    // Admin pages have their own login; sending an admin to /user-login would
+    // log them into the wrong realm (the backend keeps admins in a separate
+    // table and issues kind:"admin" tokens).
+    if (typeof window !== "undefined") {
+      const { pathname } = window.location;
+      const loginPaths = ["/user-login", "/admin-login", "/astrologer-login"];
+      if (!loginPaths.includes(pathname)) {
+        const loginPath = pathname.startsWith("/admin") ? "/admin-login" : "/user-login";
+        window.location.href = loginPath;
+      }
     }
   }
 
   return handleResponse(res);
+}
+
+export interface PageMeta {
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+}
+
+/**
+ * Routes that call the backend's `paginated()` helper resolve to
+ * `{ data, meta }`; routes that call `ok()` with an array resolve to the bare
+ * array. Callers should not have to know which is which — several components
+ * called `.filter()` straight on the envelope and crashed.
+ */
+export function unwrapList<T>(res: unknown): T[] {
+  if (Array.isArray(res)) return res as T[];
+  const inner = (res as { data?: unknown } | null)?.data;
+  return Array.isArray(inner) ? (inner as T[]) : [];
+}
+
+/** Pagination meta from a paginated response, or null if unpaginated. */
+export function unwrapMeta(res: unknown): PageMeta | null {
+  const meta = (res as { meta?: PageMeta } | null)?.meta;
+  return meta && typeof meta.total === "number" ? meta : null;
+}
+
+/** Build a query string from a filter object, dropping empty values. */
+export function qs(params: Record<string, string | number | undefined | null>): string {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v === undefined || v === null || v === "") continue;
+    sp.set(k, String(v));
+  }
+  const s = sp.toString();
+  return s ? `?${s}` : "";
 }
 
 export const api = {
@@ -125,6 +169,7 @@ export const api = {
   register: (body: unknown) => request("POST", "/api/auth/register", body),
   login: (body: unknown) => request("POST", "/api/auth/login", body),
   adminLogin: (body: unknown) => request("POST", "/api/auth/admin/login", body),
+  expertLogin: (body: unknown) => request("POST", "/api/auth/expert/login", body),
   me: () => request("GET", "/api/auth/me"),
   logout: () => request("POST", "/api/auth/logout"),
   verifyEmailSend: () => request("POST", "/api/auth/verify-email/send"),
@@ -173,6 +218,10 @@ export const api = {
     deleteCoupon: (id: number) => request("DELETE", `/api/coupons/${id}`),
 
     getSlots: (query = "") => request("GET", `/api/slots${query}`),
+    // Per-expert aggregates for the availability table. /api/slots returns
+    // individual slot rows, which that table cannot render without inventing
+    // the totals — which is exactly what it used to do.
+    getSlotAvailability: (query = "") => request("GET", `/api/slots/availability${query}`),
     createSlot: (body: unknown) => request("POST", "/api/slots", body),
     updateSlot: (id: number, body: unknown) => request("PATCH", `/api/slots/${id}`, body),
     deleteSlot: (id: number) => request("DELETE", `/api/slots/${id}`),
@@ -222,6 +271,10 @@ export const api = {
       request("GET", `/api/dashboard/revenue?period=${period}`),
     getUsersGrowth: (period = "month") =>
       request("GET", `/api/dashboard/users/growth?period=${period}`),
+    getRevenueByService: (query = "") =>
+      request("GET", `/api/dashboard/revenue/by-service${query}`),
+    getReportsByType: () => request("GET", "/api/dashboard/reports/by-type"),
+    getBookingPatterns: () => request("GET", "/api/dashboard/bookings/patterns"),
 
     exportCSV: async (type: string) => {
       const res = await fetch(`${API_URL}/api/dashboard/export/${type}`, {
@@ -275,11 +328,30 @@ export const api = {
   createPaymentOrder: (body: unknown) => request("POST", "/api/payments/create-order", body),
   verifyPayment: (body: unknown) => request("POST", "/api/payments/verify", body),
 
-  // coupons (public)
-  validateCoupon: (code: string) => request("POST", "/api/coupons/validate", { code }),
+  // coupons
+  //
+  // `validate` is a dry run used to preview a discount before a booking exists.
+  // It MUST be sent the order amount: the backend computes
+  //   discount = amount ? (percent ? amount * value / 100 : value) : 0
+  // so omitting `amount` made every preview return 0 and the UI cheerfully
+  // reported "You saved ₹0".
+  validateCoupon: (code: string, amount?: number) =>
+    request("POST", "/api/coupons/validate", { code, ...(amount != null ? { amount } : {}) }),
+
+  // `apply` is the real redemption: it is transactional, idempotent per booking
+  // (UNIQUE key on coupon_usages.booking_id), and writes the discounted total
+  // back to bookings.amount so the customer is actually charged less. Nothing
+  // called it before, which is why coupons never reduced anyone's bill.
+  applyCoupon: (code: string, bookingId: number) =>
+    request("POST", "/api/coupons/apply", { code, booking_id: bookingId }),
 
   // activity tracking
   getMyActivity: (query = "") => request("GET", `/api/activity/mine${query}`),
+  logActivity: (body: {
+    action: string;
+    action_details?: Record<string, unknown>;
+    page_or_route?: string;
+  }) => request("POST", "/api/activity/log", body),
 
   // upload (auth)
   uploadFile: async (file: File) => {

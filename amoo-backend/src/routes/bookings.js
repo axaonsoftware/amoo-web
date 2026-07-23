@@ -39,8 +39,22 @@ router.get(
     if (req.query.user_id && req.user.kind === "admin") add(" b.user_id = ?", req.query.user_id);
     if (req.query.date_from) add(" b.date >= ?", req.query.date_from);
     if (req.query.date_to) add(" b.date <= ?", req.query.date_to);
+    // The admin bookings table has a search box that sent `?search=` to an
+    // endpoint that never parsed it, so it silently did nothing.
+    if (req.query.search) {
+      const term = `%${req.query.search}%`;
+      where += where ? " AND" : "WHERE";
+      where += " (b.booking_ref LIKE ? OR u.name LIKE ? OR s.name LIKE ?)";
+      params.push(term, term, term);
+    }
+    // The count must use the same joins as LIST_SELECT: `search` and
+    // `expert_name` filters reference the joined tables.
     const [[{ total }]] = await pool.query(
-      `SELECT COUNT(*) AS total FROM bookings b ${where}`,
+      `SELECT COUNT(*) AS total
+       FROM bookings b
+       JOIN users u ON u.id = b.user_id
+       LEFT JOIN experts e ON e.id = b.expert_id
+       JOIN services s ON s.id = b.service_id ${where}`,
       params
     );
     const [rows] = await pool.query(
@@ -139,18 +153,71 @@ router.delete(
   "/:id",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT user_id, slot_id FROM bookings WHERE id = ?", [req.params.id]);
-    if (assertFound(res, rows[0])) return;
-    if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
-      return fail(res, 403, "Forbidden");
+    const conn = await pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      // FOR UPDATE so a double-clicked Cancel cannot run the slot release twice.
+      const [rows] = await conn.query(
+        "SELECT id, user_id, slot_id, status, payment, amount FROM bookings WHERE id = ? FOR UPDATE",
+        [req.params.id]
+      );
+      const booking = rows[0];
+      if (!booking) {
+        await conn.rollback();
+        return fail(res, 404, "Resource not found");
+      }
+      if (req.user.kind !== "admin" && booking.user_id !== req.user.id) {
+        await conn.rollback();
+        return fail(res, 403, "Forbidden");
+      }
+
+      // Cancelling an already-cancelled booking used to re-run the slot release,
+      // which could free a slot that had since been re-booked by someone else.
+      if (booking.status === "cancelled") {
+        await conn.rollback();
+        return ok(res, { id: booking.id, cancelled: true, already_cancelled: true });
+      }
+      // A delivered consultation is not cancellable — that is a refund decision,
+      // which is admin-only and goes through POST /api/payments/:id/refund.
+      if (booking.status === "completed") {
+        await conn.rollback();
+        return fail(res, 409, "A completed booking cannot be cancelled. Request a refund instead.");
+      }
+
+      if (booking.slot_id) {
+        // Only release a slot this booking actually holds. Without the status
+        // guard, cancelling could free a slot another booking now owns.
+        await conn.query(
+          "UPDATE slots SET status = 'available' WHERE id = ? AND status = 'booked'",
+          [booking.slot_id]
+        );
+      }
+      await conn.query("UPDATE bookings SET status = 'cancelled' WHERE id = ?", [booking.id]);
+      await conn.commit();
+
+      req.audit("cancel", "booking", booking.id, {
+        was_paid: booking.payment === "Paid",
+        amount: booking.amount,
+      });
+
+      // A paid booking still owes the customer money. Refunds move real funds
+      // through the gateway and are admin-only, so this cannot settle itself —
+      // it flags the obligation instead of silently dropping it.
+      const refundDue = booking.payment === "Paid";
+      ok(res, {
+        id: booking.id,
+        cancelled: true,
+        refund_due: refundDue,
+        message: refundDue
+          ? "Booking cancelled. A refund is due and will be processed by our team."
+          : "Booking cancelled.",
+      });
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
     }
-    // Release the slot if one was reserved
-    if (rows[0].slot_id) {
-      await pool.query("UPDATE slots SET status = 'available' WHERE id = ?", [rows[0].slot_id]);
-    }
-    await pool.query("UPDATE bookings SET status = 'cancelled' WHERE id = ?", [req.params.id]);
-    req.audit("cancel", "booking", Number(req.params.id));
-    ok(res, { id: Number(req.params.id), cancelled: true });
   })
 );
 

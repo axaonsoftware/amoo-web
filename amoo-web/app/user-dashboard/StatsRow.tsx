@@ -2,31 +2,44 @@
 
 import Link from "next/link";
 import { CalendarDays, FileText, Wallet, Star, ArrowRight } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useApi, useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import { formatCurrency, formatNumber } from "@/lib/format";
+import { ErrorState } from "@/app/components/states";
 
 type Booking = { status: string };
 type Report = { id: number };
-type Wallet = { balance: number | string };
+type WalletData = { balance: number | string; currency?: string };
 
 export default function StatsRow() {
-  const bookings = useApi<Booking[]>(() => api.getBookings());
-  const reports = useApi<Report[]>(() => api.getReports());
-  const wallet = useApi<Wallet>(() => api.getWallet());
+  // /api/bookings and /api/reports both respond through the backend's
+  // paginated() helper, i.e. `{ data, meta }` — not a bare array. Reading
+  // `.filter`/`.length` straight off the envelope threw at render.
+  const bookings = useApiList<Booking>(() => api.getBookings());
+  const reports = useApiList<Report>(() => api.getReports());
+  const wallet = useApi<WalletData>(() => api.getWallet());
 
   const loading = bookings.loading || reports.loading || wallet.loading;
   const error = bookings.error || reports.error || wallet.error;
+  const retry = () => {
+    bookings.refetch();
+    reports.refetch();
+    wallet.refetch();
+  };
 
-  const upcoming = (bookings.data ?? []).filter(
-    (b: Booking) => b.status === "upcoming" || b.status === "pending-payment"
+  const upcoming = bookings.items.filter(
+    (b) => b.status === "upcoming" || b.status === "pending-payment"
   ).length;
-  const reportCount = (reports.data ?? []).length;
-  const balance = wallet.data ? Number(wallet.data.balance || 0) : 0;
+  // meta.total counts every report, not just the current page.
+  const reportCount = reports.meta?.total ?? reports.items.length;
 
   const stats = [
-    { Icon: CalendarDays, label: "Upcoming Consultations", value: String(upcoming), action: "View All", tinted: true },
-    { Icon: FileText, label: "Reports Generated", value: String(reportCount), action: "View All", tinted: false },
-    { Icon: Wallet, label: "Wallet Balance", value: "₹" + balance.toLocaleString("en-IN"), action: "Add Money", tinted: false },
+    { Icon: CalendarDays, label: "Upcoming Consultations", value: formatNumber(upcoming), action: "View All", tinted: true },
+    { Icon: FileText, label: "Reports Generated", value: formatNumber(reportCount), action: "View All", tinted: false },
+    { Icon: Wallet, label: "Wallet Balance", value: formatCurrency(wallet.data?.balance ?? 0, wallet.data?.currency), action: "Add Money", tinted: false },
+    // GAP (pending backend support): no rewards/loyalty-points model exists —
+    // no points column on `users`, no ledger table. Held at 0 rather than
+    // faked. See WIRING_NOTES.md gap G11.
     { Icon: Star, label: "Reward Points", value: "0", action: "View Rewards", tinted: true },
   ];
 
@@ -49,9 +62,7 @@ export default function StatsRow() {
   }
 
   if (error) {
-    return (
-      <div className="mt-5 rounded-lg bg-red-50 p-4 text-[12.5px] text-red-700">Failed to load stats.</div>
-    );
+    return <ErrorState className="mt-5" tone="dashboard" message={error} onRetry={retry} />;
   }
 
   return (

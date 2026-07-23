@@ -7,6 +7,7 @@ const { authRequired, adminRequired } = require("../middleware/auth");
 const { upload } = require("../middleware/upload");
 const { saveFile, deleteFile } = require("../config/storage");
 const { asyncHandler } = require("../utils/helpers");
+const { resolveStoredFile } = require("../utils/paths");
 const { validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination, fail } = require("../utils/response");
 const env = require("../config/env");
@@ -75,10 +76,13 @@ router.get(
     if (req.user.kind !== "admin" && u.user_id !== req.user.id) {
       return fail(res, 403, "Forbidden");
     }
-    if (env.storage.enabled && u.path && u.path.startsWith("http")) {
+    if (env.storage.enabled && u.path && /^https?:\/\//i.test(u.path)) {
       return res.redirect(u.path);
     }
-    const filePath = path.join(__dirname, "..", "..", u.path || "");
+    // Resolved through the same containment guard the report download uses, so
+    // a hand-edited `uploads.path` row can't escape the uploads directory.
+    const filePath = resolveStoredFile(u.path);
+    if (!filePath) return fail(res, 400, "Invalid file reference");
     if (!fs.existsSync(filePath)) return fail(res, 404, "File not found on disk");
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.download(filePath, u.original_name || path.basename(filePath));

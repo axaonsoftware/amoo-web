@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, Star, Heart, Smile, Mountain, Target, Loader2 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
@@ -9,8 +9,9 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeW
 };
 
 export default function PopularTools() {
-  const { data: services, loading, error } = useApi<any[]>(() => api.getServices());
-  const numerologyServices = (services ?? []).filter(
+  // /api/services is paginated -> `{ data, meta }`, never a bare array.
+  const { items: services, loading, error } = useApiList<any>(() => api.getServices());
+  const numerologyServices = services.filter(
     (s: any) => (s.category || "").toLowerCase() === "numerology"
   );
   return (

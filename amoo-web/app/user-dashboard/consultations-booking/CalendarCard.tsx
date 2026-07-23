@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -55,8 +55,9 @@ function buildDays(slots: any[]): Day[] {
 }
 
 export default function CalendarCard() {
-  const { data: slots, loading, error } = useApi<any[]>(() => api.getSlots());
-  const slotArray = Array.isArray(slots) ? slots : [];
+  // /api/slots is paginated -> `{ data, meta }`. The old `Array.isArray(slots)`
+  // guard was therefore always false, so the calendar never showed any slot.
+  const { items: slotArray, loading, error } = useApiList<any>(() => api.getSlots());
   const days = buildDays(slotArray);
 
   if (loading) {

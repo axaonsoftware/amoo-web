@@ -1,14 +1,15 @@
 "use client";
 
 import { ShieldCheck, Crown, CalendarDays, Star, IndianRupee, ArrowRight, Loader2 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useApi, useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 export default function AccountInformation() {
   const { data: profile, loading: pLoading, error: pError } = useApi<any>(() => api.getProfile());
-  const { data: subs, loading: sLoading } = useApi<any[]>(() => api.getSubscriptions());
+  // /api/subscriptions is paginated -> `{ data, meta }`, never a bare array.
+  const { items: subs, loading: sLoading } = useApiList<any>(() => api.getSubscriptions());
   const user = profile?.user || profile || {};
-  const hasPremium = Array.isArray(subs) ? subs.some((s: any) => s.status === "active") : false;
+  const hasPremium = subs.some((s: any) => s.status === "active");
   const loading = pLoading || sLoading;
 
   const tiles = [

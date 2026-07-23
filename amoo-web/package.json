@@ -12,9 +12,24 @@
   "dependencies": {
     "dompurify": "^3.4.12",
     "lucide-react": "^1.24.0",
-    "next": "16.2.10",
+    "next": "16.2.11",
     "react": "19.2.4",
     "react-dom": "19.2.4"
+  },
+  "//overrides": [
+    "Both entries patch vulnerabilities that reach us only through next's own",
+    "dependency tree, so bumping next alone cannot clear them:",
+    "  sharp   <0.35.0  — libvips CVE-2026-33327/33328/35590/35591 (high).",
+    "                     Used by next/image optimisation, which this app does",
+    "                     use, including for remote images.",
+    "  postcss <8.5.10  — XSS via unescaped </style> in stringify output",
+    "                     (GHSA-qx2v-qp2m-jg93, moderate).",
+    "Remove an entry once next depends on a patched version by itself.",
+    "`npm audit fix --force` is NOT the answer here: it proposes next@9.3.3."
+  ],
+  "overrides": {
+    "sharp": "^0.35.3",
+    "postcss": "^8.5.10"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -23,7 +38,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.2.10",
+    "eslint-config-next": "16.2.11",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useRef } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -157,6 +157,10 @@ function BookingForm() {
   const [couponDiscount, setCouponDiscount] = useState(0);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [svcRow, setSvcRow] = useState<ConsultationService | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; url: string } | null>(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   useEffect(() => {
     const stored = loadConsultationData();
@@ -228,7 +232,19 @@ function BookingForm() {
         amount: 0,
         ...(notes ? { notes } : {}),
       });
-      saveConsultationData({ service, mode, date, time });
+      saveConsultationData({
+        service, mode, date, time,
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        dob,
+        gender,
+        maritalStatus,
+        language,
+        foundUs,
+        concern: concern.trim(),
+        specialRequests: specialRequests.trim(),
+      });
       router.push(`/consultation/booking-summary?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`);
     } catch (e: any) {
       setSubmitError(e?.message || "Booking failed. Please try again.");
@@ -258,6 +274,33 @@ function BookingForm() {
       setCouponLoading(false);
     }
   };
+
+  const handleFileClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadLoading(true);
+    setUploadError("");
+    try {
+      const result = await api.uploadFile(file);
+      const url = result?.url || result?.data?.url || "";
+      setUploadedFile({ name: file.name, url });
+    } catch (e: any) {
+      setUploadError(e?.message || "Upload failed. Please try again.");
+    } finally {
+      setUploadLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleRemoveFile = () => {
+    setUploadedFile(null);
+    setUploadError("");
+  };
+
   return (
     <>
       <OfferBar />
@@ -416,13 +459,12 @@ function BookingForm() {
                         Date of Birth
                       </label>
                       <div className="relative">
-                        <CalendarFormIcon className="absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-body" />
+                        <CalendarFormIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-body" />
                         <input
-                          type="text"
-                          placeholder="DD / MM / YYYY"
+                          type="date"
                           value={dob}
                           onChange={(e) => setDob(e.target.value)}
-                          className="h-[44px] w-full rounded-lg border border-line bg-white pl-10 pr-4 text-[13.5px] text-ink placeholder:text-body/60 focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30"
+                          className="h-[44px] w-full rounded-lg border border-line bg-white pl-10 pr-4 text-[13.5px] text-ink focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30 [color-scheme:light]"
                         />
                       </div>
                     </div>
@@ -598,13 +640,48 @@ function BookingForm() {
                     <label className="mb-1.5 block text-[13px] font-medium text-ink">
                       Upload Birth Chart / Relevant Documents <span className="text-body">(Optional)</span>
                     </label>
-                    <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-line bg-[#fdfaf5] px-4 py-6 text-center">
-                      <UploadIcon className="h-[32px] w-[32px] text-grape-2" />
-                      <p className="mt-2 text-[12.5px] text-ink">
-                        <span className="font-medium text-grape-2">Click to upload</span> or drag and drop
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept=".png,.jpg,.jpeg,.pdf"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    {uploadedFile ? (
+                      <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                        <CheckIcon className="h-[16px] w-[16px] shrink-0 text-green-600" />
+                        <span className="flex-1 truncate text-[13px] text-ink">{uploadedFile.name}</span>
+                        <button
+                          type="button"
+                          onClick={handleRemoveFile}
+                          className="text-[12px] font-medium text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleFileClick}
+                        disabled={uploadLoading}
+                        className="flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-line bg-[#fdfaf5] px-4 py-6 text-center hover:border-grape-2/50 transition-colors disabled:opacity-60"
+                      >
+                        {uploadLoading ? (
+                          <Loader2 className="h-[32px] w-[32px] animate-spin text-grape-2" />
+                        ) : (
+                          <UploadIcon className="h-[32px] w-[32px] text-grape-2" />
+                        )}
+                        <p className="mt-2 text-[12.5px] text-ink">
+                          <span className="font-medium text-grape-2">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="mt-0.5 text-[11px] text-body">PNG, JPG, PDF (Max. 5MB)</p>
+                      </button>
+                    )}
+                    {uploadError && (
+                      <p className="mt-1.5 flex items-center gap-1 text-[12px] text-red-500">
+                        <AlertCircle className="h-[13px] w-[13px]" />{uploadError}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-body">PNG, JPG, PDF (Max. 5MB)</p>
-                    </div>
+                    )}
                   </div>
 
                   {/* Special Requests */}

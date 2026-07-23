@@ -3,8 +3,9 @@ const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired } = require("../middleware/auth");
 const { asyncHandler } = require("../utils/helpers");
+const { validate } = require("../middleware/validate");
 const { logAudit } = require("../utils/audit");
-const { ok, fail, paginated, parsePagination } = require("../utils/response");
+const { ok, paginated, parsePagination } = require("../utils/response");
 
 // POST /api/activity/log — fire-and-forget activity logging from the frontend.
 // Accepts: { action, action_details (JSON object), page_or_route }
@@ -12,11 +13,9 @@ const { ok, fail, paginated, parsePagination } = require("../utils/response");
 router.post(
   "/log",
   authRequired,
+  validate("activityLog"),
   asyncHandler(async (req, res) => {
     const { action, action_details, page_or_route } = req.body;
-    if (!action || typeof action !== "string") {
-      return fail(res, 400, "`action` (string) is required");
-    }
     // Fire-and-forget: don't await — never slow down the UI
     logAudit({
       actor_id: req.user.id,

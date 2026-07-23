@@ -172,8 +172,11 @@ export default function RightPanel() {
               />
               <span className="text-base sm:text-lg lg:text-[22px] text-[#322F43]">Remember Me</span>
             </label>
+            {/* Admins have no self-service reset route by design — accounts are
+                seeded/provisioned. /contact is intentional, not the bug that was
+                fixed on the user login page. */}
             <Link href="/contact" className="text-base sm:text-lg lg:text-[21px] font-semibold text-[#5B1AC8] hover:underline">
-              Forgot Password?
+              Forgot Password? Contact support
             </Link>
           </div>
 
@@ -194,21 +197,14 @@ export default function RightPanel() {
           </button>
         </form>
 
-        <div className="my-8 sm:my-12 flex items-center gap-4 sm:gap-5">
-          <div className="h-px flex-1 bg-[#E3DFEC]" />
-          <span className="text-sm sm:text-base lg:text-[20px] text-[#6E6A83]">or continue with</span>
-          <div className="h-px flex-1 bg-[#E3DFEC]" />
-        </div>
-
-        <button className="flex h-14 sm:h-[82px] w-full items-center justify-center gap-4 sm:gap-5 rounded-xl sm:rounded-2xl border border-[#E6E2F1] bg-white text-base sm:text-xl lg:text-[24px] font-medium text-[#2B2B2B] transition hover:bg-gray-50 active:scale-[0.99]">
-          <Image src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width={28} height={28} unoptimized alt="Google" />
-          Continue with Google
-        </button>
-
-        <button className="mt-4 sm:mt-6 flex h-14 sm:h-[82px] w-full items-center justify-center gap-4 sm:gap-5 rounded-xl sm:rounded-2xl border border-[#E6E2F1] bg-white text-base sm:text-xl lg:text-[24px] font-medium text-[#2B2B2B] transition hover:bg-gray-50 active:scale-[0.99]">
-          <Image src="https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg" width={30} height={30} unoptimized alt="Microsoft" />
-          Continue with Microsoft
-        </button>
+        {/* "Continue with Google / Microsoft" buttons were removed here.
+            No SSO exists anywhere in the stack — no provider client id, no
+            /api/auth/{google,microsoft} route, no oauth columns on `admins`.
+            On an admin login screen a dead SSO button is worse than absent:
+            it implies a federated identity control that isn't there.
+            They also loaded their icons from upload.wikimedia.org, making the
+            admin login depend on a third-party CDN at render time.
+            Re-add together with the backend routes, not before. */}
 
         <div className="mt-10 sm:mt-16 flex items-start gap-4 sm:gap-5 rounded-xl sm:rounded-2xl border border-[#EEE4FF] bg-[#F6EDFF] p-4 sm:p-6">
           <div className="flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-white text-[#6A21C8] shadow">

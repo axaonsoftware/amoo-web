@@ -1,7 +1,7 @@
 "use client";
 
 import { UserRound, Pencil, ChevronDown, Loader2, CheckCircle2, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
@@ -10,6 +10,8 @@ type Profile = {
   email?: string;
   phone?: string;
   dob?: string;
+  tob?: string;
+  birthplace?: string;
   gender?: string;
   language?: string;
   country?: string;
@@ -20,14 +22,55 @@ type Profile = {
 
 type FormErrors = Partial<Record<keyof Profile, string>>;
 
+// MySQL DATE columns come back from the API as a full ISO timestamp, which
+// <input type="date"> cannot display — it renders blank and the user silently
+// loses the value.
+//
+// Slicing the first 10 characters is NOT correct: mysql2 turns a DATE into a JS
+// Date at *local* midnight, so 1995-04-12 serialises to "1995-04-11T18:30:00Z"
+// in IST — a day earlier. Taking the string prefix would show the wrong date and
+// shift it back another day on every save. Read the local calendar parts
+// instead, which inverts that encoding.
+function toDateInput(value?: string): string {
+  if (!value) return "";
+  // Already a plain calendar date — use it verbatim.
+  const plain = /^(\d{4}-\d{2}-\d{2})$/.exec(value);
+  if (plain) return plain[1];
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// TIME columns arrive as "14:30:00"; <input type="time"> wants "HH:MM".
+function toTimeInput(value?: string): string {
+  if (!value) return "";
+  const match = /^(\d{2}:\d{2})/.exec(value);
+  return match ? match[1] : "";
+}
+
+function formFromUser(user: Profile): Profile {
+  return {
+    name: user.name || "",
+    email: user.email || "",
+    phone: user.phone || "",
+    dob: toDateInput(user.dob),
+    tob: toTimeInput(user.tob),
+    birthplace: user.birthplace || "",
+    gender: user.gender || "",
+    language: user.language || "",
+    country: user.country || "",
+    state: user.state || "",
+    city: user.city || "",
+    address: user.address || "",
+  };
+}
+
+// `email` is intentionally not validated: it identifies the account and the API
+// will not change it via PATCH /api/users/me, so it renders read-only.
 function validate(form: Profile): FormErrors {
   const e: FormErrors = {};
   if (!form.name?.trim()) e.name = "Full name is required";
-  if (!form.email?.trim()) {
-    e.email = "Email is required";
-  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-    e.email = "Enter a valid email address";
-  }
   if (!form.phone?.trim()) {
     e.phone = "Mobile number is required";
   } else if (!/^\d{10}$/.test(form.phone.replace(/\s/g, ""))) {
@@ -47,6 +90,7 @@ function EditableField({
   type = "text",
   dropdown,
   full,
+  required,
 }: {
   label: string;
   name: keyof Profile;
@@ -56,11 +100,12 @@ function EditableField({
   type?: string;
   dropdown?: boolean;
   full?: boolean;
+  required?: boolean;
 }) {
   return (
     <div className={full ? "lg:col-span-3" : undefined}>
       <label className="block text-[12.5px] text-[#6c6b78]">
-        {label} <span className="text-red-400">*</span>
+        {label} {required && <span className="text-red-400">*</span>}
       </label>
       <div className="relative mt-[7px]">
         {dropdown ? (
@@ -115,27 +160,34 @@ function ReadonlyField({
   value,
   dropdown,
   full,
+  hint,
 }: {
   label: string;
   value: string;
   dropdown?: boolean;
   full?: boolean;
+  hint?: string;
 }) {
   return (
     <div className={full ? "lg:col-span-3" : undefined}>
       <label className="block text-[12.5px] text-[#6c6b78]">{label}</label>
-      <div className="relative mt-[7px] flex h-[46px] items-center rounded-[10px] border border-[#e7e1ef] bg-white px-[15px]">
+      <div
+        className={`relative mt-[7px] flex h-[46px] items-center rounded-[10px] border border-[#e7e1ef] px-[15px] ${
+          hint ? "bg-[#f7f5fa]" : "bg-white"
+        }`}
+      >
         <span className="text-[14px] text-[#2b0f47]">{value}</span>
         {dropdown ? (
           <ChevronDown className="ml-auto h-[18px] w-[18px] text-[#8b8697]" strokeWidth={2} />
         ) : null}
       </div>
+      {hint && <p className="mt-1 text-[12px] text-[#8b8697]">{hint}</p>}
     </div>
   );
 }
 
 export default function PersonalInformation() {
-  const { data: profile, loading, error } = useApi<any>(() => api.getProfile());
+  const { data: profile, loading, error, refetch } = useApi<any>(() => api.getProfile());
   const user: Profile = profile?.user || profile || {};
 
   const [editing, setEditing] = useState(false);
@@ -143,52 +195,32 @@ export default function PersonalInformation() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState<"success" | "error" | null>(null);
+  const [saveErr, setSaveErr] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (user && !editing) {
-      setForm({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        dob: user.dob || "",
-        gender: user.gender || "",
-        language: user.language || "",
-        country: user.country || "",
-        state: user.state || "",
-        city: user.city || "",
-        address: user.address || "",
-      });
-    }
-  }, [user, editing]);
-
+  // No effect syncs `form` from `profile`: the read-only view renders straight
+  // from `user`, so the draft only has to exist while editing. The previous
+  // version synced on every render (its dep was the freshly-allocated
+  // `profile?.user || profile || {}`), which cascaded renders for no benefit.
   const handleChange = (name: keyof Profile, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
-    if (saveMsg) setSaveMsg(null);
+    if (saveMsg) { setSaveMsg(null); setSaveErr(null); }
   };
 
   const handleEdit = () => {
+    setForm(formFromUser(user));
     setEditing(true);
     setErrors({});
     setSaveMsg(null);
+    setSaveErr(null);
   };
 
   const handleCancel = () => {
     setEditing(false);
     setErrors({});
     setSaveMsg(null);
-    setForm({
-      name: user.name || "",
-      email: user.email || "",
-      phone: user.phone || "",
-      dob: user.dob || "",
-      gender: user.gender || "",
-      language: user.language || "",
-      country: user.country || "",
-      state: user.state || "",
-      city: user.city || "",
-      address: user.address || "",
-    });
+    setSaveErr(null);
+    setForm(formFromUser(user));
   };
 
   const handleSubmit = async () => {
@@ -198,34 +230,59 @@ export default function PersonalInformation() {
 
     setSaving(true);
     setSaveMsg(null);
+    setSaveErr(null);
     try {
-      await api.updateProfile({
+      // `email` is omitted deliberately — the API strips it as an unknown key
+      // (see the updateProfile schema); changing it needs a re-verification flow.
+      const payload: Profile = {
         name: form.name?.trim(),
-        email: form.email?.trim(),
         phone: form.phone?.trim(),
         dob: form.dob?.trim(),
-        gender: form.gender?.trim(),
-        language: form.language?.trim(),
-        country: form.country?.trim(),
-        state: form.state?.trim(),
-        city: form.city?.trim(),
-        address: form.address?.trim(),
-      });
+        birthplace: form.birthplace?.trim() || "",
+        gender: form.gender?.trim() || "",
+        language: form.language?.trim() || "",
+        country: form.country?.trim() || "",
+        state: form.state?.trim() || "",
+        city: form.city?.trim() || "",
+        address: form.address?.trim() || "",
+      };
+      // `tob` is validated as a bare HH:MM regex with no .allow("") — sending an
+      // empty string 400s, so only include it when the user actually set one.
+      const tob = form.tob?.trim();
+      if (tob) payload.tob = tob;
+
+      await api.updateProfile(payload);
       setSaveMsg("success");
       setEditing(false);
-    } catch (e: any) {
+      refetch();
+    } catch (e: unknown) {
+      // Surface what the API actually said — a generic "try again" hides real,
+      // actionable causes such as a rejected date/time format.
+      setSaveErr((e as Error)?.message || null);
       setSaveMsg("error");
     } finally {
       setSaving(false);
     }
   };
 
-  const fields: { label: string; name: keyof Profile; dropdown?: boolean; full?: boolean; type?: string }[] = [
-    { label: "Full Name", name: "name" },
-    { label: "Email Address", name: "email", type: "email" },
-    { label: "Mobile Number", name: "phone", type: "tel" },
-    { label: "Date of Birth", name: "dob", type: "date" },
-    { label: "Gender", name: "gender", dropdown: true },
+  const fields: {
+    label: string;
+    name: keyof Profile;
+    dropdown?: boolean;
+    full?: boolean;
+    type?: string;
+    required?: boolean;
+    readOnly?: boolean;
+  }[] = [
+    { label: "Full Name", name: "name", required: true },
+    // Read-only: PATCH /api/users/me does not accept `email`.
+    { label: "Email Address", name: "email", type: "email", readOnly: true },
+    { label: "Mobile Number", name: "phone", type: "tel", required: true },
+    { label: "Date of Birth", name: "dob", type: "date", required: true },
+    // Birth time/place drive kundali generation, and the API already stores them.
+    { label: "Time of Birth", name: "tob", type: "time" },
+    { label: "Place of Birth", name: "birthplace" },
+    { label: "Gender", name: "gender", dropdown: true, required: true },
     { label: "Language", name: "language", dropdown: true },
     { label: "Country", name: "country" },
     { label: "State", name: "state" },
@@ -291,7 +348,7 @@ export default function PersonalInformation() {
       )}
       {saveMsg === "error" && (
         <div className="mt-4 rounded-[10px] bg-[#fdeaf0] px-4 py-3 text-[13px] font-medium text-[#e0567f]">
-          Failed to update profile. Please try again.
+          {saveErr || "Failed to update profile. Please try again."}
         </div>
       )}
 
@@ -306,7 +363,7 @@ export default function PersonalInformation() {
       ) : (
         <div className="mt-[22px] grid grid-cols-1 gap-x-[18px] gap-y-[15px] sm:grid-cols-2 lg:grid-cols-3">
           {fields.map((f) =>
-            editing ? (
+            editing && !f.readOnly ? (
               <EditableField
                 key={f.name}
                 label={f.label}
@@ -317,6 +374,7 @@ export default function PersonalInformation() {
                 type={f.type}
                 dropdown={f.dropdown}
                 full={f.full}
+                required={f.required}
               />
             ) : (
               <ReadonlyField
@@ -325,10 +383,15 @@ export default function PersonalInformation() {
                 value={
                   f.name === "address"
                     ? [user.address, user.city, user.state, user.country].filter(Boolean).join(", ") || "—"
-                    : user[f.name] || "—"
+                    : f.name === "dob"
+                      ? toDateInput(user.dob) || "—"
+                      : f.name === "tob"
+                        ? toTimeInput(user.tob) || "—"
+                        : user[f.name] || "—"
                 }
-                dropdown={f.dropdown}
+                dropdown={f.dropdown && !f.readOnly}
                 full={f.full}
+                hint={editing && f.readOnly ? "Cannot be changed here" : undefined}
               />
             )
           )}

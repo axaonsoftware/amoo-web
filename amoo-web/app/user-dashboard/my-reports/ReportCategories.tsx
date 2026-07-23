@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { LayoutGrid, Layers, Orbit, Compass, Flower2, ChevronRight, Loader2 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 const ICON_MAP: Record<string, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
@@ -30,9 +30,10 @@ const ICON_COLOR_MAP: Record<string, string> = {
 };
 
 export default function ReportCategories() {
-  const { data: services, loading, error } = useApi<any[]>(() => api.getServices());
+  // /api/services is paginated -> `{ data, meta }`, never a bare array.
+  const { items: services, loading, error } = useApiList<any>(() => api.getServices());
   const grouped: Record<string, number> = {};
-  (services ?? []).forEach((s: any) => {
+  services.forEach((s: any) => {
     const key = s.category || s.type || "Other";
     grouped[key] = (grouped[key] || 0) + 1;
   });

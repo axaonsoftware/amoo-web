@@ -91,6 +91,7 @@ if (env.nodeEnv !== "test") {
   app.use("/api", limiter);
   app.use("/api/auth/login", authLimiter);
   app.use("/api/auth/admin/login", authLimiter);
+  app.use("/api/auth/expert/login", authLimiter);
   app.use("/api/auth/forgot-password", authLimiter);
   app.use("/api/auth/reset-password", authLimiter);
   app.use("/api/auth/register", registerLimiter);

@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
-const { authRequired, adminRequired } = require("../middleware/auth");
-const { verifyAccessToken } = require("../middleware/auth");
+const bcrypt = require("bcryptjs");
+const { adminRequired, verifyAccessToken, extractToken } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
@@ -17,16 +17,22 @@ router.get(
   "/",
   validateQuery,
   asyncHandler(async (req, res) => {
-    // ?all=1 reveals inactive/expert PII — only admins may do this.
-    // Properly verify the token instead of just checking header existence.
+    // ?all=1 reveals inactive experts and their PII — admins only.
+    //
+    // This used to read `req.headers.authorization` directly, which meant it
+    // only ever worked for a Bearer client. The browser authenticates with the
+    // httpOnly `access_token` cookie, so the admin expert-management page always
+    // got 401 here and could never list inactive experts. extractToken() checks
+    // the header first and falls back to the cookie, which is exactly the
+    // precedence the rest of the middleware uses.
     let isAdmin = false;
     if (req.query.all === "1") {
-      const header = req.headers.authorization || "";
-      if (header.startsWith("Bearer ")) {
+      const token = extractToken(req);
+      if (token) {
         try {
-          const decoded = verifyAccessToken(header.slice(7));
+          const decoded = verifyAccessToken(token);
           isAdmin = decoded.kind === "admin";
-        } catch (_) { /* token invalid — not admin */ }
+        } catch (_) { /* token invalid or expired — not admin */ }
       }
       if (!isAdmin) {
         return fail(res, 401, "Admin authentication required");
@@ -78,7 +84,17 @@ router.post(
 router.patch(
   "/:id",
   adminRequired,
+  validate("expertUpdate"),
   asyncHandler(async (req, res) => {
+    // experts.email is UNIQUE — without this pre-check a collision surfaces as
+    // an unhandled ER_DUP_ENTRY and a 500 instead of a usable 409.
+    if (req.body.email) {
+      const [clash] = await pool.query(
+        "SELECT id FROM experts WHERE email = ? AND id <> ?",
+        [req.body.email, req.params.id]
+      );
+      if (clash.length) throw new HttpError(409, "Expert email already exists");
+    }
     const { setClause, values } = buildUpdate(req.body, EXPERT_UPDATE_ALLOWED, [req.params.id]);
     await pool.query(`UPDATE experts SET ${setClause} WHERE id = ?`, values);
     req.audit("update", "expert", Number(req.params.id), req.body);
@@ -96,6 +112,25 @@ router.delete(
     await pool.query("UPDATE experts SET deleted_at = NOW(), status = 'inactive' WHERE id = ?", [req.params.id]);
     req.audit("delete", "expert", Number(req.params.id));
     ok(res, { id: Number(req.params.id), deleted: true });
+  })
+);
+
+// POST /api/experts/:id/set-password (admin sets or resets an expert's password)
+router.post(
+  "/:id/set-password",
+  adminRequired,
+  validate("setExpertPassword"),
+  asyncHandler(async (req, res) => {
+    const { password } = req.body;
+    const [rows] = await pool.query("SELECT id FROM experts WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
+    if (assertFound(res, rows[0])) return;
+    const hash = await bcrypt.hash(password, 12);
+    await pool.query(
+      "UPDATE experts SET password_hash = ?, token_version = token_version + 1, verified = 1 WHERE id = ?",
+      [hash, req.params.id]
+    );
+    req.audit("set-password", "expert", Number(req.params.id));
+    ok(res, { id: Number(req.params.id), password_set: true });
   })
 );
 

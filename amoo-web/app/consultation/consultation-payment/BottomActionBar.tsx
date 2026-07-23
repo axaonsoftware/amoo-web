@@ -1,89 +1,86 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { ArrowLeft, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { formatCurrency } from "@/lib/format";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/lib/razorpay";
-import {
-  resolveService,
-  toApiMode,
-  modeNote,
-  parseDisplayDate,
-  parseDisplayTime,
-  type ConsultationService,
-} from "../lib/services";
+import { clearConsultationData } from "../lib/consultation-storage";
+import { toApiMode, modeNote, parseDisplayDate, parseDisplayTime, type ConsultationService } from "../lib/services";
+import type { AppliedCoupon } from "./CouponCard";
 
 export default function BottomActionBar({
   service,
   mode,
   date,
   time,
+  svc,
+  coupon,
+  total,
 }: {
-  service?: string;
-  mode?: string;
-  date?: string;
-  time?: string;
+  service: string;
+  mode: string;
+  date: string;
+  time: string;
+  svc: ConsultationService | null;
+  coupon: AppliedCoupon | null;
+  total: number;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
-  const [svcRow, setSvcRow] = useState<ConsultationService | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const svc = service || "Reiki Healing Session";
-  const md = mode || "Video Call";
-  const dt = date || "Tuesday, 10 June 2026";
-  const tm = time || "08:00 AM";
-
-  const backParams = new URLSearchParams();
-  backParams.set("service", svc);
-  backParams.set("mode", md);
-  backParams.set("date", dt);
-  backParams.set("time", tm);
-  const qs = backParams.toString();
-
-  // Show the real price on the button rather than a constant that can drift
-  // from the services table. Silent on failure — handlePay surfaces the error.
-  useEffect(() => {
-    let live = true;
-    resolveService(svc)
-      .then((row) => { if (live) setSvcRow(row); })
-      .catch(() => {});
-    return () => { live = false; };
-  }, [svc]);
+  const backQuery = new URLSearchParams({ service, mode, date, time }).toString();
 
   const handlePay = async () => {
+    if (!svc) return;
     setBusy(true);
+    setError(null);
     setStatus("Creating booking...");
     try {
-      // 1. Resolve the picked service to its row — service_id is required and
-      //    the price is the server's, not ours.
-      const match = svcRow ?? (await resolveService(svc));
-      setSvcRow(match);
-
-      // 2. Create the booking. amount 0 means "pay later": the API stores the
-      //    real services.price and rejects any non-zero amount that disagrees
-      //    with it. `payment` is not an accepted field — only /payments/verify
-      //    may mark a booking paid.
-      const note = modeNote(md);
+      // 1. Create the booking. `amount: 0` means "let the server price it": the
+      //    API stores services.price and rejects any non-zero amount that
+      //    disagrees with it. `payment` is not an accepted field — only a
+      //    signature-verified /payments/verify may mark a booking paid.
+      const note = modeNote(mode);
       const booking = await api.createBooking({
-        service_id: match.id,
-        date: parseDisplayDate(dt),
-        time: parseDisplayTime(tm),
-        mode: toApiMode(md),
+        service_id: svc.id,
+        date: parseDisplayDate(date),
+        time: parseDisplayTime(time),
+        mode: toApiMode(mode),
         amount: 0,
         method: "razorpay",
         ...(note ? { notes: note } : {}),
       });
 
-      // 3. Create a Razorpay order for this booking
+      // 2. Redeem the coupon BEFORE the order is created. /apply rewrites
+      //    bookings.amount inside a transaction, and /create-order prices the
+      //    order from that column — so the discount has to land first or the
+      //    customer is charged full price. Nothing called /apply at all before
+      //    this change, which is exactly why coupons never reduced a bill.
+      if (coupon) {
+        setStatus("Applying coupon...");
+        try {
+          await api.applyCoupon(coupon.code, booking.id);
+        } catch (couponErr) {
+          // The booking exists and is valid; only the discount failed. Stop
+          // rather than silently charging full price after the summary promised
+          // a saving.
+          throw new Error(
+            `${(couponErr as Error)?.message || "Coupon could not be applied"}. ` +
+              "Remove the coupon to continue at the full price."
+          );
+        }
+      }
+
+      // 3. Create the Razorpay order for the (now possibly discounted) booking.
       setStatus("Loading payment gateway...");
       const order = await api.createPaymentOrder({ booking_id: booking.id });
 
-      // 4. Load Razorpay checkout script
       await loadRazorpayScript();
 
-      // 5. Open Razorpay checkout modal
       setStatus("Opening payment window...");
       const paymentResult = await openRazorpayCheckout({
         key: order.key_id,
@@ -91,12 +88,10 @@ export default function BottomActionBar({
         currency: order.currency,
         order_id: order.order_id,
         name: "Amoo Guru",
-        description: svc,
-        prefill: { name: "", email: "", contact: "" },
+        description: service,
         theme: { color: "#7C3AED" },
       });
 
-      // 6. Verify payment on the backend
       setStatus("Verifying payment...");
       await api.verifyPayment({
         booking_id: booking.id,
@@ -105,13 +100,17 @@ export default function BottomActionBar({
         razorpay_signature: paymentResult.razorpay_signature,
       });
 
-      // 7. Redirect to confirmation
+      // The multi-step form data has served its purpose; holding personal
+      // details in browser storage after checkout is an unnecessary risk.
+      clearConsultationData();
       router.push(`/consultation/booking-confirmation?bookingId=${booking.id}`);
-    } catch (err: any) {
-      if (err.message === "Payment cancelled by user") {
-        // User closed the modal — no action needed
-      } else {
-        alert(err.message || "Payment failed. Please try again.");
+    } catch (err) {
+      const message = (err as Error)?.message || "Payment failed. Please try again.";
+      // Closing the Razorpay modal is a normal action, not an error state.
+      if (message !== "Payment cancelled by user") {
+        // Rendered inline rather than through alert(), which is blocking,
+        // unstyled, and impossible to read on mobile.
+        setError(message);
       }
     } finally {
       setBusy(false);
@@ -120,42 +119,56 @@ export default function BottomActionBar({
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-0 justify-between bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mt-6">
-      <button
-        onClick={() => router.push(`/consultation/booking-summary?${qs}`)}
-        disabled={busy}
-        className="flex items-center gap-2 border border-gray-200 rounded-lg px-5 py-2.5 text-sm font-medium text-gray-700 disabled:opacity-50"
-      >
-        <ArrowLeft size={16} />
-        Back
-      </button>
+    <div className="mt-6">
+      {error && (
+        <div
+          role="alert"
+          className="mb-4 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{error}</span>
+        </div>
+      )}
 
-      <p className="flex items-center gap-2 text-xs text-gray-500 order-3 sm:order-2">
-        <Lock size={14} />
-        {status || (busy ? "Processing..." : "Secured by Razorpay")}
-      </p>
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-0 justify-between bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <button
+          type="button"
+          onClick={() => router.push(`/consultation/booking-summary?${backQuery}`)}
+          disabled={busy}
+          className="flex items-center gap-2 border border-gray-200 rounded-lg px-5 py-2.5 text-sm font-medium text-gray-700 disabled:opacity-50"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back
+        </button>
 
-      <button
-        onClick={handlePay}
-        disabled={busy}
-        className="order-2 sm:order-3 flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-[#3E1E7A] w-full sm:w-auto disabled:opacity-60"
-        style={{
-          background: "linear-gradient(90deg,#F3D07A 0%,#C9932F 100%)",
-        }}
-      >
-        {busy ? (
-          <>
-            <Loader2 size={16} className="animate-spin" />
-            {status || "Processing..."}
-          </>
-        ) : (
-          <>
-            {svcRow ? `Pay ₹${svcRow.price.toLocaleString("en-IN")} Securely` : "Pay Securely"}
-            <ArrowRight size={16} />
-            <Lock size={14} />
-          </>
-        )}
-      </button>
+        <p className="flex items-center gap-2 text-xs text-gray-500 order-3 sm:order-2" aria-live="polite">
+          <Lock size={14} aria-hidden="true" />
+          {status || (busy ? "Processing..." : "Secured by Razorpay")}
+        </p>
+
+        <button
+          type="button"
+          onClick={handlePay}
+          disabled={busy || !svc}
+          className="order-2 sm:order-3 flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-[#3E1E7A] w-full sm:w-auto disabled:opacity-60"
+          style={{ background: "linear-gradient(90deg,#F3D07A 0%,#C9932F 100%)" }}
+        >
+          {busy ? (
+            <>
+              <Loader2 size={16} className="animate-spin" aria-hidden="true" />
+              {status || "Processing..."}
+            </>
+          ) : (
+            <>
+              {/* Shows the same total as the summary — both come from the page,
+                  which sourced it from services.price. */}
+              Pay {formatCurrency(total)} Securely
+              <ArrowRight size={16} aria-hidden="true" />
+              <Lock size={14} aria-hidden="true" />
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

@@ -11,7 +11,7 @@ import { trackEvent } from "../../lib/tracking";
 export default function UserRightPanel() {
   const router = useRouter();
   const { loginUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"user" | "astrologer">("user");
+  const [activeTab, setActiveTab] = useState<"user">("user");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
   const [email, setEmail] = useState("");
@@ -23,12 +23,13 @@ export default function UserRightPanel() {
 
   function validate(): boolean {
     const newErrors: { email?: string; password?: string } = {};
+    // The API authenticates on email only (POST /api/auth/login validates
+    // `email` with Joi's email rule), so accepting a mobile number here would
+    // just produce a 400 after the round-trip.
     if (!email.trim()) {
-      newErrors.email = "Email or mobile number is required";
-    } else if (email.includes("@") && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Enter a valid email address";
-    } else if (!email.includes("@") && !/^\d{10}$/.test(email.replace(/\s/g, ""))) {
-      newErrors.email = "Enter a valid 10-digit mobile number";
     }
     if (!password) {
       newErrors.password = "Password is required";
@@ -45,27 +46,18 @@ export default function UserRightPanel() {
     setIsLoading(true);
     setApiError(null);
     try {
-      const isAstrologer = activeTab === "astrologer";
-      const data = isAstrologer
-        ? await api.login({ email, password, role: "astrologer" })
-        : await api.login({ email, password });
+      const data = await api.login({ email, password });
       if (!data.user) throw new Error("Invalid response from server");
-      if (isAstrologer && data.user.role !== "astrologer") {
-        throw new Error("This account is not registered as an astrologer");
-      }
       loginUser({ ...data.user, kind: "user" });
       setLoginSuccess(true);
-      trackEvent("login", { method: "email", role: isAstrologer ? "astrologer" : "user" });
-      const dest = isAstrologer ? "/astrologer-dashboard" : "/user-dashboard";
-      setTimeout(() => router.push(dest), 1200);
+      trackEvent("login", { method: "email", role: "user" });
+      setTimeout(() => router.push("/"), 1200);
     } catch (err: any) {
       setApiError(err?.message || "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   }
-
-  const tabLabel = activeTab === "astrologer" ? "Astrologer" : "User";
 
   return (
     <div className="w-full h-full bg-white flex flex-col items-center px-6 sm:px-10 md:px-14 pt-10 sm:pt-12 pb-8 sm:pb-10 md:w-1/2">
@@ -87,36 +79,17 @@ export default function UserRightPanel() {
         </div>
 
         <div className="flex border-b border-gray-200 mb-6">
-          <button
-            onClick={() => { setActiveTab("user"); setErrors({}); }}
-            className={`flex items-center gap-2 px-1 pb-3 mr-8 text-sm font-medium relative transition ${
-              activeTab === "user" ? "text-[#5B2A9D]" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
+          <button className="flex items-center gap-2 px-1 pb-3 mr-8 text-sm font-medium relative text-[#5B2A9D]">
             <Sparkles size={16} />
             User Login
-            {activeTab === "user" && (
-              <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-[#5B2A9D]" />
-            )}
-          </button>
-          <button
-            onClick={() => { setActiveTab("astrologer"); setErrors({}); }}
-            className={`flex items-center gap-2 px-1 pb-3 text-sm font-medium relative transition ${
-              activeTab === "astrologer" ? "text-[#5B2A9D]" : "text-gray-400 hover:text-gray-600"
-            }`}
-          >
-            <User size={16} />
-            Astrologer Login
-            {activeTab === "astrologer" && (
-              <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-[#5B2A9D]" />
-            )}
+            <span className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-[#5B2A9D]" />
           </button>
         </div>
 
         {loginSuccess && (
           <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-3 text-green-700 text-sm">
             <CheckCircle2 size={16} />
-            Login successful! Redirecting to {tabLabel} dashboard...
+            Login successful! Redirecting...
           </div>
         )}
 
@@ -130,7 +103,7 @@ export default function UserRightPanel() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-800 mb-1.5">
-              Email Address / Mobile Number
+              Email Address
             </label>
             <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
@@ -178,7 +151,10 @@ export default function UserRightPanel() {
           </div>
 
           <div className="flex justify-end -mt-2">
-            <Link href="/contact" className="text-xs font-medium text-[#5B2A9D]">
+            {/* /forgot-password and POST /api/auth/forgot-password are both
+                fully implemented; this used to point at /contact, leaving a
+                working self-service reset flow completely unreachable. */}
+            <Link href="/forgot-password" className="text-xs font-medium text-[#5B2A9D] hover:underline">
               Forgot Password?
             </Link>
           </div>
@@ -211,20 +187,12 @@ export default function UserRightPanel() {
           </button>
         </form>
 
-        <div className="flex items-center gap-3 my-6">
-          <span className="flex-1 h-px bg-gray-200" />
-          <span className="text-xs text-gray-400">or continue with</span>
-          <span className="flex-1 h-px bg-gray-200" />
-        </div>
-
-        <div className="flex gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition active:scale-[0.98]">
-            <GoogleIcon /> Continue with Google
-          </button>
-          <button className="flex-1 flex items-center justify-center gap-2 border border-gray-200 rounded-lg py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition active:scale-[0.98]">
-            <AppleIcon /> Continue with Apple
-          </button>
-        </div>
+        {/* "Continue with Google / Apple" buttons were removed here.
+            There is no OAuth support anywhere in the stack: no provider client
+            id, no /api/auth/google or /api/auth/apple route, and no oauth
+            columns on `users`. The buttons rendered, were clickable, and did
+            absolutely nothing — a dead end on the primary sign-in path.
+            Re-add them together with the backend routes, not before. */}
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Don&apos;t have an account?{" "}
@@ -234,24 +202,5 @@ export default function UserRightPanel() {
         </p>
       </div>
     </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 48 48">
-      <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.4-.1-2.4-.4-3.5z" />
-      <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 16.2 3 9.5 7.4 6.3 14.7z" />
-      <path fill="#4CAF50" d="M24 45c5.5 0 10.4-2.1 14.1-5.5l-6.5-5.5C29.6 35.6 26.9 36.5 24 36.5c-5.3 0-9.7-3.4-11.3-8l-6.5 5C9.4 40.5 16.1 45 24 45z" />
-      <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.4l6.5 5.5C41 35.4 44 30 44 24c0-1.4-.1-2.4-.4-3.5z" />
-    </svg>
-  );
-}
-
-function AppleIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="black">
-      <path d="M16.365 1.43c0 1.14-.463 2.093-1.39 2.958-.928.865-2.056 1.363-3.383 1.24-.02-1.09.5-2.14 1.39-2.99.94-.86 2.13-1.36 3.383-1.208zm4.615 16.523c-.398.926-.87 1.783-1.417 2.573-.756 1.1-1.375 1.86-1.855 2.284-.744.694-1.542 1.05-2.394 1.067-.615 0-1.354-.175-2.216-.53-.865-.353-1.66-.53-2.386-.53-.762 0-1.583.177-2.462.53-.88.355-1.588.54-2.126.556-.816.036-1.632-.334-2.447-1.107-.52-.463-1.166-1.253-1.94-2.37-.83-1.198-1.513-2.586-2.048-4.165C.63 13.998.353 12.523.353 11.1c0-1.633.353-3.04 1.06-4.22.556-.947 1.293-1.694 2.216-2.243.923-.55 1.92-.832 2.99-.852.65 0 1.5.202 2.552.6 1.05.398 1.724.6 2.02.6.222 0 .967-.234 2.23-.7 1.196-.434 2.207-.614 3.037-.542 2.243.18 3.928 1.064 5.05 2.654-2.007 1.216-3 2.92-2.98 5.11.018 1.71.638 3.133 1.86 4.267.554.526 1.172.933 1.858 1.222-.15.435-.31.85-.483 1.25z" />
-    </svg>
   );
 }
