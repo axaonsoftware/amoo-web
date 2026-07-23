@@ -72,21 +72,19 @@ router.post(
   verifiedRequired,
   validate("booking"),
   asyncHandler(async (req, res) => {
-    const { service_id, expert_id, slot_id, date, time, mode, amount, payment, method, notes } = req.body;
+    const { service_id, expert_id, slot_id, date, time, mode, amount, notes } = req.body;
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
 
       // Server-side price enforcement: never trust the client-supplied amount.
+      // The booking always stores the real service price; the client `amount` is
+      // only cross-checked so a stale UI price surfaces as a 400 rather than
+      // silently charging something else. 0 means "pay later".
       const [[svc]] = await conn.query("SELECT id, price FROM services WHERE id = ? AND deleted_at IS NULL", [service_id]);
       if (!svc) throw new HttpError(404, "Service not found");
       const expected = Number(svc.price);
-      // Paid bookings must match the real service price exactly; pending-payment
-      // bookings (pay later) are allowed to carry a 0 amount.
-      const isPending = payment !== "Paid";
-      if (isPending) {
-        if (Number(amount) !== 0) throw new HttpError(400, "Pending bookings must have amount 0");
-      } else if (Math.abs(Number(amount) - expected) > 0.01) {
+      if (Number(amount) !== 0 && Math.abs(Number(amount) - expected) > 0.01) {
         throw new HttpError(400, "Amount does not match the service price");
       }
 
@@ -99,21 +97,16 @@ router.post(
       }
 
       const ref = genBookingRef();
-      const status = payment === "Paid" ? "upcoming" : "pending-payment";
+      // SECURITY: bookings are ALWAYS created unpaid. This route never inserts a
+      // payments row — only /api/payments/verify (signature-checked) and the
+      // gateway webhook may mark a booking Paid. Anything else lets a client
+      // conjure a confirmed booking without money moving.
       const [result] = await conn.query(
         `INSERT INTO bookings (booking_ref, user_id, expert_id, service_id, slot_id, date, time, mode, amount, payment, status, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [ref, req.user.id, expert_id || null, service_id, slot_id || null, date, time, mode || null, amount, payment, status, notes || null]
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', 'pending-payment', ?)`,
+        [ref, req.user.id, expert_id || null, service_id, slot_id || null, date, time, mode || null, expected, notes || null]
       );
       const bookingId = result.insertId;
-
-      if (payment === "Paid") {
-        await conn.query(
-          "INSERT INTO payments (booking_id, user_id, amount, method, status) VALUES (?, ?, ?, ?, 'success')",
-          [bookingId, req.user.id, amount, method || "card"]
-        );
-        await conn.query("UPDATE services SET bookings = bookings + 1 WHERE id = ?", [service_id]);
-      }
 
       await conn.commit();
       const [rows] = await conn.query("SELECT * FROM bookings WHERE id = ?", [bookingId]);

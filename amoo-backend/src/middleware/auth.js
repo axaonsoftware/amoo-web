@@ -28,10 +28,14 @@ function verifyRefreshToken(token) {
   return jwt.verify(token, env.jwt.refreshSecret);
 }
 
+// Browsers authenticate via the httpOnly `access_token` cookie; non-browser API
+// clients still send an Authorization header, which takes precedence so an
+// explicit header always wins over a stale cookie.
 function extractToken(req, fromCookie = false) {
   if (fromCookie && req.cookies && req.cookies.refresh_token) return req.cookies.refresh_token;
   const header = req.headers.authorization || "";
   if (header.startsWith("Bearer ")) return header.slice(7);
+  if (req.cookies && req.cookies.access_token) return req.cookies.access_token;
   return null;
 }
 

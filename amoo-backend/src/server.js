@@ -14,6 +14,7 @@ const { helmetConfig, corsOptions, limiter, authLimiter, registerLimiter } = req
 const { HttpError } = require("./utils/helpers");
 const { fail } = require("./utils/response");
 const { withAudit, authRequired } = require("./middleware/auth");
+const { generateCsrfToken, csrfGuard } = require("./middleware/csrf");
 
 const authRoutes = require("./routes/auth");
 const userRoutes = require("./routes/users");
@@ -62,6 +63,14 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// --- CSRF (double-submit cookie) ---
+// Auth rides on an httpOnly cookie, which the browser attaches to cross-site
+// requests too, so every state-changing call must also echo a token that only
+// our own frontend can read. generateCsrfToken issues/refreshes the readable
+// cookie; csrfGuard enforces the match on unsafe methods.
+app.use(generateCsrfToken);
+app.use(csrfGuard);
 
 // Request correlation id (traced in logs / errors)
 app.use((req, res, next) => {

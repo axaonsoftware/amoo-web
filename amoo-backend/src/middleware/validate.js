@@ -41,6 +41,8 @@ const schemas = {
 
   couponApply: Joi.object({
     code: Joi.string().min(3).max(30).required(),
+    // Accepted for backwards compatibility but ignored: /apply discounts the
+    // booking's own stored amount, never a client-supplied figure.
     amount: optionalNumber.min(0),
     booking_id: Joi.number().integer().positive().required(),
   }),
@@ -74,6 +76,9 @@ const schemas = {
     birthplace: optionalString.max(255),
   }),
 
+  // SECURITY: `payment` is deliberately NOT accepted here. A booking always
+  // starts unpaid; only /api/payments/verify and the gateway webhook may mark
+  // one Paid. A client-supplied `payment` key is silently stripped.
   booking: Joi.object({
     service_id: Joi.number().integer().positive().required(),
     expert_id: optionalNumber.integer().positive(),
@@ -82,7 +87,6 @@ const schemas = {
     time: Joi.string().required(),
     mode: Joi.string().valid("chat", "video", "in-person", "").allow(null),
     amount: Joi.number().min(0).required(),
-    payment: Joi.string().valid("Paid", "Pending").default("Pending"),
     method: optionalString.max(40),
     notes: optionalString.max(2000),
   }),
@@ -160,6 +164,11 @@ const schemas = {
   }),
 
   report: Joi.object({
+    // Optional here because two routes share this schema: POST /api/reports
+    // ignores it and uses the caller's own id, while POST /api/reports/admin
+    // requires it. Without the key, stripUnknown deleted it before the admin
+    // handler could ever see it, so that route could only ever return 400.
+    user_id: optionalNumber.integer().positive(),
     service_id: optionalNumber.integer().positive(),
     type: optionalString.max(60),
     title: Joi.string().max(200).required(),
@@ -187,12 +196,12 @@ const schemas = {
     reply: optionalString.max(4000),
   }),
 
+  // SECURITY: `user_id`, `name` and `avatar` are deliberately NOT accepted.
+  // They are read from the authenticated account in the handler — otherwise a
+  // testimonial could be attributed to any real user.
   testimonial: Joi.object({
-    name: optionalString.max(120),
     comment: Joi.string().min(2).max(2000).required(),
     rating: Joi.number().min(1).max(5).default(5),
-    user_id: optionalNumber.integer().positive(),
-    avatar: optionalString.max(512),
   }),
 
   notification: Joi.object({
@@ -234,12 +243,36 @@ const schemas = {
     status: Joi.string().valid("draft", "published"),
   }),
 
+  // PATCH variant: nothing required, and no defaults — a default would silently
+  // rewrite a field the caller never mentioned.
+  blogUpdate: Joi.object({
+    slug: Joi.string().max(255),
+    title: Joi.string().max(500),
+    excerpt: Joi.string().max(4000).allow("").allow(null),
+    content: Joi.string().max(65535).allow("").allow(null),
+    category: optionalString.max(100),
+    image: optionalString.max(500),
+    author: optionalString.max(255),
+    author_avatar: optionalString.max(500),
+    read_time: optionalString.max(50),
+    status: Joi.string().valid("draft", "published"),
+  }),
+
   faq: Joi.object({
     question: Joi.string().max(500).required(),
     answer: Joi.string().required(),
     category: Joi.string().max(100).default("General"),
     sort_order: Joi.number().integer().min(0).default(0),
     active: Joi.boolean().default(true),
+  }),
+
+  // PATCH variant — see blogUpdate above.
+  faqUpdate: Joi.object({
+    question: Joi.string().max(500),
+    answer: Joi.string(),
+    category: Joi.string().max(100),
+    sort_order: Joi.number().integer().min(0),
+    active: Joi.boolean(),
   }),
 
   userUpdateAdmin: Joi.object({

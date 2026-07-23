@@ -31,7 +31,7 @@ describe("register schema", () => {
 });
 
 describe("booking schema", () => {
-  const valid = { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0, payment: "Pending" };
+  const valid = { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0 };
 
   it("accepts valid input", () => {
     assert.strictEqual(check(schemas.booking, valid), null);
@@ -42,9 +42,14 @@ describe("booking schema", () => {
     assert.ok(errs.length > 0);
   });
 
-  it("rejects invalid payment value", () => {
-    const errs = check(schemas.booking, { ...valid, payment: "Free" });
-    assert.ok(errs.some((m) => /payment/i.test(m)));
+  // S1: a client must never be able to declare its own booking already paid.
+  it("strips a client-supplied payment field", () => {
+    const { error, value } = schemas.booking.validate(
+      { ...valid, payment: "Paid" },
+      { abortEarly: false, stripUnknown: true } // same options the middleware uses
+    );
+    assert.strictEqual(error, undefined);
+    assert.ok(!("payment" in value), "payment must not survive validation");
   });
 
   it("rejects missing required fields", () => {

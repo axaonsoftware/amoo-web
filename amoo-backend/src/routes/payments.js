@@ -266,9 +266,11 @@ router.post(
 );
 
 // POST /api/payments/:id/refund
+// SECURITY: admin-only. This calls the real gateway refund API and moves real
+// money, so it must never be reachable by the payment's owner.
 router.post(
   "/:id/refund",
-  authRequired,
+  adminRequired,
   validate("refund"),
   asyncHandler(async (req, res) => {
     const { reason } = req.body;
@@ -365,7 +367,15 @@ router.get(
 router.post(
   "/webhook",
   asyncHandler(async (req, res) => {
-    if (env.payments.gateway !== "mock" && env.payments.webhookSecret) {
+    // Signature verification is only skippable for local development against
+    // the mock gateway. config/env.js refuses to boot in production without a
+    // real gateway and a webhook secret; this is the same rule enforced at the
+    // request level, so an unsigned event can never mark a booking paid in prod.
+    const canVerify = env.payments.gateway !== "mock" && !!env.payments.webhookSecret;
+    if (!canVerify && env.isProd) {
+      return fail(res, 503, "Webhook signature verification is not configured");
+    }
+    if (canVerify) {
       const sig = req.headers["x-payment-signature"] || req.headers["x-razorpay-signature"];
       const raw = req.rawBody || JSON.stringify(req.body);
       const expected = crypto

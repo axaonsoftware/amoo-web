@@ -45,17 +45,29 @@ router.get(
   })
 );
 
-// public submit
+// authenticated submit — queued for admin approval
+//
+// SECURITY: signed-in users only, and the author is taken from the token, never
+// the request body, so a testimonial cannot be attributed to another account.
+// New submissions land as 'Inactive' and only appear on the public site once an
+// admin flips them to 'Active' via PATCH /api/testimonials/:id.
 router.post(
   "/",
+  authRequired,
   validate("testimonial"),
   asyncHandler(async (req, res) => {
-    const { name, comment, rating, user_id, avatar } = req.body;
-    const [result] = await pool.query(
-      "INSERT INTO testimonials (user_id, name, avatar, comment, rating, status) VALUES (?,?,?,?,?,'Active')",
-      [user_id || null, name || null, avatar || null, comment, rating || 5]
+    const { comment, rating } = req.body;
+    const [[user]] = await pool.query(
+      "SELECT name, avatar FROM users WHERE id = ? AND deleted_at IS NULL",
+      [req.user.id]
     );
-    created(res, { id: result.insertId });
+    if (!user) throw new HttpError(404, "User not found");
+    const [result] = await pool.query(
+      "INSERT INTO testimonials (user_id, name, avatar, comment, rating, status) VALUES (?,?,?,?,?,'Inactive')",
+      [req.user.id, user.name || null, user.avatar || null, comment, rating || 5]
+    );
+    req.audit("create", "testimonial", result.insertId, { rating });
+    created(res, { id: result.insertId, status: "Inactive" });
   })
 );
 

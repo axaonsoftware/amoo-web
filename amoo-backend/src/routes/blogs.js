@@ -84,7 +84,7 @@ router.post(
 router.patch(
   "/:id",
   adminRequired,
-  validate("blog"),
+  validate("blogUpdate"),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, ["slug", "title", "excerpt", "content", "category", "image", "author", "author_avatar", "read_time", "status"], [req.params.id]);
     await pool.query(`UPDATE blogs SET ${setClause} WHERE id = ? AND deleted_at IS NULL`, values);

@@ -19,9 +19,13 @@ function mockReject(err) {
   mockHandlers.push(() => Promise.reject(err));
 }
 
+/** Every SQL statement the app issued, so tests can assert on what ran. */
+const queryLog = [];
+
 /** Consume one handler per query call */
 function makeQuery() {
   return (...args) => {
+    queryLog.push(String(args[0]));
     const h = mockHandlers.shift();
     if (!h) throw new Error(`No mock for query: ${String(args[0]).slice(0, 120)}...`);
     return h();
@@ -52,6 +56,7 @@ const adminToken = signAccessToken({ id: 1, kind: "admin", tokenVersion: 0 });
 
 function resetMocks() {
   mockHandlers.length = 0;
+  queryLog.length = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,8 +71,18 @@ before(() => new Promise((ok) => {
 }));
 after(() => new Promise((ok) => server.close(ok)));
 
+// A valid double-submit pair: the same token in the cookie and the header.
+// State-changing routes are CSRF-protected, so requests carry it by default;
+// pass `csrf: false` (or an explicit `csrf` value) to exercise the guard.
+const CSRF_TOKEN = "a".repeat(64);
+
 async function api(method, path, opts = {}) {
   const headers = { "Content-Type": "application/json", ...opts.headers };
+  const csrf = opts.csrf === undefined ? CSRF_TOKEN : opts.csrf;
+  if (csrf !== false) {
+    headers["X-CSRF-Token"] = csrf;
+    headers.Cookie = [headers.Cookie, `csrf_token=${CSRF_TOKEN}`].filter(Boolean).join("; ");
+  }
   const res = await fetch(baseUrl + path, {
     method,
     headers,
@@ -205,19 +220,39 @@ describe("GET /api/auth/me", () => {
 describe("POST /api/bookings", () => {
   beforeEach(resetMocks);
 
-  it("creates a paid booking with slot reservation", async () => {
-    mockResolvedValue([{ token_version: 0 }]);                     // 0: checkTokenVersion
-    mockResolvedValue([{ id: 1, price: 100 }]);                    // 1: SELECT service price
-    mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// 2: SELECT slot FOR UPDATE
-    mockResolvedValue({});                                          // 3: UPDATE slot → booked
-    mockResolvedValue({ insertId: 1 });                             // 4: INSERT booking
-    mockResolvedValue({});                                          // 5: INSERT payment
-    mockResolvedValue({});                                          // 6: UPDATE bookings count
-    mockResolvedValue([{                                            // 7: SELECT created booking
+  /** The exact query sequence a successful create now makes. */
+  function mockCreateBooking() {
+    mockResolvedValue([{ token_version: 0 }]);                      // 0: checkTokenVersion
+    mockResolvedValue([{ verified: 1 }]);                           // 1: verifiedRequired
+    mockResolvedValue([{ id: 1, price: 100 }]);                     // 2: SELECT service price
+    mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// 3: SELECT slot FOR UPDATE
+    mockResolvedValue({});                                          // 4: UPDATE slot → booked
+    mockResolvedValue({ insertId: 1 });                             // 5: INSERT booking
+    mockResolvedValue([{                                            // 6: SELECT created booking
       id: 1, booking_ref: "BOOK-T", user_id: 1, service_id: 1,
       date: "2025-06-15", time: "10:00", amount: 100,
-      payment: "Paid", status: "upcoming",
+      payment: "Pending", status: "pending-payment",
     }]);
+  }
+
+  it("creates a pending booking with slot reservation", async () => {
+    mockCreateBooking();
+
+    const res = await api("POST", "/api/bookings", {
+      headers: { Authorization: `Bearer ${userToken}` },
+      body: { service_id: 1, slot_id: 1, date: "2025-06-15", time: "10:00",
+              amount: 100, method: "card" },
+    });
+    assert.strictEqual(res.status, 201);
+    assert.ok(res.body.success);
+    assert.strictEqual(res.body.data.payment, "Pending");
+  });
+
+  // S1: POST /api/bookings must never produce a paid booking, whatever the
+  // client asks for. The booking is inserted Pending and no payments row is
+  // created — only a verified gateway callback may mark money as received.
+  it("ignores a client-supplied payment='Paid' and stays pending", async () => {
+    mockCreateBooking();
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
@@ -225,18 +260,25 @@ describe("POST /api/bookings", () => {
               amount: 100, payment: "Paid", method: "card" },
     });
     assert.strictEqual(res.status, 201);
-    assert.ok(res.body.success);
+
+    const insertBooking = queryLog.find((q) => /INSERT INTO bookings/i.test(q));
+    assert.ok(insertBooking, "expected a booking insert");
+    assert.match(insertBooking, /'Pending', 'pending-payment'/);
+    assert.ok(
+      !queryLog.some((q) => /INSERT INTO payments/i.test(q)),
+      "booking creation must never insert a payments row"
+    );
   });
 
   it("rejects amount mismatch with service price", async () => {
     mockResolvedValue([{ token_version: 0 }]);                     // 0: checkTokenVersion
-    mockResolvedValue([{ id: 1, price: 100 }]);                    // 1: SELECT service (price=100)
-    mockResolvedValue({});                                          // 2: rollback
+    mockResolvedValue([{ verified: 1 }]);                          // 1: verifiedRequired
+    mockResolvedValue([{ id: 1, price: 100 }]);                    // 2: SELECT service (price=100)
+    mockResolvedValue({});                                          // 3: rollback
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
-      body: { service_id: 1, date: "2025-06-15", time: "10:00",
-              amount: 999, payment: "Paid" },
+      body: { service_id: 1, date: "2025-06-15", time: "10:00", amount: 999 },
     });
     assert.strictEqual(res.status, 400);
   });
@@ -295,6 +337,108 @@ describe("GET /api/bookings/:id — cross-user security", () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// CSRF (double-submit cookie)
+// ---------------------------------------------------------------------------
+describe("CSRF protection", () => {
+  beforeEach(resetMocks);
+
+  it("rejects a state-changing request with no CSRF token", async () => {
+    const res = await api("POST", "/api/bookings", {
+      csrf: false,
+      headers: { Authorization: `Bearer ${userToken}` },
+      body: { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0 },
+    });
+    assert.strictEqual(res.status, 403);
+    assert.match(res.body.error, /CSRF/);
+  });
+
+  it("rejects a header that does not match the cookie", async () => {
+    const res = await api("POST", "/api/bookings", {
+      csrf: "b".repeat(64), // valid shape, wrong value
+      headers: { Authorization: `Bearer ${userToken}` },
+      body: { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0 },
+    });
+    assert.strictEqual(res.status, 403);
+    assert.match(res.body.error, /CSRF/);
+  });
+
+  it("allows GET without a CSRF token", async () => {
+    mockResolvedValue([{ token_version: 0 }]);
+    mockResolvedValue([{
+      id: 1, name: "Test", email: "t@t.com", role: "free",
+      status: "active", verified: 1, phone: null, avatar: null,
+      created_at: "2025-01-01T00:00:00.000Z",
+    }]);
+
+    const res = await api("GET", "/api/auth/me", {
+      csrf: false,
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    assert.strictEqual(res.status, 200);
+  });
+
+  it("exempts login so a fresh client can authenticate", async () => {
+    mockResolvedValue([]); // SELECT user → none, so login fails on credentials
+    const res = await api("POST", "/api/auth/login", {
+      csrf: false,
+      body: { email: "test@example.com", password: "password123" },
+    });
+    assert.strictEqual(res.status, 401); // reached the handler, not blocked by CSRF
+  });
+
+  it("issues a csrf_token cookie and echoes it in a response header", async () => {
+    const res = await api("GET", "/api/health", { csrf: false });
+    const token = res.headers.get("x-csrf-token");
+    assert.match(token, /^[a-f0-9]{64}$/);
+    assert.match(res.headers.get("set-cookie") || "", /csrf_token=/);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Cookie-based auth
+// ---------------------------------------------------------------------------
+describe("access_token cookie auth", () => {
+  beforeEach(resetMocks);
+
+  it("authenticates from the access_token cookie with no Authorization header", async () => {
+    mockResolvedValue([{ token_version: 0 }]);                      // checkTokenVersion
+    mockResolvedValue([{                                            // SELECT user
+      id: 1, name: "Test", email: "t@t.com", role: "free",
+      status: "active", verified: 1, phone: null, avatar: null,
+      created_at: "2025-01-01T00:00:00.000Z",
+    }]);
+
+    const res = await api("GET", "/api/auth/me", {
+      csrf: false,
+      headers: { Cookie: `access_token=${userToken}` },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body?.data?.data?.email, "t@t.com");
+  });
+
+  it("login sets an httpOnly access_token cookie", async () => {
+    const hash = "$2a$12$WY2Yo.FGEW6NVvLhOJlSHuv4KoSKz0xqEPUiWx152PLiZbTvjs4C2";
+    mockResolvedValue([{
+      id: 1, name: "Test", email: "test@example.com", password_hash: hash,
+      role: "free", status: "active", verified: 1, token_version: 0,
+      failed_attempts: 0, locked_until: null, deleted_at: null,
+    }]);                                                            // 0: SELECT user
+    mockResolvedValue([{ failed_attempts: 0, locked_until: null }]);// 1: checkLockout
+    mockResolvedValue({});                                          // 2: resetFailedAttempts
+
+    const res = await api("POST", "/api/auth/login", {
+      body: { email: "test@example.com", password: "password123" },
+    });
+    assert.strictEqual(res.status, 200);
+    const cookies = res.headers.getSetCookie();
+    const access = cookies.find((c) => c.startsWith("access_token="));
+    assert.ok(access, "expected an access_token cookie");
+    assert.match(access, /HttpOnly/i);
+    assert.ok(cookies.some((c) => c.startsWith("refresh_token=")), "expected a refresh_token cookie");
+  });
+});
+
 describe("Admin-only routes reject regular users", () => {
   beforeEach(resetMocks);
 
@@ -326,5 +470,21 @@ describe("Admin-only routes reject regular users", () => {
       headers: { Authorization: `Bearer ${userToken}` },
     });
     assert.strictEqual(res.status, 403);
+  });
+
+  // S2: refunds move real money through the gateway. The payment's own owner
+  // must not be able to trigger one — 403 before any payment row is read.
+  it("POST /api/payments/:id/refund returns 403 for the payment's owner", async () => {
+    mockResolvedValue([{ token_version: 0 }]);                     // adminRequired
+
+    const res = await api("POST", "/api/payments/1/refund", {
+      headers: { Authorization: `Bearer ${userToken}` },           // user 1 owns payment 1
+      body: { reason: "changed my mind" },
+    });
+    assert.strictEqual(res.status, 403);
+    assert.ok(
+      !queryLog.some((q) => /FROM payments/i.test(q)),
+      "must reject before touching the payment record"
+    );
   });
 });

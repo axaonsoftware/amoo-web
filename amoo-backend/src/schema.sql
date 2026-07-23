@@ -133,6 +133,41 @@ CREATE TABLE IF NOT EXISTS bookings (
 );
 
 -- --------------------------------------------------------
+-- Packages
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS packages (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  name          VARCHAR(160) NOT NULL,
+  description   TEXT,
+  price         DECIMAL(10,2) NOT NULL DEFAULT 0,
+  duration_days INT,
+  status        ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
+  deleted_at    DATETIME,
+  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- --------------------------------------------------------
+-- Subscriptions
+--  NOTE: must be created before `payments`, which carries a foreign key
+--  referencing subscriptions(id). MySQL rejects a FK to a table that does
+--  not exist yet, and migrate.js runs these statements in file order.
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id            INT AUTO_INCREMENT PRIMARY KEY,
+  user_id       INT NOT NULL,
+  package_id    INT,
+  plan_name     VARCHAR(120),
+  status        ENUM('active','expired','cancelled','pending-payment') NOT NULL DEFAULT 'active',
+  auto_renew    TINYINT(1) NOT NULL DEFAULT 0,
+  started_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  expires_at    DATETIME,
+  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
+  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL,
+  INDEX idx_subscriptions_user_id (user_id),
+  INDEX idx_subscriptions_status (status)
+);
+
+-- --------------------------------------------------------
 -- Payments
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS payments (
@@ -173,20 +208,6 @@ CREATE TABLE IF NOT EXISTS refunds (
 );
 
 -- --------------------------------------------------------
--- Packages
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS packages (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  name          VARCHAR(160) NOT NULL,
-  description   TEXT,
-  price         DECIMAL(10,2) NOT NULL DEFAULT 0,
-  duration_days INT,
-  status        ENUM('Active','Inactive') NOT NULL DEFAULT 'Active',
-  deleted_at    DATETIME,
-  created_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
--- --------------------------------------------------------
 -- Coupons / discounts
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS coupons (
@@ -204,21 +225,27 @@ CREATE TABLE IF NOT EXISTS coupons (
 );
 
 -- --------------------------------------------------------
--- Subscriptions
+-- Coupon usage ledger
+--  Coupon redemptions used to be recorded as zero-amount rows in `payments`,
+--  which inflated the transaction counts in revenue reporting. They live here
+--  instead. The UNIQUE key on booking_id makes redemption idempotent and stops
+--  two coupons stacking discounts onto one booking.
 -- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS subscriptions (
-  id            INT AUTO_INCREMENT PRIMARY KEY,
-  user_id       INT NOT NULL,
-  package_id    INT,
-  plan_name     VARCHAR(120),
-  status        ENUM('active','expired','cancelled','pending-payment') NOT NULL DEFAULT 'active',
-  auto_renew    TINYINT(1) NOT NULL DEFAULT 0,
-  started_at    DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  expires_at    DATETIME,
-  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE CASCADE,
-  FOREIGN KEY (package_id) REFERENCES packages(id) ON DELETE SET NULL,
-  INDEX idx_subscriptions_user_id (user_id),
-  INDEX idx_subscriptions_status (status)
+CREATE TABLE IF NOT EXISTS coupon_usages (
+  id              INT AUTO_INCREMENT PRIMARY KEY,
+  coupon_id       INT NOT NULL,
+  booking_id      INT NOT NULL,
+  user_id         INT,
+  discount        DECIMAL(10,2) NOT NULL DEFAULT 0,
+  amount_before   DECIMAL(10,2) NOT NULL DEFAULT 0,
+  amount_after    DECIMAL(10,2) NOT NULL DEFAULT 0,
+  created_at      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_coupon_usages_booking (booking_id),
+  FOREIGN KEY (coupon_id)  REFERENCES coupons(id)  ON DELETE CASCADE,
+  FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id)    REFERENCES users(id)    ON DELETE SET NULL,
+  INDEX idx_coupon_usages_coupon_id (coupon_id),
+  INDEX idx_coupon_usages_user_id (user_id)
 );
 
 -- --------------------------------------------------------

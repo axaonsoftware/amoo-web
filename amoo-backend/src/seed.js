@@ -1,17 +1,31 @@
 require("dotenv").config();
+const logger = require("./utils/logger");
+
+// SECURITY: this script inserts demo accounts with well-known passwords. It must
+// never run against production data. Checked before ./config/db is required, so
+// we neither load production config nor open a connection.
+if (process.env.NODE_ENV === "production") {
+  logger.error(
+    "Refusing to seed: NODE_ENV=production. This script inserts demo accounts with known passwords."
+  );
+  process.exit(1);
+}
+
 const bcrypt = require("bcryptjs");
 const { pool, testConnection } = require("./config/db");
-const logger = require("./utils/logger");
 
 async function seed() {
   logger.info("Seeding database...");
 
   // Admin
+  // SECURITY: `id = id` is a deliberate no-op. Re-seeding must never overwrite
+  // an existing admin's password hash — updating it here would reset a strong
+  // password back to the well-known seed value.
   const adminHash = await bcrypt.hash("admin123", 12);
   await pool.query(
     `INSERT INTO admins (name, email, password_hash, role)
      VALUES ('Admin', 'admin@amooguru.com', ?, 'admin')
-     ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)`,
+     ON DUPLICATE KEY UPDATE id = id`,
     [adminHash]
   );
 

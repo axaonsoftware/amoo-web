@@ -13,7 +13,10 @@ const corsOptions = {
   },
   credentials: true,
   methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-CSRF-Token"],
+  // The frontend reads the current CSRF token off the response; document.cookie
+  // can't see a cookie set by this (different) origin.
+  exposedHeaders: ["X-CSRF-Token", "X-Request-Id"],
   maxAge: 86400,
 };
 

@@ -104,10 +104,18 @@ if (env.isProd && env.storage.enabled && !env.storage.bucket) {
   throw new Error("S3_BUCKET is required when S3_ENABLED=true in production");
 }
 
-if (env.isProd && env.payments.gateway !== "mock" && !env.payments.webhookSecret) {
+// The webhook skips signature verification when the gateway is 'mock' or no
+// secret is set — which would leave an unauthenticated endpoint that can mark
+// bookings paid. 'mock' is the default, so a deploy that forgets to change it
+// must fail loudly at boot rather than silently expose that endpoint.
+if (env.isProd && env.payments.gateway === "mock") {
   throw new Error(
-    "PAYMENT_WEBHOOK_SECRET is required when PAYMENT_GATEWAY is not 'mock' in production"
+    "PAYMENT_GATEWAY must not be 'mock' in production. Set a real gateway (razorpay | stripe)."
   );
+}
+
+if (env.isProd && !env.payments.webhookSecret) {
+  throw new Error("PAYMENT_WEBHOOK_SECRET is required in production");
 }
 
 module.exports = env;

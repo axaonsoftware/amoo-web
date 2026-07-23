@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const { pool } = require("../config/db");
 const {
@@ -13,6 +14,25 @@ const { validate, schemas } = require("../middleware/validate");
 const { ok, created, raw, fail } = require("../utils/response");
 const env = require("../config/env");
 const { sendMail } = require("../config/email");
+const {
+  authCookieOptions,
+  clearCookieOptions,
+  ACCESS_TOKEN_MAX_AGE,
+  REFRESH_TOKEN_MAX_AGE,
+} = require("../utils/cookies");
+
+// The access token travels as an httpOnly cookie so the browser attaches it
+// automatically and JavaScript can never read it. It is still returned in the
+// response body for non-browser API clients, which send it as a Bearer header.
+function setAuthCookies(res, access, refresh) {
+  res.cookie("access_token", access, authCookieOptions(ACCESS_TOKEN_MAX_AGE));
+  res.cookie("refresh_token", refresh, authCookieOptions(REFRESH_TOKEN_MAX_AGE));
+}
+
+function clearAuthCookies(res) {
+  res.clearCookie("access_token", clearCookieOptions());
+  res.clearCookie("refresh_token", clearCookieOptions());
+}
 
 function publicUser(u) {
   return {
@@ -99,12 +119,7 @@ router.post(
     );
     const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [result.insertId]);
     const { access, refresh } = issueTokens(rows[0]);
-    res.cookie("refresh_token", refresh, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: env.isProd,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    setAuthCookies(res, access, refresh);
     raw(res, 201, { token: access, user: publicUser(rows[0]) });
   })
 );
@@ -127,12 +142,7 @@ router.post(
     await resetFailedAttempts("users", user.id);
 
     const { access, refresh } = issueTokens(user);
-    res.cookie("refresh_token", refresh, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: env.isProd,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    setAuthCookies(res, access, refresh);
     raw(res, 200, { token: access, user: publicUser(user) });
   })
 );
@@ -158,12 +168,7 @@ router.post(
     const payload = { id: admin.id, kind: "admin", tokenVersion: admin.token_version || 0 };
     const access = signAccessToken(payload);
     const refresh = signRefreshToken(payload);
-    res.cookie("refresh_token", refresh, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: env.isProd,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    setAuthCookies(res, access, refresh);
     raw(res, 200, {
       token: access,
       admin: { id: admin.id, name: admin.name, email: admin.email, role: admin.role },
@@ -194,12 +199,7 @@ router.post(
     const newPayload = { id: payload.id, kind: payload.kind, tokenVersion: rows[0].token_version || 0 };
     const access = signAccessToken(newPayload);
     const refresh = signRefreshToken(newPayload);
-    res.cookie("refresh_token", refresh, {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: env.isProd,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-    });
+    setAuthCookies(res, access, refresh);
     raw(res, 200, { token: access });
   })
 );
@@ -208,7 +208,7 @@ router.post(
 router.post(
   "/logout",
   asyncHandler(async (req, res) => {
-    res.clearCookie("refresh_token");
+    clearAuthCookies(res);
     ok(res, { message: "Logged out" });
   })
 );
@@ -220,7 +220,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const table = req.user.kind === "admin" ? "admins" : "users";
     await pool.query(`UPDATE ${table} SET token_version = token_version + 1 WHERE id = ?`, [req.user.id]);
-    res.clearCookie("refresh_token");
+    clearAuthCookies(res);
     req.audit("logout-all", req.user.kind, req.user.id);
     ok(res, { message: "Logged out of all sessions" });
   })
@@ -243,7 +243,7 @@ router.post(
       "UPDATE users SET password_hash = ?, token_version = token_version + 1 WHERE id = ?",
       [hash, user.id]
     );
-    res.clearCookie("refresh_token");
+    clearAuthCookies(res);
     req.audit("change-password", "user", user.id);
     ok(res, { message: "Password updated. Please login again." });
   })
@@ -274,15 +274,28 @@ router.post(
   "/verify-email/send",
   authRequired,
   asyncHandler(async (req, res) => {
-    const token = genOtp(32);
+    // The JWT carries only { id, kind, tokenVersion } — there is no email on
+    // it. Read the address from the row we're about to stamp the token onto.
+    const [rows] = await pool.query(
+      "SELECT id, email, verified FROM users WHERE id = ? AND deleted_at IS NULL",
+      [req.user.id]
+    );
+    const user = rows[0];
+    if (!user) throw new HttpError(404, "User not found");
+    if (user.verified) return ok(res, { verified: true, message: "Already verified" });
+
+    // A link token, not an OTP: genOtp(32) would compute 10^32 and blow past
+    // MAX_SAFE_INTEGER, which makes crypto.randomInt throw. 48 hex chars fits
+    // users.verify_token VARCHAR(64).
+    const token = crypto.randomBytes(24).toString("hex");
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await pool.query(
       "UPDATE users SET verify_token = ?, verify_token_expires = ? WHERE id = ?",
-      [token, expires, req.user.id]
+      [token, expires, user.id]
     );
-    const link = `${env.appUrl}/verify-email?email=${encodeURIComponent(req.user.email)}&token=${token}`;
+    const link = `${env.appUrl}/verify-email?email=${encodeURIComponent(user.email)}&token=${token}`;
     await sendMail({
-      to: req.user.email,
+      to: user.email,
       subject: "Amoo Guru — Verify your email",
       text: `Click to verify your email: ${link}`,
       html: `<p>Click to verify your email:</p><p><a href="${link}">${link}</a></p>`,

@@ -58,7 +58,7 @@ router.post(
 router.patch(
   "/:id",
   adminRequired,
-  validate("faq"),
+  validate("faqUpdate"),
   asyncHandler(async (req, res) => {
     const fields = { ...req.body };
     if (fields.active !== undefined) fields.active = fields.active ? 1 : 0;
