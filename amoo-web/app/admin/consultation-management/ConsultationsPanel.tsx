@@ -25,6 +25,7 @@ import {
   type TypeKey,
 } from "./data";
 import { api } from "../../../lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 const tabs = [
   { label: "All Consultations", active: true },
@@ -288,17 +289,17 @@ export default function ConsultationsPanel() {
                       <div className="flex items-center gap-[10px]">
                         <Image
                           src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80"
-                          alt={c.user}
+                          alt={sanitize(c.user)}
                           width={30}
                           height={30}
                           className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
                         />
                         <div className="leading-tight">
                           <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                            {c.user}
+                            {sanitize(c.user)}
                           </p>
                           <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                            {c.phone}
+                            {sanitize(c.phone)}
                           </p>
                         </div>
                       </div>
@@ -308,17 +309,17 @@ export default function ConsultationsPanel() {
                       <div className="flex items-center gap-[10px]">
                         <Image
                           src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
-                          alt={c.expert}
+                          alt={sanitize(c.expert)}
                           width={28}
                           height={28}
                           className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
                         />
                         <div className="leading-tight">
                           <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                            {c.expert}
+                            {sanitize(c.expert)}
                           </p>
                           <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                            {c.expertRole}
+                            {sanitize(c.expertRole)}
                           </p>
                         </div>
                       </div>

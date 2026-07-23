@@ -14,6 +14,7 @@ import {
 import { typeTone } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
+import { sanitize } from "../../../lib/sanitize";
 
 const statusOptions = [
   { label: "All Types", value: "" },
@@ -241,7 +242,7 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
                     >
                       <option value="">Select a user…</option>
                       {filteredUsers.map((u: any) => (
-                        <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
+                        <option key={u.id} value={u.id}>{sanitize(u.name)} ({sanitize(u.email)})</option>
                       ))}
                     </select>
                   </div>
@@ -348,11 +349,11 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
                               <Users size={13} strokeWidth={2} className="text-[#2563EB]" />
                             )}
                           </span>
-                          <p className="text-[11.5px] font-semibold text-[#221C33]">{n.title}</p>
+                          <p className="text-[11.5px] font-semibold text-[#221C33]">{sanitize(n.title)}</p>
                         </div>
                       </td>
                       <td className="py-[13px] pr-3">
-                        <p className="max-w-[260px] truncate text-[11px] text-[#6B6480]">{n.message}</p>
+                        <p className="max-w-[260px] truncate text-[11px] text-[#6B6480]">{sanitize(n.message)}</p>
                       </td>
                       <td className="py-[13px] pr-3">
                         <span className={`inline-flex items-center rounded-[6px] px-[8px] py-[3px] text-[9.5px] font-medium ${isBroadcast ? "bg-[#F0EAFB] text-[#7C3AED]" : "bg-[#E7F0FE] text-[#2563EB]"}`}>

@@ -20,6 +20,7 @@ import { roleStyles, statusStyles } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
+import { sanitize } from "../../../lib/sanitize";
 
 const tabs = [
   { label: "All Users", active: true },
@@ -280,7 +281,7 @@ export default function UsersPanel() {
                       {u.avatar ? (
                         <Image
                           src={u.avatar}
-                          alt={u.name}
+                          alt={sanitize(u.name)}
                           width={30}
                           height={30}
                           className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
@@ -293,7 +294,7 @@ export default function UsersPanel() {
                       <div className="leading-tight">
                         <div className="flex items-center gap-[6px]">
                           <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                            {u.name}
+                            {sanitize(u.name)}
                           </p>
                           {u.verified ? (
                             <span className="inline-flex h-[17px] items-center rounded-[5px] bg-[#EDE7FB] px-[6px] text-[9px] font-medium text-[#6D28D9]">
@@ -310,10 +311,10 @@ export default function UsersPanel() {
 
                   <td className="py-[11px] pr-3 leading-tight">
                     <p className="whitespace-nowrap text-[11.5px] text-[#2E2A3B]">
-                      {u.email}
+                      {sanitize(u.email)}
                     </p>
                     <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {u.phone}
+                      {sanitize(u.phone)}
                     </p>
                   </td>
 
@@ -471,7 +472,7 @@ export default function UsersPanel() {
       <ConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.type === "delete" ? "Delete User" : "Block User"}
-        message={confirmDialog.type === "delete" ? `Are you sure you want to delete ${confirmDialog.user?.name}? This action cannot be undone.` : `Are you sure you want to block ${confirmDialog.user?.name}? They will no longer be able to access the platform.`}
+        message={confirmDialog.type === "delete" ? `Are you sure you want to delete ${sanitize(confirmDialog.user?.name)}? This action cannot be undone.` : `Are you sure you want to block ${sanitize(confirmDialog.user?.name)}? They will no longer be able to access the platform.`}
         onConfirm={async () => {
           setConfirmSaving(true);
           try {

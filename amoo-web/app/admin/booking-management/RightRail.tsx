@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 const legend = [
   { label: "Upcoming", value: "542 (25.3%)", color: "#F59E0B", pct: 25.3 },
@@ -240,7 +241,7 @@ export default function RightRail() {
                 <p className="whitespace-nowrap text-[8.5px] font-semibold text-[#221C33]">
                   <span className="text-[#4A4658]">{s.time}</span>
                   <span className="px-[3px] text-[#D6D3E0]">|</span>
-                  {s.name}
+                  {sanitize(s.name)}
                 </p>
                 <p className="mt-[1px] truncate text-[8px] text-[#8B879C]">
                   {s.service}

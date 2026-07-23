@@ -17,6 +17,7 @@ import {
   Gem, Loader2, AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 const tabs = [
   { label: "Astrologer Availability", active: true },
@@ -179,19 +180,19 @@ export default function AvailabilityTable() {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.name} className="border-b border-[#f2f1f6] last:border-b-0">
+                  <tr key={sanitize(r.name)} className="border-b border-[#f2f1f6] last:border-b-0">
                     <td className="py-3.5 pr-2">
                       <div className="flex items-center gap-2.5">
                         <Image
                           src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&q=80"
-                          alt={r.name}
+                          alt={sanitize(r.name)}
                           width={72}
                           height={72}
                           unoptimized
                           className="h-9 w-9 shrink-0 rounded-full object-cover"
                         />
                         <div className="min-w-0">
-                          <p className="truncate text-[12px] font-medium leading-tight text-[#241f3d]">{r.name}</p>
+                          <p className="truncate text-[12px] font-medium leading-tight text-[#241f3d]">{sanitize(r.name)}</p>
                           <p className="mt-0.5 text-[10px] font-light leading-tight text-[#a5a2b3]">{r.exp}</p>
                         </div>
                       </div>

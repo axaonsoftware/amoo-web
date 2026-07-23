@@ -16,6 +16,7 @@ import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
 
 const typeOptions = [
   { label: "All Types", value: "" },
@@ -366,7 +367,7 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
                         {r.type}
                       </span>
                     </td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-[#1D1630]">{r.title}</td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-[#1D1630]">{sanitize(r.title)}</td>
                     <td className="whitespace-nowrap px-4 py-3">
                       <span className={`inline-block rounded-[6px] px-[9px] py-[3px] text-[11px] font-medium ${statClass}`}>
                         {r.status}

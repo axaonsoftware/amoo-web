@@ -8,6 +8,7 @@ import {
   ChevronRightThin,
   StarSolidIcon,
 } from "../../../components/home-icons";
+import { sanitize } from "../../../../lib/sanitize";
 import { api } from "../../../../lib/api";
 
 function wrapQuote(text: string, maxLen = 38): string[] {
@@ -99,11 +100,11 @@ export default function Testimonials() {
                     </div>
                     <p className="mt-[8px] text-[10.5px] leading-[1.7] text-[#6c6b78] italic">
                       {quote.map((line: string, i: number) => (
-                        <span key={i}>{line}{i < quote.length - 1 ? <br /> : null}</span>
+                        <span key={i}>{sanitize(line)}{i < quote.length - 1 ? <br /> : null}</span>
                       ))}
                     </p>
                     <p className="mt-[8px] text-[10.5px] font-semibold text-[#4b2583]">
-                      – {name}
+                      – {sanitize(name)}
                     </p>
                   </div>
                 </article>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Download, Loader2 } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 const TYPE_META: Record<string, { tag: string; tagClass: string; subtitle: string; image: string }> = {
   numerology: { tag: "Numerology", tagClass: "bg-[#f3ecfb] text-[#7c3aed]", subtitle: "Full Name Analysis", image: "https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4d5?w=140&q=80" },
@@ -49,7 +50,7 @@ export default function RecentReports() {
                   <Image src={meta.image} alt="" fill sizes="70px" aria-hidden="true" className="object-cover" />
                 </span>
                 <div className="min-w-[150px] flex-1">
-                  <p className="text-[14.5px] font-semibold leading-none text-[#2b0f47]">{r.title}</p>
+                  <p className="text-[14.5px] font-semibold leading-none text-[#2b0f47]">{sanitize(r.title)}</p>
                   <p className="mt-[7px] text-[12px] leading-none text-[#8b8697]">{meta.subtitle}</p>
                   <span className={`mt-[9px] inline-flex items-center rounded-[6px] px-[9px] py-[4px] text-[10.5px] font-medium leading-none ${meta.tagClass}`}>{meta.tag}</span>
                 </div>

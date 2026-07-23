@@ -6,6 +6,7 @@ import Link from "next/link";
 import { HomeHeader, OfferBar } from "../../components/home-header";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
+import { sanitize } from "../../../lib/sanitize";
 import { api } from "../../../lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
 import {
@@ -905,10 +906,10 @@ export default function TarotReadingPage() {
                   </div>
                   {/* Text */}
                   <p className="mt-3 text-[13px] leading-[1.65] text-body">
-                    {t.comment || t.text}
+                    {sanitize(t.comment || t.text)}
                   </p>
                   <p className="mt-3 text-[13px] font-semibold text-grape">
-                    – {t.name || "Client"}
+                    – {sanitize(t.name || "Client")}
                   </p>
                 </div>
               ))}

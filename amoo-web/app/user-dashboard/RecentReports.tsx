@@ -4,6 +4,7 @@ import Link from "next/link";
 import { LayoutGrid, Orbit, Flower2, Layers, Sparkles, type LucideIcon } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import { sanitize } from "../../lib/sanitize";
 
 const TYPE_META: Record<string, { Icon: LucideIcon; tagClass: string }> = {
   numerology: { Icon: LayoutGrid, tagClass: "bg-[#f3ecfb] text-[#7c3aed]" },
@@ -43,7 +44,7 @@ export default function RecentReports() {
                   <Icon className="h-[19px] w-[19px] text-[#f0c877]" strokeWidth={1.7} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-[#2b0f47]">{r.title}</p>
+                  <p className="truncate text-[13px] font-semibold text-[#2b0f47]">{sanitize(r.title)}</p>
                   <p className="mt-1 text-[11.5px] text-[#8b8697]">
                     Generated on {new Date(r.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
                   </p>

@@ -7,6 +7,7 @@ import { SiteFooter } from "@/app/components/site-footer";
 import { api } from "@/lib/api";
 import { WHATSAPP_URL } from "@/lib/constants";
 import { ChevronDown } from "lucide-react";
+import { sanitize } from "../../lib/sanitize";
 
 interface Faq {
   id: number;
@@ -93,7 +94,7 @@ const FaqPage = () => {
                         className="font-sans text-sm font-medium pr-4"
                         style={{ color: "#2c0c47" }}
                       >
-                        {faq.question}
+                        {sanitize(faq.question)}
                       </span>
                       <ChevronDown
                         className={`h-5 w-5 shrink-0 transition-transform ${
@@ -111,7 +112,7 @@ const FaqPage = () => {
                         className="px-6 pb-4 font-sans text-sm leading-relaxed"
                         style={{ color: "#6c6b78" }}
                       >
-                        {faq.answer}
+                        {sanitize(faq.answer)}
                       </p>
                     </div>
                   </div>

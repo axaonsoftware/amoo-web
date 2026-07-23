@@ -5,6 +5,7 @@ import { loadConsultationData } from "../lib/consultation-storage";
 import Link from "next/link";
 import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../../lib/constants";
 import { HomeHeader, OfferBar } from "../../components/home-header";
+import { sanitize } from "../../../lib/sanitize";
 import {
   FacebookIcon,
   InstagramIcon,
@@ -198,7 +199,7 @@ function OverviewRow({
         {label}
       </span>
       <span className={`font-semibold text-right ${error ? "text-red-500" : "text-purple-950"}`}>
-        {value}
+{sanitize(value)}
         {error && <span className="block text-red-500 text-xs font-normal">{error}</span>}
       </span>
     </div>
@@ -407,7 +408,7 @@ function BookingSummaryContent() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Service</p>
-                  <p className="font-bold text-purple-950">{service}</p>
+                  <p className="font-bold text-purple-950">{sanitize(service)}</p>
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                     Selected consultation service
                   </p>
@@ -425,7 +426,7 @@ function BookingSummaryContent() {
                     </span>
                     <span className="text-gray-500">:</span>
                     <span className={`font-medium whitespace-pre-line ml-1 ${d.error ? "text-red-500" : "text-purple-950"}`}>
-                      {d.value}
+                      {sanitize(d.value)}
                     </span>
                     {d.error && (
                       <span className="text-red-500 text-xs ml-1">{d.error}</span>

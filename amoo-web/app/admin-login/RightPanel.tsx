@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "../../lib/api";
+import { useAuth } from "../../lib/auth-context";
 import { SITE_NAME } from "../../lib/constants";
 import { trackEvent } from "../../lib/tracking";
 import {
@@ -22,6 +23,7 @@ import {
 
 export default function RightPanel() {
   const router = useRouter();
+  const { loginUser } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -54,8 +56,8 @@ export default function RightPanel() {
     setApiError(null);
     try {
       const data = await api.adminLogin({ email, password });
-      if (!data.token || !data.user) throw new Error("Invalid response from server");
-      localStorage.setItem("amoo_admin_token", data.token);
+      if (!data.admin) throw new Error("Invalid response from server");
+      loginUser({ ...data.admin, kind: "admin" });
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: "admin" });
       setTimeout(() => router.push("/admin/admin-dashboard"), 1200);

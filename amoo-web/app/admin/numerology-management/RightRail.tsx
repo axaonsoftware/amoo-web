@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 const quickActions = [
   { label: "Generate Report", Icon: Plus, color: "text-[#7C3AED]" },
@@ -103,7 +104,7 @@ export default function RightRail() {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[11.5px] font-medium text-[#1B1630]">
-                  {m.name}
+                  {sanitize(m.name)}
                 </p>
                 <p className="mt-[1px] text-[10px] text-[#8B879C]">
                   {m.reports}

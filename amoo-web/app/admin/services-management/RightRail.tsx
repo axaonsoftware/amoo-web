@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 const donut = [
   { label: "Numerology", value: "18 (32.1%)", pct: 32.1, color: "#7C3AED" },
@@ -201,7 +202,7 @@ export default function RightRail() {
 
               <div className="min-w-0 flex-1 leading-tight">
                 <p className="truncate text-[10.5px] font-medium text-[#1F1836]">
-                  {p.name}
+                  {sanitize(p.name)}
                 </p>
                 <p className="mt-[2px] text-[9.5px] text-[#8B879C]">
                   {p.bookings}

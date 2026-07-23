@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { api } from "@/lib/api";
+import { sanitize } from "../../lib/sanitize";
 
 type Notification = {
   id: number;
@@ -197,14 +198,14 @@ export default function NotificationBell() {
                             isUnread ? "font-bold text-[#2b0f47]" : "font-semibold text-[#4b4458]"
                           }`}
                         >
-                          {n.title}
+                          {sanitize(n.title)}
                         </p>
                         {isUnread && (
                           <span className="mt-1 h-[7px] w-[7px] shrink-0 rounded-full bg-[#e9b85c]" />
                         )}
                       </div>
                       <p className="mt-[3px] text-[11.5px] leading-[1.4] text-[#8b8697] line-clamp-2">
-                        {n.message}
+                        {sanitize(n.message)}
                       </p>
                       <div className="mt-1.5 flex items-center gap-1 text-[10.5px] text-[#a09aab]">
                         <Clock className="h-[10px] w-[10px]" strokeWidth={2} />

@@ -20,6 +20,7 @@ import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
 
 const statusOptions = [
   { label: "Pending", value: "pending" },
@@ -528,13 +529,13 @@ export default function ReportsPanel() {
 
                     <td className="py-[13px] pr-4 align-middle">
                       <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#1B1630]">
-                        {r.client.name}
+                        {sanitize(r.client.name)}
                       </p>
                       <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                        {r.client.email}
+                        {sanitize(r.client.email)}
                       </p>
                       <p className="whitespace-nowrap text-[10px] text-[#8B879C]">
-                        {r.client.phone}
+                        {sanitize(r.client.phone)}
                       </p>
                     </td>
 
@@ -548,7 +549,7 @@ export default function ReportsPanel() {
 
                     <td className="py-[13px] pr-4 align-middle">
                       <p className="whitespace-nowrap text-[11.5px] font-medium text-[#1B1630]">
-                        {r.subject.name}
+                        {sanitize(r.subject.name)}
                       </p>
                       <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
                         {r.subject.birth}
@@ -557,7 +558,7 @@ export default function ReportsPanel() {
 
                     <td className="py-[13px] pr-4 align-middle">
                       <p className="whitespace-nowrap text-[11.5px] font-medium text-[#1B1630]">
-                        {r.master.name}
+                        {sanitize(r.master.name)}
                       </p>
                       <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
                         {r.master.role}

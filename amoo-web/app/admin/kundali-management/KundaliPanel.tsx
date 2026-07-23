@@ -24,6 +24,7 @@ import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
 
 const statusOptions = [
   { label: "Pending", value: "pending" },
@@ -566,13 +567,13 @@ export default function KundaliPanel() {
 
                       <td className="pr-[6px] align-middle">
                         <p className="whitespace-nowrap text-[11px] font-bold leading-[15.5px] text-[#14134A]">
-                          {k.client.name}
+                          {sanitize(k.client.name)}
                         </p>
                         <p className="whitespace-nowrap text-[9.5px] leading-[15.5px] text-[#8B879C]">
-                          {k.client.email}
+                          {sanitize(k.client.email)}
                         </p>
                         <p className="whitespace-nowrap text-[9.5px] leading-[15.5px] text-[#8B879C]">
-                          {k.client.phone}
+                          {sanitize(k.client.phone)}
                         </p>
                       </td>
 
@@ -589,7 +590,7 @@ export default function KundaliPanel() {
                           {k.astrologer.avatar ? (
                             <Image
                               src={k.astrologer.avatar}
-                              alt={k.astrologer.name}
+                              alt={sanitize(k.astrologer.name)}
                               width={26}
                               height={26}
                               className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
@@ -601,10 +602,10 @@ export default function KundaliPanel() {
                           )}
                           <div>
                             <p className="whitespace-nowrap text-[11px] font-bold leading-[16px] text-[#14134A]">
-                              {k.astrologer.name}
+                              {sanitize(k.astrologer.name)}
                             </p>
                             <p className="whitespace-nowrap text-[10px] leading-[15px] text-[#8B879C]">
-                              {k.astrologer.role}
+                              {sanitize(k.astrologer.role)}
                             </p>
                           </div>
                         </div>

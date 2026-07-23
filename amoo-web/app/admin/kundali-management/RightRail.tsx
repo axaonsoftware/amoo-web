@@ -13,6 +13,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 const DONUT =
   "conic-gradient(#1173BB 0deg 127deg, #FFFFFF 127deg 129deg," +
@@ -181,7 +182,7 @@ export default function RightRail() {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[10.5px] font-bold leading-[14px] text-[#14134A]">
-                  {a.name}
+                  {sanitize(a.name)}
                 </p>
                 <p className="truncate text-[9.5px] leading-[13px] text-[#8B879C]">
                   {a.count}

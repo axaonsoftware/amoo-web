@@ -27,6 +27,7 @@ import {
 } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
+import { sanitize } from "../../../lib/sanitize";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -345,13 +346,13 @@ export default function BookingsPanel() {
                     <td className="py-[13px] pr-3">
                       <div className="leading-tight">
                         <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                          {b.user.name}
+                          {sanitize(b.user.name)}
                         </p>
                         <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                          {b.user.email}
+                          {sanitize(b.user.email)}
                         </p>
                         <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                          {b.user.phone}
+                          {sanitize(b.user.phone)}
                         </p>
                       </div>
                     </td>
@@ -361,7 +362,7 @@ export default function BookingsPanel() {
                         {b.expert.avatar ? (
                           <Image
                             src={b.expert.avatar}
-                            alt={b.expert.name}
+                            alt={sanitize(b.expert.name)}
                             width={28}
                             height={28}
                             className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
@@ -373,10 +374,10 @@ export default function BookingsPanel() {
                         )}
                         <div className="leading-tight">
                           <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                            {b.expert.name}
+                            {sanitize(b.expert.name)}
                           </p>
                           <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                            {b.expert.role}
+                            {sanitize(b.expert.role)}
                           </p>
                         </div>
                       </div>

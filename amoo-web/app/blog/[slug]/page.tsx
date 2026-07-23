@@ -8,6 +8,7 @@ import { HomeHeader, OfferBar } from "../../components/home-header";
 import { ArrowRightIcon, LotusSolidIcon } from "../../components/home-icons";
 import { WHATSAPP_URL, CONTACT_EMAIL, SITE_NAME } from "../../../lib/constants";
 import api from "../../../lib/api";
+import { sanitize, sanitizeHtml } from "../../../lib/sanitize";
 import {
   ChevronRightIcon,
   ClockIcon,
@@ -186,10 +187,10 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 Blog
               </Link>
               <ChevronRightIcon className="h-[14px] w-[14px]" />
-              <span className="text-white/90">{category}</span>
+              <span className="text-white/90">{sanitize(category)}</span>
               <ChevronRightIcon className="h-[14px] w-[14px]" />
               <span className="max-w-[260px] truncate text-white/60">
-                {post.title}
+                {sanitize(post.title)}
               </span>
             </nav>
 
@@ -202,7 +203,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
 
             {/* Title */}
             <h1 className="mt-[14px] max-w-[760px] font-display text-[30px] leading-[1.25] font-bold text-white sm:text-[40px] lg:text-[48px]">
-              {post.title}
+              {sanitize(post.title)}
             </h1>
 
             <div className="mt-[12px] flex items-center gap-2 text-gold">
@@ -222,11 +223,11 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                     height={80}
                     className="h-[32px] w-[32px] rounded-full border-2 border-gold/50 object-cover"
                   />
-                  <span className="font-medium text-white">{author}</span>
+                  <span className="font-medium text-white">{sanitize(author)}</span>
                 </div>
               )}
               {!post.authorAvatar && (
-                <span className="font-medium text-white">{author}</span>
+                <span className="font-medium text-white">{sanitize(author)}</span>
               )}
               <span className="flex items-center gap-1.5">
                 <ClockIcon className="h-[14px] w-[14px]" />
@@ -242,7 +243,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
           <div className="mx-auto w-full max-w-[780px] px-5 py-[40px] sm:py-[56px]">
             {post.excerpt && (
               <p className="mb-[28px] text-[16px] leading-[1.75] font-medium italic text-[#6c6b78] border-l-4 border-gold pl-5">
-                {post.excerpt}
+                {sanitize(post.excerpt)}
               </p>
             )}
 
@@ -254,7 +255,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 prose-strong:text-[#2c0c47]
                 prose-img:rounded-[12px]
                 prose-blockquote:border-gold prose-blockquote:text-[#6c6b78]"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.content) }}
             />
 
             {/* Back link */}

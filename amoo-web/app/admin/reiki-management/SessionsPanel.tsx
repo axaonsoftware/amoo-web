@@ -20,6 +20,7 @@ import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
 
 const tabs = [
   { label: "All Sessions", active: true },
@@ -407,13 +408,13 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
 
                   <td className="py-[13px] pr-4 align-middle">
                     <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#1B1630]">
-                      {s.client.name}
+                      {sanitize(s.client.name)}
                     </p>
                     <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {s.client.email}
+                      {sanitize(s.client.email)}
                     </p>
                     <p className="whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {s.client.phone}
+                      {sanitize(s.client.phone)}
                     </p>
                   </td>
 
@@ -421,17 +422,17 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
                     <div className="flex items-center gap-[8px]">
                       <Image
                         src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
-                        alt={s.master.name}
+                        alt={sanitize(s.master.name)}
                         width={28}
                         height={28}
                         className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
                       />
                       <div className="min-w-0">
                         <p className="whitespace-nowrap text-[11.5px] font-medium text-[#1B1630]">
-                          {s.master.name}
+                          {sanitize(s.master.name)}
                         </p>
                         <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                          {s.master.role}
+                          {sanitize(s.master.role)}
                         </p>
                       </div>
                     </div>

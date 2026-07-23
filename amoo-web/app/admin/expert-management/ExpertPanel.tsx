@@ -12,6 +12,7 @@ import { api } from "../../../lib/api";
 import AdminModal from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
 import { specializationTone, statusTone } from "./data";
 
 const expertFields: {
@@ -287,8 +288,8 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
                         {getInitials(expert.name || "E")}
                       </span>
                       <div>
-                        <p className="font-medium text-[#1F1836]">{expert.name}</p>
-                        <p className="text-[10px] text-[#A5A2B5]">{expert.email}</p>
+                        <p className="font-medium text-[#1F1836]">{sanitize(expert.name)}</p>
+                        <p className="text-[10px] text-[#A5A2B5]">{sanitize(expert.email)}</p>
                       </div>
                     </div>
                   </td>
@@ -353,7 +354,7 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
       <ConfirmDialog
         open={confirmOpen}
         title="Delete Expert"
-        message={`Are you sure you want to delete ${deleting?.name || "this expert"}? This action cannot be undone.`}
+        message={`Are you sure you want to delete ${sanitize(deleting?.name) || "this expert"}? This action cannot be undone.`}
         onConfirm={handleDelete}
         onCancel={() => { setConfirmOpen(false); setDeleting(null); }}
         saving={deleting2}

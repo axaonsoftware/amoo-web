@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { statusStyles } from "./data";
 import { api } from "../../../lib/api";
+import { sanitize } from "../../../lib/sanitize";
 
 function fmtDate(iso: string) {
   if (!iso) return { date: "", time: "" };
@@ -218,13 +219,13 @@ export default function ReadingsPanel() {
 
                     <td className="align-middle">
                       <p className="whitespace-nowrap text-[11px] font-bold leading-[15.5px] text-[#14134A]">
-                        {r.client.name}
+                        {sanitize(r.client.name)}
                       </p>
                       <p className="whitespace-nowrap text-[10px] leading-[15.5px] text-[#8B879C]">
-                        {r.client.email}
+                        {sanitize(r.client.email)}
                       </p>
                       <p className="whitespace-nowrap text-[10px] leading-[15.5px] text-[#8B879C]">
-                        {r.client.phone}
+                        {sanitize(r.client.phone)}
                       </p>
                     </td>
 
@@ -232,17 +233,17 @@ export default function ReadingsPanel() {
                       <div className="flex items-center gap-[10px]">
                         <Image
                           src={r.master.avatar}
-                          alt={r.master.name}
+                          alt={sanitize(r.master.name)}
                           width={26}
                           height={26}
                           className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
                         />
                         <div>
                           <p className="whitespace-nowrap text-[11px] font-bold leading-[16px] text-[#14134A]">
-                            {r.master.name}
+                            {sanitize(r.master.name)}
                           </p>
                           <p className="whitespace-nowrap text-[10px] leading-[15px] text-[#8B879C]">
-                            {r.master.role}
+                            {sanitize(r.master.role)}
                           </p>
                         </div>
                       </div>

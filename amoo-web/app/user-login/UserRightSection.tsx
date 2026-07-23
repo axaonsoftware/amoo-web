@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Sparkles, User, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { api } from "../../lib/api";
+import { useAuth } from "../../lib/auth-context";
 import { trackEvent } from "../../lib/tracking";
 
 export default function UserRightPanel() {
   const router = useRouter();
+  const { loginUser } = useAuth();
   const [activeTab, setActiveTab] = useState<"user" | "astrologer">("user");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(true);
@@ -47,11 +49,11 @@ export default function UserRightPanel() {
       const data = isAstrologer
         ? await api.login({ email, password, role: "astrologer" })
         : await api.login({ email, password });
-      if (!data.token || !data.user) throw new Error("Invalid response from server");
+      if (!data.user) throw new Error("Invalid response from server");
       if (isAstrologer && data.user.role !== "astrologer") {
         throw new Error("This account is not registered as an astrologer");
       }
-      localStorage.setItem("amoo_token", data.token);
+      loginUser({ ...data.user, kind: "user" });
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: isAstrologer ? "astrologer" : "user" });
       const dest = isAstrologer ? "/astrologer-dashboard" : "/user-dashboard";

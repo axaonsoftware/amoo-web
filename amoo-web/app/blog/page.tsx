@@ -12,6 +12,7 @@ import {
 } from "../components/home-icons";
 import { WHATSAPP_URL, CONTACT_EMAIL, SITE_NAME } from "../../lib/constants";
 import { api } from "../../lib/api";
+import { sanitize } from "../../lib/sanitize";
 import {
   SearchIcon,
   GridIcon,
@@ -296,7 +297,7 @@ export default function BlogPage() {
                     <div className="relative h-[220px] shrink-0 sm:h-auto sm:w-[380px]">
                       <Image
                         src={featuredArticle.image}
-                        alt={featuredArticle.title}
+                        alt={sanitize(featuredArticle.title)}
                         fill
                         className="object-cover"
                       />
@@ -314,10 +315,10 @@ export default function BlogPage() {
                         {featuredArticle.category}
                       </span>
                       <h2 className="mt-[12px] font-display text-[20px] leading-[1.35] font-bold text-[#2c0c47] sm:text-[22px]">
-                        {featuredArticle.title}
+                        {sanitize(featuredArticle.title)}
                       </h2>
                       <p className="mt-[12px] text-[13.5px] leading-[1.7] text-[#6c6b78]">
-                        {featuredArticle.excerpt}
+                        {sanitize(featuredArticle.excerpt)}
                       </p>
                       <div className="mt-[16px] flex items-center gap-3">
                         <Image
@@ -371,14 +372,14 @@ export default function BlogPage() {
                   <div className="mt-[28px] grid grid-cols-1 gap-[20px] sm:grid-cols-2 lg:grid-cols-3">
                     {articles.map((article) => (
                       <Link
-                        key={article.title}
+                        key={sanitize(article.title)}
                         href={`/blog/${article.slug}`}
                         className="group overflow-hidden rounded-[12px] border border-[#e8e2d8] bg-white transition-shadow hover:shadow-[0_4px_16px_rgba(0,0,0,0.08)]"
                       >
                         <div className="relative h-[170px] overflow-hidden">
                           <Image
                             src={article.image}
-                            alt={article.title}
+                            alt={sanitize(article.title)}
                             fill
                             className="object-cover transition-transform duration-300 group-hover:scale-105"
                           />
@@ -393,7 +394,7 @@ export default function BlogPage() {
                             {article.category}
                           </span>
                           <h3 className="mt-[10px] text-[14.5px] leading-[1.45] font-semibold text-[#2c0c47] line-clamp-2">
-                            {article.title}
+                            {sanitize(article.title)}
                           </h3>
                           <div className="mt-[12px] flex items-center justify-between">
                             <p className="text-[11.5px] text-[#9a98a5]">
@@ -490,7 +491,7 @@ export default function BlogPage() {
                   <div className="mt-[16px] space-y-[16px]">
                     {POPULAR_ARTICLES.map((article, index) => (
                       <div
-                        key={article.title}
+                        key={sanitize(article.title)}
                         className="flex items-start gap-[14px]"
                       >
                         <span className="flex h-[28px] w-[28px] shrink-0 items-center justify-center rounded-full bg-[#f0eaf5] text-[12px] font-bold text-[#6b3fa0]">
@@ -498,7 +499,7 @@ export default function BlogPage() {
                         </span>
                         <div className="flex-1 min-w-0">
                           <h4 className="text-[13px] leading-[1.45] font-medium text-[#2c0c47] line-clamp-2">
-                            {article.title}
+                            {sanitize(article.title)}
                           </h4>
                           <p className="mt-[4px] text-[11px] text-[#9a98a5]">
                             {article.date}

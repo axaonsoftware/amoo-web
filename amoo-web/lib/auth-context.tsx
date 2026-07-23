@@ -12,6 +12,7 @@ export type User = {
   role?: string;
   avatar?: string;
   kind: "user" | "admin";
+  verified?: boolean;
 };
 
 type AuthContextType = {
@@ -19,7 +20,7 @@ type AuthContextType = {
   loading: boolean;
   isAdmin: boolean;
   isAuthenticated: boolean;
-  loginUser: (token: string, userData: User) => void;
+  loginUser: (userData: User) => void;
   logout: () => void;
 };
 
@@ -28,43 +29,35 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("amoo_token") ||
-      localStorage.getItem("amoo_admin_token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-    const kind = localStorage.getItem("amoo_admin_token") ? "admin" : "user";
     api
       .me()
       .then((res) => {
         const u = res?.user || res?.data?.data || res?.data;
         if (u) {
+          const kind = res?.kind || (res?.data?.kind) || "user";
           setUser({ ...u, kind });
         } else {
           setUser(null);
         }
       })
       .catch(() => {
-        localStorage.removeItem("amoo_token");
-        localStorage.removeItem("amoo_admin_token");
         setUser(null);
       })
       .finally(() => setLoading(false));
   }, []);
 
-  const loginUser = useCallback((token: string, userData: User) => {
+  const loginUser = useCallback((userData: User) => {
     setUser(userData);
   }, []);
 
   const logout = useCallback(() => {
-    localStorage.removeItem("amoo_token");
-    localStorage.removeItem("amoo_admin_token");
+    api.logout().catch(() => {});
     setUser(null);
-  }, []);
+    router.push("/user-login");
+  }, [router]);
 
   return (
     <AuthContext.Provider
