@@ -53,6 +53,7 @@ const logger = require("./utils/logger");
     const columnAdds = [
       ["users", "reset_otp", "VARCHAR(12)"],
       ["users", "reset_otp_expires", "DATETIME"],
+      ["users", "reset_otp_attempts", "INT NOT NULL DEFAULT 0"],
       ["users", "updated_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
       ["users", "token_version", "INT NOT NULL DEFAULT 0"],
       ["users", "verify_token", "VARCHAR(64)"],

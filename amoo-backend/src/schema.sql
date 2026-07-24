@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS users (
   verify_token_expires DATETIME,
   reset_otp       VARCHAR(12),
   reset_otp_expires DATETIME,
+  reset_otp_attempts INT NOT NULL DEFAULT 0,
   failed_attempts INT NOT NULL DEFAULT 0,
   locked_until    DATETIME,
   deleted_at      DATETIME,

@@ -345,13 +345,14 @@ router.post(
     // Building it on env.appUrl produced a link to the API origin, where the
     // path does not exist — every verification email was a dead 404.
     const link = `${env.clientUrl}/verify-email?email=${encodeURIComponent(user.email)}&token=${token}`;
-    await sendMail({
+    const mailResult = await sendMail({
       to: user.email,
       subject: "Amoo Guru — Verify your email",
       text: `Click to verify your email: ${link}`,
       html: `<p>Click to verify your email:</p><p><a href="${link}">${link}</a></p>`,
     });
-    if (!env.isProd) return ok(res, { message: "Verification token generated", dev_token: token });
+    if (env.devDebugTokens) return ok(res, { message: "Verification token generated", dev_token: token });
+    if (!mailResult.sent && env.isProd) throw new HttpError(500, "Failed to send verification email. Please try again.");
     ok(res, { message: "Verification email sent" });
   })
 );
@@ -365,19 +366,21 @@ router.post(
     const [rows] = await pool.query("SELECT id, name, email FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
     // Always respond 200 to avoid user enumeration; only act if user exists.
     if (rows.length) {
-      const otp = genOtp(6);
+      const otp = genOtp(env.otp.length || 6);
       const expires = new Date(Date.now() + env.jwt.resetExpiresMin * 60000);
       await pool.query(
         "UPDATE users SET reset_otp = ?, reset_otp_expires = ? WHERE id = ?",
         [otp, expires, rows[0].id]
       );
-      await sendMail({
+      const mailResult = await sendMail({
         to: rows[0].email,
         subject: "Amoo Guru — Password reset OTP",
         text: `Your password reset OTP is ${otp}. It expires in ${env.jwt.resetExpiresMin} minutes.`,
       });
-      // NOTE: real deployment sends the OTP via email/SMS. We return it here for dev only.
-      if (!env.isProd) return ok(res, { message: "OTP generated", dev_otp: otp });
+      if (env.devDebugTokens) return ok(res, { message: "OTP generated", dev_otp: otp });
+      if (!mailResult.sent && env.isProd) {
+        throw new HttpError(500, "Failed to send reset email. Please try again.");
+      }
     }
     ok(res, { message: "If the account exists, a reset OTP has been sent." });
   })
@@ -391,11 +394,33 @@ router.post(
     const { email, otp, password } = req.body;
     const [rows] = await pool.query("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
     const user = rows[0];
-    // Compare in constant time so the response duration can't be used to
-    // brute-force the OTP digit by digit.
-    if (!user || !user.reset_otp || !timingSafeEqualStr(user.reset_otp, otp)) {
+
+    if (!user || !user.reset_otp) {
       throw new HttpError(400, "Invalid OTP");
     }
+
+    // Per-account brute-force protection: invalidate OTP after N failed attempts.
+    if ((user.reset_otp_attempts || 0) >= env.otp.maxAttempts) {
+      throw new HttpError(400, "Invalid OTP");
+    }
+
+    // Constant-time comparison so response duration can't leak the OTP digit by digit.
+    if (!timingSafeEqualStr(user.reset_otp, otp)) {
+      const attempts = (user.reset_otp_attempts || 0) + 1;
+      if (attempts >= env.otp.maxAttempts) {
+        await pool.query(
+          "UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL, reset_otp_attempts = 0 WHERE id = ?",
+          [user.id]
+        );
+      } else {
+        await pool.query(
+          "UPDATE users SET reset_otp_attempts = ? WHERE id = ?",
+          [attempts, user.id]
+        );
+      }
+      throw new HttpError(400, "Invalid OTP");
+    }
+
     if (!user.reset_otp_expires || new Date(user.reset_otp_expires) < new Date()) {
       throw new HttpError(400, "OTP expired");
     }
@@ -411,6 +436,7 @@ router.post(
     await pool.query(
       `UPDATE users
           SET password_hash = ?, reset_otp = NULL, reset_otp_expires = NULL,
+              reset_otp_attempts = 0,
               token_version = token_version + 1,
               failed_attempts = 0, locked_until = NULL
         WHERE id = ?`,

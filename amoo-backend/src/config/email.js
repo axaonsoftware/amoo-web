@@ -25,8 +25,15 @@ async function sendMail({ to, subject, text, html }) {
     return { sent: false, dev: true };
   }
   const t = getTransporter();
-  await t.sendMail({ from: env.email.from, to, subject, text, html });
-  return { sent: true, dev: false };
+  try {
+    await t.sendMail({ from: env.email.from, to, subject, text, html });
+    return { sent: true, dev: false };
+  } catch (err) {
+    if (!env.isProd) {
+      return { sent: false, dev: true };
+    }
+    throw err;
+  }
 }
 
 module.exports = { sendMail };

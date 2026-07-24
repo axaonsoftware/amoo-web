@@ -45,7 +45,16 @@ const env = {
     durationMin: Number(required("LOCKOUT_DURATION_MIN", "15")),
   },
 
+  otp: {
+    maxAttempts: Number(required("OTP_MAX_ATTEMPTS", "5")),
+    length: Number(required("OTP_LENGTH", "6")),
+  },
+
   maxFileSize: Number(required("MAX_FILE_SIZE", "5242880")),
+  // When true, OTPs and verification tokens are returned in API responses for
+  // debugging. Never enable this in production or on any internet-facing host.
+  devDebugTokens: process.env.DEV_DEBUG_TOKENS === "true",
+
   logLevel: required("LOG_LEVEL", "info"),
 
   // Public base URL of this API (webhook callbacks, absolute asset URLs).
