@@ -120,13 +120,14 @@ describe("POST /api/auth/register", () => {
     assert.strictEqual(res.body.user.email, "alice@test.com");
   });
 
-  it("rejects duplicate email", async () => {
+  it("rejects duplicate email (generic error, no enumeration)", async () => {
     mockResolvedValue([{ id: 1 }]);                                 // SELECT existing → found
 
     const res = await api("POST", "/api/auth/register", {
       body: { name: "Alice", email: "dup@test.com", password: "password123" },
     });
-    assert.strictEqual(res.status, 409);
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error, /Registration failed/i);
   });
 
   it("rejects missing required fields", async () => {
@@ -398,6 +399,227 @@ describe("CSRF protection", () => {
 // ---------------------------------------------------------------------------
 // Cookie-based auth
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// OTP / Password Reset
+// ---------------------------------------------------------------------------
+describe("POST /api/auth/forgot-password", () => {
+  beforeEach(resetMocks);
+
+  it("generates OTP for existing user and always returns 200", async () => {
+    mockResolvedValue([{ id: 1, name: "Test", email: "test@test.com" }]); // SELECT user
+    mockResolvedValue({});                                                   // UPDATE reset_otp
+
+    const res = await api("POST", "/api/auth/forgot-password", {
+      body: { email: "test@test.com" },
+    });
+    assert.strictEqual(res.status, 200);
+    // Must not reveal whether the email exists
+    assert.match(res.body.data.message, /If the account exists/i);
+  });
+
+  it("returns same message for unknown email (no enumeration)", async () => {
+    mockResolvedValue([]); // SELECT user — none
+
+    const res = await api("POST", "/api/auth/forgot-password", {
+      body: { email: "unknown@test.com" },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.match(res.body.data.message, /If the account exists/i);
+  });
+
+  it("rejects missing email", async () => {
+    const res = await api("POST", "/api/auth/forgot-password", { body: {} });
+    assert.strictEqual(res.status, 400);
+  });
+});
+
+describe("POST /api/auth/reset-password", () => {
+  const userRow = {
+    id: 1, name: "Test", email: "test@test.com", password_hash: "$2a$12$x",
+    reset_otp: "123456", reset_otp_expires: new Date(Date.now() + 60000).toISOString(),
+    reset_otp_attempts: 0,
+    role: "free", status: "active", verified: 1, token_version: 0,
+    failed_attempts: 0, locked_until: null, deleted_at: null,
+  };
+
+  beforeEach(resetMocks);
+
+  it("resets password with valid OTP", async () => {
+    mockResolvedValue([userRow]);                                      // 0: SELECT user
+    mockResolvedValue({});                                             // 1: UPDATE password + clear OTP
+    // Audit INSERT is fire-and-forget (no mock needed, caught by error handler)
+
+    const res = await api("POST", "/api/auth/reset-password", {
+      body: { email: "test@test.com", otp: "123456", password: "NewPass123!" },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.match(res.body.data.message, /Password updated/i);
+  });
+
+  it("rejects wrong OTP", async () => {
+    mockResolvedValue([userRow]);                                      // 0: SELECT user
+    mockResolvedValue({});                                             // 1: UPDATE increment attempts
+
+    const res = await api("POST", "/api/auth/reset-password", {
+      body: { email: "test@test.com", otp: "000000", password: "NewPass123!" },
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error, /Invalid OTP/i);
+  });
+
+  it("increments attempt counter on wrong OTP", async () => {
+    mockResolvedValue([{ ...userRow, reset_otp_attempts: 0 }]);        // 0: SELECT user
+    mockResolvedValue({});                                             // 1: UPDATE increment attempts
+
+    await api("POST", "/api/auth/reset-password", {
+      body: { email: "test@test.com", otp: "000000", password: "NewPass123!" },
+    });
+    const updateLog = queryLog.filter((q) => /UPDATE.*users.*reset_otp_attempts/i.test(q));
+    assert.ok(updateLog.length > 0, "must increment reset_otp_attempts on failure");
+  });
+
+  it("invalidates OTP after max failed attempts", async () => {
+    mockResolvedValue([{ ...userRow, reset_otp_attempts: 4 }]);        // 0: SELECT user
+    mockResolvedValue({});                                             // 1: UPDATE null OTP
+
+    const res = await api("POST", "/api/auth/reset-password", {
+      body: { email: "test@test.com", otp: "000000", password: "NewPass123!" },
+    });
+    assert.strictEqual(res.status, 400);
+    // OTP should be nulled after last attempt (check query log)
+    const clearOtp = queryLog.find((q) =>
+      /reset_otp = NULL.*reset_otp_expires = NULL.*reset_otp_attempts/i.test(q)
+    );
+    assert.ok(clearOtp, "OTP must be nulled after max attempts");
+  });
+
+  it("rejects expired OTP", async () => {
+    const expired = new Date(Date.now() - 60000).toISOString();
+    mockResolvedValue([{ ...userRow, reset_otp_expires: expired }]);   // 0: SELECT user
+
+    const res = await api("POST", "/api/auth/reset-password", {
+      body: { email: "test@test.com", otp: "123456", password: "NewPass123!" },
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error, /OTP expired/i);
+  });
+
+  it("rejects unknown email (no enumeration)", async () => {
+    mockResolvedValue([]); // 0: SELECT user — none
+
+    const res = await api("POST", "/api/auth/reset-password", {
+      body: { email: "unknown@test.com", otp: "123456", password: "NewPass123!" },
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error, /Invalid OTP/i);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Email Verification
+// ---------------------------------------------------------------------------
+describe("POST /api/auth/verify-email", () => {
+  const userRow = {
+    id: 1, name: "Test", email: "test@test.com",
+    verify_token: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    verify_token_expires: new Date(Date.now() + 86400000).toISOString(),
+    verified: 0, role: "free", status: "active", token_version: 0,
+    failed_attempts: 0, locked_until: null, deleted_at: null,
+  };
+
+  beforeEach(resetMocks);
+
+  it("verifies email with valid token", async () => {
+    mockResolvedValue([userRow]);                                      // 0: SELECT user
+    mockResolvedValue({});                                             // 1: UPDATE verified=1
+    // audit fire-and-forget (no mock)
+
+    const res = await api("POST", "/api/auth/verify-email", {
+      body: { email: "test@test.com", token: userRow.verify_token },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.data.verified, true);
+  });
+
+  it("rejects invalid token", async () => {
+    mockResolvedValue([userRow]);                                      // 0: SELECT user
+
+    const res = await api("POST", "/api/auth/verify-email", {
+      body: { email: "test@test.com", token: "invalidtoken" },
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error, /Invalid verification token/i);
+  });
+
+  it("rejects expired token", async () => {
+    const expired = new Date(Date.now() - 60000).toISOString();
+    mockResolvedValue([{ ...userRow, verify_token_expires: expired }]);
+
+    const res = await api("POST", "/api/auth/verify-email", {
+      body: { email: "test@test.com", token: userRow.verify_token },
+    });
+    assert.strictEqual(res.status, 400);
+    assert.match(res.body.error, /Verification token expired/i);
+  });
+
+  it("returns already-verified when already verified", async () => {
+    mockResolvedValue([{ ...userRow, verified: 1 }]);
+
+    const res = await api("POST", "/api/auth/verify-email", {
+      body: { email: "test@test.com", token: userRow.verify_token },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.data.verified, true);
+    assert.match(res.body.data.message, /Already verified/i);
+  });
+
+  it("rejects unknown account with same error as bad token", async () => {
+    mockResolvedValue([]); // SELECT user — none
+
+    const res = await api("POST", "/api/auth/verify-email", {
+      body: { email: "unknown@test.com", token: "sometoken" },
+    });
+    assert.strictEqual(res.status, 404);
+  });
+});
+
+describe("POST /api/auth/verify-email/send", () => {
+  beforeEach(resetMocks);
+
+  it("requires authentication", async () => {
+    const res = await api("POST", "/api/auth/verify-email/send");
+    assert.strictEqual(res.status, 401);
+  });
+
+  it("generates token and sends email for unverified user", async () => {
+    mockResolvedValue([{ token_version: 0 }]);                        // 0: checkTokenVersion
+    mockResolvedValue([{                                               // 1: SELECT user
+      id: 1, email: "test@test.com", verified: 0,
+    }]);
+    mockResolvedValue({});                                             // 2: UPDATE verify_token
+    // sendMail mock — email.js returns { sent: false, dev: true } when disabled
+
+    const res = await api("POST", "/api/auth/verify-email/send", {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.match(res.body.data.message, /sent/i);
+  });
+
+  it("returns already-verified for verified user", async () => {
+    mockResolvedValue([{ token_version: 0 }]);                        // 0: checkTokenVersion
+    mockResolvedValue([{                                               // 1: SELECT user
+      id: 1, email: "test@test.com", verified: 1,
+    }]);
+
+    const res = await api("POST", "/api/auth/verify-email/send", {
+      headers: { Authorization: `Bearer ${userToken}` },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.data.verified, true);
+  });
+});
+
 describe("access_token cookie auth", () => {
   beforeEach(resetMocks);
 

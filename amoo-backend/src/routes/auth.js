@@ -132,8 +132,8 @@ router.post(
     const { name, email, phone, password } = req.body;
     const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
     if (existing.length) {
-      // Return generic success to prevent user enumeration.
-      return ok(res, { message: "Registration successful. Please check your email to verify your account." });
+      // Generic error to prevent user enumeration.
+      throw new HttpError(400, "Registration failed. Please try again with different information.");
     }
 
     const hash = await bcrypt.hash(password, 12);
