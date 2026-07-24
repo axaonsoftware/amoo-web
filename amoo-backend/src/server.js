@@ -97,7 +97,7 @@ if (env.nodeEnv !== "test") {
   app.use("/api/auth/forgot-password", authLimiter);
   app.use("/api/auth/reset-password", authLimiter);
   app.use("/api/auth/register", registerLimiter);
-  app.use("/api/auth/verify-email/send", authLimiter);
+  app.use("/api/auth/verify-email", authLimiter);
 }
 
 // NOTE: uploaded files are NO LONGER served statically. They are accessed

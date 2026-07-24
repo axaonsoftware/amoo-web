@@ -78,7 +78,7 @@ const schemas = {
 
   resetPassword: Joi.object({
     email: Joi.string().email().required(),
-    otp: Joi.string().length(6).required(),
+    otp: Joi.string().pattern(/^\d{4,10}$/).required(),
     password: Joi.string().min(8).max(128).required(),
   }),
 

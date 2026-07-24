@@ -131,7 +131,10 @@ router.post(
   asyncHandler(async (req, res) => {
     const { name, email, phone, password } = req.body;
     const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
-    if (existing.length) throw new HttpError(409, "Email already registered");
+    if (existing.length) {
+      // Return generic success to prevent user enumeration.
+      return ok(res, { message: "Registration successful. Please check your email to verify your account." });
+    }
 
     const hash = await bcrypt.hash(password, 12);
     const [result] = await pool.query(
