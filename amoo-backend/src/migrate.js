@@ -27,6 +27,14 @@ const logger = require("./utils/logger");
       if (ch === quote && sql[i - 1] !== "\\") inString = false;
       continue;
     }
+    // Skip -- line comments (handles semicolons inside comments)
+    if (ch === "-" && sql[i + 1] === "-") {
+      const nl = sql.indexOf("\n", i + 2);
+      if (nl === -1) break; // rest of file is a comment
+      i = nl;
+      buf += "\n";
+      continue;
+    }
     if (ch === "'" || ch === '"' || ch === "`") {
       inString = true;
       quote = ch;

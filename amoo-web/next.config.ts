@@ -64,10 +64,15 @@ const nextConfig: NextConfig = {
   // Hides the framework/version banner from responses.
   poweredByHeader: false,
   images: {
+    // Cloudinary serves already-optimized images, so skip Next.js's
+    // built-in optimizer to avoid timeouts fetching from the CDN.
+    unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
       // Used by the admin login page's provider icon.
       { protocol: "https", hostname: "upload.wikimedia.org" },
+      // Used by the site logo and other Cloudinary-hosted images.
+      { protocol: "https", hostname: "res.cloudinary.com" },
     ],
   },
   async headers() {

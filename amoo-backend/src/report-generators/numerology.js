@@ -47,10 +47,14 @@ function expressionNumber(fullName) {
 // Soul Urge Number: vowels only
 const VOWELS = new Set(["A", "E", "I", "O", "U"]);
 function soulUrgeNumber(fullName) {
+  const lookup = {};
+  for (const [num, letters] of Object.entries(mapping)) {
+    for (const l of letters) lookup[l] = parseInt(num, 10);
+  }
   const chars = fullName.toUpperCase().split("");
   const vowelNums = chars
     .filter((c) => VOWELS.has(c))
-    .map((c) => mapping[c] || 0);
+    .map((c) => lookup[c] || 0);
   if (vowelNums.length === 0) return null;
   return reduce(vowelNums.reduce((s, n) => s + n, 0));
 }
