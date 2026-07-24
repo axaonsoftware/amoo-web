@@ -35,7 +35,7 @@ export default function VerifyEmailPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#faf7f2] to-[#f0e8d8] px-4">
-      <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl text-center">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 sm:p-8 shadow-xl text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#f5edfe]">
           {status === "verifying" ? (
             <Loader2 className="h-8 w-8 animate-spin text-[#5B2A9D]" />

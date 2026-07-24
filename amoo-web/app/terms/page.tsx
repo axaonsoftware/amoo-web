@@ -10,7 +10,7 @@ const TermsPage = () => {
       <OfferBar />
       <HomeHeader />
 
-      <section className="mx-auto max-w-3xl px-6 py-16">
+      <section className="mx-auto max-w-3xl px-4 sm:px-6 py-16">
         <h1
           className="font-display text-4xl font-bold md:text-5xl"
           style={{ color: "#2c0c47" }}

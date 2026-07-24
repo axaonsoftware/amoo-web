@@ -88,7 +88,7 @@ const FaqPage = () => {
                   <div key={faq.id} className="border-b border-gray-100 last:border-b-0">
                     <button
                       onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
-                      className="flex w-full items-center justify-between px-6 py-4 text-left transition-colors hover:bg-gray-50"
+                      className="flex w-full items-center justify-between px-4 sm:px-6 py-4 text-left transition-colors hover:bg-gray-50"
                     >
                       <span
                         className="font-sans text-sm font-medium pr-4"
