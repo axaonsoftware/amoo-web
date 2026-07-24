@@ -11,7 +11,7 @@ import {
   validationDetails,
   isUserCancellation,
   isApiError,
-} from "../errors.ts";
+} from "../errors";
 
 describe("errorMessage", () => {
   test("reads an Error's message", () => {

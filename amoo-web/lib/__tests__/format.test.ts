@@ -16,7 +16,7 @@ import {
   formatTime,
   titleCase,
   initials,
-} from "../format.ts";
+} from "../format";
 
 describe("toNumber", () => {
   test("passes finite numbers through", () => {

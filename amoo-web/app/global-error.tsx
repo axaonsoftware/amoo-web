@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 /**
@@ -84,7 +85,7 @@ export default function GlobalError({
             >
               Try again
             </button>
-            <a
+            <Link
               href="/"
               style={{
                 height: 44,
@@ -100,7 +101,7 @@ export default function GlobalError({
               }}
             >
               Go Home
-            </a>
+            </Link>
           </div>
         </div>
       </body>
