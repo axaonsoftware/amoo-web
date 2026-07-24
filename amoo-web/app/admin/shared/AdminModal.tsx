@@ -48,73 +48,104 @@ export default function AdminModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-modal-title"
+    >
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative z-10 w-full max-w-[520px] max-h-[85vh] overflow-y-auto rounded-[14px] border border-[#EEEDF4] bg-white shadow-[0_20px_60px_rgba(20,16,40,.18)]">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#EEEDF4] bg-white px-6 py-4">
-          <h3 className="text-[16px] font-bold text-[#1F1836]">{title}</h3>
+          <h3 id="admin-modal-title" className="text-[16px] font-bold text-[#1F1836]">{title}</h3>
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close dialog"
             className="grid h-[28px] w-[28px] place-items-center rounded-[6px] text-[#8B879C] hover:bg-[#F7F6FB]"
           >
-            <X size={16} />
+            <X size={16} aria-hidden="true" />
           </button>
         </div>
 
         <div className="px-6 py-5">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {fields.map((f) => (
-              <div
-                key={f.name}
-                className={f.full ? "sm:col-span-2" : undefined}
-              >
-                <label className="mb-[5px] block text-[11.5px] font-medium text-[#3D3752]">
-                  {f.label} {f.required && <span className="text-red-400">*</span>}
-                </label>
-                {f.type === "textarea" ? (
-                  <textarea
-                    value={values[f.name] ?? ""}
-                    onChange={(e) => onChange(f.name, e.target.value)}
-                    placeholder={f.placeholder}
-                    rows={3}
-                    className={`w-full rounded-[8px] border bg-white px-3 py-2.5 text-[12px] text-[#1F1836] outline-none transition-colors placeholder:text-[#A5A2B5] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30 ${
-                      errors?.[f.name] ? "border-red-400" : "border-[#E7E5EF]"
-                    }`}
-                  />
-                ) : f.type === "select" ? (
-                  <select
-                    value={values[f.name] ?? ""}
-                    onChange={(e) => onChange(f.name, e.target.value)}
-                    className={`h-[38px] w-full appearance-none rounded-[8px] border bg-white px-3 pr-8 text-[12px] text-[#1F1836] outline-none transition-colors focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30 ${
-                      errors?.[f.name] ? "border-red-400" : "border-[#E7E5EF]"
-                    }`}
+            {fields.map((f) => {
+              // Associates the visible label with its control, and points the
+              // control at its own error text. Without htmlFor/id a screen
+              // reader announces the field as unlabelled — this modal backs the
+              // create/edit forms on most admin pages, so one fix covers them
+              // all. Namespaced to avoid colliding with page-level ids.
+              const fieldId = `admin-field-${f.name}`;
+              const errorId = `${fieldId}-error`;
+              const hasError = Boolean(errors?.[f.name]);
+              const a11y = {
+                id: fieldId,
+                "aria-invalid": hasError || undefined,
+                "aria-describedby": hasError ? errorId : undefined,
+                "aria-required": f.required || undefined,
+              };
+
+              return (
+                <div key={f.name} className={f.full ? "sm:col-span-2" : undefined}>
+                  <label
+                    htmlFor={fieldId}
+                    className="mb-[5px] block text-[11.5px] font-medium text-[#3D3752]"
                   >
-                    <option value="">{f.placeholder || "Select..."}</option>
-                    {f.options?.map((o) => (
-                      <option key={o.value} value={o.value}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type={f.type || "text"}
-                    value={values[f.name] ?? ""}
-                    onChange={(e) => onChange(f.name, e.target.value)}
-                    placeholder={f.placeholder}
-                    min={f.min}
-                    step={f.step}
-                    className={`h-[38px] w-full rounded-[8px] border bg-white px-3 text-[12px] text-[#1F1836] outline-none transition-colors placeholder:text-[#A5A2B5] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30 ${
-                      errors?.[f.name] ? "border-red-400" : "border-[#E7E5EF]"
-                    }`}
-                  />
-                )}
-                {errors?.[f.name] && (
-                  <p className="mt-1 text-[11px] text-red-500">{errors[f.name]}</p>
-                )}
-              </div>
-            ))}
+                    {f.label}{" "}
+                    {f.required && (
+                      <span className="text-red-400" aria-hidden="true">*</span>
+                    )}
+                  </label>
+                  {f.type === "textarea" ? (
+                    <textarea
+                      {...a11y}
+                      value={values[f.name] ?? ""}
+                      onChange={(e) => onChange(f.name, e.target.value)}
+                      placeholder={f.placeholder}
+                      rows={3}
+                      className={`w-full rounded-[8px] border bg-white px-3 py-2.5 text-[12px] text-[#1F1836] outline-none transition-colors placeholder:text-[#A5A2B5] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30 ${
+                        hasError ? "border-red-400" : "border-[#E7E5EF]"
+                      }`}
+                    />
+                  ) : f.type === "select" ? (
+                    <select
+                      {...a11y}
+                      value={values[f.name] ?? ""}
+                      onChange={(e) => onChange(f.name, e.target.value)}
+                      className={`h-[38px] w-full appearance-none rounded-[8px] border bg-white px-3 pr-8 text-[12px] text-[#1F1836] outline-none transition-colors focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30 ${
+                        hasError ? "border-red-400" : "border-[#E7E5EF]"
+                      }`}
+                    >
+                      <option value="">{f.placeholder || "Select..."}</option>
+                      {f.options?.map((o) => (
+                        <option key={o.value} value={o.value}>
+                          {o.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      {...a11y}
+                      type={f.type || "text"}
+                      value={values[f.name] ?? ""}
+                      onChange={(e) => onChange(f.name, e.target.value)}
+                      placeholder={f.placeholder}
+                      min={f.min}
+                      step={f.step}
+                      className={`h-[38px] w-full rounded-[8px] border bg-white px-3 text-[12px] text-[#1F1836] outline-none transition-colors placeholder:text-[#A5A2B5] focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30 ${
+                        hasError ? "border-red-400" : "border-[#E7E5EF]"
+                      }`}
+                    />
+                  )}
+                  {hasError && (
+                    <p id={errorId} role="alert" className="mt-1 text-[11px] text-red-500">
+                      {errors?.[f.name]}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 

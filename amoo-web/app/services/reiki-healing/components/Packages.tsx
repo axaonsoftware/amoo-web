@@ -31,7 +31,7 @@ export default function Packages() {
         const items = res?.data ?? Array.isArray(res) ? res : [];
         setPackages(items);
       })
-      .catch((err) => setError("Failed to load packages. Please try again."))
+      .catch(() => setError("Failed to load packages. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 

@@ -13,9 +13,34 @@ const SCHEDULE = process.env.CRON_SCHEDULE || "0 2 * * *";
  * See the README for deployment-specific caveats (Render free tier sleep,
  * Railway restart policy, etc.).
  */
+/**
+ * Decide whether THIS process should own the scheduler.
+ *
+ * node-cron runs in-process. Under PM2 cluster mode (ecosystem.config.js uses
+ * `instances: "max"`) every worker is a full copy of the app, so without this
+ * guard the expiry job fired once per CPU core simultaneously — several
+ * concurrent runs racing on the same subscription and user rows.
+ *
+ * PM2 sets NODE_APP_INSTANCE to the worker ordinal, so worker 0 takes the job.
+ * The same reasoning applies to any horizontally-scaled deployment: set
+ * CRON_ENABLED=false on all but one replica. (A multi-host deployment needs a
+ * real distributed lock or an external scheduler — noted in the README.)
+ */
+function shouldRunCron() {
+  if (process.env.NODE_ENV === "test") return false;
+  if (process.env.CRON_ENABLED === "false") return false;
+  const instance = process.env.NODE_APP_INSTANCE;
+  if (instance !== undefined && instance !== "0") return false;
+  return true;
+}
+
 function startCron(jobs) {
-  if (process.env.NODE_ENV === "test") {
-    logger.info("[cron] Skipping cron start (NODE_ENV=test)");
+  if (!shouldRunCron()) {
+    logger.info(
+      `[cron] Not the scheduler process (NODE_ENV=${process.env.NODE_ENV}, ` +
+        `NODE_APP_INSTANCE=${process.env.NODE_APP_INSTANCE ?? "unset"}, ` +
+        `CRON_ENABLED=${process.env.CRON_ENABLED ?? "unset"}) — skipping cron start`
+    );
     return;
   }
 
@@ -38,4 +63,4 @@ function startCron(jobs) {
   }
 }
 
-module.exports = { startCron, SCHEDULE };
+module.exports = { startCron, shouldRunCron, SCHEDULE };

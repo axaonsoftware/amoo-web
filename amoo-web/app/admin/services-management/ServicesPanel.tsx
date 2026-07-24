@@ -16,6 +16,7 @@ import { categoryTone, typeTone, type ServiceRow } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
+import { errorMessage } from "../../../lib/errors";
 
 const tabs = [
   { label: "All Services", active: true },
@@ -68,7 +69,7 @@ export default function ServicesPanel() {
           );
         }
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -336,8 +337,8 @@ export default function ServicesPanel() {
             setEditModalOpen(false);
             showToast("Service updated successfully");
             reload();
-          } catch (e: any) {
-            showToast(e.message || "Failed to update service", "error");
+          } catch (e: unknown) {
+            showToast(errorMessage(e, "Failed to update service"), "error");
           } finally {
             setEditSaving(false);
           }
@@ -355,8 +356,8 @@ export default function ServicesPanel() {
             setConfirmDelete({ open: false, service: null });
             showToast("Service deleted successfully");
             reload();
-          } catch (e: any) {
-            showToast(e.message || "Failed to delete service", "error");
+          } catch (e: unknown) {
+            showToast(errorMessage(e, "Failed to delete service"), "error");
           } finally {
             setDeleteSaving(false);
           }

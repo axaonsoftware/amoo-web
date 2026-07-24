@@ -65,11 +65,11 @@ export default function SideMetrics() {
         setPayouts(payoutsVal);
       }
       if (o) {
-        const convRate = (o as Record<string, unknown>).conversionRate as number || 78.4;
+        const convRate = (o as any).conversionRate as number || 78.4;
         setPct(Math.round(convRate * 10) / 10);
-        const avgDeltaVal = (o as Record<string, unknown>).avgOrderDelta as string || "6.3%";
+        const avgDeltaVal = (o as any).avgOrderDelta as string || "6.3%";
         setAvgDelta(avgDeltaVal);
-        const payDelta = (o as Record<string, unknown>).payoutsDelta as string || "16.1%";
+        const payDelta = (o as any).payoutsDelta as string || "16.1%";
         setPayoutsDelta(payDelta);
       }
     })

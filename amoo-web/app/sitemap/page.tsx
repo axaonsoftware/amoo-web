@@ -97,7 +97,7 @@ const sections: { title: string; links: { label: string; href: string }[] }[] = 
 
 export default function SitemapPage() {
   return (
-    <main className="min-h-screen bg-[#0D0218] px-4 py-12 text-white">
+    <main id="main-content" className="min-h-screen bg-[#0D0218] px-4 py-12 text-white">
       <div className="mx-auto max-w-4xl">
         <h1 className="text-3xl font-bold text-gold">Sitemap</h1>
         <p className="mt-2 text-white/60">All pages on {SITE_NAME}</p>

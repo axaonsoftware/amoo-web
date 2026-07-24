@@ -1,5 +1,7 @@
 // --- OpenTelemetry (must be imported before anything else) ---
-require("./config/telemetry");
+// Never throws: tracing degrades to a no-op if the packages are absent or the
+// exporter cannot start, rather than preventing the API from booting.
+const { shutdownTelemetry } = require("./config/telemetry");
 
 const express = require("express");
 const path = require("path");
@@ -192,13 +194,19 @@ if (require.main === module) {
   function shutdown(signal) {
     logger.info(`Received ${signal}, shutting down...`);
     if (!server) process.exit(0);
-    server.close(() => {
-      logger.info("HTTP server closed, closing DB pool...");
+    server.close(async () => {
+      logger.info("HTTP server closed, flushing telemetry and closing DB pool...");
+      // Flush buffered spans before exit, or the traces for the last requests
+      // before a deploy are lost. No-op when tracing never started.
+      await shutdownTelemetry();
       const { pool } = require("./config/db");
-      pool.end().then(() => {
+      try {
+        await pool.end();
         logger.info("DB pool closed, exiting.");
-        process.exit(0);
-      });
+      } catch (e) {
+        logger.error("Error closing DB pool:", e.message);
+      }
+      process.exit(0);
     });
     // Hard exit if graceful shutdown takes > 10 seconds
     setTimeout(() => {

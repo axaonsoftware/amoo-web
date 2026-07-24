@@ -8,7 +8,6 @@ import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
 import { sanitize } from "../../../lib/sanitize";
 import { api } from "../../../lib/api";
-import { Loader2, AlertCircle } from "lucide-react";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -575,16 +574,16 @@ export default function TarotReadingPage() {
   const [testimonials, setTestimonials] = useState<any[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [loadingTestimonials, setLoadingTestimonials] = useState(true);
-  const [errorServices, setErrorServices] = useState<string | null>(null);
-  const [errorTestimonials, setErrorTestimonials] = useState<string | null>(null);
+  const [, setErrorServices] = useState<string | null>(null);
+  const [, setErrorTestimonials] = useState<string | null>(null);
 
   useEffect(() => {
     api.getServices()
       .then((res: any) => {
-        const items = res?.data ?? Array.isArray(res) ? res : [];
+        const items = (res?.data as any[]) ?? Array.isArray(res) ? res : [];
         setServices(items.filter((s: any) => s.category === "Tarot"));
       })
-      .catch((err) => setErrorServices("Failed to load services. Please try again."))
+      .catch(() => setErrorServices("Failed to load services. Please try again."))
       .finally(() => setLoadingServices(false));
 
     api.getTestimonials()
@@ -592,7 +591,7 @@ export default function TarotReadingPage() {
         const list = Array.isArray(rows) ? rows : rows?.data ?? [];
         setTestimonials(list.length ? list : []);
       })
-      .catch((err) => setErrorTestimonials("Failed to load testimonials. Please try again."))
+      .catch(() => setErrorTestimonials("Failed to load testimonials. Please try again."))
       .finally(() => setLoadingTestimonials(false));
   }, []);
 
@@ -605,7 +604,7 @@ export default function TarotReadingPage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main className="flex-1 bg-cream">
+      <main id="main-content" className="flex-1 bg-cream">
         {/* ── Top Promo Banner ── */}
 
         {/* ── Hero Section ── */}

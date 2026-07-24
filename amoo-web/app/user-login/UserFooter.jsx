@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Instagram, Facebook, Youtube, Phone, Mail, Clock } from "lucide-react";
-import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../lib/constants";
+import { CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../lib/constants";
 
 const quickLinks = [
   { label: "Home", href: "/" },

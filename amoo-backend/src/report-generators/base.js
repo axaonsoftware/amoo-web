@@ -1,28 +1,52 @@
 /**
  * Base class for all report generators.
  *
- * Subclasses must implement the static `type` property and the `generate` method.
+ * Subclasses implement the static `type` property and the `generate` method:
+ *   generate({ userId, serviceId, userName, userEmail, extras })
+ *     -> { title, content, file_url?, chakra_data? }
  *
- * The `generate` method receives:
- *   { userId, serviceId, userName, userEmail, extras }
+ * `extras` carries additional context from the caller (birth details from the
+ * request body, saved profile fields merged in by the reports route, etc.).
  *
- * The `extras` object can carry additional context passed by the caller
- * (e.g. expert_id, related booking info, partial birth details from the
- * request body).  Over time, user birth details (dob, time, place, gender)
- * should be added to the users table and queried inside `generate()` so each
- * generator can read them directly.
+ * ─── MATURITY ───────────────────────────────────────────────────────────
+ * These are NOT professional-grade engines. Their maturity varies and is
+ * declared per subclass via the static `maturity` flag:
  *
- * Returns:
- *   { title: string, content: string, file_url?: string, chakra_data?: object }
+ *   "heuristic"  — real, deterministic domain logic runs (numerology's
+ *                  Pythagorean reduction, tarot's card draw, reiki's chakra
+ *                  data). Output is plausible and self-consistent, but it is
+ *                  guidance/entertainment, not certified professional advice.
  *
- * ─── IMPORTANT ──────────────────────────────────────────────────────
- * This is a **scaffold**.  Every generator below returns placeholder
- * content.  Replace each with real domain logic or a third-party API
- * call when the business rules are defined.
- * ────────────────────────────────────────────────────────────────────
+ *   "scaffold"   — NO real calculation exists yet. The generator can only
+ *                  echo its inputs. It MUST NOT fabricate specifics (planet
+ *                  positions, house lords) and present them as a real reading.
+ *                  Kundali is here until a real ephemeris/API is wired in.
+ *
+ * DISCLAIMER is appended to every report so a reader is never misled about
+ * what they are looking at, and `describeMaturity()` renders a scaffold notice
+ * in place of invented data. See docs/changes/020 for the rationale and the
+ * plan to graduate each generator.
+ * ────────────────────────────────────────────────────────────────────────
  */
+
+const DISCLAIMER = [
+  "─── PLEASE NOTE ───",
+  "This report is generated automatically for guidance and self-reflection.",
+  "It is not a substitute for professional financial, medical, legal or",
+  "psychological advice. Your choices shape your path.",
+].join("\n");
+
 class BaseReportGenerator {
   static type = "";
+
+  // "heuristic" | "scaffold". Overridden per subclass. Defaults to scaffold so
+  // a new generator is treated as unproven until it declares otherwise.
+  static maturity = "scaffold";
+
+  /** True when this generator has no real calculation behind it yet. */
+  static get isScaffold() {
+    return this.maturity === "scaffold";
+  }
 
   /**
    * @returns {{ title: string, content: string, file_url?: string, chakra_data?: object }}
@@ -35,3 +59,4 @@ class BaseReportGenerator {
 }
 
 module.exports = BaseReportGenerator;
+module.exports.DISCLAIMER = DISCLAIMER;

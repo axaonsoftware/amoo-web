@@ -59,8 +59,8 @@ export default function CreateReport() {
     try {
       await api.createBooking({ service: "Numerology Report", type: "numerology" });
       setMessage("Report created successfully!");
-    } catch (e: any) {
-      setMessage(e.message || "Failed to create report");
+    } catch (e: unknown) {
+      setMessage(e instanceof Error ? e.message : "Failed to create report");
     } finally {
       setSubmitting(false);
     }

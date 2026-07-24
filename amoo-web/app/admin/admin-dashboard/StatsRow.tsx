@@ -9,7 +9,7 @@ const fmt = (n: number) => n.toLocaleString("en-IN");
 
 export default function StatsRow() {
   const { data, loading, error } = useApi(() => api.admin.getOverview());
-  const stats = data?.stats;
+  const stats = (data as { stats?: { users: number; experts: number; bookings: number; revenue: number; pendingPayments: number } } | null)?.stats;
   const items = [
     { label: "Total Users", value: stats ? fmt(stats.users) : "—", Icon: Users },
     { label: "Active Astrologers", value: stats ? fmt(stats.experts) : "—", Icon: UserCog },

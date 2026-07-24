@@ -5,7 +5,7 @@ import RightRail from "./RightRail";
 
 export default function TarotManagementPage() {
   return (
-    <main className="flex-1 pb-8">
+    <main id="main-content" className="flex-1 pb-8">
       <div className="px-6 pt-[18px]">
         <PageHeader />
 

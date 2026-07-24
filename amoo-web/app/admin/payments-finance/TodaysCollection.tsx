@@ -23,9 +23,9 @@ export default function TodaysCollection() {
       .then((res) => {
         if (cancelled) return;
         const payments = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        const todayPayments = payments.filter((p: Record<string, unknown>) => p.created_at && isToday(p.created_at as string));
+        const todayPayments = payments.filter((p: any) => p.created_at && isToday(p.created_at as string));
         if (todayPayments.length > 0) {
-          const total = todayPayments.reduce((s: number, p: Record<string, unknown>) => s + ((p.amount as number) || 0), 0);
+          const total = todayPayments.reduce((s: number, p: any) => s + ((p.amount as number) || 0), 0);
           const count = todayPayments.length;
           const avg = count > 0 ? Math.round(total / count) : 0;
           setAmount(`₹ ${total.toLocaleString("en-IN")}`);

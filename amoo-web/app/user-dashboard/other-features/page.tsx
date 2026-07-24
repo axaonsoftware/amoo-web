@@ -6,7 +6,7 @@ import BottomRow from "./BottomRow";
 
 export default function OtherUserFeaturesPage() {
   return (
-    <main className="flex-1 px-4 sm:px-6 lg:px-8 pb-6 pt-7 sm:pt-[31px]">
+    <main id="main-content" className="flex-1 px-4 sm:px-6 lg:px-8 pb-6 pt-7 sm:pt-[31px]">
       <PageHeader />
 
       <div className="mt-[24px]">

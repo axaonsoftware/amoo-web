@@ -161,21 +161,19 @@ export default function SelectServicePage() {
   const [servicesError, setServicesError] = useState("");
 
   useEffect(() => {
-    setLoadingServices(true);
-    setServicesError("");
     api.getServices("?pageSize=100").then((res: any) => {
       const items = res?.data ?? [];
       if (Array.isArray(items) && items.length) {
         setApiServices(items);
       }
-    }).catch((e: any) => {
-      setServicesError(e?.message || "Failed to load services.");
+    }).catch(() => {
+      setServicesError("Failed to load services.");
     }).finally(() => setLoadingServices(false));
   }, []);
 
   const CATEGORIES = useMemo(() => {
     const derived = apiServices
-      ? [...new Set(apiServices.map((s: any) => s.category).filter(Boolean))]
+      ? [...new Set(apiServices.map((s: any) => s.category as string).filter(Boolean))]
       : [];
     const fromStatic = STATIC_CATEGORIES.map((c) => c.label);
     const labels = derived.length ? derived : fromStatic.slice(1);
@@ -281,7 +279,7 @@ export default function SelectServicePage() {
         </div>
       </div>
 
-      <main className="flex-1 bg-cream">
+      <main id="main-content" className="flex-1 bg-cream">
         {/* ═══ Heading ═══ */}
         <div className="mx-auto w-full max-w-[1440px] px-4 pt-[16px]">
           <SectionHeading>Select Your Consultation Service</SectionHeading>

@@ -10,7 +10,7 @@ export default function PricingManagementPage() {
   const panelFns = useRef<{ openCreate: () => void; exportData: () => void } | null>(null);
 
   return (
-    <main className="flex-1 px-6 pb-8 pt-[18px]">
+    <main id="main-content" className="flex-1 px-6 pb-8 pt-[18px]">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-[6px] text-[10.5px]">
         <span className="text-[#8B879C]">Dashboard</span>

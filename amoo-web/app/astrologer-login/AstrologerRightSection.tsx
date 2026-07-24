@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, User, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { User, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { trackEvent } from "../../lib/tracking";
@@ -12,7 +12,6 @@ export default function AstrologerRightPanel() {
   const router = useRouter();
   const { loginUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -48,8 +47,8 @@ export default function AstrologerRightPanel() {
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: "expert" });
       setTimeout(() => router.push("/user-dashboard"), 1200);
-    } catch (err: any) {
-      setApiError(err?.message || "Login failed. Please try again.");
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -90,12 +89,12 @@ export default function AstrologerRightPanel() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="astrologerrightsection-email-address" className="block text-sm font-medium text-gray-800 mb-1.5">
               Email Address
             </label>
             <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input
+              <input id="astrologerrightsection-email-address"
                 type="text"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
@@ -111,12 +110,12 @@ export default function AstrologerRightPanel() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="astrologerrightsection-password" className="block text-sm font-medium text-gray-800 mb-1.5">
               Password
             </label>
             <div className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+              <input id="astrologerrightsection-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
@@ -148,15 +147,12 @@ export default function AstrologerRightPanel() {
             </Link>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={() => setRemember((v) => !v)}
-              className="w-4 h-4 rounded accent-[#5B2A9D]"
-            />
-            Remember Me
-          </label>
+          {/* "Remember Me" was removed here. Its state was captured and never
+              read: the backend issues a 30-day refresh token on every login
+              regardless (JWT_REFRESH_EXPIRES_IN), so unchecking it changed
+              nothing and the control promised a shorter session it could not
+              deliver. Reinstate it together with a backend option that varies
+              the refresh-token lifetime. */}
 
           <button
             type="submit"

@@ -104,13 +104,14 @@ function EditableField({
 }) {
   return (
     <div className={full ? "lg:col-span-3" : undefined}>
-      <label className="block text-[12.5px] text-[#6c6b78]">
-        {label} {required && <span className="text-red-400">*</span>}
+      <label htmlFor={`profile-${name}`} className="block text-[12.5px] text-[#6c6b78]">
+        {label} {required && <span className="text-red-400" aria-hidden="true">*</span>}
       </label>
       <div className="relative mt-[7px]">
         {dropdown ? (
           <div className="relative">
             <select
+              id={`profile-${name}`}
               value={value}
               onChange={(e) => onChange(name, e.target.value)}
               className={`h-[46px] w-full appearance-none rounded-[10px] border bg-white px-[15px] pr-10 text-[14px] text-[#2b0f47] outline-none transition-colors focus:border-[#6b3fa0] focus:ring-1 focus:ring-[#6b3fa0]/30 ${
@@ -170,7 +171,7 @@ function ReadonlyField({
 }) {
   return (
     <div className={full ? "lg:col-span-3" : undefined}>
-      <label className="block text-[12.5px] text-[#6c6b78]">{label}</label>
+      <p className="block text-[12.5px] text-[#6c6b78]">{label}</p>
       <div
         className={`relative mt-[7px] flex h-[46px] items-center rounded-[10px] border border-[#e7e1ef] px-[15px] ${
           hint ? "bg-[#f7f5fa]" : "bg-white"

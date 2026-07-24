@@ -9,7 +9,7 @@ export default function StatsRow() {
   const { data: reportStats, loading: statsLoading, error: statsError } = useApi<any>(() => api.getReportStats());
   const { data: bookings } = useApi<any>(() => api.getBookings());
 
-  const allBookings: any[] = bookings?.data ?? [];
+  const allBookings: any[] = (bookings as any)?.data as any[] ?? [];
 
   const upcomingReiki = allBookings.find((b: any) =>
     (b.service_name || "").toLowerCase().includes("reiki") &&

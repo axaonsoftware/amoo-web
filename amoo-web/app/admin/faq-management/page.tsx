@@ -108,7 +108,7 @@ export default function FaqManagementPage() {
   };
 
   return (
-    <main className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
+    <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-[6px] text-[10.5px]">
         <span className="text-[#8B879C]">Dashboard</span>
@@ -265,8 +265,8 @@ export default function FaqManagementPage() {
 
             <div className="mt-5 space-y-4">
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">Question</label>
-                <textarea
+                <label htmlFor="page-question" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Question</label>
+                <textarea id="page-question"
                   rows={2}
                   value={formData.question}
                   onChange={(e) => setFormData({ ...formData, question: e.target.value })}
@@ -275,8 +275,8 @@ export default function FaqManagementPage() {
                 />
               </div>
               <div>
-                <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">Answer</label>
-                <textarea
+                <label htmlFor="page-answer" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Answer</label>
+                <textarea id="page-answer"
                   rows={4}
                   value={formData.answer}
                   onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
@@ -286,8 +286,8 @@ export default function FaqManagementPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">Category</label>
-                  <select
+                  <label htmlFor="page-category" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Category</label>
+                  <select id="page-category"
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
@@ -298,8 +298,9 @@ export default function FaqManagementPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">Sort Order</label>
+                  <label htmlFor="faq-sort-order" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Sort Order</label>
                   <input
+                    id="faq-sort-order"
                     type="number"
                     value={formData.sort_order}
                     onChange={(e) => setFormData({ ...formData, sort_order: Number(e.target.value) })}

@@ -8,7 +8,7 @@ import UpgradeBanner from "./UpgradeBanner";
 
 export default function NumerologyDashboardPage() {
   return (
-    <main className="flex-1 px-5 pb-6 pt-4 lg:px-6">
+    <main id="main-content" className="flex-1 px-5 pb-6 pt-4 lg:px-6">
       <PageHeader />
       <StatsRow />
 

@@ -20,6 +20,7 @@ import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
+import { errorMessage } from "../../../lib/errors";
 
 type Package = {
   id: number;
@@ -123,8 +124,8 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
       } else {
         setList([]);
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      setError(errorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -200,8 +201,8 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
       setModalOpen(false);
       setEditing(null);
       await loadData();
-    } catch (e: any) {
-      showToast(e.message || "Something went wrong", "error");
+    } catch (e: unknown) {
+      showToast(errorMessage(e, "Something went wrong"), "error");
     } finally {
       setSaving(false);
     }
@@ -216,8 +217,8 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
       setConfirmOpen(false);
       setDeletingId(null);
       await loadData();
-    } catch (e: any) {
-      showToast(e.message || "Failed to delete package", "error");
+    } catch (e: unknown) {
+      showToast(errorMessage(e, "Failed to delete package"), "error");
     } finally {
       setDeleting(false);
     }

@@ -1,8 +1,3 @@
-type RazorpayInstance = {
-  open: () => void;
-  on: (event: string, handler: (response: any) => void) => void;
-};
-
 type RazorpayOptions = {
   key: string;
   amount: number;
@@ -17,13 +12,11 @@ type RazorpayOptions = {
   modal?: { ondismiss?: () => void };
 };
 
-let scriptLoaded = false;
 let scriptLoading: Promise<void> | null = null;
 
 export function loadRazorpayScript(): Promise<void> {
   if (typeof window === "undefined") return Promise.resolve();
   if ((window as any).Razorpay) {
-    scriptLoaded = true;
     return Promise.resolve();
   }
   if (scriptLoading) return scriptLoading;
@@ -33,7 +26,6 @@ export function loadRazorpayScript(): Promise<void> {
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     script.onload = () => {
-      scriptLoaded = true;
       resolve();
     };
     script.onerror = () => {
@@ -57,7 +49,8 @@ export function openRazorpayCheckout(options: RazorpayOptions): Promise<{
       return;
     }
 
-    const rzp = new (window as any).Razorpay({
+    const Razorpay = (window as any).Razorpay as new (opts: RazorpayOptions) => { open: () => void };
+    const rzp = new Razorpay({
       key: options.key,
       amount: options.amount,
       currency: options.currency,

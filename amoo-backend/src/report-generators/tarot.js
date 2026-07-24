@@ -1,5 +1,6 @@
 const path = require("path");
 const BaseReportGenerator = require("./base");
+const { DISCLAIMER } = require("./base");
 
 const tarotCards = require(path.join(__dirname, "data", "tarot-meanings.json"));
 
@@ -17,6 +18,9 @@ function drawCards(n) {
 
 class TarotReportGenerator extends BaseReportGenerator {
   static type = "tarot";
+  // Real card-draw logic runs against a curated meanings deck — plausible and
+  // self-consistent, but guidance/entertainment, not professional divination.
+  static maturity = "heuristic";
 
   async generate({ userId, serviceId, userName, extras }) {
     // Accept explicit cards, or draw a 3-card past → present → future spread
@@ -56,8 +60,7 @@ class TarotReportGenerator extends BaseReportGenerator {
         `The energy of this reading is shaped by ${drawn[0]?.name}, ${drawn[1]?.name}, and ${drawn[2]?.name}.`,
         "The cards suggest a journey of awareness — trust your intuition and stay open to the messages that emerge.",
         "",
-        "─── NOTE ───",
-        "This reading is for guidance and reflection. Your future is shaped by your own choices.",
+        DISCLAIMER,
         "",
         `Reading generated for service #${serviceId || "N/A"} — ${new Date().toISOString()}`,
         "",

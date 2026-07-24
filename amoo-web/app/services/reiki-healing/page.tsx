@@ -19,7 +19,7 @@ export default function ReikiHealingPage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main className="flex-1 bg-[#170426]">
+      <main id="main-content" className="flex-1 bg-[#170426]">
         <Hero />
         <ServicesGrid />
         <BenefitsChakras />

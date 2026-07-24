@@ -23,7 +23,7 @@ export default function PopularSpreads() {
   // /api/services is paginated -> `{ data, meta }`, never a bare array.
   const { items: services, loading, error } = useApiList<any>(() => api.getServices());
   const tarotServices = services.filter(
-    (s: any) => s.category === "Tarot" || (s.type || "").toLowerCase() === "tarot"
+    (s: any) => s.category === "Tarot" || (s.type as string || "").toLowerCase() === "tarot"
   );
   return (
     <section className="rounded-[14px] border border-[#ece9f3] bg-white px-5 py-[16px] shadow-[0_1px_3px_rgba(43,15,71,.04)]">

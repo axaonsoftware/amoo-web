@@ -18,6 +18,7 @@ import { HomeHeader, OfferBar } from "../../components/home-header";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
 import { WHATSAPP_URL } from "../../../lib/constants";
+import { errorMessage } from "../../../lib/errors";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -246,8 +247,8 @@ function BookingForm() {
         specialRequests: specialRequests.trim(),
       });
       router.push(`/consultation/booking-summary?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`);
-    } catch (e: any) {
-      setSubmitError(e?.message || "Booking failed. Please try again.");
+    } catch (e: unknown) {
+      setSubmitError(errorMessage(e, "Booking failed. Please try again."));
     } finally {
       setSubmitting(false);
     }
@@ -268,8 +269,8 @@ function BookingForm() {
       } else {
         setCouponError("Invalid or expired coupon code");
       }
-    } catch (e: any) {
-      setCouponError(e?.message || "Invalid coupon code. Please try again.");
+    } catch (e: unknown) {
+      setCouponError(errorMessage(e, "Invalid coupon code. Please try again."));
     } finally {
       setCouponLoading(false);
     }
@@ -288,8 +289,8 @@ function BookingForm() {
       const result = await api.uploadFile(file);
       const url = result?.url || result?.data?.url || "";
       setUploadedFile({ name: file.name, url });
-    } catch (e: any) {
-      setUploadError(e?.message || "Upload failed. Please try again.");
+    } catch (e: unknown) {
+      setUploadError(errorMessage(e, "Upload failed. Please try again."));
     } finally {
       setUploadLoading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -306,7 +307,7 @@ function BookingForm() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main className="flex-1 bg-cream">
+      <main id="main-content" className="flex-1 bg-cream">
         {/* ── Progress Stepper ── */}
         <div className="border-b border-line bg-white">
           <div className="mx-auto max-w-[1100px] px-3 sm:px-5 py-5 sm:py-7">
@@ -388,11 +389,11 @@ function BookingForm() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     {/* Full Name */}
                     <div>
-                      <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                      <label htmlFor="page-full-name" className="mb-1.5 block text-[13px] font-medium text-ink">
                         Full Name <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
-                        <input
+                        <input id="page-full-name"
                           type="text"
                           placeholder="Enter your full name"
                           value={fullName}
@@ -409,11 +410,11 @@ function BookingForm() {
 
                     {/* Email Address */}
                     <div>
-                      <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                      <label htmlFor="page-email-address" className="mb-1.5 block text-[13px] font-medium text-ink">
                         Email Address <span className="text-red-500">*</span>
                       </label>
                       <div className="relative">
-                        <input
+                        <input id="page-email-address"
                           type="email"
                           placeholder="Enter your email address"
                           value={email}
@@ -430,7 +431,7 @@ function BookingForm() {
 
                     {/* Mobile Number */}
                     <div>
-                      <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                      <label htmlFor="page-mobile-number" className="mb-1.5 block text-[13px] font-medium text-ink">
                         Mobile Number <span className="text-red-500">*</span>
                       </label>
                       <div className="flex">
@@ -438,7 +439,7 @@ function BookingForm() {
                           <span className="text-[14px]">🇮🇳</span>
                           <span className="text-[13px] text-ink">+91</span>
                         </div>
-                        <input
+                        <input id="page-mobile-number"
                           type="tel"
                           placeholder="Enter mobile number"
                           value={phone}
@@ -455,12 +456,12 @@ function BookingForm() {
 
                     {/* Date of Birth */}
                     <div>
-                      <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                      <label htmlFor="page-date-of-birth" className="mb-1.5 block text-[13px] font-medium text-ink">
                         Date of Birth
                       </label>
                       <div className="relative">
                         <CalendarFormIcon className="pointer-events-none absolute left-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-body" />
-                        <input
+                        <input id="page-date-of-birth"
                           type="date"
                           value={dob}
                           onChange={(e) => setDob(e.target.value)}
@@ -471,11 +472,11 @@ function BookingForm() {
 
                     {/* Gender */}
                     <div>
-                      <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                      <label htmlFor="page-gender" className="mb-1.5 block text-[13px] font-medium text-ink">
                         Gender
                       </label>
                       <div className="relative">
-                        <select value={gender} onChange={(e) => setGender(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
+                        <select id="page-gender" value={gender} onChange={(e) => setGender(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
                           <option value="">Select Gender</option>
                           <option>Male</option>
                           <option>Female</option>
@@ -487,11 +488,11 @@ function BookingForm() {
 
                     {/* Marital Status */}
                     <div>
-                      <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                      <label htmlFor="page-marital-status-optional" className="mb-1.5 block text-[13px] font-medium text-ink">
                         Marital Status <span className="text-body">(Optional)</span>
                       </label>
                       <div className="relative">
-                        <select value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
+                        <select id="page-marital-status-optional" value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
                           <option value="">Select Status</option>
                           <option>Single</option>
                           <option>Married</option>
@@ -516,7 +517,7 @@ function BookingForm() {
 
                 {/* Selected Service */}
                 <div className="mb-4">
-                  <label className="mb-2 block text-[13px] font-medium text-ink">Selected Service</label>
+                  <p className="mb-2 block text-[13px] font-medium text-ink">Selected Service</p>
                   <div className="flex items-center gap-4 rounded-xl border border-line bg-[#fdfaf5] p-4">
                     <span className="flex h-[48px] w-[48px] shrink-0 items-center justify-center rounded-full bg-lilac text-grape-2">
                       <LotusIcon className="h-[26px] w-[26px]" />
@@ -532,7 +533,7 @@ function BookingForm() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {/* Consultation Mode */}
                   <div>
-                    <label className="mb-2 block text-[13px] font-medium text-ink">Consultation Mode</label>
+                    <p className="mb-2 block text-[13px] font-medium text-ink">Consultation Mode</p>
                     <div className="flex items-center gap-3 rounded-xl border border-line bg-[#fdfaf5] p-4">
                       <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-lilac text-grape-2">
                         <VideoCallIcon className="h-[22px] w-[22px]" />
@@ -546,7 +547,7 @@ function BookingForm() {
 
                   {/* Date & Time */}
                   <div>
-                    <label className="mb-2 block text-[13px] font-medium text-ink">Date & Time</label>
+                    <p className="mb-2 block text-[13px] font-medium text-ink">Date & Time</p>
                     <div className="flex items-center gap-3 rounded-xl border border-line bg-[#fdfaf5] p-4">
                       <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-lilac text-grape-2">
                         <CalendarIcon className="h-[22px] w-[22px]" />
@@ -563,11 +564,11 @@ function BookingForm() {
 
                   {/* Preferred Language */}
                   <div>
-                    <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                    <label htmlFor="page-preferred-language-optional" className="mb-1.5 block text-[13px] font-medium text-ink">
                       Preferred Language <span className="text-body">(Optional)</span>
                     </label>
                     <div className="relative">
-                      <select value={language} onChange={(e) => setLanguage(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
+                      <select id="page-preferred-language-optional" value={language} onChange={(e) => setLanguage(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
                         <option value="">Select Language</option>
                         <option>English</option>
                         <option>Hindi</option>
@@ -580,11 +581,11 @@ function BookingForm() {
 
                   {/* How did you find us */}
                   <div>
-                    <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                    <label htmlFor="booking-found-us" className="mb-1.5 block text-[13px] font-medium text-ink">
                       How did you find us? <span className="text-body">(Optional)</span>
                     </label>
                     <div className="relative">
-                      <select value={foundUs} onChange={(e) => setFoundUs(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
+                      <select id="booking-found-us" value={foundUs} onChange={(e) => setFoundUs(e.target.value)} className="h-[44px] w-full appearance-none rounded-lg border border-line bg-white pl-4 pr-10 text-[13.5px] text-body focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30">
                         <option value="">Select Option</option>
                         <option>Google Search</option>
                         <option>Social Media</option>
@@ -637,10 +638,10 @@ function BookingForm() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   {/* Upload */}
                   <div>
-                    <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                    <label htmlFor="page-upload-birth-chart-relevant" className="mb-1.5 block text-[13px] font-medium text-ink">
                       Upload Birth Chart / Relevant Documents <span className="text-body">(Optional)</span>
                     </label>
-                    <input
+                    <input id="page-upload-birth-chart-relevant"
                       ref={fileInputRef}
                       type="file"
                       accept=".png,.jpg,.jpeg,.pdf"
@@ -686,10 +687,10 @@ function BookingForm() {
 
                   {/* Special Requests */}
                   <div>
-                    <label className="mb-1.5 block text-[13px] font-medium text-ink">
+                    <label htmlFor="page-special-requests-optional" className="mb-1.5 block text-[13px] font-medium text-ink">
                       Special Requests <span className="text-body">(Optional)</span>
                     </label>
-                    <textarea
+                    <textarea id="page-special-requests-optional"
                       rows={4}
                       placeholder="Any specific request for the expert?"
                       value={specialRequests}
@@ -701,7 +702,7 @@ function BookingForm() {
                 </div>
 
                 {/* Confirmation Checkbox */}
-                <label className="mt-5 flex items-start gap-3 cursor-pointer" onClick={() => setAgree(!agree)}>
+                <label htmlFor="page-setagree-agree-i-confirm" className="mt-5 flex items-start gap-3 cursor-pointer" onClick={() => setAgree(!agree)}>
                   <span className={`flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded mt-0.5 ${agree ? 'bg-grape-2' : 'border border-line bg-white'}`}>
                     {agree && <CheckIcon className="h-[12px] w-[12px] text-white" />}
                   </span>
@@ -778,7 +779,7 @@ function BookingForm() {
                   {/* Coupon */}
                   <p className="mb-2 text-[13px] font-medium text-ink">Have a Coupon Code?</p>
                   <div className="flex gap-2">
-                    <input
+                    <input id="page-setagree-agree-i-confirm"
                       type="text"
                       placeholder="Enter coupon code"
                       value={couponCode}

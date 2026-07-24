@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 
 export default function ConsultationPricingPage() {
   return (
-    <main className="min-h-screen bg-[#FCF9F3]">
+    <main id="main-content" className="min-h-screen bg-[#FCF9F3]">
       <OfferBar />
       <HomeHeader absolute={false} />
       <Hero />

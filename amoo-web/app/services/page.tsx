@@ -24,7 +24,7 @@ export default function ServicesPage() {
       <OfferBar />
       <Hero />
 
-      <main className="relative rounded-t-[16px] bg-sand">
+      <main id="main-content" className="relative rounded-t-[16px] bg-sand">
         <ServicesGrid />
         <StatsBand />
         <WhyChoose />

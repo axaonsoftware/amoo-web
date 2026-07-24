@@ -10,7 +10,7 @@ import { PageViewTracker } from "../components/PageViewTracker";
 
 export default function DashboardPage() {
   return (
-    <main className="flex-1 px-5 pb-10 pt-6 lg:px-6">
+    <main id="main-content" className="flex-1 px-5 pb-10 pt-6 lg:px-6">
       <PageViewTracker page="/user-dashboard" meta={{ area: "user-dashboard" }} />
       <WelcomeHeader />
       <StatsRow />

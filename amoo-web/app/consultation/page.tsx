@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { OfferBar } from "../components/home-header";
-import { SITE_NAME } from "../../lib/constants";
 import Hero from "./components/Hero";
 import ConsultationModes from "./components/ConsultationModes";
 import HowItWorks from "./components/HowItWorks";

@@ -28,6 +28,10 @@ import {
   Orbit,
   Layers,
   Package,
+  Ticket,
+  Inbox,
+  MessageSquareQuote,
+  CalendarClock,
   LogOut,
 } from "lucide-react";
 
@@ -45,14 +49,20 @@ const nav: { label: string; Icon: React.ComponentType<{ className?: string; stro
   { label: "Reports & Analytics", Icon: BarChart3, href: "/admin/reports-analytics" },
   { label: "Payments & Finance", Icon: CreditCard, href: "/admin/payments-finance" },
   { label: "Packages & Offers", Icon: Gift, href: "/admin/packages-offers" },
+  { label: "Coupons", Icon: Ticket, href: "/admin/coupon-management" },
+  { label: "Availability & Slots", Icon: CalendarClock, href: "/admin/availability-slots" },
   { label: "Users", Icon: User, href: "/admin/user-management" },
   { label: "Expert Management", Icon: UserCog, href: "/admin/expert-management" },
-  { label: "Courses", Icon: GraduationCap, href: "/admin/admin-dashboard" },
-  { label: "Content Management", Icon: FileText, href: "/admin/admin-dashboard" },
+  { label: "Blog Management", Icon: FileText, href: "/admin/blog-management" },
+  { label: "Testimonials", Icon: MessageSquareQuote, href: "/admin/testimonial-management" },
+  { label: "Contact Inbox", Icon: Inbox, href: "/admin/contact-inbox" },
   { label: "FAQ Management", Icon: HelpCircle, href: "/admin/faq-management" },
-  { label: "Settings", Icon: Settings, href: "/admin/admin-dashboard" },
   { label: "Notifications", Icon: Bell, href: "/admin/notification-management" },
   { label: "Activity Logs", Icon: ScrollText, href: "/admin/activity-logs" },
+  // "Courses", "Content Management" and "Settings" were removed: all three
+  // pointed at /admin/admin-dashboard, so they looked like features and
+  // silently dumped the admin back on the dashboard. Re-add them when the
+  // pages exist.
 ];
 
 export default function AdminSidebar() {

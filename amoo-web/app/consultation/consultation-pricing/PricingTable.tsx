@@ -22,21 +22,20 @@ export default function PricingTable() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
     api.getServices()
       .then((res: any) => {
-        const items = res?.data ?? Array.isArray(res) ? res : [];
+        const items = (res?.data ?? Array.isArray(res) ? res : []) as any[];
         if (items.length) setServices(items);
       })
-      .catch((err) => setError("Failed to load pricing. Please try again."))
+      .catch(() => setError("Failed to load pricing. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 
   const rows = services && services.length
     ? services.map((svc: any) => {
-        const Icon = MODE_ICONS[svc.type] || MODE_ICONS[Object.keys(MODE_ICONS).find(k => svc.name?.includes(k)) || ""] || MessageSquare;
-        const price = svc.price ? `₹${Number(svc.price).toLocaleString("en-IN")}` : "—";
-        return { icon: Icon, mode: svc.name || "Service", prices: [price, price, price, price], bestFor: svc.sub || svc.description || "" };
+        const Icon = MODE_ICONS[svc.type as string] || MODE_ICONS[Object.keys(MODE_ICONS).find(k => (svc.name as string)?.includes(k)) || ""] || MessageSquare;
+        const price = svc.price ? `₹${Number(svc.price as string).toLocaleString("en-IN")}` : "—";
+        return { icon: Icon, mode: (svc.name as string) || "Service", prices: [price, price, price, price], bestFor: (svc.sub as string) || (svc.description as string) || "" };
       })
     : STATIC_ROWS;
 
@@ -73,10 +72,10 @@ export default function PricingTable() {
           </thead>
           <tbody>
             {rows.map((row: any, i: number) => {
-              const Icon = row.icon;
+              const Icon = row.icon as React.FC<{ size?: number; className?: string }>;
               return (
                 <tr
-                  key={row.mode}
+                  key={row.mode as string}
                   className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
                 >
                   <td className="px-5 py-3.5 flex items-center gap-2 text-gray-700 font-medium">

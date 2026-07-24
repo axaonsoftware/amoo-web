@@ -16,17 +16,15 @@ export default function Testimonials() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
-    setError(null);
     api
       .getTestimonials()
       .then((rows: any[]) => {
         if (Array.isArray(rows) && rows.length) {
-          setItems(rows.map((r) => ({ name: r.name || "Client", text: r.comment })));
+          setItems(rows.map((r: any) => ({ name: r.name as string || "Client", text: r.comment as string })));
         }
       })
-      .catch((err: any) => {
-        setError(err?.message || "Failed to load testimonials");
+      .catch(() => {
+        setError("Failed to load testimonials");
       })
       .finally(() => setLoading(false));
   }, []);

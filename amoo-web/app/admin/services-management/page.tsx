@@ -5,7 +5,7 @@ import RightRail from "./RightRail";
 
 export default function ServicesManagementPage() {
   return (
-    <main className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
+    <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
       <PageHeader />
 
       <StatsRow />

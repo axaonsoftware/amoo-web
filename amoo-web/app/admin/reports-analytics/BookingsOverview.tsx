@@ -27,8 +27,8 @@ export default function BookingsOverview() {
         if (cancelled) return;
         const data = res?.data || res;
         if (Array.isArray(data)) {
-          const b = data.map((d: Record<string, unknown>) => Number(d.total || d.count || d.bookings || 0));
-          const c = data.map((d: Record<string, unknown>) => Number(d.completed || d.completed_bookings || 0));
+          const b = data.map((d: any) => Number(d.total || d.count || d.bookings || 0));
+          const c = data.map((d: any) => Number(d.completed || d.completed_bookings || 0));
           if (b.length >= 7) {
             setBookings(b.slice(0, 14));
             setCompleted(c.slice(0, 14));

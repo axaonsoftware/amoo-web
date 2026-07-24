@@ -5,7 +5,7 @@ import RightRail from "./RightRail";
 
 export default function KundaliManagementPage() {
   return (
-    <main className="flex-1 pb-6">
+    <main id="main-content" className="flex-1 pb-6">
       <div className="px-6 pt-[11px]">
         <PageHeader />
 

@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { OfferBar, HomeHeader } from "@/app/components/home-header";
 import { SiteFooter } from "@/app/components/site-footer";
 
 const PrivacyPage = () => {
   return (
-    <main className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
+    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
       <OfferBar />
       <HomeHeader />
 
@@ -124,13 +125,13 @@ const PrivacyPage = () => {
         </div>
 
         <div className="mt-16">
-          <a
+          <Link
             href="/"
             className="font-sans text-sm font-medium transition-colors hover:underline"
             style={{ color: "#2c0c47" }}
           >
             &larr; Back to Home
-          </a>
+          </Link>
         </div>
       </section>
 

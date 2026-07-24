@@ -3,11 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "test": "echo \"amoo-web has no test runner yet — see AUDIT.md, Infrastructure & deployment\" && exit 0"
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"lib/__tests__/*.test.ts\""
   },
   "dependencies": {
     "dompurify": "^3.4.12",

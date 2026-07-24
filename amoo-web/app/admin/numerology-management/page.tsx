@@ -5,7 +5,7 @@ import RightRail from "./RightRail";
 
 export default function NumerologyManagementPage() {
   return (
-    <main className="flex-1 px-5 py-[18px]">
+    <main id="main-content" className="flex-1 px-5 py-[18px]">
       <PageHeader />
 
       <div className="mt-[18px]">

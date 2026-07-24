@@ -7,7 +7,7 @@ import UnlockInsights from "./UnlockInsights";
 
 export default function ConsultationsBookingPage() {
   return (
-    <main className="flex-1 px-5 pb-8 pt-6 lg:px-[26px]">
+    <main id="main-content" className="flex-1 px-5 pb-8 pt-6 lg:px-[26px]">
       <PageHeader />
 
       <div className="mt-[25px] grid grid-cols-1 items-start gap-[25px] xl:grid-cols-[1fr_378px]">

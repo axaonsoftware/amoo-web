@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 type Headers = Record<string, string>;
@@ -73,12 +74,12 @@ async function refreshAccessToken(): Promise<boolean> {
   return refreshPromise;
 }
 
-async function handleResponse(res: Response): Promise<any> {
+async function handleResponse(res: Response) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
-    const err: ApiError = new Error((data && (data as any).error) || "Request failed");
+    const err: ApiError = new Error((data && data.error) || "Request failed");
     err.status = res.status;
-    err.details = (data as any).details;
+    err.details = data.details;
     throw err;
   }
   if (data && data.success === true && data.data !== undefined) {
@@ -88,7 +89,7 @@ async function handleResponse(res: Response): Promise<any> {
   return data;
 }
 
-async function request(method: string, path: string, body?: unknown): Promise<any> {
+async function request(method: string, path: string, body?: unknown) {
   const headers = await buildHeaders(method, { "Content-Type": "application/json" });
 
   const res = await fetch(`${API_URL}${path}`, {
@@ -212,7 +213,7 @@ export const api = {
     getPaymentRefunds: (query = "") => request("GET", `/api/payments/refunds${query}`),
     getPaymentStats: () => request("GET", "/api/payments/stats/overview"),
 
-    getCoupons: () => request("GET", "/api/coupons"),
+    getCoupons: (query = "") => request("GET", `/api/coupons${query}`),
     createCoupon: (body: unknown) => request("POST", "/api/coupons", body),
     updateCoupon: (id: number, body: unknown) => request("PATCH", `/api/coupons/${id}`, body),
     deleteCoupon: (id: number) => request("DELETE", `/api/coupons/${id}`),
@@ -226,7 +227,7 @@ export const api = {
     updateSlot: (id: number, body: unknown) => request("PATCH", `/api/slots/${id}`, body),
     deleteSlot: (id: number) => request("DELETE", `/api/slots/${id}`),
 
-    getContacts: () => request("GET", "/api/contact"),
+    getContacts: (query = "") => request("GET", `/api/contact${query}`),
     getContact: (id: number) => request("GET", `/api/contact/${id}`),
     updateContact: (id: number, body: unknown) => request("PATCH", `/api/contact/${id}`, body),
     deleteContact: (id: number) => request("DELETE", `/api/contact/${id}`),
@@ -234,7 +235,7 @@ export const api = {
     getSubscriptions: () => request("GET", "/api/subscriptions/all"),
     updateSubscription: (id: number, body: unknown) => request("PATCH", `/api/subscriptions/${id}`, body),
 
-    getTestimonials: () => request("GET", "/api/testimonials/all"),
+    getTestimonials: (query = "") => request("GET", `/api/testimonials/all${query}`),
     updateTestimonial: (id: number, body: unknown) => request("PATCH", `/api/testimonials/${id}`, body),
     deleteTestimonial: (id: number) => request("DELETE", `/api/testimonials/${id}`),
 
@@ -248,6 +249,11 @@ export const api = {
     createExpert: (body: unknown) => request("POST", "/api/experts", body),
     updateExpert: (id: number, body: unknown) => request("PATCH", `/api/experts/${id}`, body),
     deleteExpert: (id: number) => request("DELETE", `/api/experts/${id}`),
+    // Experts have no self-service signup or password reset: an admin sets the
+    // credential here, which also marks them verified. Without a UI for this,
+    // /astrologer-login existed but no expert could ever obtain a password.
+    setExpertPassword: (id: number, password: string) =>
+      request("POST", `/api/experts/${id}/set-password`, { password }),
 
     getOverview: () => request("GET", "/api/dashboard/overview"),
     getTopExperts: (limit = 5) =>
@@ -349,7 +355,7 @@ export const api = {
   getMyActivity: (query = "") => request("GET", `/api/activity/mine${query}`),
   logActivity: (body: {
     action: string;
-    action_details?: Record<string, unknown>;
+    action_details?: any;
     page_or_route?: string;
   }) => request("POST", "/api/activity/log", body),
 
@@ -366,7 +372,7 @@ export const api = {
     });
     rememberCsrfToken(res);
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error((data && (data as any).error) || "Upload failed");
+    if (!res.ok) throw new Error((data && data.error) || "Upload failed");
     return data;
   },
 };

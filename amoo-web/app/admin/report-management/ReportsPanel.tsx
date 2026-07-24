@@ -17,6 +17,7 @@ import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 
 const typeOptions = [
   { label: "All Types", value: "" },
@@ -106,7 +107,7 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         setMeta({ total: m.total ?? items.length, totalPages: m.totalPages ?? 1 });
         setList(items);
       })
-      .catch((e: any) => setError(e.message || "Failed to load"))
+      .catch((e: any) => setError(errorMessage(e, "Failed to load")))
       .finally(() => setLoading(false));
   }, [page, limit, typeFilter, statusFilter, search]);
 
@@ -210,8 +211,8 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         loadReports();
         showToast("Report created successfully");
       }
-    } catch (e: any) {
-      setFormErrors({ _submit: e.message || "Failed to save" });
+    } catch (e: unknown) {
+      setFormErrors({ _submit: errorMessage(e, "Failed to save") });
       setSaving(false);
     }
   };
@@ -230,8 +231,8 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
       setDeleting(null);
       loadReports();
       showToast("Report deleted successfully");
-    } catch (e: any) {
-      showToast(e.message || "Failed to delete", "error");
+    } catch (e: unknown) {
+      showToast(errorMessage(e, "Failed to delete"), "error");
     } finally {
       setDeleteSaving(false);
     }

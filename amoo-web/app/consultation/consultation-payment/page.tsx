@@ -73,7 +73,7 @@ export default function ConsultationPaymentPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-[#FCF9F3]">
+      <main id="main-content" className="min-h-screen bg-[#FCF9F3]">
         <OfferBar />
         <HomeHeader absolute={false} />
         <div className="flex min-h-[50vh] items-center justify-center">
@@ -85,7 +85,7 @@ export default function ConsultationPaymentPage() {
 
   if (!params || error) {
     return (
-      <main className="min-h-screen bg-[#FCF9F3]">
+      <main id="main-content" className="min-h-screen bg-[#FCF9F3]">
         <OfferBar />
         <HomeHeader absolute={false} />
         <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center px-4 text-center">
@@ -117,7 +117,7 @@ export default function ConsultationPaymentPage() {
   const total = Math.max(0, Math.round((price - discount) * 100) / 100);
 
   return (
-    <main className="min-h-screen bg-[#FCF9F3]">
+    <main id="main-content" className="min-h-screen bg-[#FCF9F3]">
       <OfferBar />
       <HomeHeader absolute={false} />
       <Stepper />

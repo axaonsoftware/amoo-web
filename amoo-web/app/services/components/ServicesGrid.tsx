@@ -21,7 +21,7 @@ const COPY: Record<string, { tagline: string; accent: string; desc: string; poin
 export default function ServicesGrid() {
     const { data: services, loading } = useApi(() => api.getServices());
 
-  const items: any[] = services?.data ?? [];
+  const items: any[] = (services as any)?.data as any[] ?? [];
   const rows = items.map((s: any) => {
     const c = COPY[s.category] || COPY[s.category === "Astrology" ? "Astrology" : "Spiritual"];
     return {
@@ -81,7 +81,7 @@ export default function ServicesGrid() {
             </p>
 
             <ul className="mt-[11px] mb-[14px] space-y-[6px]">
-              {service.points.map((point: any) => (
+              {service.points.map((point: string) => (
                 <li key={point} className="flex items-center gap-[6px] text-[10px] leading-[1.4] text-[#4a4757]">
                   <CheckCircleIcon className="h-[11px] w-[11px] shrink-0" style={{ color: service.accent }} />
                   <span>{point}</span>

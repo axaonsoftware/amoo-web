@@ -7,15 +7,14 @@ import { api } from "@/lib/api";
 
 export default function WalletCard() {
   const [balance, setBalance] = useState<number | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
   const load = () => {
-    setBusy(true);
     setLoadError(false);
     api
       .getWallet()
-      .then((w: any) => setBalance(Number(w?.balance ?? 0)))
+      .then((w: any) => setBalance(Number((w as { balance?: unknown })?.balance ?? 0)))
       .catch(() => { setBalance(null); setLoadError(true); })
       .finally(() => setBusy(false));
   };

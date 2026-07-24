@@ -169,7 +169,7 @@ export default function NumerologySoftwarePage() {
   return (
     <>
       <OfferBar />
-      <main className="flex-1 bg-cream">
+      <main id="main-content" className="flex-1 bg-cream">
         {/* ---------------- HERO ---------------- */}
         <section className="relative min-h-[420px] w-full overflow-hidden bg-[#170426] sm:min-h-[490px]">
           <Image

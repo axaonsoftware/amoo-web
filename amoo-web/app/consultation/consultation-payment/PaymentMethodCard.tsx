@@ -146,11 +146,11 @@ export default function PaymentMethodCard() {
             <span className="flex-1 h-px bg-gray-200" />
           </div>
 
-          <label className="block text-xs font-medium text-gray-700 mb-1.5">
+          <label htmlFor="paymentmethodcard-enter-upi-id" className="block text-xs font-medium text-gray-700 mb-1.5">
             Enter UPI ID
           </label>
           <div className="flex gap-3">
-            <input
+            <input id="paymentmethodcard-enter-upi-id"
               type="text"
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}

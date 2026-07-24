@@ -1,13 +1,10 @@
 "use client";
 
-import Image from "next/image";
 import { ArrowRight, Download, FileText, Loader2, MoreVertical } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 type Report = { id: number; title: string; type: string; created_at: string };
-
-const NUMEROLOGY_IMG = "https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4d5?w=88&q=80";
 
 function parseDate(iso: string): string {
   const d = new Date(iso);

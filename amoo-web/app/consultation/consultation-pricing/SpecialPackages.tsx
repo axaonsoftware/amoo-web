@@ -21,13 +21,12 @@ export default function SpecialPackages() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setLoading(true);
     api.getPackages()
       .then((res: any) => {
         const items = res?.data ?? Array.isArray(res) ? res : [];
         if (items.length) setPackages(items);
       })
-      .catch((err) => setError("Failed to load packages. Please try again."))
+      .catch(() => setError("Failed to load packages. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 

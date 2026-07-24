@@ -20,8 +20,8 @@ export default function VerifyEmailBanner() {
     try {
       await api.verifyEmailSend();
       setSent(true);
-    } catch (e: any) {
-      setErr(e?.message || "Failed to send verification email");
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : "Failed to send verification email");
     } finally {
       setSending(false);
     }

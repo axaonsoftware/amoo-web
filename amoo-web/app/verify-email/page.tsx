@@ -15,12 +15,10 @@ export default function VerifyEmailPage() {
   const token = searchParams.get("token") || "";
 
   const [status, setStatus] = useState<Status>("verifying");
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState("Invalid verification link. Please check the link and try again.");
 
   useEffect(() => {
     if (!email || !token) {
-      setStatus("error");
-      setMessage("Invalid verification link. Please check the link and try again.");
       return;
     }
     api

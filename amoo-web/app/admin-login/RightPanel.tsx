@@ -8,6 +8,7 @@ import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { SITE_NAME } from "../../lib/constants";
 import { trackEvent } from "../../lib/tracking";
+import { errorMessage } from "../../lib/errors";
 import {
   Mail,
   Lock,
@@ -27,7 +28,6 @@ export default function RightPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
@@ -55,14 +55,14 @@ export default function RightPanel() {
     setIsLoading(true);
     setApiError(null);
     try {
-      const data = await api.adminLogin({ email, password });
+      const data = await api.adminLogin({ email, password }) as { admin?: { id: number; name: string; email: string; phone?: string; avatar?: string; verified?: boolean } };
       if (!data.admin) throw new Error("Invalid response from server");
       loginUser({ ...data.admin, kind: "admin" });
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: "admin" });
       setTimeout(() => router.push("/admin/admin-dashboard"), 1200);
-    } catch (err: any) {
-      setApiError(err?.message || "Login failed. Please try again.");
+    } catch (err: unknown) {
+      setApiError(errorMessage(err, "Login failed. Please try again."));
     } finally {
       setIsLoading(false);
     }
@@ -118,12 +118,12 @@ export default function RightPanel() {
 
         <form onSubmit={handleSubmit}>
           <div className="mt-8 sm:mt-14">
-            <label className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]">
+            <label htmlFor="rightpanel-email-address" className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]">
               Email Address
             </label>
             <div className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.email ? "border-red-400" : "border-[#DDD9EC]"}`}>
               <Mail className={`shrink-0 ${errors.email ? "text-red-400" : "text-[#8B86A7]"}`} size={24} />
-              <input
+              <input id="rightpanel-email-address"
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
@@ -139,12 +139,12 @@ export default function RightPanel() {
           </div>
 
           <div className="mt-6 sm:mt-10">
-            <label className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]">
+            <label htmlFor="rightpanel-password" className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]">
               Password
             </label>
             <div className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.password ? "border-red-400" : "border-[#DDD9EC]"}`}>
               <Lock className={`shrink-0 ${errors.password ? "text-red-400" : "text-[#8B86A7]"}`} size={24} />
-              <input
+              <input id="rightpanel-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
@@ -162,16 +162,14 @@ export default function RightPanel() {
             )}
           </div>
 
-          <div className="mt-6 sm:mt-9 flex items-center justify-between">
-            <label className="flex cursor-pointer items-center gap-3 sm:gap-4">
-              <input
-                type="checkbox"
-                checked={remember}
-                onChange={() => setRemember((v) => !v)}
-                className="h-5 w-5 sm:h-6 sm:w-6 accent-[#6517C6]"
-              />
-              <span className="text-base sm:text-lg lg:text-[22px] text-[#322F43]">Remember Me</span>
-            </label>
+          <div className="mt-6 sm:mt-9 flex items-center justify-end">
+            {/* "Remember Me" was removed here. Its state was captured and never
+                read: the backend issues a 30-day refresh token on every login
+                regardless (JWT_REFRESH_EXPIRES_IN), so unchecking it changed
+                nothing and the control promised a shorter session it could not
+                deliver. On an admin login a false session-scoping control is
+                worse than none. Reinstate it together with a backend option
+                that varies the refresh-token lifetime. */}
             {/* Admins have no self-service reset route by design — accounts are
                 seeded/provisioned. /contact is intentional, not the bug that was
                 fixed on the user login page. */}

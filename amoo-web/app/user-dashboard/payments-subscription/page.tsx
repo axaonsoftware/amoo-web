@@ -9,7 +9,7 @@ import AvailableOffers from "./AvailableOffers";
 
 export default function PaymentsSubscriptionPage() {
   return (
-    <main className="flex-1 px-5 pb-8 pt-[18px] lg:px-6">
+    <main id="main-content" className="flex-1 px-5 pb-8 pt-[18px] lg:px-6">
       <PageHeader />
 
       <div className="mt-[18px]">

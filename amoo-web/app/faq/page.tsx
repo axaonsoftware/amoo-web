@@ -30,7 +30,7 @@ const FaqPage = () => {
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [openId, setOpenId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [, setError] = useState(false);
 
   useEffect(() => {
     api
@@ -53,7 +53,7 @@ const FaqPage = () => {
   }, {});
 
   return (
-    <main className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
+    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
       <OfferBar />
       <HomeHeader />
 

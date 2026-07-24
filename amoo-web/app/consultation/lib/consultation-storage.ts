@@ -39,7 +39,6 @@ export type ConsultationData = {
 type Store = Record<string, string>;
 
 declare global {
-  // eslint-disable-next-line no-var
   var __amooConsultation: Store | undefined;
 }
 

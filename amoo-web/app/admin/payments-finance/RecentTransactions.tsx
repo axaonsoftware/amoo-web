@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import api from "../../../lib/api";
+import { errorMessage } from "../../../lib/errors";
 
 type Payment = {
   id: number;
@@ -78,7 +79,7 @@ export default function RecentTransactions() {
         const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
         setRows(data);
       })
-      .catch((e) => { setRows([]); setError(e?.message || "Failed to load"); })
+      .catch((e) => { setRows([]); setError(errorMessage(e, "Failed to load")); })
       .finally(() => setLoading(false));
   };
 
@@ -102,8 +103,8 @@ export default function RecentTransactions() {
       const res = await api.admin.refundPayment(refundTarget.id, { reason: refundReason || undefined });
       setRefundResult({ ok: true, msg: `Refunded ${fmtAmount(refundTarget.amount)} — ${res?.gateway_refund_id ? `Gateway ID: ${res.gateway_refund_id}` : "DB only"}` });
       load(); // refresh the list
-    } catch (e: any) {
-      setRefundResult({ ok: false, msg: e?.message || "Refund failed" });
+    } catch (e: unknown) {
+      setRefundResult({ ok: false, msg: errorMessage(e, "Refund failed") });
     } finally {
       setRefunding(false);
     }

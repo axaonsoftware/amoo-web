@@ -59,7 +59,7 @@ function describe(row: AuditRow) {
 
 export default function RecentActivity() {
   const { data, loading, error } = useApi(() => api.admin.getAudit("?pageSize=8"));
-  const rows: AuditRow[] = data?.data ?? [];
+  const rows: AuditRow[] = (data as { data?: AuditRow[] } | null)?.data ?? [];
 
   return (
     <section className="rounded-[16px] border border-[#f0eaf8] bg-white p-5 shadow-[0_1px_3px_rgba(42,17,72,.05)]">

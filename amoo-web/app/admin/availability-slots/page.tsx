@@ -6,7 +6,7 @@ import RightPanel from "./RightPanel";
 
 export default function AvailabilitySlotsPage() {
   return (
-    <main className="flex-1 px-5 pb-8 pt-5 lg:px-6">
+    <main id="main-content" className="flex-1 px-5 pb-8 pt-5 lg:px-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-[11.5px]">
         <span className="font-light text-[#8a86a0]">Dashboard</span>

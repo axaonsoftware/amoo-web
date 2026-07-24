@@ -53,46 +53,32 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState<number | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loadingList, setLoadingList] = useState(false);
+  const [loadingList, setLoadingList] = useState(true);
   const [fetchingCount, setFetchingCount] = useState(true);
   const panelRef = useRef<HTMLDivElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const refreshCount = useCallback(async () => {
-    try {
-      const res: any = await api.getUnreadCount();
-      setUnread(Number(res?.count ?? 0));
-    } catch {
-      /* keep stale count */
-    } finally {
-      setFetchingCount(false);
-    }
-  }, []);
-
-  const loadNotifications = useCallback(async () => {
-    setLoadingList(true);
-    try {
-      const res: any = await api.getNotifications();
-      const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-      setNotifications(list);
-    } catch {
-      /* silent */
-    } finally {
-      setLoadingList(false);
-    }
-  }, []);
-
   /* fetch unread count on mount + every 30 s */
   useEffect(() => {
-    refreshCount();
-    timerRef.current = setInterval(refreshCount, 30000);
+    const fetchCount = () => {
+      api.getUnreadCount().then((res: unknown) => {
+        setUnread(Number((res as any)?.count ?? 0));
+      }).catch(() => {}).finally(() => setFetchingCount(false));
+    };
+    fetchCount();
+    timerRef.current = setInterval(fetchCount, 30000);
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [refreshCount]);
+  }, []);
 
   /* fetch list on open */
   useEffect(() => {
-    if (open) loadNotifications();
-  }, [open, loadNotifications]);
+    if (!open) return;
+    api.getNotifications().then((res: unknown) => {
+      const d = res as any;
+      const list = Array.isArray(d?.data) ? d.data : Array.isArray(res) ? res : [];
+      setNotifications(list as Notification[]);
+    }).catch(() => {}).finally(() => setLoadingList(false));
+  }, [open]);
 
   /* close on outside click */
   useEffect(() => {

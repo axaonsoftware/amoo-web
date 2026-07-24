@@ -199,8 +199,8 @@ export default function ContactPage() {
       setIsSubmitted(true);
       setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
       setTimeout(() => setIsSubmitted(false), 5000);
-    } catch (err: any) {
-      setErrors({ message: err?.message || "Failed to send. Please try again." });
+    } catch (err: unknown) {
+      setErrors({ message: err instanceof Error ? err.message : "Failed to send. Please try again." });
     } finally {
       setIsSubmitting(false);
     }
@@ -211,7 +211,7 @@ export default function ContactPage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* HERO SECTION */}
         <section className="relative overflow-hidden bg-[radial-gradient(130%_140%_at_20%_50%,#2d0f4f_0%,#1e0a38_45%,#130525_100%)]">
           {/* Background meditation image - right side */}

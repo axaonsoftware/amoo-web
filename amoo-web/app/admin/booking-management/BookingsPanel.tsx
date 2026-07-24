@@ -28,6 +28,7 @@ import {
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -168,7 +169,7 @@ export default function BookingsPanel() {
         );
       })
       .catch((e) => {
-        if (!cancelled) setError(e.message);
+        if (!cancelled) setError(errorMessage(e));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -544,8 +545,8 @@ export default function BookingsPanel() {
           }
           setConfirmDialog({ open: false, type: "complete", booking: null });
           reload();
-        } catch (e: any) {
-          showToast(e.message || "Action failed", "error");
+        } catch (e: unknown) {
+          showToast(errorMessage(e, "Action failed"), "error");
         } finally {
           setConfirmSaving(false);
         }

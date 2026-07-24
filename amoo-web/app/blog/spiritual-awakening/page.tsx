@@ -15,20 +15,17 @@ import {
   SendIcon,
   ChevronRightIcon,
   EyeIcon,
-  ShareIcon,
   FacebookIcon,
   TwitterIcon,
   WhatsAppIcon,
   LinkIcon,
   CheckCircleIcon,
   SearchIcon,
-  BookmarkIcon,
   PhoneIcon,
   MailIcon,
   MapPinIcon,
   InstagramIcon,
   YoutubeIcon,
-  EyeOffIcon,
   BookOpenIcon,
   StarIcon,
   HeartIcon,
@@ -220,7 +217,7 @@ export default function BlogArticlePage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* HERO SECTION */}
         <section className="relative overflow-hidden bg-[radial-gradient(130%_140%_at_20%_50%,#2d0f4f_0%,#1e0a38_45%,#130525_100%)]">
           <div className="haze pointer-events-none absolute inset-0 opacity-50" />

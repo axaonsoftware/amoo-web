@@ -113,12 +113,12 @@ export default function ForgotPasswordForm() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="forgotpasswordform-email-address" className="block text-sm font-medium text-gray-800 mb-1.5">
               Email Address
             </label>
             <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input
+              <input id="forgotpasswordform-email-address"
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}

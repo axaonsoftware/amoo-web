@@ -59,11 +59,12 @@ export default function AdminActivityLogsPage() {
     api.admin
       .getAudit(buildQuery())
       .then((res) => {
-        const d = res?.data || [];
+        const r = res as { data?: ActivityItem[]; meta?: { total: number; totalPages: number } } | null;
+        const d = r?.data || [];
         setItems(Array.isArray(d) ? d : []);
-        const total = res?.meta?.total || 0;
+        const total = r?.meta?.total || 0;
         setTotal(total);
-        setTotalPages(res?.meta?.totalPages || Math.ceil(total / pageSize) || 1);
+        setTotalPages(r?.meta?.totalPages || Math.ceil(total / pageSize) || 1);
       })
       .catch((e) => { setItems([]); setError(e?.message || "Failed to load") })
       .finally(() => setLoading(false));
@@ -180,7 +181,7 @@ export default function AdminActivityLogsPage() {
   );
 
   return (
-    <main className="flex flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6">
+    <main id="main-content" className="flex flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-[22px] font-bold text-[#2a1148] font-serif">Activity Logs</h1>

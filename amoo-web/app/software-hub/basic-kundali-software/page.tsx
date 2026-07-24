@@ -132,7 +132,7 @@ export default function BasicKundaliSoftwarePage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main className="flex-1 bg-cream">
+      <main id="main-content" className="flex-1 bg-cream">
         {/* ---------------- HERO ---------------- */}
         <section className="relative min-h-[420px] w-full overflow-hidden sm:min-h-[490px]">
           <Image

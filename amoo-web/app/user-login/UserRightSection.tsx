@@ -11,9 +11,7 @@ import { trackEvent } from "../../lib/tracking";
 export default function UserRightPanel() {
   const router = useRouter();
   const { loginUser } = useAuth();
-  const [activeTab, setActiveTab] = useState<"user">("user");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -52,8 +50,8 @@ export default function UserRightPanel() {
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: "user" });
       setTimeout(() => router.push("/"), 1200);
-    } catch (err: any) {
-      setApiError(err?.message || "Login failed. Please try again.");
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -102,50 +100,64 @@ export default function UserRightPanel() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="login-email" className="block text-sm font-medium text-gray-800 mb-1.5">
               Email Address
             </label>
             <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
+              <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" aria-hidden="true" />
               <input
-                type="text"
+                id="login-email"
+                // type="email" gets the right mobile keyboard and native
+                // validation. The placeholder used to promise "email or mobile
+                // number", but POST /api/auth/login validates `email` with
+                // Joi's email rule — a phone number could never succeed.
+                type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
-                placeholder="Enter your email or mobile number"
+                placeholder="you@example.com"
+                aria-invalid={errors.email ? true : undefined}
+                aria-describedby={errors.email ? "login-email-error" : undefined}
                 className="w-full pl-10 pr-3 py-3 rounded-lg border border-purple-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
             </div>
             {errors.email && (
-              <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
-                <AlertCircle size={12} /> {errors.email}
+              <p id="login-email-error" role="alert" className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                <AlertCircle size={12} aria-hidden="true" /> {errors.email}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-800 mb-1.5">
               Password
             </label>
             <div className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
               <input
+                id="login-password"
                 type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
                 placeholder="Enter your password"
+                aria-invalid={errors.password ? true : undefined}
+                aria-describedby={errors.password ? "login-password-error" : undefined}
                 className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
               </button>
             </div>
             {errors.password && (
-              <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
-                <AlertCircle size={12} /> {errors.password}
+              <p id="login-password-error" role="alert" className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                <AlertCircle size={12} aria-hidden="true" /> {errors.password}
               </p>
             )}
           </div>
@@ -159,15 +171,12 @@ export default function UserRightPanel() {
             </Link>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={remember}
-              onChange={() => setRemember((v) => !v)}
-              className="w-4 h-4 rounded accent-[#5B2A9D]"
-            />
-            Remember Me
-          </label>
+          {/* "Remember Me" was removed here. Its state was captured and never
+              read: the backend issues a 30-day refresh token on every login
+              regardless (JWT_REFRESH_EXPIRES_IN), so unchecking it changed
+              nothing and the control promised a shorter session it could not
+              deliver. Reinstate it together with a backend option that varies
+              the refresh-token lifetime. */}
 
           <button
             type="submit"

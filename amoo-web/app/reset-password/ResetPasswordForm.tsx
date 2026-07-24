@@ -127,12 +127,12 @@ function ResetFormInner() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="resetpasswordform-email-address" className="block text-sm font-medium text-gray-800 mb-1.5">
               Email Address
             </label>
             <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input
+              <input id="resetpasswordform-email-address"
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
@@ -148,12 +148,12 @@ function ResetFormInner() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="resetpasswordform-otp-code" className="block text-sm font-medium text-gray-800 mb-1.5">
               OTP Code
             </label>
             <div className={`relative ${errors.otp ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <KeyRound size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input
+              <input id="resetpasswordform-otp-code"
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
@@ -171,12 +171,12 @@ function ResetFormInner() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="resetpasswordform-new-password" className="block text-sm font-medium text-gray-800 mb-1.5">
               New Password
             </label>
             <div className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+              <input id="resetpasswordform-new-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
@@ -199,12 +199,12 @@ function ResetFormInner() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="resetpasswordform-confirm-new-password" className="block text-sm font-medium text-gray-800 mb-1.5">
               Confirm New Password
             </label>
             <div className={`relative ${errors.confirmPassword ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+              <input id="resetpasswordform-confirm-new-password"
                 type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined })); }}

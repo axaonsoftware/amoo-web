@@ -7,7 +7,7 @@ import UnlockInsights from "./UnlockInsights";
 
 export default function MyReportsPage() {
   return (
-    <main className="flex-1 px-5 pb-7 pt-6 lg:px-[26px]">
+    <main id="main-content" className="flex-1 px-5 pb-7 pt-6 lg:px-[26px]">
       <PageHeader />
 
       <div className="mt-4">

@@ -56,8 +56,6 @@ export default function DateTimeCard({
   const [slotsError, setSlotsError] = useState("");
 
   useEffect(() => {
-    setLoadingSlots(true);
-    setSlotsError("");
     api.getSlots()
       .then((res: any) => {
         const list = Array.isArray(res) ? res : res?.data ?? [];
@@ -71,7 +69,7 @@ export default function DateTimeCard({
           setSlotsByPeriod((prev) => ({ ...prev, ...grouped }));
         }
       })
-      .catch((e: any) => setSlotsError(e?.message || "Failed to load slots."))
+      .catch((e: Error) => setSlotsError(e?.message || "Failed to load slots."))
       .finally(() => setLoadingSlots(false));
   }, []);
 

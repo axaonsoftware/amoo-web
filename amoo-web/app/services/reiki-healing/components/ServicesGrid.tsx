@@ -50,10 +50,10 @@ export default function ServicesGrid() {
   useEffect(() => {
     api.getServices()
       .then((res: any) => {
-        const items = res?.data ?? Array.isArray(res) ? res : [];
+        const items = (res?.data as any[]) ?? Array.isArray(res) ? res : [];
         setServices(items.filter((s: any) => s.category === "Healing"));
       })
-      .catch((err) => setError("Failed to load services. Please try again."))
+      .catch(() => setError("Failed to load services. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 

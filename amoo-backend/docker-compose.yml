@@ -1,11 +1,17 @@
-# Docker Compose for local + staging full-stack runs.
-# For production, point DB_HOST at a managed MySQL and do NOT expose the DB port.
-# WARNING: The defaults below are INSECURE — always set DB_PASSWORD, JWT_SECRET,
-# and JWT_REFRESH_SECRET via a .env file or environment overrides.
-#   $ echo "DB_PASSWORD=my_strong_password" >> .env
-#   $ echo "JWT_SECRET=$(openssl rand -base64 32)" >> .env
-#   $ echo "JWT_REFRESH_SECRET=$(openssl rand -base64 32)" >> .env
-#   $ docker compose up
+# Docker Compose for local and staging full-stack runs.
+#
+# Required in a .env file beside this one (compose reads it automatically):
+#   DB_PASSWORD=...                       # openssl rand -base64 24
+#   JWT_SECRET=...                        # openssl rand -base64 48
+#   JWT_REFRESH_SECRET=...                # openssl rand -base64 48
+#   CLIENT_ORIGIN=https://your-frontend    # exact origin(s), comma separated
+#   PAYMENT_GATEWAY=razorpay
+#   PAYMENT_WEBHOOK_SECRET=...
+#   RAZORPAY_KEY_ID=... / RAZORPAY_KEY_SECRET=...
+#
+# The `:?` syntax makes compose refuse to start rather than silently substitute
+# an empty value — config/env.js would then throw at boot anyway, but failing
+# here gives a clearer message.
 
 services:
   db:
@@ -15,15 +21,21 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       MYSQL_DATABASE: ${DB_NAME:-amoo_db}
-    ports:
-      - "3306:3306"
+    # SECURITY: the port is no longer published to the host. It was bound to
+    # 0.0.0.0:3306, which on any machine without a host firewall exposed MySQL —
+    # with the root password from this file — to the network. The `backend`
+    # service reaches it over the compose network by service name regardless.
+    # For local DB access, uncomment and bind to loopback only:
+    # ports:
+    #   - "127.0.0.1:3306:3306"
     volumes:
       - amoo_db_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
+      start_period: 30s
 
   backend:
     build: .
@@ -42,11 +54,35 @@ services:
       DB_NAME: ${DB_NAME:-amoo_db}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
-      CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:3000}
+      # config/env.js throws in production if CLIENT_ORIGIN is "*" or if the
+      # resolved frontend URL is localhost, because every emailed link is built
+      # from it.
+      CLIENT_ORIGIN: ${CLIENT_ORIGIN:?CLIENT_ORIGIN is required (exact origins, not *)}
+      CLIENT_URL: ${CLIENT_URL:-}
+      APP_URL: ${APP_URL:-http://localhost:4000}
+      # These three were missing entirely, so this file could NEVER start with
+      # NODE_ENV=production: env.js refuses to boot when the gateway is still
+      # 'mock' (the default) or the webhook secret is unset, because that would
+      # leave an unauthenticated endpoint able to mark bookings paid.
+      PAYMENT_GATEWAY: ${PAYMENT_GATEWAY:?PAYMENT_GATEWAY must be razorpay or stripe in production}
+      PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:?PAYMENT_WEBHOOK_SECRET is required in production}
+      RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
+      RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-false}
+      EMAIL_HOST: ${EMAIL_HOST:-}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER:-}
+      EMAIL_PASS: ${EMAIL_PASS:-}
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@amooguru.com}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
       - "4000:4000"
     volumes:
-      - ./uploads:/app/uploads
+      - amoo_uploads:/app/uploads
 
 volumes:
   amoo_db_data:
+  # A named volume rather than a host bind mount: the container runs as the
+  # unprivileged `node` user, and a bind-mounted host directory usually lands
+  # owned by root, so every upload failed with EACCES.
+  amoo_uploads:

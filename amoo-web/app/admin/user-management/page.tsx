@@ -5,7 +5,7 @@ import RightRail from "./RightRail";
 
 export default function UserManagementPage() {
   return (
-    <main className="flex-1 px-4 pb-8 pt-5 sm:px-6">
+    <main id="main-content" className="flex-1 px-4 pb-8 pt-5 sm:px-6">
       <PageHeader />
 
       <div className="mt-0 grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_276px]">

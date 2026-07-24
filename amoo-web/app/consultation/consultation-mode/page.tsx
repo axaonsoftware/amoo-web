@@ -33,7 +33,7 @@ function ModePageInner() {
     <>
       <OfferBar />
       <HomeHeader absolute={false} />
-      <main className="min-h-screen bg-[#2a1046]">
+      <main id="main-content" className="min-h-screen bg-[#2a1046]">
         <div className="relative z-[1] -mt-[26px] rounded-t-[46px] bg-[#fbf6ef]">
           <Stepper />
           <ModeCards selectedMode={selectedMode} onSelectMode={setSelectedMode} />

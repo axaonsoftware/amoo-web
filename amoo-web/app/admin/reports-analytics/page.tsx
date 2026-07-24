@@ -12,7 +12,7 @@ import QuickInsights from "./QuickInsights";
 
 export default function ReportsAnalyticsPage() {
   return (
-    <main className="flex-1 px-5 py-5">
+    <main id="main-content" className="flex-1 px-5 py-5">
       <PageHeader />
 
       <div className="mt-5">

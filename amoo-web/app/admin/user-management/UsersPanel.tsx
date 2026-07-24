@@ -23,6 +23,7 @@ import { useToast } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 
 // Each tab is a preset over the filters `GET /api/users` actually parses:
 // search, status, role, verified, date_from, date_to, page, limit|pageSize.
@@ -145,7 +146,7 @@ export default function UsersPanel() {
           })
         );
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, [buildQuery]);
 
@@ -534,8 +535,8 @@ export default function UsersPanel() {
             setEditModalOpen(false);
             showToast("User updated successfully");
             reload();
-          } catch (e: any) {
-            showToast(e.message || "Failed to update user", "error");
+          } catch (e: unknown) {
+            showToast(errorMessage(e, "Failed to update user"), "error");
           } finally {
             setEditSaving(false);
           }
@@ -558,8 +559,8 @@ export default function UsersPanel() {
             }
             setConfirmDialog({ open: false, type: "delete", user: null });
             reload();
-          } catch (e: any) {
-            showToast(e.message || "Action failed", "error");
+          } catch (e: unknown) {
+            showToast(errorMessage(e, "Action failed"), "error");
           } finally {
             setConfirmSaving(false);
           }

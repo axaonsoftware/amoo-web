@@ -21,6 +21,7 @@ import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 
 const statusOptions = [
   { label: "Pending", value: "pending" },
@@ -157,7 +158,7 @@ export default function ReportsPanel() {
           setList(items.map(toRow));
         }
       })
-      .catch((e: any) => setError(e.message))
+      .catch((e: any) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -348,8 +349,8 @@ export default function ReportsPanel() {
         load();
         setToast("Report created successfully");
       }
-    } catch (e: any) {
-      setFormErrors({ _submit: e.message || "Failed to save" });
+    } catch (e: unknown) {
+      setFormErrors({ _submit: errorMessage(e, "Failed to save") });
       setSaving(false);
     }
   };
@@ -363,8 +364,8 @@ export default function ReportsPanel() {
       setDeletingId(null);
       load();
       setToast("Report deleted successfully");
-    } catch (e: any) {
-      setToast(e.message || "Failed to delete");
+    } catch (e: unknown) {
+      setToast(errorMessage(e, "Failed to delete"));
     } finally {
       setSaving(false);
     }

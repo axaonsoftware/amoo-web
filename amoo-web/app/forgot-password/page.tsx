@@ -7,7 +7,7 @@ export default function ForgotPasswordPage() {
     <>
       <OfferBar />
       <HomeHeader absolute={false} />
-      <main className="min-h-screen bg-[#0d0616] flex flex-col items-center justify-start md:justify-center px-4 py-6 md:py-8">
+      <main id="main-content" className="min-h-screen bg-[#0d0616] flex flex-col items-center justify-start md:justify-center px-4 py-6 md:py-8">
         <div className="w-full max-w-[500px] rounded-2xl overflow-hidden shadow-2xl bg-white">
           <ForgotPasswordForm />
         </div>

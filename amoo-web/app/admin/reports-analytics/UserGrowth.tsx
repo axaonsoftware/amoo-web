@@ -25,7 +25,7 @@ export default function UserGrowth() {
         if (cancelled) return;
         const data = res?.data || res;
         if (Array.isArray(data)) {
-          const vals = data.map((d: Record<string, unknown>) => Number(d.count || d.users || d.total || 0)).filter((n: number) => n > 0);
+          const vals = data.map((d: any) => Number(d.count || d.users || d.total || 0)).filter((n: number) => n > 0);
           if (vals.length >= 7) {
             const padded = vals.length >= 18 ? vals.slice(0, 18) : [...vals, ...fallbackUsers.slice(vals.length)];
             setUsers(padded.slice(0, 18));

@@ -13,7 +13,7 @@ import WhatsAppFloatButton from "./WhatsAppFloatButton";
 
 export default function BookingConfirmationPage() {
   return (
-    <main className="min-h-screen bg-[#FCF9F3]">
+    <main id="main-content" className="min-h-screen bg-[#FCF9F3]">
       <OfferBar />
       <HomeHeader absolute={false} />
       <Stepper />

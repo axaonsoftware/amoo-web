@@ -9,7 +9,7 @@ export default function NotificationManagementPage() {
   const panelRef = useRef<any>(null);
 
   return (
-    <main className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
+    <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
       <PageHeader onAdd={() => panelRef.current?.openCompose?.()} />
       <StatsRow />
       <div className="mt-5 flex flex-col gap-4 xl:flex-row">

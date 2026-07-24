@@ -8,7 +8,7 @@ import UpgradeCta from "./UpgradeCta";
 
 export default function KundaliDashboardPage() {
   return (
-    <main className="flex-1 px-5 pb-8 pt-5 lg:px-6">
+    <main id="main-content" className="flex-1 px-5 pb-8 pt-5 lg:px-6">
       <PageHeader />
       <StatsRow />
 

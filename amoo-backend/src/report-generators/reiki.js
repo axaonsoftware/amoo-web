@@ -1,5 +1,6 @@
 const path = require("path");
 const BaseReportGenerator = require("./base");
+const { DISCLAIMER } = require("./base");
 
 const chakras = require(path.join(__dirname, "data", "reiki-chakras.json"));
 
@@ -8,6 +9,9 @@ for (const c of chakras) CHAKRA_MAP[c.name] = c;
 
 class ReikiReportGenerator extends BaseReportGenerator {
   static type = "reiki";
+  // Works from a curated chakra dataset. The before/after wording is sampled,
+  // so it reads as a session summary — wellness guidance, not a medical claim.
+  static maturity = "heuristic";
 
   async generate({ userId, serviceId, userName, extras }) {
     const requestedNames = Array.isArray(extras?.chakras)
@@ -74,6 +78,8 @@ class ReikiReportGenerator extends BaseReportGenerator {
         "Rest and allow the energy to integrate over the next 24 hours.",
         "Continue with self-Reiki or meditation to maintain balance.",
         `Repeat the affirmations shared above for each chakra.`,
+        "",
+        DISCLAIMER,
         "",
         `Session generated for service #${serviceId || "N/A"} — ${new Date().toISOString()}`,
         "",

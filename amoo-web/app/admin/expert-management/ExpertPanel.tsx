@@ -5,15 +5,19 @@ import {
   Filter,
   Pencil,
   Trash2,
+  KeyRound,
   Loader2,
   AlertTriangle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
+import SetPasswordDialog from "./SetPasswordDialog";
+import { useToast } from "../shared/useToast";
 import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
 import { specializationTone, statusTone } from "./data";
+import { errorMessage } from "../../../lib/errors";
 
 const expertFields: ModalField[] = [
   { name: "name", label: "Full Name", required: true, placeholder: "Full name" },
@@ -94,6 +98,9 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
   const [deleting, setDeleting] = useState<any | null>(null);
   const [deleting2, setDeleting2] = useState(false);
 
+  const [passwordTarget, setPasswordTarget] = useState<any | null>(null);
+  const { showToast, Toast } = useToast();
+
   const cancelled = useRef(false);
 
   const loadExperts = useCallback(async () => {
@@ -151,8 +158,8 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
       setEditing(null);
       setValues({});
       loadExperts();
-    } catch (err: any) {
-      alert(err?.message || "Save failed");
+    } catch (err: unknown) {
+      alert(errorMessage(err, "Save failed"));
     } finally {
       setSaving(false);
     }
@@ -166,42 +173,58 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
       setConfirmOpen(false);
       setDeleting(null);
       loadExperts();
-    } catch (err: any) {
-      alert(err?.message || "Delete failed");
+    } catch (err: unknown) {
+      alert(errorMessage(err, "Delete failed"));
     } finally {
       setDeleting2(false);
     }
   };
 
-  const handleExport = () => {
+  // Declared BEFORE handleExport, which reads it. It used to be declared ~20
+  // lines below its own consumer: legal at runtime only because handleExport is
+  // never called during render, but a temporal-dead-zone hazard the moment that
+  // changes (and what react-hooks/immutability flags).
+  //
+  // The filter matches on `specialties`, the actual column. It compared
+  // `e.specialization` — a field the `experts` table does not have and
+  // EXPERT_SELECT never returns — so the Specialization dropdown could never
+  // match anything and always emptied the table.
+  const filtered = experts.filter((e) => {
+    const q = search.toLowerCase();
+    const matchSearch =
+      !q || e.name?.toLowerCase().includes(q) || e.email?.toLowerCase().includes(q);
+    const matchSpec =
+      !specializationFilter ||
+      (e.specialties || "").toLowerCase().includes(specializationFilter.toLowerCase());
+    const matchStatus = !statusFilter || e.status === statusFilter;
+    return matchSearch && matchSpec && matchStatus;
+  });
+
+  const handleExport = useCallback(() => {
     if (!filtered.length) return;
+    // Columns are the ones EXPERT_SELECT actually returns. `specialization`,
+    // `experience`, `hourly_rate` and `sessions` do not exist on `experts`, so
+    // those four columns exported as empty strings for every row.
     exportCSV(
       filtered.map((e) => ({
         Name: e.name,
         Email: e.email,
         Phone: e.phone || "",
-        Specialization: e.specialization || "",
-        Experience: e.experience || "",
-        Rate: e.hourly_rate || "",
-        Rating: e.rating || "",
-        Sessions: e.sessions || "",
+        Title: e.role_title || "",
+        Specialties: e.specialties || "",
+        Rating: e.rating ?? "",
         Status: e.status || "",
+        Joined: e.created_at || "",
       })),
       "experts"
     );
-  };
+  }, [filtered]);
 
+  // Was dependency-less, so it re-invoked the parent's callback on EVERY
+  // render — each one handing the toolbar a fresh pair of closures.
   useEffect(() => {
-    if (onReady) onReady({ openCreate: openAdd, exportData: handleExport });
-  });
-
-  const filtered = experts.filter((e) => {
-    const q = search.toLowerCase();
-    const matchSearch = !q || e.name?.toLowerCase().includes(q) || e.email?.toLowerCase().includes(q);
-    const matchSpec = !specializationFilter || e.specialization === specializationFilter;
-    const matchStatus = !statusFilter || e.status === statusFilter;
-    return matchSearch && matchSpec && matchStatus;
-  });
+    onReady?.({ openCreate: openAdd, exportData: handleExport });
+  }, [onReady, handleExport]);
 
   return (
     <>
@@ -316,10 +339,23 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
                       >
                         <Pencil size={13} strokeWidth={2} />
                       </button>
+                      {/* Without this, an expert created here can never log in:
+                          experts have no self-service signup or password reset,
+                          so POST /api/experts/:id/set-password is the only way
+                          experts.password_hash is ever populated. */}
+                      <button
+                        onClick={() => setPasswordTarget(expert)}
+                        className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#6D28D9] hover:bg-[#FAF7FF]"
+                        title="Set login password"
+                        aria-label={`Set login password for ${sanitize(expert.name) || "expert"}`}
+                      >
+                        <KeyRound size={13} strokeWidth={2} />
+                      </button>
                       <button
                         onClick={() => { setDeleting(expert); setConfirmOpen(true); }}
                         className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEF2F2]"
                         title="Delete"
+                        aria-label={`Delete ${sanitize(expert.name) || "expert"}`}
                       >
                         <Trash2 size={13} strokeWidth={2} />
                       </button>
@@ -351,6 +387,14 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
         onCancel={() => { setConfirmOpen(false); setDeleting(null); }}
         saving={deleting2}
       />
+
+      <SetPasswordDialog
+        expert={passwordTarget}
+        onClose={() => setPasswordTarget(null)}
+        onDone={(msg) => { showToast(msg); loadExperts(); }}
+      />
+
+      <Toast />
     </>
   );
 }

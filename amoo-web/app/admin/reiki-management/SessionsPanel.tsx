@@ -28,6 +28,7 @@ import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 
 const tabs = [
   { label: "All Sessions", active: true },
@@ -136,7 +137,7 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
           setList([]);
         }
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
 
@@ -165,10 +166,6 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
     setFormValues({ user_id: "", title: "", content: "", status: "pending" });
     setModalOpen(true);
   };
-
-  useEffect(() => {
-    onReady?.({ openCreate: handleOpenAdd, exportData: handleExport });
-  });
 
   const handleOpenEdit = (raw: RawReport) => {
     setEditing(raw);
@@ -199,8 +196,8 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
         addToast("Session updated successfully");
         setModalOpen(false);
         loadData();
-      } catch (e: any) {
-        addToast(e.message || "Failed to update session", "error");
+      } catch (e: unknown) {
+        addToast(errorMessage(e, "Failed to update session"), "error");
       } finally {
         setSaving(false);
       }
@@ -243,8 +240,8 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
         addToast("Session created successfully");
         setModalOpen(false);
         loadData();
-      } catch (e: any) {
-        addToast(e.message || "Failed to create session", "error");
+      } catch (e: unknown) {
+        addToast(errorMessage(e, "Failed to create session"), "error");
       } finally {
         setSaving(false);
       }
@@ -265,8 +262,8 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
       setConfirmOpen(false);
       setDeletingId(null);
       loadData();
-    } catch (e: any) {
-      addToast(e.message || "Failed to delete session", "error");
+    } catch (e: unknown) {
+      addToast(errorMessage(e, "Failed to delete session"), "error");
     } finally {
       setSaving(false);
     }
@@ -287,6 +284,16 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
     exportCSV(rows, "reiki-sessions.csv");
     addToast(`Exported ${rows.length} sessions`);
   };
+
+  // Registered AFTER the handlers it passes up. It previously sat ~100 lines
+  // above `handleExport` with no dependency array — referencing a
+  // not-yet-initialised binding, and re-running on every render.
+  useEffect(() => {
+    onReady?.({ openCreate: handleOpenAdd, exportData: handleExport });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see PricingPanel:
+    // these handlers are redefined each render, so depending on them restores
+    // the every-render loop. They read state only when invoked.
+  }, [onReady]);
 
   if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
   if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;

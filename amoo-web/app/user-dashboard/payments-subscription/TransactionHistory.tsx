@@ -2,7 +2,6 @@
 
 import {
   ArrowRight,
-  ArrowLeft,
   CalendarDays,
   ChevronDown,
   ChevronLeft,
@@ -60,7 +59,6 @@ function BrandMark({ type }: { type: "credit" | "debit" }) {
 
 export default function TransactionHistory() {
   const [page, setPage] = useState(1);
-  const pageSize = 10;
 
   const { data, loading, error } = useApi<WalletResponse>(
     () => api.getWallet(),

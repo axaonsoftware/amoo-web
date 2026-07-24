@@ -1,5 +1,6 @@
 const path = require("path");
 const BaseReportGenerator = require("./base");
+const { DISCLAIMER } = require("./base");
 
 const data = require(path.join(__dirname, "data", "numerology-meanings.json"));
 const { mapping, numbers } = data;
@@ -68,6 +69,9 @@ function meaning(num) {
 
 class NumerologyReportGenerator extends BaseReportGenerator {
   static type = "numerology";
+  // Real Pythagorean numerology (life-path/expression/soul-urge reduction) —
+  // deterministic and self-consistent, offered as guidance, not fact.
+  static maturity = "heuristic";
 
   async generate({ userId, serviceId, userName, extras }) {
     const dob = extras?.dob || "1990-01-01";
@@ -114,8 +118,7 @@ class NumerologyReportGenerator extends BaseReportGenerator {
         "─── SUMMARY ───",
         `Your Life Path ${lp} sets the overall direction, while your Expression ${expr} shapes how you engage with the world.`,
         "",
-        "─── NOTE ───",
-        "These numbers offer insight into your innate tendencies. You always have the free will to transcend any pattern.",
+        DISCLAIMER,
         "",
         `Report generated for service #${serviceId || "N/A"} — ${new Date().toISOString()}`,
         "",

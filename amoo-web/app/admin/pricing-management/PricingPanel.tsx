@@ -16,6 +16,7 @@ import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
+import { errorMessage } from "../../../lib/errors";
 
 type RawPackage = {
   id: number;
@@ -126,15 +127,11 @@ export default function PricingPanel({
           );
         }
       })
-      .catch((e) => setError(e.message))
+      .catch((e) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => { loadData(); }, [loadData]);
-
-  useEffect(() => {
-    onReady?.({ openCreate: handleOpenAdd, exportData: handleExport });
-  });
 
   const rows = list || [];
 
@@ -206,8 +203,8 @@ export default function PricingPanel({
       }
       setModalOpen(false);
       loadData();
-    } catch (e: any) {
-      addToast(e.message || "Failed to save package", "error");
+    } catch (e: unknown) {
+      addToast(errorMessage(e, "Failed to save package"), "error");
     } finally {
       setSaving(false);
     }
@@ -222,8 +219,8 @@ export default function PricingPanel({
       setConfirmOpen(false);
       setDeletingId(null);
       loadData();
-    } catch (e: any) {
-      addToast(e.message || "Failed to delete package", "error");
+    } catch (e: unknown) {
+      addToast(errorMessage(e, "Failed to delete package"), "error");
     } finally {
       setSaving(false);
     }
@@ -243,6 +240,18 @@ export default function PricingPanel({
     exportCSV(rows, "pricing-plans.csv");
     addToast(`Exported ${rows.length} plans`);
   };
+
+  // Registered AFTER the handlers it passes up. It previously sat ~100 lines
+  // above `handleExport` with no dependency array, so it both referenced a
+  // not-yet-initialised binding (a temporal-dead-zone hazard) and re-ran on
+  // every single render, handing the parent toolbar new closures each time.
+  useEffect(() => {
+    onReady?.({ openCreate: handleOpenAdd, exportData: handleExport });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleOpenAdd and
+    // handleExport are redefined every render; depending on them would restore
+    // the every-render loop this fix removes. They close over state that is
+    // only read when the user clicks, so a stable identity is not required.
+  }, [onReady]);
 
   const modalFields: ModalField[] = [
     { name: "name", label: "Plan Name", type: "text", required: true, placeholder: "e.g. Gold Package", full: true },

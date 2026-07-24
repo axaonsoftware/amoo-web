@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
@@ -103,6 +103,25 @@ const SOCIAL_LINKS = [
 
 const ITEMS_PER_PAGE = 6;
 
+/* ---------------- Types ---------------- */
+
+interface BlogArticle {
+  slug: string;
+  title: string;
+  image: string;
+  category: string;
+  date: string;
+  readTime: string;
+  author?: string;
+  authorAvatar?: string;
+  excerpt?: string;
+}
+
+interface BlogApiResponse {
+  data?: BlogArticle[];
+  meta?: { total?: number; totalPages?: number };
+}
+
 /* ---------------- Page ---------------- */
 
 export default function BlogPage() {
@@ -113,14 +132,13 @@ export default function BlogPage() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
 
-  const [articles, setArticles] = useState<any[]>([]);
-  const [featuredArticle, setFeaturedArticle] = useState<any | null>(null);
+  const [articles, setArticles] = useState<BlogArticle[]>([]);
+  const [featuredArticle, setFeaturedArticle] = useState<BlogArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalFromApi, setTotalFromApi] = useState(0);
   const [totalPagesFromApi, setTotalPagesFromApi] = useState(1);
 
   useEffect(() => {
-    setLoading(true);
     const params = new URLSearchParams();
     if (activeCategory !== "All Articles") params.set("category", activeCategory);
     if (searchQuery.trim()) params.set("search", searchQuery);
@@ -128,11 +146,11 @@ export default function BlogPage() {
     params.set("pageSize", String(ITEMS_PER_PAGE));
     const query = `?${params.toString()}`;
     api.getBlogs(query)
-      .then((res: any) => {
+      .then((res: BlogApiResponse | BlogArticle[]) => {
         const list = Array.isArray(res) ? res : res?.data ?? [];
-        setArticles(list);
-        setTotalFromApi(res?.meta?.total ?? 0);
-        setTotalPagesFromApi(res?.meta?.totalPages ?? 1);
+        setArticles(list as BlogArticle[]);
+        setTotalFromApi(!Array.isArray(res) ? (res?.meta?.total ?? 0) : 0);
+        setTotalPagesFromApi(!Array.isArray(res) ? (res?.meta?.totalPages ?? 1) : 1);
       })
       .catch(() => { setArticles([]); })
       .finally(() => setLoading(false));
@@ -174,7 +192,7 @@ export default function BlogPage() {
       <>
         <OfferBar />
         <HomeHeader absolute={false} />
-        <main className="flex-1 flex items-center justify-center min-h-[60vh] bg-[#fdf8f0]">
+        <main id="main-content" className="flex-1 flex items-center justify-center min-h-[60vh] bg-[#fdf8f0]">
           <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
         </main>
       </>
@@ -186,7 +204,7 @@ export default function BlogPage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* HERO SECTION */}
         <section className="relative overflow-hidden bg-[radial-gradient(130%_140%_at_20%_50%,#2d0f4f_0%,#1e0a38_45%,#130525_100%)]">
           <div className="haze pointer-events-none absolute inset-0 opacity-50" />
@@ -322,8 +340,8 @@ export default function BlogPage() {
                       </p>
                       <div className="mt-[16px] flex items-center gap-3">
                         <Image
-                          src={featuredArticle.authorAvatar}
-                          alt={featuredArticle.author}
+                          src={featuredArticle.authorAvatar ?? ''}
+                          alt={featuredArticle.author ?? ''}
                           width={80}
                           height={80}
                           className="h-[36px] w-[36px] rounded-full border-2 border-gold/50 object-cover"

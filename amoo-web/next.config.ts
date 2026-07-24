@@ -25,7 +25,7 @@ const csp = [
   `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://checkout.razorpay.com`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://images.unsplash.com https://upload.wikimedia.org",
-  "font-src 'self' data:",
+  "font-src 'self' data: https://fonts.gstatic.com",
   `connect-src 'self' ${API_URL} ${RAZORPAY}`,
   "frame-src https://api.razorpay.com https://checkout.razorpay.com",
   "object-src 'none'",

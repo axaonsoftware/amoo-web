@@ -7,7 +7,7 @@ import api from "../../../lib/api";
 type ActivityItem = {
   id: number;
   action: string;
-  action_details: Record<string, unknown> | null;
+  action_details: any | null;
   page_or_route: string | null;
   created_at: string;
 };
@@ -21,7 +21,6 @@ export default function MyActivityPage() {
   const pageSize = 20;
 
   useEffect(() => {
-    setLoading(true);
     api
       .getMyActivity(`?page=${page}&pageSize=${pageSize}`)
       .then((res) => {
@@ -54,7 +53,7 @@ export default function MyActivityPage() {
   }
 
   return (
-    <main className="flex-1 px-5 pb-10 pt-6 lg:px-6">
+    <main id="main-content" className="flex-1 px-5 pb-10 pt-6 lg:px-6">
       <div className="mb-6">
         <h1 className="text-[22px] font-bold text-[#2b0f47] font-serif">My Activity</h1>
         <p className="mt-1 text-[14px] text-[#8b8697]">Your recent actions and events</p>

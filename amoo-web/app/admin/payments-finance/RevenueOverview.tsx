@@ -25,7 +25,7 @@ export default function RevenueOverview() {
         if (cancelled) return;
         const data = res?.data || res;
         if (Array.isArray(data) && data.length >= 7) {
-          const rev = data.map((d: Record<string, unknown>) => {
+          const rev = data.map((d: any) => {
             const v = Number(d.amount || d.revenue || d.total || 0);
             return v > 0 ? v / 100000 : 0;
           }).filter((v: number) => v > 0);

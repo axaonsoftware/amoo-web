@@ -5,4 +5,7 @@ export const greatVibes = Great_Vibes({
   variable: "--font-signature",
   subsets: ["latin"],
   weight: ["400"],
+  display: "swap",
+  preload: false,
+  fallback: ["cursive", "serif"],
 });

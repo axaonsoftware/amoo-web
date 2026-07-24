@@ -20,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function SoftwareHubPage() {
   return (
-    <main className="min-h-screen bg-[#14032b]">
+    <main id="main-content" className="min-h-screen bg-[#14032b]">
       <HomeHeader />
       <Hero />
 

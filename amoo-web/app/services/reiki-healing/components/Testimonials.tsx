@@ -44,7 +44,7 @@ export default function Testimonials() {
           })));
         }
       })
-      .catch((err: any) => setError(err?.message || "Failed to load testimonials"))
+      .catch((err: Error) => setError(err?.message || "Failed to load testimonials"))
       .finally(() => setLoading(false));
   }, []);
 

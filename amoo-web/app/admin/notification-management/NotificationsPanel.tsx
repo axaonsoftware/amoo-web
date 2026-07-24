@@ -15,6 +15,7 @@ import { typeTone } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 
 const statusOptions = [
   { label: "All Types", value: "" },
@@ -132,8 +133,8 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
       showToast("Notification sent successfully");
       setPage(1);
       loadNotifications();
-    } catch (err: any) {
-      showToast(err?.message || "Failed to send", "error");
+    } catch (err: unknown) {
+      showToast(errorMessage(err, "Failed to send"), "error");
     } finally {
       setComposeSending(false);
     }
@@ -148,8 +149,8 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
       setDeleting(null);
       showToast("Notification deleted");
       loadNotifications();
-    } catch (err: any) {
-      showToast(err?.message || "Delete failed", "error");
+    } catch (err: unknown) {
+      showToast(errorMessage(err, "Delete failed"), "error");
     } finally {
       setDeleteSaving(false);
     }
@@ -213,8 +214,8 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Target</label>
-                <select
+                <label htmlFor="notificationspanel-target" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Target</label>
+                <select id="notificationspanel-target"
                   value={composeTarget}
                   onChange={(e) => setComposeTarget(e.target.value)}
                   className="h-[36px] w-full rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#2E2A3B] outline-none"
@@ -227,15 +228,19 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
 
               {composeTarget === "specific" && (
                 <div>
-                  <label className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Select User</label>
+                  <label htmlFor="notif-user" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Select User</label>
                   <div className="relative">
+                    <label htmlFor="notif-user-search" className="sr-only">Search users</label>
                     <input
+                      id="notif-user-search"
+                      type="search"
                       value={userSearch}
                       onChange={(e) => setUserSearch(e.target.value)}
                       placeholder="Search users..."
                       className="mb-1 h-[32px] w-full rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#2E2A3B] outline-none placeholder:text-[#A5A2B5]"
                     />
                     <select
+                      id="notif-user"
                       value={composeUserId}
                       onChange={(e) => setComposeUserId(e.target.value)}
                       className="h-[36px] w-full rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#2E2A3B] outline-none"
@@ -250,8 +255,8 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
               )}
 
               <div>
-                <label className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Type</label>
-                <select
+                <label htmlFor="notificationspanel-type" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Type</label>
+                <select id="notificationspanel-type"
                   value={composeType}
                   onChange={(e) => setComposeType(e.target.value)}
                   className="h-[36px] w-full rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#2E2A3B] outline-none"
@@ -265,8 +270,8 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Title *</label>
-                <input
+                <label htmlFor="notificationspanel-title" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Title *</label>
+                <input id="notificationspanel-title"
                   value={composeTitle}
                   onChange={(e) => setComposeTitle(e.target.value)}
                   placeholder="Notification title"
@@ -275,8 +280,9 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
               </div>
 
               <div className="sm:col-span-2">
-                <label className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Message *</label>
+                <label htmlFor="notif-message" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Message *</label>
                 <textarea
+                  id="notif-message"
                   value={composeMessage}
                   onChange={(e) => setComposeMessage(e.target.value)}
                   placeholder="Notification message"

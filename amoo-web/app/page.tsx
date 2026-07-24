@@ -259,7 +259,7 @@ export default function Home() {
       <PageViewTracker page="/" meta={{ page: "home" }} />
       <OfferBar />
 
-      <main className="flex-1 bg-white">
+      <main id="main-content" className="flex-1 bg-white">
         {/* ---------------- HERO ---------------- */}
         <section className="relative overflow-hidden rounded-b-[16px] bg-[radial-gradient(120%_130%_at_18%_50%,#33124f_0%,#22083a_45%,#170426_100%)]">
           <HomeHeader />

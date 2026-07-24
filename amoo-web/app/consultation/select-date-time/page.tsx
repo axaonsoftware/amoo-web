@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AlertCircle } from "lucide-react";
 import { saveConsultationData } from "../lib/consultation-storage";
@@ -17,14 +17,9 @@ import { LockIcon, ShieldTickIcon } from "./icons";
 
 function SelectDateTimeInner() {
   const router = useRouter();
-  const [service, setService] = useState("Selected Service");
-  const [mode, setMode] = useState("Selected Mode");
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setService(params.get("service") || "Selected Service");
-    setMode(params.get("mode") || "Selected Mode");
-  }, []);
+  const searchParams = useSearchParams();
+  const service = searchParams.get("service") || "Selected Service";
+  const mode = searchParams.get("mode") || "Selected Mode";
 
   const [selectedDate, setSelectedDate] = useState<number>(10);
   const [selectedPeriod, setSelectedPeriod] = useState("Morning");
@@ -78,7 +73,7 @@ function SelectDateTimeInner() {
         </div>
       </div>
 
-      <main className="flex-1 bg-cream">
+      <main id="main-content" className="flex-1 bg-cream">
         {/* ═══ Heading ═══ */}
         <div className="mx-auto w-full max-w-[1440px] px-4 pt-[14px]">
           <SectionHeading>Select Date &amp; Time</SectionHeading>

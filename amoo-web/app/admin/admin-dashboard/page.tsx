@@ -10,7 +10,7 @@ import { PageViewTracker } from "../../components/PageViewTracker";
 
 export default function AdminDashboardPage() {
   return (
-    <main className="flex flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6">
+    <main id="main-content" className="flex flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6">
       <PageViewTracker page="/admin/admin-dashboard" meta={{ area: "admin-dashboard" }} />
       <WelcomeHeader />
       <StatsRow />

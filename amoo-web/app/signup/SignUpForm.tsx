@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import { User, Mail, Phone, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { trackEvent } from "../../lib/tracking";
@@ -63,8 +63,8 @@ export default function SignUpForm() {
       setSignupSuccess(true);
       trackEvent("signup", { method: "email" });
       setTimeout(() => router.push("/user-dashboard"), 1200);
-    } catch (err: any) {
-      setApiError(err?.message || "Registration failed. Please try again.");
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -105,12 +105,12 @@ export default function SignUpForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="signupform-full-name" className="block text-sm font-medium text-gray-800 mb-1.5">
               Full Name
             </label>
             <div className={`relative ${errors.name ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input
+              <input id="signupform-full-name"
                 type="text"
                 value={name}
                 onChange={(e) => { setName(e.target.value); if (errors.name) setErrors((p) => ({ ...p, name: undefined })); }}
@@ -126,12 +126,12 @@ export default function SignUpForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="signupform-email-address" className="block text-sm font-medium text-gray-800 mb-1.5">
               Email Address
             </label>
             <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input
+              <input id="signupform-email-address"
                 type="email"
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
@@ -147,12 +147,12 @@ export default function SignUpForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="signupform-phone-number-optional" className="block text-sm font-medium text-gray-800 mb-1.5">
               Phone Number <span className="text-gray-400 font-normal">(optional)</span>
             </label>
             <div className={`relative ${errors.phone ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Phone size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input
+              <input id="signupform-phone-number-optional"
                 type="tel"
                 value={phone}
                 onChange={(e) => { setPhone(e.target.value); if (errors.phone) setErrors((p) => ({ ...p, phone: undefined })); }}
@@ -168,12 +168,12 @@ export default function SignUpForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="signupform-password" className="block text-sm font-medium text-gray-800 mb-1.5">
               Password
             </label>
             <div className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+              <input id="signupform-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
@@ -196,12 +196,12 @@ export default function SignUpForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label htmlFor="signupform-confirm-password" className="block text-sm font-medium text-gray-800 mb-1.5">
               Confirm Password
             </label>
             <div className={`relative ${errors.confirmPassword ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
               <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
+              <input id="signupform-confirm-password"
                 type={showPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined })); }}
