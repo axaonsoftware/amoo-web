@@ -11,7 +11,7 @@ export default function CtaBanner() {
           <div className="stars pointer-events-none absolute inset-0 opacity-40" />
 
           <Image
-            src="/imagesP/tarot_no_bg.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/tarot_no_bg.png"
             alt=""
             aria-hidden
             width={340}
@@ -20,7 +20,7 @@ export default function CtaBanner() {
           />
 
           <Image
-            src="/imagesP/lotus_candles_no_bg.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
             alt=""
             aria-hidden
             width={300}

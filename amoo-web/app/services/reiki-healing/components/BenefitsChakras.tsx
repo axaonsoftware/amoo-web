@@ -15,50 +15,50 @@ const BENEFITS = [
 
 const CHAKRAS = [
   {
-    img: "/images/chakra-7.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/chakra-7.png",
     name: "Crown Chakra",
     color: "#a855f7",
     desc: "Spirituality & Divine Connection",
   },
   {
-    img: "/images/chakra-6.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/chakra-6.png",
     name: "Third Eye Chakra",
     color: "#6366f1",
     desc: "Intuition & Wisdom",
   },
   {
-    img: "/images/chakra-5.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/chakra-5.png",
     name: "Throat Chakra",
     color: "#38bdf8",
     desc: "Communication & Expression",
   },
   {
-    img: "/images/chakra-4.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/chakra-4.png",
     name: "Heart Chakra",
     color: "#22c55e",
     desc: "Love & Compassion",
   },
   {
-    img: "/images/chakra-3.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/chakra-3.png",
     name: "Solar Plexus Chakra",
     color: "#eab308",
     desc: "Confidence & Power",
   },
   {
-    img: "/images/chakra-2.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/chakra-2.png",
     name: "Sacral Chakra",
     color: "#f97316",
     desc: "Creativity & Emotions",
   },
   {
-    img: "/images/chakra-1.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/chakra-1.png",
     name: "Root Chakra",
     color: "#ef4444",
     desc: "Stability & Grounding",
   },
 ];
 
-const AVATARS = ["/images/t-1.png", "/images/t-2.png", "/images/t-3.png"];
+const AVATARS = ["https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png", "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-2.png", "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-3.png"];
 
 export default function BenefitsChakras() {
   return (

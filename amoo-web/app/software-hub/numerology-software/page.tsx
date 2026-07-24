@@ -173,7 +173,7 @@ export default function NumerologySoftwarePage() {
         {/* ---------------- HERO ---------------- */}
         <section className="relative min-h-[420px] w-full overflow-hidden bg-[#170426] sm:min-h-[490px]">
           <Image
-            src="/imagesP/numerologyHeroP.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/numerologyHeroP.png"
             alt="Numerology Software report dashboard"
             fill
             priority
@@ -222,7 +222,7 @@ export default function NumerologySoftwarePage() {
 
               <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-6">
                 {HERO_POINTS.map(({ icon: Icon, lines }) => (
-                  <li key={lines.join(" ")} className="w-[86px] text-center">
+                  <li key={lines.join(" ")} className="w-1/3 sm:w-[86px] text-center">
                     <Icon className="mx-auto h-[30px] w-[30px] text-gold" />
                     <p className="mt-2.5 text-[11.5px] leading-[1.45] font-medium text-gold">
                       {lines[0]}
@@ -448,7 +448,7 @@ export default function NumerologySoftwarePage() {
             {/* Right decorative lotus */}
             <div className="pointer-events-none absolute top-1/2 right-8 hidden -translate-y-1/2 xl:block">
               <Image
-                src="/images/deco-footer-right.png"
+                src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-footer-right.png"
                 alt=""
                 width={200}
                 height={180}
@@ -460,7 +460,7 @@ export default function NumerologySoftwarePage() {
               {/* Gift + copy */}
               <div className="flex flex-1 items-center gap-5">
                 <Image
-                  src="/images/sw-box.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-box.png"
                   alt=""
                   width={120}
                   height={120}
@@ -488,7 +488,7 @@ export default function NumerologySoftwarePage() {
               <div className="flex flex-col items-center">
                 <button
                   type="button"
-                  className="flex h-[52px] w-[240px] items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 text-[16px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)]"
+                  className="flex h-[52px] w-full max-w-[240px] items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 text-[16px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)]"
                 >
                   Get Started Now
                   <ArrowRightIcon className="h-[18px] w-[18px]" />

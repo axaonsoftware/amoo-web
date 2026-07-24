@@ -29,7 +29,7 @@ export default function MissionVision() {
         {/* Portrait */}
         <div className="relative mx-auto h-[312px] w-[334px] max-w-full shrink-0">
           <Image
-            src="/imagesP/amooLadyP.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooLadyP.png"
             alt="Surinder Kaur Sehgal"
             fill
             priority

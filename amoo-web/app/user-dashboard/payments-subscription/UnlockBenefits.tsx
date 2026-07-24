@@ -7,7 +7,7 @@ export default function UnlockBenefits() {
     <section className="relative overflow-hidden rounded-[16px] border border-[#ecd9b4] bg-[#fdf8ef] px-[24px] py-[22px] shadow-[0_1px_3px_rgba(43,15,71,0.04)]">
       {/* Decorative mandala */}
       <Image
-        src="/images/deco-chakra-right.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-right.png"
         alt=""
         aria-hidden="true"
         width={220}

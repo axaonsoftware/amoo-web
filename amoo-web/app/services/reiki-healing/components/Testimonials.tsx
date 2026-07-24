@@ -38,7 +38,7 @@ export default function Testimonials() {
         const list = Array.isArray(rows) ? rows : rows?.data ?? [];
         if (list.length) {
           setItems(list.map((r: any) => ({
-            img: r.img || "/images/t-1.png",
+            img: r.img || "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
             quote: wrapQuote(r.comment || r.text || ""),
             name: r.name || "Client",
           })));

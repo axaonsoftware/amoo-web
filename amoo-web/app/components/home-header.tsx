@@ -130,7 +130,7 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
       <div className="mx-auto flex h-[66px] w-full max-w-[1336px] items-center justify-between gap-3 px-5 sm:h-[86px] sm:gap-6">
         <Link href="/" className="shrink-0">
           <Image
-            src="/imagesP/amooLogoP.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooLogoP.png"
             alt={SITE_NAME}
             width={350}
             height={150}

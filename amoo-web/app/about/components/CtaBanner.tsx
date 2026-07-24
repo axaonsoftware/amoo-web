@@ -7,7 +7,7 @@ export default function CtaBanner() {
   return (
     <section className="relative min-h-[132px] w-full overflow-hidden bg-gradient-to-r from-[#3d1157] via-[#2a0940] to-[#3d1157]">
       <Image
-        src="/imagesP/lotus_candles_no_bg.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
         alt=""
         width={320}
         height={132}
@@ -15,7 +15,7 @@ export default function CtaBanner() {
         className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[320px] object-cover md:block"
       />
       <Image
-        src="/imagesP/tarot_no_bg.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/tarot_no_bg.png"
         alt=""
         width={224}
         height={132}

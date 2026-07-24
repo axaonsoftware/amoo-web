@@ -9,7 +9,7 @@ export default function CtaBanner() {
       <div className="stars pointer-events-none absolute inset-0 opacity-70" />
 
       <Image
-        src="/images/trust-candles.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
         alt=""
         width={417}
         height={222}
@@ -17,7 +17,7 @@ export default function CtaBanner() {
         className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[190px] scale-x-[-1] object-cover object-left opacity-70 lg:block"
       />
       <Image
-        src="/images/trust-candles.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
         alt=""
         width={417}
         height={222}

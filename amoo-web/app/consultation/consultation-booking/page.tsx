@@ -317,14 +317,14 @@ function BookingForm() {
                   {/* Connector line */}
                   {i > 0 && (
                     <span
-                      className={`absolute top-[13px] sm:top-[18px] right-1/2 h-[2px] w-full ${
+                      className={`absolute top-[15px] sm:top-[18px] right-1/2 h-[2px] w-full ${
                         step.done || step.active ? "bg-grape-2" : "bg-line"
                       }`}
                     />
                   )}
                   {/* Circle */}
                   <span
-                    className={`relative z-10 flex h-[26px] w-[26px] sm:h-[36px] sm:w-[36px] items-center justify-center rounded-full text-[10px] sm:text-[14px] font-semibold ${
+                    className={`relative z-10 flex h-[30px] w-[30px] sm:h-[36px] sm:w-[36px] items-center justify-center rounded-full text-[11px] sm:text-[14px] font-semibold ${
                       step.done
                         ? "bg-grape-2 text-white"
                         : step.active
@@ -727,7 +727,7 @@ function BookingForm() {
                   {/* Decorative image */}
                   <div className="mt-4 flex justify-center">
                     <Image
-                      src="/images/trust-candles.png"
+                      src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
                       alt=""
                       width={280}
                       height={120}

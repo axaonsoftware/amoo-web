@@ -211,13 +211,13 @@ export default function ContactPage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main id="main-content" className="flex-1">
+      <main id="main-content" className="flex-1 overflow-x-hidden">
         {/* HERO SECTION */}
         <section className="relative overflow-hidden bg-[radial-gradient(130%_140%_at_20%_50%,#2d0f4f_0%,#1e0a38_45%,#130525_100%)]">
           {/* Background meditation image - right side */}
-          <div className="absolute right-0 top-0 h-full w-[55%] opacity-40 md:opacity-60 lg:opacity-80">
+          <div className="absolute right-0 top-0 h-full w-[40%] opacity-30 md:w-[55%] md:opacity-60 lg:opacity-80">
             <Image
-              src="/imagesP/lotus_candles_no_bg.png"
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
               alt=""
               fill
               sizes="(max-width: 768px) 100vw, 55vw"
@@ -228,7 +228,7 @@ export default function ContactPage() {
 
           <div className="relative mx-auto w-full max-w-[1336px] px-5 pt-[50px] pb-[50px] sm:pt-[70px] sm:pb-[60px] lg:pt-[90px] lg:pb-[70px]">
             <div className="max-w-[600px]">
-              <h1 className="font-display text-[42px] leading-[1.15] font-bold text-[#f6e3b4] sm:text-[56px] lg:text-[68px]">
+              <h1 className="font-display text-[32px] leading-[1.15] font-bold text-[#f6e3b4] sm:text-[56px] lg:text-[68px]">
                 Contact Us
               </h1>
 
@@ -429,7 +429,7 @@ export default function ContactPage() {
                 <div className="overflow-hidden rounded-[14px] bg-[radial-gradient(130%_120%_at_50%_20%,#3a1560_0%,#2a0f46_50%,#1b0a2e_100%)]">
                   <div className="relative h-[200px] w-full">
                     <Image
-                      src="/images/trust-candles.png"
+                      src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
                       alt=""
                       fill
                       className="object-cover"
@@ -558,7 +558,7 @@ export default function ContactPage() {
           {/* Lotus decoration left */}
           <div className="absolute left-[5%] top-1/2 -translate-y-1/2 opacity-30 md:opacity-50">
             <Image
-              src="/imagesP/lotus_candles_no_bg.png"
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
               alt={SITE_NAME}
               width={460}
               height={460}
@@ -595,7 +595,7 @@ export default function ContactPage() {
               {/* Brand Column */}
               <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
                 <Image
-                  src="/images/logo-footer.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/logo-footer.png"
                   alt={SITE_NAME}
                   width={460}
                   height={460}

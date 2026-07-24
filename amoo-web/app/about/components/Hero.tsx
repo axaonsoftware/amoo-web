@@ -8,7 +8,7 @@ export default function Hero() {
     <section className="relative min-h-[500px] w-full overflow-hidden sm:min-h-[556px]">
       <HomeHeader />
       <Image
-        src="/imagesP/aboutHeroPN.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aboutHeroPN.png"
         alt=""
         fill
         priority

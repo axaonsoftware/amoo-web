@@ -5,7 +5,7 @@ export default function Hero() {
   return (
     <section className="relative overflow-hidden">
       <Image
-        src="/imagesP/serviceHeroBg.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/serviceHeroBg.png"
         alt=""
         fill
         priority

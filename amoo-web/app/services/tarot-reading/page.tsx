@@ -553,17 +553,17 @@ const TESTIMONIALS = [
   {
     name: "Neha Sharma",
     text: '"Tarot reading by Surinder Ji gave me clarity when I was completely confused about my career. Highly accurate!"',
-    img: "/images/t-1.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
   },
   {
     name: "Rohit Malhotra",
     text: '"The love reading was so accurate and helped me understand my relationship much better."',
-    img: "/images/t-2.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-2.png",
   },
   {
     name: "Priya Verma",
     text: '"I always get positive energy and guidance after every tarot session. Thank you Amoo Guru!"',
-    img: "/images/t-3.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-3.png",
   },
 ];
 
@@ -610,7 +610,7 @@ export default function TarotReadingPage() {
         {/* ── Hero Section ── */}
         <section className="relative min-h-[420px] w-full overflow-hidden sm:min-h-[490px]">
           <Image
-            src="/imagesP/serviceHeroBg.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/serviceHeroBg.png"
             alt=""
             fill
             priority
@@ -670,7 +670,7 @@ export default function TarotReadingPage() {
                     label: ["100% Confidential", "& Safe"],
                   },
                 ].map(({ icon: Icon, label }) => (
-                  <li key={label.join(" ")} className="w-[100px] text-center">
+                  <li key={label.join(" ")} className="w-1/3 sm:w-1/4 lg:w-[100px] text-center">
                     <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold/50 text-gold">
                       <Icon className="h-[22px] w-[22px]" />
                     </span>
@@ -798,7 +798,7 @@ export default function TarotReadingPage() {
             {/* Decorative image */}
             <div className="hidden items-center justify-center lg:flex">
               <Image
-                src="/images/trust-candles.png"
+                src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
                 alt=""
                 width={200}
                 height={200}
@@ -890,7 +890,7 @@ export default function TarotReadingPage() {
                   {/* Avatar */}
                   <div className="mx-auto h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-gold/30">
                     <Image
-                      src={t.img || "/images/t-1.png"}
+                      src={t.img || "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png"}
                       alt={t.name || "Client"}
                       width={60}
                       height={60}
@@ -925,7 +925,7 @@ export default function TarotReadingPage() {
               {/* Left image */}
               <div className="hidden lg:block">
                 <Image
-                  src="/images/trust-candles.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
                   alt=""
                   width={140}
                   height={140}

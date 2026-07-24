@@ -17,7 +17,7 @@ export default function PremiumBanner() {
 
       {/* Left buddha / lotus */}
       <Image
-        src="/imagesP/lotus_candles_no_bg.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
         alt=""
         width={260}
         height={260}

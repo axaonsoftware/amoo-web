@@ -79,7 +79,7 @@ export function SiteFooter() {
           {/* Brand */}
           <div className="col-span-2 flex flex-col items-center text-center sm:col-span-1">
             <Image
-              src="/images/logo-footer.png"
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/logo-footer.png"
               alt={SITE_NAME}
               width={460}
               height={460}

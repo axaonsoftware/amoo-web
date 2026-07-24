@@ -121,7 +121,7 @@ export default function StatsBand() {
           </div>
 
           <Image
-            src="/images/guru-portrait.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/guru-portrait.png"
             alt="Grand Master Surinder Kaur Sehgal"
             width={320}
             height={400}

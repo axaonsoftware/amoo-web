@@ -187,7 +187,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
               <ChevronRightIcon className="h-[14px] w-[14px]" />
               <span className="text-white/90">{sanitize(category)}</span>
               <ChevronRightIcon className="h-[14px] w-[14px]" />
-              <span className="max-w-[260px] truncate text-white/60">
+              <span className="max-w-[120px] sm:max-w-[260px] truncate text-white/60">
                 {sanitize(post.title)}
               </span>
             </nav>
@@ -277,7 +277,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
             <div className="grid grid-cols-1 gap-[30px] sm:grid-cols-2 lg:grid-cols-[220px_1fr_1fr_1fr_1fr]">
               <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
                 <Image
-                  src="/images/logo-footer.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/logo-footer.png"
                   alt={SITE_NAME}
                   width={460}
                   height={460}

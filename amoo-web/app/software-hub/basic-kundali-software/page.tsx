@@ -136,7 +136,7 @@ export default function BasicKundaliSoftwarePage() {
         {/* ---------------- HERO ---------------- */}
         <section className="relative min-h-[420px] w-full overflow-hidden sm:min-h-[490px]">
           <Image
-            src="/imagesP/numerologyHeroP.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/numerologyHeroP.png"
             alt=""
             fill
             priority
@@ -179,7 +179,7 @@ export default function BasicKundaliSoftwarePage() {
 
               <ul className="mt-8 flex flex-wrap gap-x-9 gap-y-6">
                 {HERO_POINTS.map(({ icon: Icon, lines }) => (
-                  <li key={lines.join(" ")} className="w-[112px] text-center">
+                  <li key={lines.join(" ")} className="w-1/2 sm:w-[112px] text-center">
                     <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold/60 text-gold">
                       <Icon className="h-[21px] w-[21px]" />
                     </span>
@@ -247,7 +247,7 @@ export default function BasicKundaliSoftwarePage() {
           <div className="relative overflow-hidden rounded-2xl border border-line bg-white px-7 py-7 shadow-[0_2px_14px_rgba(75,37,131,0.05)]">
             <div className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 sm:block">
               <Image
-                src="/images/deco-chakra-left.png"
+                src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-left.png"
                 alt=""
                 width={300}
                 height={300}
@@ -351,7 +351,7 @@ export default function BasicKundaliSoftwarePage() {
             {/* Right decorative wheel */}
             <div className="pointer-events-none absolute top-1/2 right-6 hidden -translate-y-1/2 xl:block">
               <Image
-                src="/images/deco-chakra-right.png"
+                src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-right.png"
                 alt=""
                 width={160}
                 height={160}
@@ -363,7 +363,7 @@ export default function BasicKundaliSoftwarePage() {
               {/* Gift + copy */}
               <div className="flex flex-1 items-center gap-5">
                 <Image
-                  src="/images/sw-box.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-box.png"
                   alt=""
                   width={120}
                   height={120}
@@ -397,7 +397,7 @@ export default function BasicKundaliSoftwarePage() {
               <div className="flex flex-col items-center">
                 <Link
                   href="/software-hub/basic-kundali-software"
-                  className="flex h-[52px] w-[260px] items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 text-[16px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)]"
+                  className="flex h-[52px] w-full max-w-[260px] items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 text-[16px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)]"
                 >
                   Get Started Now
                   <ArrowRightIcon className="h-[18px] w-[18px]" />

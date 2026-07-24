@@ -6,7 +6,7 @@ export default function UserLeftPanel() {
     <section className="relative hidden w-full overflow-hidden md:block md:w-1/2">
       {/* Background Image */}
       <Image
-        src="/imagesP/userRightSideLogin.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/userRightSideLogin.png"
         fill
         sizes="50vw"
         alt=""

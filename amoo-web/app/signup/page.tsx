@@ -13,7 +13,7 @@ export default function SignUpPage() {
         <div className="w-full max-w-[1100px] flex flex-col md:flex-row justify-center rounded-2xl overflow-hidden shadow-2xl min-h-[auto] md:min-h-[720px]">
           <div className="relative hidden w-full overflow-hidden md:block md:w-1/2">
             <Image
-              src="/imagesP/userRightSideLogin.png"
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/userRightSideLogin.png"
               alt=""
               fill
               className="object-cover"

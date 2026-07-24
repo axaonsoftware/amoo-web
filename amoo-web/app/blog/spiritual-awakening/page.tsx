@@ -40,7 +40,7 @@ const ARTICLE = {
   excerpt:
     "Spiritual awakening is the first step towards understanding your true self and the universe. Learn the signs, stages and ways to embrace this beautiful journey.",
   author: "Surinder Kaur Sehgal",
-  authorAvatar: "/images/t-1.png",
+  authorAvatar: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
   date: "May 15, 2025",
   readTime: "8 min read",
   views: "1.2K views",
@@ -223,7 +223,7 @@ export default function BlogArticlePage() {
           <div className="haze pointer-events-none absolute inset-0 opacity-50" />
 
           <Image
-            src="/imagesP/blogPageHeroBgN.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/blogPageHeroBgN.png"
             alt=""
             fill
             sizes="100vw"
@@ -574,7 +574,7 @@ export default function BlogArticlePage() {
                   <div className="bg-[radial-gradient(130%_120%_at_50%_20%,#3a1560_0%,#2a0f46_50%,#1b0a2e_100%)] px-[22px] pt-[24px] pb-[40px] text-center">
                     <div className="relative mx-auto h-[72px] w-[72px]">
                       <Image
-                        src="/images/t-1.png"
+                        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png"
                         alt="Surinder Kaur Sehgal"
                         fill
                         className="rounded-full border-3 border-gold/50 object-cover"
@@ -730,7 +730,7 @@ export default function BlogArticlePage() {
               {/* Brand Column */}
               <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
                 <Image
-                  src="/images/logo-footer.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/logo-footer.png"
                   alt={SITE_NAME}
                   width={460}
                   height={460}

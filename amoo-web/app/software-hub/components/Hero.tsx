@@ -19,7 +19,7 @@ export default function Hero() {
       {/* full background image */}
       <div className="absolute inset-0">
         <Image
-          src="/imagesP/softwareHero.jpg"
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/softwareHero.jpg"
           alt=""
           fill
           priority

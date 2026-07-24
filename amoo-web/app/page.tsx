@@ -44,9 +44,9 @@ export const metadata: Metadata = {
 /* ---------------- data ---------------- */
 
 const HERO_POINTS = [
-  { icon: "/images/hero-ico-1.png", lines: ["Numerology", "Insight"] },
-  { icon: "/images/hero-ico-2.png", lines: ["Reiki", "Healing"] },
-  { icon: "/images/hero-ico-3.png", lines: ["Tarot", "Guidance"] },
+  { icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-1.png", lines: ["Numerology", "Insight"] },
+  { icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-2.png", lines: ["Reiki", "Healing"] },
+  { icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-3.png", lines: ["Tarot", "Guidance"] },
 ];
 
 const MODES = [
@@ -77,13 +77,13 @@ const MODES = [
 ];
 
 const CHAKRAS = [
-  { img: "/imagesP/chakra_1.png", name: "Muladhara", sub: "Root Chakra" },
-  { img: "/imagesP/chakra_2.png", name: "Swadhisthana", sub: "Sacral Chakra" },
-  { img: "/imagesP/chakra_3.png", name: "Manipura", sub: "Solar Plexus" },
-  { img: "/imagesP/chakra_4.png", name: "Anahata", sub: "Heart Chakra" },
-  { img: "/imagesP/chakra_5.png", name: "Vishuddha", sub: "Throat Chakra" },
-  { img: "/imagesP/chakra_6.png", name: "Ajna", sub: "Third Eye Chakra" },
-  { img: "/imagesP/chakra_7.png", name: "Sahasrara", sub: "Crown Chakra" },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_1.png", name: "Muladhara", sub: "Root Chakra" },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_2.png", name: "Swadhisthana", sub: "Sacral Chakra" },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_3.png", name: "Manipura", sub: "Solar Plexus" },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_4.png", name: "Anahata", sub: "Heart Chakra" },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_5.png", name: "Vishuddha", sub: "Throat Chakra" },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_6.png", name: "Ajna", sub: "Third Eye Chakra" },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_7.png", name: "Sahasrara", sub: "Crown Chakra" },
 ];
 
 const CREDENTIALS = [
@@ -135,32 +135,32 @@ const STEPS = [
 ];
 
 const SERVICES = [
-  { img: "/images/svc-1.png", lines: ["Numerology", "Guidance"] },
-  { img: "/images/svc-2.png", lines: ["Reiki", "Healing"] },
-  { img: "/images/svc-3.png", lines: ["Tarot", "Reading"] },
-  { img: "/images/svc-4.png", lines: ["Chakra", "Balancing"] },
-  { img: "/images/svc-5.png", lines: ["Kundali", "Analysis"] },
-  { img: "/images/svc-6.png", lines: ["Love & Relationship", "Guidance"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-1.png", lines: ["Numerology", "Guidance"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-2.png", lines: ["Reiki", "Healing"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-3.png", lines: ["Tarot", "Reading"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-4.png", lines: ["Chakra", "Balancing"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-5.png", lines: ["Kundali", "Analysis"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-6.png", lines: ["Love & Relationship", "Guidance"] },
 ];
 
 const SOFTWARE = [
   {
-    img: "/images/sw-1.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-1.png",
     title: "Numerology Software",
     desc: ["Complete numerology solution for", "professionals and learners."],
   },
   {
-    img: "/images/sw-2.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-2.png",
     title: "Name Numerology Software",
     desc: ["Advanced name analysis and", "suggestion software."],
   },
   {
-    img: "/images/sw-3.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-3.png",
     title: "Tarot Reading Software",
     desc: ["Professional tarot reading software", "with multiple spreads."],
   },
   {
-    img: "/images/sw-4.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-4.png",
     title: "Basic Kundali Software",
     desc: ["Generate accurate kundali and", "basic astrological reports."],
   },
@@ -168,7 +168,7 @@ const SOFTWARE = [
 
 const TESTIMONIALS = [
   {
-    img: "/images/t-1.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
     quote: [
       "“Surinder Ji’s guidance changed",
       "my life completely. Her numerology",
@@ -177,7 +177,7 @@ const TESTIMONIALS = [
     name: "– Neha Sharma",
   },
   {
-    img: "/images/t-2.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-2.png",
     quote: [
       "“Reiki healing sessions helped me",
       "overcome anxiety and stress. Highly",
@@ -186,7 +186,7 @@ const TESTIMONIALS = [
     name: "– Rajeev Verma",
   },
   {
-    img: "/images/t-3.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-3.png",
     quote: [
       "“Tarot reading was very detailed",
       "and gave me clear direction in",
@@ -195,7 +195,7 @@ const TESTIMONIALS = [
     name: "– Priya Malhotra",
   },
   {
-    img: "/images/t-4.png",
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-4.png",
     quote: [
       "“Her predictions and remedies",
       "are 100% accurate. I am truly",
@@ -206,10 +206,10 @@ const TESTIMONIALS = [
 ];
 
 const TRUST = [
-  { img: "/imagesP/badge_1.png", lines: ["Certified Reiki", "Grand Master"] },
-  { img: "/imagesP/badge_2.png", lines: ["Professional", "Numerology Expert"] },
-  { img: "/imagesP/badge_3.png", lines: ["Certified Tarot", "Reader"] },
-  { img: "/imagesP/badge_4.png", lines: ["Trusted By", "Thousands"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_1.png", lines: ["Certified Reiki", "Grand Master"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_2.png", lines: ["Professional", "Numerology Expert"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_3.png", lines: ["Certified Tarot", "Reader"] },
+  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_4.png", lines: ["Trusted By", "Thousands"] },
 ];
 
 /* ---------------- section heading ---------------- */
@@ -265,17 +265,17 @@ export default function Home() {
           <HomeHeader />
 
           <Image
-            src="/imagesP/amooHomeHeroBgP.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooHomeHeroBgP.png"
             alt=""
             fill
             priority
             sizes="100vw"
             className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#1c0730_0%,rgba(28,7,48,0.9)_6%,rgba(28,7,48,0.35)_20%,rgba(28,7,48,0)_36%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,#1c0730_0%,rgba(28,7,48,0.9)_15%,rgba(28,7,48,0.35)_40%,rgba(28,7,48,0)_60%)] md:bg-[linear-gradient(90deg,#1c0730_0%,rgba(28,7,48,0.9)_6%,rgba(28,7,48,0.35)_20%,rgba(28,7,48,0)_36%)]" />
 
           <div className="relative mx-auto w-full max-w-[1336px] px-5">
-            <div className="w-full max-w-[560px] pt-[128px] pb-[62px]">
+            <div className="w-full max-w-[560px] pt-[100px] pb-[62px] sm:pt-[128px]">
               <p className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.14em] text-gold uppercase">
                 <LotusIcon className="h-[13px] w-[13px]" />
                 Welcome to {SITE_NAME}
@@ -402,7 +402,7 @@ export default function Home() {
 
                     <Link
                       href="/consultation/select-service"
-                      className={`mt-[20px] flex h-[32px] w-[172px] items-center justify-center rounded-[6px] text-[13px] font-medium text-white ${
+                      className={`mt-[20px] flex h-[32px] w-auto min-w-[120px] items-center justify-center rounded-[6px] px-4 text-[13px] font-medium text-white sm:w-[172px] ${
                         gold
                           ? "bg-gradient-to-b from-[#c8901f] to-[#a06a12]"
                           : "bg-gradient-to-b from-[#5e1c8f] to-[#3f0f55]"
@@ -421,7 +421,7 @@ export default function Home() {
         <section className="relative overflow-hidden rounded-[16px] bg-[radial-gradient(120%_150%_at_50%_40%,#3a1560_0%,#2a0f46_50%,#1b0a2e_100%)]">
           <div className="haze pointer-events-none absolute inset-0 opacity-70" />
           <Image
-            src="/images/deco-chakra-left.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-left.png"
             alt=""
             width={174}
             height={438}
@@ -429,7 +429,7 @@ export default function Home() {
             className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[58px] object-cover md:block"
           />
           <Image
-            src="/images/deco-chakra-right.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-right.png"
             alt=""
             width={174}
             height={438}
@@ -457,10 +457,10 @@ export default function Home() {
 
               <ul className="flex flex-1 flex-wrap items-start justify-center gap-x-4 gap-y-6 sm:gap-x-[42px] lg:flex-nowrap lg:justify-between lg:px-[30px]">
                 {CHAKRAS.map(({ img, name, sub }) => (
-                  <li
-                    key={name}
-                    className="flex w-[110px] flex-col items-center"
-                  >
+<li
+                      key={name}
+                      className="flex w-1/3 sm:w-[110px] flex-col items-center"
+                    >
                     <Image
                       src={img}
                       alt=""
@@ -494,7 +494,7 @@ export default function Home() {
           <div className="mx-auto grid w-full max-w-[1336px] grid-cols-1 items-center gap-8 px-5 py-[26px] lg:grid-cols-[380px_1fr_400px] lg:gap-[38px]">
             <div className="flex justify-center">
               <Image
-                src="/imagesP/amooLadyP.png"
+                src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooLadyP.png"
                 alt="Surinder Kaur Sehgal"
                 width={890}
                 height={878}
@@ -545,8 +545,8 @@ export default function Home() {
                 <div
                   key={value}
                   className={`flex flex-col items-center justify-center px-4 py-[26px] text-center ${
-                    index % 2 === 0 ? "border-r border-[#e8dcc8]" : ""
-                  } ${index < 2 ? "border-b border-[#e8dcc8]" : ""}`}
+                    index % 2 === 0 ? "sm:border-r border-[#e8dcc8]" : ""
+                  } ${index < 2 ? "border-b border-[#e8dcc8] sm:border-b-0" : index >= STATS.length - 2 ? "" : ""}`}
                 >
                   <Icon className="h-[30px] w-[30px] text-[#6b2a9c]" />
                   <p className="font-display mt-[12px] text-[26px] leading-none font-bold text-[#b5471a]">
@@ -649,7 +649,7 @@ export default function Home() {
 
               <Link
                 href="/services"
-                className="absolute -bottom-[2px] left-1/2 flex h-[32px] w-[172px] -translate-x-1/2 items-center justify-center rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 text-[13px] font-semibold text-[#2b0a3d]"
+                className="absolute -bottom-[2px] left-1/2 flex h-[32px] w-auto -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 px-5 text-[13px] font-semibold text-[#2b0a3d]"
               >
                 View All Services
               </Link>
@@ -705,7 +705,7 @@ export default function Home() {
                     at Best Price
                   </h3>
                   <Image
-                    src="/images/sw-box.png"
+                    src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-box.png"
                     alt=""
                     width={392}
                     height={208}
@@ -713,7 +713,7 @@ export default function Home() {
                   />
                   <Link
                     href="/consultation/consultation-pricing"
-                    className="mt-[8px] flex h-[32px] w-[150px] items-center justify-center gap-2 rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 text-[13px] font-semibold text-[#2b0a3d]"
+                    className="mt-[8px] flex h-[32px] w-auto items-center justify-center gap-2 rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 px-5 text-[13px] font-semibold text-[#2b0a3d]"
                   >
                     View Pricing
                     <ArrowRightIcon className="h-[13px] w-[13px]" />
@@ -728,7 +728,7 @@ export default function Home() {
         <section className="relative overflow-hidden rounded-[16px] bg-[radial-gradient(120%_150%_at_50%_40%,#3d1662_0%,#2c1049_50%,#200b36_100%)]">
           <div className="haze pointer-events-none absolute inset-0 opacity-60" />
           <Image
-            src="/images/deco-testi-left.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-testi-left.png"
             alt=""
             width={174}
             height={423}
@@ -736,7 +736,7 @@ export default function Home() {
             className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[58px] object-cover md:block"
           />
           <Image
-            src="/images/deco-testi-right.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-testi-right.png"
             alt=""
             width={192}
             height={423}
@@ -787,7 +787,7 @@ export default function Home() {
 
               <Link
                 href="/about"
-                className="absolute -bottom-[4px] left-1/2 flex h-[32px] w-[172px] -translate-x-1/2 items-center justify-center rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 text-[13px] font-semibold text-[#2b0a3d]"
+                className="absolute -bottom-[4px] left-1/2 flex h-[32px] w-auto -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 px-5 text-[13px] font-semibold text-[#2b0a3d]"
               >
                 View More Reviews
               </Link>
@@ -798,7 +798,7 @@ export default function Home() {
         {/* ---------------- TRUST BADGES ---------------- */}
         <section className="relative overflow-hidden rounded-[16px] bg-[linear-gradient(90deg,#fdf6e6_0%,#fbf3e4_60%,#f7ecd8_100%)]">
           <Image
-            src="/imagesP/badge_5.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_5.png"
             alt=""
             width={417}
             height={222}
@@ -807,12 +807,12 @@ export default function Home() {
           />
 
           <div className="relative mx-auto w-full max-w-[1336px] px-5 py-[18px]">
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 sm:grid-cols-4 lg:pr-[240px]">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 lg:grid-cols-4 lg:pr-[240px]">
               {TRUST.map(({ img, lines }, index) => (
                 <li
                   key={lines.join(" ")}
                   className={`flex items-center gap-[14px] px-[18px] ${
-                    index === 0 ? "" : "border-l border-[#e6d9c2]"
+                    index === 0 ? "" : "sm:border-l border-[#e6d9c2]"
                   }`}
                 >
                   <Image

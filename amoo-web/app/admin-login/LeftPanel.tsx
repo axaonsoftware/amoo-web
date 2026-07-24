@@ -8,7 +8,7 @@ export default function LeftPanel() {
     <section className="relative hidden w-full overflow-hidden md:block md:w-1/2">
       {/* Background Image */}
       <Image
-        src="/imagesP/adminloginRightBg.jpg"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/adminloginRightBg.jpg"
         fill
         sizes="50vw"
         alt=""

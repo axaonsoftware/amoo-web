@@ -144,7 +144,7 @@ export default function TarotSoftwarePage() {
           {/* full background image */}
           <div className="pointer-events-none absolute inset-0">
             <Image
-              src="/imagesP/tarotSoftwareHero.jpg"
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/tarotSoftwareHero.jpg"
               alt=""
               fill
               priority
@@ -189,7 +189,7 @@ export default function TarotSoftwarePage() {
 
               <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-6">
                 {HERO_POINTS.map(({ icon: Icon, lines }) => (
-                  <li key={lines.join(" ")} className="w-[92px] text-center">
+                  <li key={lines.join(" ")} className="w-1/3 sm:w-[92px] text-center">
                     <Icon className="mx-auto h-[30px] w-[30px] text-gold" />
                     <p className="mt-2.5 text-[11px] leading-[1.5] text-white/85">
                       {lines[0]}
@@ -395,7 +395,7 @@ export default function TarotSoftwarePage() {
               {/* Gift + copy */}
               <div className="flex flex-1 items-center gap-5">
                 <Image
-                  src="/images/sw-box.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-box.png"
                   alt=""
                   width={120}
                   height={120}
@@ -427,7 +427,7 @@ export default function TarotSoftwarePage() {
               <div className="flex flex-col items-center">
                 <Link
                   href="/software-hub/tarot-software"
-                  className="flex h-[52px] w-[260px] items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 text-[16px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)]"
+                  className="flex h-[52px] w-full max-w-[260px] items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 text-[16px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)]"
                 >
                   Get Started Now
                   <ArrowRightIcon className="h-[18px] w-[18px]" />

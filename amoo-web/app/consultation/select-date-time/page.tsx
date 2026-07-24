@@ -52,7 +52,7 @@ function SelectDateTimeInner() {
       <div className="relative overflow-hidden bg-[radial-gradient(120%_150%_at_50%_35%,#2e1150_0%,#210a38_55%,#190429_100%)]">
         <div className="stars pointer-events-none absolute inset-0 opacity-60" />
         <Image
-          src="/images/deco-chakra-left.png"
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-left.png"
           alt=""
           width={174}
           height={438}
@@ -60,7 +60,7 @@ function SelectDateTimeInner() {
           className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[140px] object-cover opacity-90 md:block"
         />
         <Image
-          src="/images/deco-chakra-right.png"
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-right.png"
           alt=""
           width={174}
           height={438}

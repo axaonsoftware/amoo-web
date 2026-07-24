@@ -2,11 +2,11 @@ import Image from "next/image";
 import { ChevronLeftIcon, ChevronRightIcon, SparkOrnament } from "./icons";
 
 const CERTIFICATES = [
-  { title: "Reiki Grand Master", src: "/imagesP/certificate_1.png" },
-  { title: "Numerology Expert", src: "/imagesP/certificate_2.png" },
-  { title: "Tarot Reading Expert", src: "/imagesP/certificate_3.png" },
-  { title: "Holistic Healing", src: "/imagesP/certificate_4.png" },
-  { title: "Spiritual Coach", src: "/imagesP/certificate_5.png" },
+  { title: "Reiki Grand Master", src: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/certificate_1.png" },
+  { title: "Numerology Expert", src: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/certificate_2.png" },
+  { title: "Tarot Reading Expert", src: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/certificate_3.png" },
+  { title: "Holistic Healing", src: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/certificate_4.png" },
+  { title: "Spiritual Coach", src: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/certificate_5.png" },
 ];
 
 export default function Certifications() {

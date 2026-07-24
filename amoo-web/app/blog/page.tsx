@@ -204,13 +204,13 @@ export default function BlogPage() {
       <OfferBar />
       <HomeHeader absolute={false} />
 
-      <main id="main-content" className="flex-1">
+      <main id="main-content" className="flex-1 overflow-x-hidden">
         {/* HERO SECTION */}
         <section className="relative overflow-hidden bg-[radial-gradient(130%_140%_at_20%_50%,#2d0f4f_0%,#1e0a38_45%,#130525_100%)]">
           <div className="haze pointer-events-none absolute inset-0 opacity-50" />
 
           <Image
-            src="/imagesP/blogPageHeroBgN.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/blogPageHeroBgN.png"
             alt=""
             fill
             sizes="100vw"
@@ -567,7 +567,7 @@ export default function BlogPage() {
 
           <div className="absolute left-[8%] top-1/2 -translate-y-1/2 opacity-25 md:opacity-40">
             <Image
-              src="/imagesP/lotus_candles_no_bg.png"
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
               alt={SITE_NAME}
               width={460}
               height={460}
@@ -619,7 +619,7 @@ export default function BlogPage() {
             <div className="grid grid-cols-1 gap-[30px] sm:grid-cols-2 lg:grid-cols-[220px_1fr_1fr_1fr_1fr]">
               <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
                 <Image
-                  src="/images/logo-footer.png"
+                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/logo-footer.png"
                   alt={SITE_NAME}
                   width={460}
                   height={460}

@@ -30,7 +30,7 @@ export default function Expertise() {
       {/* Portrait */}
       <div className="relative min-h-[300px] w-full lg:min-h-[500px]">
         <Image
-          src="/imagesP/aboutLady2.png"
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aboutLady2.png"
           alt="Surinder Kaur Sehgal writing"
           fill
           priority
@@ -94,7 +94,7 @@ export default function Expertise() {
       {/* Om panel */}
       <div className="relative flex flex-col items-center justify-center overflow-hidden bg-[#1a0828] px-4 py-4">
         <Image
-          src="/imagesP/OmSignP.png"
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/OmSignP.png"
           alt="Om"
           width={330}
           height={330}

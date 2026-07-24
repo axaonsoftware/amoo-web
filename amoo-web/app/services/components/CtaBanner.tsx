@@ -12,7 +12,7 @@ export default function CtaBanner() {
 
       {/* Tarot cards, candles and crystals */}
       <Image
-        src="/imagesP/tarot_no_bg.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/tarot_no_bg.png"
         alt=""
         width={324}
         height={108}
@@ -20,7 +20,7 @@ export default function CtaBanner() {
         className="pointer-events-none absolute right-[300px] bottom-[26px] hidden h-[130px] w-[210px] object-contain object-bottom lg:block"
       />
       <Image
-        src="/imagesP/lotus_candles_no_bg.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
         alt=""
         width={356}
         height={173}

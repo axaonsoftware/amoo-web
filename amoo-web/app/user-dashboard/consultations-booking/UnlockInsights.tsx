@@ -8,7 +8,7 @@ export default function UnlockInsights() {
       <div className="stars pointer-events-none absolute inset-0 opacity-50" />
 
       <Image
-        src="/imagesP/lotus_candles_no_bg.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
         alt=""
         width={300}
         height={300}

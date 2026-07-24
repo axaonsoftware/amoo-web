@@ -53,7 +53,7 @@ export default function Navbar() {
       <div className="mx-auto flex h-[66px] w-full max-w-[1400px] items-center justify-between gap-4 px-4 sm:h-[92px]">
         <Link href="/" className="shrink-0">
           <Image
-            src="/imagesP/amooLogoP.png"
+            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooLogoP.png"
             alt={SITE_NAME}
             width={300}
             height={120}

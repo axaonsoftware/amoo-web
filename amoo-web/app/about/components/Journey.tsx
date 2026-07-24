@@ -49,7 +49,7 @@ export default function Journey() {
       <div className="stars pointer-events-none absolute inset-0 opacity-50" />
 
       <Image
-        src="/images/deco-chakra-left.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-left.png"
         alt=""
         width={222}
         height={399}
@@ -57,7 +57,7 @@ export default function Journey() {
         className="pointer-events-none absolute -bottom-[10px] left-0 hidden h-[190px] w-[120px] object-cover opacity-70 xl:block"
       />
       <Image
-        src="/images/deco-chakra-right.png"
+        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-right.png"
         alt=""
         width={222}
         height={399}

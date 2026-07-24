@@ -102,7 +102,7 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
             id: Number(p.id),
             name: p.name,
             sub: p.description,
-            img: "/imagesP/aura_scanner.png",
+            img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aura_scanner.png",
             type: "Package",
             services: p.duration_days ? `${p.duration_days} days` : "Multiple",
             price: `₹ ${Number(p.price).toLocaleString("en-IN")}`,

@@ -56,7 +56,7 @@ export default function RightRail() {
           setTopPackages(
             items.slice(0, 5).map((p: any) => ({
               name: p.name || "Unknown",
-              img: "/imagesP/aura_scanner.png",
+              img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aura_scanner.png",
               bookings: `${p.bookings || 0} bookings`,
               revenue: `₹ ${Number(p.revenue || p.price || 0).toLocaleString("en-IN")}`,
             }))

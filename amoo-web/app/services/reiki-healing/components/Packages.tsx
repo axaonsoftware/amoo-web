@@ -122,7 +122,7 @@ export default function Packages() {
           {/* Journey CTA card */}
           <article className="relative overflow-hidden rounded-[12px] bg-[#210b36] sm:col-span-2 lg:col-span-4 xl:col-span-1">
             <Image
-              src="/images/trust-candles.png"
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
               alt=""
               width={417}
               height={222}

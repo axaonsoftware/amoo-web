@@ -256,7 +256,7 @@ export default function SelectServicePage() {
         <div className="stars pointer-events-none absolute inset-0 opacity-60" />
 
         <Image
-          src="/images/deco-chakra-left.png"
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-left.png"
           alt=""
           width={174}
           height={438}
@@ -264,7 +264,7 @@ export default function SelectServicePage() {
           className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[140px] object-cover opacity-90 md:block"
         />
         <Image
-          src="/images/deco-chakra-right.png"
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-chakra-right.png"
           alt=""
           width={174}
           height={438}
@@ -534,7 +534,7 @@ export default function SelectServicePage() {
               <div className="rounded-2xl border border-line bg-white p-4 shadow-[0_1px_2px_rgba(75,37,131,0.04)]">
                 <div className="flex items-start gap-3">
                   <Image
-                    src="/imagesP/amooLadyP.png"
+                    src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooLadyP.png"
                     alt="Expert"
                     width={96}
                     height={96}
