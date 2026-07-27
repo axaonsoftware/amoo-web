@@ -246,7 +246,7 @@ const schemas = {
   }),
 
   // Admin PATCH on a subscription. `expires_at` is an ISO datetime; `status`
-  // must match the ENUM exactly or MySQL silently coerces it to ''.
+  // must match the ENUM exactly or PostgreSQL throws an error.
   subscriptionUpdate: Joi.object({
     status: Joi.string().valid("active", "expired", "cancelled", "pending-payment"),
     auto_renew: Joi.boolean(),

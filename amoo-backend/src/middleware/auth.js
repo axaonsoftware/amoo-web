@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const env = require("../config/env");
 const { HttpError } = require("../utils/helpers");
 const { logAudit } = require("../utils/audit");
@@ -20,6 +21,10 @@ function signRefreshToken(payload) {
   return jwt.sign(payload, env.jwt.refreshSecret, { expiresIn: env.jwt.refreshExpiresIn });
 }
 
+function generateJti() {
+  return crypto.randomBytes(16).toString("hex");
+}
+
 function verifyAccessToken(token) {
   return jwt.verify(token, env.jwt.secret);
 }
@@ -39,15 +44,32 @@ function extractToken(req, fromCookie = false) {
   return null;
 }
 
+// In-memory cache for token_version to avoid a DB round-trip on every request.
+// TTL is intentionally short (10 s) so revocation is still near-real-time while
+// redundant reads under high traffic hit the cache instead of the pool.
+const tvCache = new Map();
+const TV_TTL_MS = 10_000;
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, v] of tvCache) { if (now >= v.expires) tvCache.delete(k); }
+}, TV_TTL_MS).unref();
+
 // Verify the token's embedded tokenVersion still matches the DB (revocation).
 async function checkTokenVersion(user) {
   if (user.tokenVersion === undefined) return true; // legacy tokens: trust
-  const table = resolveTable(user.kind);
-  const [rows] = await pool.query(`SELECT token_version FROM ${table} WHERE id = ?`, [user.id]);
-  if (!rows.length) throw new HttpError(401, "Account no longer exists");
-  if (rows[0].token_version !== user.tokenVersion) {
-    throw new HttpError(401, "Session revoked. Please login again.");
+  const cacheKey = `${user.kind}:${user.id}`;
+  const cached = tvCache.get(cacheKey);
+  if (cached !== undefined) {
+    if (cached !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
+    return true;
   }
+  const table = resolveTable(user.kind);
+  const result = await pool.query(`SELECT token_version FROM ${table} WHERE id = $1`, [user.id]);
+  if (!result.rows.length) throw new HttpError(401, "Account no longer exists");
+  const dbVersion = result.rows[0].token_version;
+  tvCache.set(cacheKey, dbVersion);
+  setTimeout(() => tvCache.delete(cacheKey), TV_TTL_MS).unref();
+  if (dbVersion !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
   return true;
 }
 
@@ -76,9 +98,9 @@ function verifiedRequired(req, res, next) {
     return next(e);
   }
 
-  pool.query(`SELECT verified FROM ${table} WHERE id = ?`, [req.user.id])
-    .then(([rows]) => {
-      req._verifiedUser = rows[0] || null;
+  pool.query(`SELECT verified FROM ${table} WHERE id = $1`, [req.user.id])
+    .then((result) => {
+      req._verifiedUser = result.rows[0] || null;
       finish(req._verifiedUser);
     })
     .catch((e) => next(e));
@@ -158,6 +180,7 @@ function withAudit(req, res, next) {
 module.exports = {
   signAccessToken,
   signRefreshToken,
+  generateJti,
   verifyAccessToken,
   verifyRefreshToken,
   extractToken,

@@ -15,12 +15,12 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
-    const [[{ total }]] = await pool.query(
-      "SELECT COUNT(*) AS total FROM notifications WHERE (user_id = ? OR user_id IS NULL)",
+    const { rows: [{ total }] } = await pool.query(
+      "SELECT COUNT(*) AS total FROM notifications WHERE (user_id = $1 OR user_id IS NULL)",
       [req.user.id]
     );
-    const [rows] = await pool.query(
-      "SELECT * FROM notifications WHERE (user_id = ? OR user_id IS NULL) ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    const { rows } = await pool.query(
+      "SELECT * FROM notifications WHERE (user_id = $1 OR user_id IS NULL) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
       [req.user.id, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -32,8 +32,8 @@ router.get(
   "/unread-count",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(
-      "SELECT COUNT(*) AS count FROM notifications WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0",
+    const { rows } = await pool.query(
+      "SELECT COUNT(*) AS count FROM notifications WHERE (user_id = $1 OR user_id IS NULL) AND is_read = false",
       [req.user.id]
     );
     ok(res, rows[0]);
@@ -45,11 +45,11 @@ router.post(
   "/:id/read",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT * FROM notifications WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT * FROM notifications WHERE id = $1", [req.params.id]);
     if (rows.length && rows[0].user_id && rows[0].user_id !== req.user.id) {
       return fail(res, 403, "Forbidden");
     }
-    await pool.query("UPDATE notifications SET is_read = 1 WHERE id = ?", [req.params.id]);
+    await pool.query("UPDATE notifications SET is_read = true WHERE id = $1", [req.params.id]);
     ok(res, { id: Number(req.params.id), read: true });
   })
 );
@@ -59,11 +59,11 @@ router.post(
   "/read-all",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [result] = await pool.query(
-      "UPDATE notifications SET is_read = 1 WHERE (user_id = ? OR user_id IS NULL) AND is_read = 0",
+    const result = await pool.query(
+      "UPDATE notifications SET is_read = true WHERE (user_id = $1 OR user_id IS NULL) AND is_read = false",
       [req.user.id]
     );
-    ok(res, { marked: result.affectedRows });
+    ok(res, { marked: result.rowCount });
   })
 );
 
@@ -74,7 +74,7 @@ router.delete(
   "/:id",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT * FROM notifications WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT * FROM notifications WHERE id = $1", [req.params.id]);
     if (!rows.length) return ok(res, { id: Number(req.params.id), deleted: true });
     const n = rows[0];
     if (n.user_id && n.user_id !== req.user.id && req.user.kind !== "admin") {
@@ -83,7 +83,7 @@ router.delete(
     if (!n.user_id && req.user.kind !== "admin") {
       return fail(res, 403, "Forbidden");
     }
-    await pool.query("DELETE FROM notifications WHERE id = ?", [req.params.id]);
+    await pool.query("DELETE FROM notifications WHERE id = $1", [req.params.id]);
     req.audit("delete", "notification", Number(req.params.id));
     ok(res, { id: Number(req.params.id), deleted: true });
   })
@@ -96,19 +96,19 @@ router.post(
   validate("notification"),
   asyncHandler(async (req, res) => {
     const { user_id, title, message, type } = req.body;
-    const [result] = await pool.query(
-      "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)",
+    const result = await pool.query(
+      "INSERT INTO notifications (user_id, title, message, type) VALUES ($1, $2, $3, $4) RETURNING id",
       [user_id || null, title, message, type || "info"]
     );
-    req.audit("create", "notification", result.insertId, { user_id });
+    req.audit("create", "notification", result.rows[0].id, { user_id });
 
     // Fire-and-forget: send email notification
     (async () => {
       try {
         if (user_id) {
           // Targeted — one recipient, addressed normally.
-          const [[u]] = await pool.query(
-            "SELECT email FROM users WHERE id = ? AND deleted_at IS NULL",
+          const { rows: [u] } = await pool.query(
+            "SELECT email FROM users WHERE id = $1 AND deleted_at IS NULL",
             [user_id]
           );
           if (u?.email) await sendNotificationEmail(u.email, title, message);
@@ -121,8 +121,8 @@ router.post(
         // showed every user the full address list of every other user — a
         // personal-data breach on the first broadcast. An array routes through
         // sendBulk(), which chunks the list into Bcc batches instead.
-        const [rows] = await pool.query(
-          "SELECT email FROM users WHERE verified = 1 AND deleted_at IS NULL AND email IS NOT NULL AND email != ''"
+        const { rows } = await pool.query(
+          "SELECT email FROM users WHERE verified = true AND deleted_at IS NULL AND email IS NOT NULL AND email != ''"
         );
         const emails = rows.map((r) => r.email).filter(Boolean);
         if (emails.length) {
@@ -137,7 +137,7 @@ router.post(
       }
     })();
 
-    created(res, { id: result.insertId });
+    created(res, { id: result.rows[0].id });
   })
 );
 
@@ -148,9 +148,9 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
-    const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM notifications");
-    const [rows] = await pool.query(
-      "SELECT * FROM notifications ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    const { rows: [{ total }] } = await pool.query("SELECT COUNT(*) AS total FROM notifications");
+    const { rows } = await pool.query(
+      "SELECT * FROM notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2",
       [pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });

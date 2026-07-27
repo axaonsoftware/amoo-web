@@ -1,4 +1,4 @@
-const express = require("express");
+﻿const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
@@ -15,14 +15,14 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
-    const [[{ total }]] = await pool.query(
-      "SELECT COUNT(*) AS total FROM subscriptions WHERE user_id = ?",
+    const { rows: [{ total }] } = await pool.query(
+      "SELECT COUNT(*) AS total FROM subscriptions WHERE user_id = $1",
       [req.user.id]
     );
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT s.*, p.name AS package_name, p.price AS package_price
        FROM subscriptions s LEFT JOIN packages p ON p.id = s.package_id
-       WHERE s.user_id = ? ORDER BY s.started_at DESC LIMIT ? OFFSET ?`,
+       WHERE s.user_id = $1 ORDER BY s.started_at DESC LIMIT $2 OFFSET $3`,
       [req.user.id, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -45,7 +45,7 @@ router.post(
     let days = duration_days ? Number(duration_days) : 30;
     let price = 0;
     if (package_id) {
-      const [rows] = await pool.query("SELECT * FROM packages WHERE id = ? AND deleted_at IS NULL", [package_id]);
+      const { rows } = await pool.query("SELECT * FROM packages WHERE id = $1 AND deleted_at IS NULL", [package_id]);
       if (!rows.length) throw new HttpError(404, "Package not found");
       if (rows[0].status !== "Active") throw new HttpError(400, "Package is not available");
       name = rows[0].name;
@@ -56,21 +56,22 @@ router.post(
     const expires = new Date(Date.now() + days * 86400000);
     const isFree = price <= 0;
     const status = isFree ? "active" : "pending-payment";
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
-      const [result] = await conn.query(
-        "INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at, status, auto_renew) VALUES (?, ?, ?, ?, ?, ?)",
-        [req.user.id, package_id || null, name, expires, status, auto_renew ? 1 : 0]
+      await client.query('BEGIN');
+      const result = await client.query(
+        "INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at, status, auto_renew) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
+        [req.user.id, package_id || null, name, expires, status, auto_renew]
       );
+      const insertId = result.rows[0].id;
       if (isFree) {
         // No payment needed: activate premium immediately.
-        await conn.query("UPDATE users SET role = 'premium' WHERE id = ?", [req.user.id]);
+        await client.query("UPDATE users SET role = 'premium' WHERE id = $1", [req.user.id]);
       }
-      await conn.commit();
-      req.audit("create", "subscription", result.insertId, { plan_name: name, free: isFree });
+      await client.query('COMMIT');
+      req.audit("create", "subscription", insertId, { plan_name: name, free: isFree });
       created(res, {
-        id: result.insertId,
+        id: insertId,
         plan_name: name,
         expires_at: expires,
         status,
@@ -78,10 +79,10 @@ router.post(
         note: isFree ? "Free plan activated." : "Complete payment to activate premium.",
       });
     } catch (e) {
-      await conn.rollback();
+      await client.query('ROLLBACK');
       throw e;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -91,12 +92,12 @@ router.post(
   "/:id/cancel",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT * FROM subscriptions WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT * FROM subscriptions WHERE id = $1", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
       return fail(res, 403, "Forbidden");
     }
-    await pool.query("UPDATE subscriptions SET status = 'cancelled', auto_renew = 0 WHERE id = ?", [req.params.id]);
+    await pool.query("UPDATE subscriptions SET status = 'cancelled', auto_renew = false WHERE id = $1", [req.params.id]);
     req.audit("cancel", "subscription", Number(req.params.id));
     ok(res, { id: Number(req.params.id), cancelled: true });
   })
@@ -111,13 +112,18 @@ router.get(
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];
     let where = "WHERE 1=1";
-    if (req.query.status) { where += " AND s.status = ?"; params.push(req.query.status); }
-    if (req.query.user_id) { where += " AND s.user_id = ?"; params.push(req.query.user_id); }
-    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM subscriptions s ${where}`, params);
-    const [rows] = await pool.query(
+    let paramIndex = 0;
+    if (req.query.status) { where += ` AND s.status = $${++paramIndex}`; params.push(req.query.status); }
+    if (req.query.user_id) { where += ` AND s.user_id = $${++paramIndex}`; params.push(req.query.user_id); }
+    const { rows: [{ total }] } = await pool.query(
+      `SELECT COUNT(*) AS total FROM subscriptions s ${where}`,
+      params
+    );
+    const { rows } = await pool.query(
       `SELECT s.*, u.name AS user_name, p.name AS package_name
        FROM subscriptions s JOIN users u ON u.id = s.user_id
-       LEFT JOIN packages p ON p.id = s.package_id ${where} ORDER BY s.started_at DESC LIMIT ? OFFSET ?`,
+       LEFT JOIN packages p ON p.id = s.package_id ${where}
+       ORDER BY s.started_at DESC LIMIT $${paramIndex + 1} OFFSET $${paramIndex + 2}`,
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -131,7 +137,7 @@ router.patch(
   validate("subscriptionUpdate"),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, SUB_UPDATE_ALLOWED, [req.params.id]);
-    await pool.query(`UPDATE subscriptions SET ${setClause} WHERE id = ?`, values);
+    await pool.query(`UPDATE subscriptions SET ${setClause} WHERE id = $${values.length}`, values);
     req.audit("update", "subscription", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })
@@ -140,23 +146,20 @@ router.patch(
 // Shared expire logic (used by both the HTTP endpoint and the cron job).
 // Returns { expired: number } so callers can log or respond accordingly.
 async function expireSubscriptions() {
-  const [expired] = await pool.query(
+  const { rows: expired } = await pool.query(
     "SELECT id, user_id FROM subscriptions WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()"
   );
-  if (expired.length) {
+if (expired.length) {
     const ids = expired.map((e) => e.id);
-    // mysql2 expands an array in `?` to a comma-separated list for IN clauses
-    await pool.query("UPDATE subscriptions SET status = 'expired' WHERE id IN (?)", [ids]);
-    // Downgrade users who have NO remaining active subscription (single query, no N+1)
+    await pool.query("UPDATE subscriptions SET status = 'expired' WHERE id = ANY($1::int[])", [ids]);
     const userIds = [...new Set(expired.map((e) => e.user_id))];
-    // Find users among the expired group that still have an active subscription
-    const [[{ keepActive }]] = await pool.query(
-      "SELECT COUNT(DISTINCT user_id) AS keepActive FROM subscriptions WHERE user_id IN (?) AND status = 'active'",
+    const { rows: [{ keepActive }] } = await pool.query(
+      "SELECT COUNT(DISTINCT user_id)::int AS keepActive FROM subscriptions WHERE user_id = ANY($1::int[]) AND status = 'active'",
       [userIds]
     );
     if (keepActive < userIds.length) {
       await pool.query(
-        "UPDATE users SET role = 'free' WHERE id IN (?) AND role != 'free' AND id NOT IN (SELECT user_id FROM subscriptions WHERE status = 'active')",
+        "UPDATE users SET role = 'free' WHERE id = ANY($1::int[]) AND role != 'free' AND id NOT IN (SELECT user_id FROM subscriptions WHERE status = 'active')",
         [userIds]
       );
     }

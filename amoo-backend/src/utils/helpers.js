@@ -25,7 +25,7 @@ function genOtp(length = 6) {
 function buildUpdate(fields, allowed, startingValues = []) {
   const keys = Object.keys(fields).filter((k) => allowed.includes(k));
   if (!keys.length) throw new HttpError(400, "No valid fields to update");
-  const setClause = keys.map((k) => `\`${k}\` = ?`).join(", ");
+  const setClause = keys.map((k, i) => `"${k}" = $${i + 1}`).join(", ");
   const values = [...keys.map((k) => fields[k]), ...startingValues];
   return { setClause, values, keys };
 }

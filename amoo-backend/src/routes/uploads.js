@@ -22,11 +22,11 @@ router.post(
     const ext = path.extname(req.file.originalname).toLowerCase();
     const unique = Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
     const saved = await saveFile(req.file.buffer, unique, req.file.mimetype);
-    const [result] = await pool.query(
-      "INSERT INTO uploads (user_id, original_name, stored_name, path, mime, size) VALUES (?, ?, ?, ?, ?, ?)",
+    const result = await pool.query(
+      "INSERT INTO uploads (user_id, original_name, stored_name, path, mime, size) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id",
       [req.user.id, req.file.originalname, saved.key, saved.url, req.file.mimetype, req.file.size]
     );
-    created(res, { id: result.insertId, url: saved.url, filename: saved.key, size: req.file.size });
+    created(res, { id: result.rows[0].id, url: saved.url, filename: saved.key, size: req.file.size });
   })
 );
 
@@ -37,12 +37,12 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
-    const [[{ total }]] = await pool.query(
-      "SELECT COUNT(*) AS total FROM uploads WHERE user_id = ?",
+    const { rows: [{ total }] } = await pool.query(
+      "SELECT COUNT(*) AS total FROM uploads WHERE user_id = $1",
       [req.user.id]
     );
-    const [rows] = await pool.query(
-      "SELECT id, original_name, stored_name, path, mime, size, created_at FROM uploads WHERE user_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    const { rows } = await pool.query(
+      "SELECT id, original_name, stored_name, path, mime, size, created_at FROM uploads WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
       [req.user.id, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -55,9 +55,9 @@ router.get(
   adminRequired,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
-    const [[{ total }]] = await pool.query("SELECT COUNT(*) AS total FROM uploads");
-    const [rows] = await pool.query(
-      "SELECT id, user_id, original_name, path, mime, size, created_at FROM uploads ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    const { rows: [{ total }] } = await pool.query("SELECT COUNT(*) AS total FROM uploads");
+    const { rows } = await pool.query(
+      "SELECT id, user_id, original_name, path, mime, size, created_at FROM uploads ORDER BY created_at DESC LIMIT $1 OFFSET $2",
       [pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -70,7 +70,7 @@ router.get(
   "/:id/download",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT * FROM uploads WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT * FROM uploads WHERE id = $1", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     const u = rows[0];
     if (req.user.kind !== "admin" && u.user_id !== req.user.id) {
@@ -79,8 +79,6 @@ router.get(
     if (env.storage.enabled && u.path && /^https?:\/\//i.test(u.path)) {
       return res.redirect(u.path);
     }
-    // Resolved through the same containment guard the report download uses, so
-    // a hand-edited `uploads.path` row can't escape the uploads directory.
     const filePath = resolveStoredFile(u.path);
     if (!filePath) return fail(res, 400, "Invalid file reference");
     if (!fs.existsSync(filePath)) return fail(res, 404, "File not found on disk");
@@ -94,13 +92,13 @@ router.delete(
   "/:id",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT * FROM uploads WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT * FROM uploads WHERE id = $1", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
       return fail(res, 403, "Forbidden");
     }
     await deleteFile(rows[0].stored_name);
-    await pool.query("DELETE FROM uploads WHERE id = ?", [req.params.id]);
+    await pool.query("DELETE FROM uploads WHERE id = $1", [req.params.id]);
     ok(res, { id: Number(req.params.id), deleted: true });
   })
 );

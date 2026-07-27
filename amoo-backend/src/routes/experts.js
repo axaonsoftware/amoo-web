@@ -13,6 +13,11 @@ const EXPERT_UPDATE_ALLOWED = [
 const EXPERT_SELECT = "id, name, email, phone, avatar, role_title, bio, specialties, rating, status, created_at";
 
 // GET /api/experts (public, active only) + admin sees all via ?all=1
+//
+// Public usage:  GET /api/experts              → active experts only
+// Admin usage:   GET /api/experts?all=1        → all experts (requires admin JWT)
+// Filtered:      GET /api/experts?status=active&search=vasant
+// Paginated:     GET /api/experts?page=2&limit=20
 router.get(
   "/",
   validateQuery,
@@ -41,11 +46,12 @@ router.get(
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];
     let where = isAdmin ? "WHERE deleted_at IS NULL" : "WHERE status = 'active' AND deleted_at IS NULL";
-    if (req.query.status) { where += " AND status = ?"; params.push(req.query.status); }
-    if (req.query.search) { where += " AND (name LIKE ? OR specialties LIKE ?)"; params.push(`%${req.query.search}%`, `%${req.query.search}%`); }
-    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM experts ${where}`, params);
-    const [rows] = await pool.query(
-      `SELECT ${EXPERT_SELECT} FROM experts ${where} ORDER BY rating DESC LIMIT ? OFFSET ?`,
+    if (req.query.status) { where += ` AND status = $${params.length + 1}`; params.push(req.query.status); }
+    if (req.query.search) { where += ` AND (name LIKE $${params.length + 1} OR specialties LIKE $${params.length + 2})`; params.push(`%${req.query.search}%`, `%${req.query.search}%`); }
+    const { rows: [{ total }] } = await pool.query(`SELECT COUNT(*) AS total FROM experts ${where}`, params);
+    const n = params.length;
+    const { rows } = await pool.query(
+      `SELECT ${EXPERT_SELECT} FROM experts ${where} ORDER BY rating DESC LIMIT $${n + 1} OFFSET $${n + 2}`,
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -56,7 +62,7 @@ router.get(
 router.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(`SELECT ${EXPERT_SELECT} FROM experts WHERE id = ? AND deleted_at IS NULL`, [req.params.id]);
+    const { rows } = await pool.query(`SELECT ${EXPERT_SELECT} FROM experts WHERE id = $1 AND deleted_at IS NULL`, [req.params.id]);
     if (assertFound(res, rows[0])) return;
     ok(res, rows[0]);
   })
@@ -69,14 +75,14 @@ router.post(
   validate("expert"),
   asyncHandler(async (req, res) => {
     const { name, email, phone, avatar, role_title, bio, specialties, rating } = req.body;
-    const [existing] = await pool.query("SELECT id FROM experts WHERE email = ?", [email]);
+    const { rows: existing } = await pool.query("SELECT id FROM experts WHERE email = $1", [email]);
     if (existing.length) throw new HttpError(409, "Expert email already exists");
-    const [result] = await pool.query(
-      "INSERT INTO experts (name, email, phone, avatar, role_title, bio, specialties, rating) VALUES (?,?,?,?,?,?,?,?)",
+    const result = await pool.query(
+      "INSERT INTO experts (name, email, phone, avatar, role_title, bio, specialties, rating) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id",
       [name, email, phone || null, avatar || null, role_title || null, bio || null, specialties || null, rating || 0]
     );
-    req.audit("create", "expert", result.insertId, { name });
-    created(res, { id: result.insertId });
+    req.audit("create", "expert", result.rows[0].id, { name });
+    created(res, { id: result.rows[0].id });
   })
 );
 
@@ -87,16 +93,16 @@ router.patch(
   validate("expertUpdate"),
   asyncHandler(async (req, res) => {
     // experts.email is UNIQUE — without this pre-check a collision surfaces as
-    // an unhandled ER_DUP_ENTRY and a 500 instead of a usable 409.
+    // an unhandled 23505 (unique_violation) and a 500 instead of a usable 409.
     if (req.body.email) {
-      const [clash] = await pool.query(
-        "SELECT id FROM experts WHERE email = ? AND id <> ?",
+      const { rows: clash } = await pool.query(
+        "SELECT id FROM experts WHERE email = $1 AND id <> $2",
         [req.body.email, req.params.id]
       );
       if (clash.length) throw new HttpError(409, "Expert email already exists");
     }
-    const { setClause, values } = buildUpdate(req.body, EXPERT_UPDATE_ALLOWED, [req.params.id]);
-    await pool.query(`UPDATE experts SET ${setClause} WHERE id = ?`, values);
+    const { setClause, values } = buildUpdate(req.body, EXPERT_UPDATE_ALLOWED);
+    await pool.query(`UPDATE experts SET ${setClause} WHERE id = $${values.length + 1}`, [...values, req.params.id]);
     req.audit("update", "expert", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })
@@ -107,9 +113,9 @@ router.delete(
   "/:id",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT id FROM experts WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
+    const { rows } = await pool.query("SELECT id FROM experts WHERE id = $1 AND deleted_at IS NULL", [req.params.id]);
     if (assertFound(res, rows[0])) return;
-    await pool.query("UPDATE experts SET deleted_at = NOW(), status = 'inactive' WHERE id = ?", [req.params.id]);
+    await pool.query("UPDATE experts SET deleted_at = NOW(), status = 'inactive' WHERE id = $1", [req.params.id]);
     req.audit("delete", "expert", Number(req.params.id));
     ok(res, { id: Number(req.params.id), deleted: true });
   })
@@ -122,11 +128,11 @@ router.post(
   validate("setExpertPassword"),
   asyncHandler(async (req, res) => {
     const { password } = req.body;
-    const [rows] = await pool.query("SELECT id FROM experts WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
+    const { rows } = await pool.query("SELECT id FROM experts WHERE id = $1 AND deleted_at IS NULL", [req.params.id]);
     if (assertFound(res, rows[0])) return;
     const hash = await bcrypt.hash(password, 12);
     await pool.query(
-      "UPDATE experts SET password_hash = ?, token_version = token_version + 1, verified = 1 WHERE id = ?",
+      "UPDATE experts SET password_hash = $1, token_version = token_version + 1, verified = true WHERE id = $2",
       [hash, req.params.id]
     );
     req.audit("set-password", "expert", Number(req.params.id));

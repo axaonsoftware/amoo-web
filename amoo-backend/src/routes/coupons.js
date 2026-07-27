@@ -38,12 +38,13 @@ router.get(
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];
     let where = "WHERE 1=1";
-    if (req.query.status === "active") where += " AND active = 1";
-    if (req.query.status === "inactive") where += " AND active = 0";
-    if (req.query.search) { where += " AND code LIKE ?"; params.push(`%${req.query.search}%`); }
-    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM coupons ${where}`, params);
-    const [rows] = await pool.query(
-      "SELECT * FROM coupons " + where + " ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    let paramIndex = 0;
+    if (req.query.status === "active") where += " AND active = true";
+    if (req.query.status === "inactive") where += " AND active = false";
+    if (req.query.search) { where += ` AND code LIKE $${++paramIndex}`; params.push(`%${req.query.search}%`); }
+    const { rows: [{ total }] } = await pool.query(`SELECT COUNT(*) AS total FROM coupons ${where}`, params);
+    const { rows } = await pool.query(
+      `SELECT * FROM coupons ${where} ORDER BY created_at DESC LIMIT $${paramIndex + 1} OFFSET $${paramIndex + 2}`,
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -59,15 +60,15 @@ router.post(
     const {
       code, description, discount_type, discount_value, min_amount, max_uses, expires_at, active,
     } = req.body;
-    const [existing] = await pool.query("SELECT id FROM coupons WHERE code = ?", [code]);
+    const { rows: existing } = await pool.query("SELECT id FROM coupons WHERE code = $1", [code]);
     if (existing.length) throw new HttpError(409, "Coupon code already exists");
-    const [result] = await pool.query(
+    const result = await pool.query(
       `INSERT INTO coupons (code, description, discount_type, discount_value, min_amount, max_uses, expires_at, active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
       [code, description || null, discount_type, discount_value, min_amount, max_uses || null, expires_at || null, active]
     );
-    req.audit("create", "coupon", result.insertId, { code });
-    created(res, { id: result.insertId });
+    req.audit("create", "coupon", result.rows[0].id, { code });
+    created(res, { id: result.rows[0].id });
   })
 );
 
@@ -77,7 +78,7 @@ router.post(
   validate("couponValidate"),
   asyncHandler(async (req, res) => {
     const { code, amount } = req.body;
-    const [rows] = await pool.query("SELECT * FROM coupons WHERE code = ?", [code.toUpperCase()]);
+    const { rows } = await pool.query("SELECT * FROM coupons WHERE code = $1", [code.toUpperCase()]);
     if (!rows.length) throw new HttpError(404, "Invalid coupon");
     const c = rows[0];
     if (!c.active) throw new HttpError(400, "Coupon inactive");
@@ -115,13 +116,13 @@ router.post(
   validate("couponApply"),
   asyncHandler(async (req, res) => {
     const { code, booking_id } = req.body;
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
+      await client.query('BEGIN');
       // Lock the booking: its amount is both the discount base and the row we
       // are about to rewrite, so it must not move underneath us.
-      const [b] = await conn.query(
-        "SELECT id, user_id, amount, payment, status FROM bookings WHERE id = ? FOR UPDATE",
+      const { rows: b } = await client.query(
+        "SELECT id, user_id, amount, payment, status FROM bookings WHERE id = $1 FOR UPDATE",
         [booking_id]
       );
       if (!b.length) throw new HttpError(404, "Booking not found");
@@ -130,20 +131,20 @@ router.post(
       if (booking.payment === "Paid") throw new HttpError(400, "Booking is already paid");
       if (booking.status === "cancelled") throw new HttpError(400, "Booking is cancelled");
 
-      const [[already]] = await conn.query(
-        "SELECT id FROM coupon_usages WHERE booking_id = ? LIMIT 1",
+      const { rows: [already] } = await client.query(
+        "SELECT id FROM coupon_usages WHERE booking_id = $1 LIMIT 1",
         [booking_id]
       );
       if (already) throw new HttpError(409, "A coupon has already been applied to this booking");
       // Legacy guard: redemptions made before coupon_usages existed live in
       // `payments` as gateway = 'coupon:CODE'. Drop this once those are migrated.
-      const [[legacy]] = await conn.query(
-        "SELECT id FROM payments WHERE booking_id = ? AND gateway LIKE 'coupon:%' LIMIT 1",
+      const { rows: [legacy] } = await client.query(
+        "SELECT id FROM payments WHERE booking_id = $1 AND gateway LIKE 'coupon:%' LIMIT 1",
         [booking_id]
       );
       if (legacy) throw new HttpError(409, "A coupon has already been applied to this booking");
 
-      const [rows] = await conn.query("SELECT * FROM coupons WHERE code = ? FOR UPDATE", [code.toUpperCase()]);
+      const { rows } = await client.query("SELECT * FROM coupons WHERE code = $1 FOR UPDATE", [code.toUpperCase()]);
       if (!rows.length) throw new HttpError(404, "Invalid coupon");
       const c = rows[0];
       if (!c.active) throw new HttpError(400, "Coupon inactive");
@@ -159,14 +160,14 @@ router.post(
       const discount = Math.round(Math.min(raw, amountBefore) * 100) / 100;
       const amountAfter = Math.round((amountBefore - discount) * 100) / 100;
 
-      await conn.query("UPDATE coupons SET used_count = used_count + 1 WHERE id = ?", [c.id]);
-      await conn.query("UPDATE bookings SET amount = ? WHERE id = ?", [amountAfter, booking_id]);
-      await conn.query(
+      await client.query("UPDATE coupons SET used_count = used_count + 1 WHERE id = $1", [c.id]);
+      await client.query("UPDATE bookings SET amount = $1 WHERE id = $2", [amountAfter, booking_id]);
+      await client.query(
         `INSERT INTO coupon_usages (coupon_id, booking_id, user_id, discount, amount_before, amount_after)
-         VALUES (?, ?, ?, ?, ?, ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6)`,
         [c.id, booking_id, req.user.id, discount, amountBefore, amountAfter]
       );
-      await conn.commit();
+      await client.query('COMMIT');
       req.audit("apply", "coupon", c.id, { code: c.code, booking_id, discount, amount_before: amountBefore, amount_after: amountAfter });
       ok(res, {
         code: c.code,
@@ -176,10 +177,10 @@ router.post(
         amount: amountAfter,
       });
     } catch (e) {
-      await conn.rollback();
+      await client.query('ROLLBACK');
       throw e;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -191,7 +192,9 @@ router.patch(
   validate("coupon", undefined, couponUpdateSchema),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, COUPON_UPDATE_ALLOWED, [req.params.id]);
-    await pool.query(`UPDATE coupons SET ${setClause} WHERE id = ?`, values);
+    let paramIdx = 0;
+    const pgSetClause = setClause.replace(/\?/g, () => `$${++paramIdx}`);
+    await pool.query(`UPDATE coupons SET ${pgSetClause} WHERE id = $${values.length}`, values);
     req.audit("update", "coupon", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })
@@ -201,9 +204,9 @@ router.delete(
   "/:id",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT id FROM coupons WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT id FROM coupons WHERE id = $1", [req.params.id]);
     if (assertFound(res, rows[0])) return;
-    await pool.query("DELETE FROM coupons WHERE id = ?", [req.params.id]);
+    await pool.query("DELETE FROM coupons WHERE id = $1", [req.params.id]);
     req.audit("delete", "coupon", Number(req.params.id));
     ok(res, { id: Number(req.params.id), deleted: true });
   })

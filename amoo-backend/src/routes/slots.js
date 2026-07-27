@@ -6,6 +6,8 @@ const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
 
+const toPg = (sql) => { let i = 0; return sql.replace(/\?/g, () => `$${++i}`); };
+
 // GET /api/slots?expert_id=1&date=2025-05-18 (public + filters)
 router.get(
   "/",
@@ -17,23 +19,16 @@ router.get(
     if (req.query.expert_id) { where += " AND expert_id = ?"; params.push(req.query.expert_id); }
     if (req.query.date) { where += " AND date = ?"; params.push(req.query.date); }
     if (req.query.status) { where += " AND status = ?"; params.push(req.query.status); }
-    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM slots ${where}`, params);
-    const [rows] = await pool.query(
-      `SELECT * FROM slots ${where} ORDER BY date, start_time LIMIT ? OFFSET ?`,
+    const { rows: [{ total }] } = await pool.query(toPg(`SELECT COUNT(*) AS total FROM slots ${where}`), params);
+    const { rows } = await pool.query(
+      toPg(`SELECT * FROM slots ${where} ORDER BY date, start_time LIMIT ? OFFSET ?`),
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
   })
 );
 
-// GET /api/slots/availability  (admin: per-expert slot utilisation)
-//
-// The admin availability table needs one row per expert with total/booked/
-// available counts. GET /api/slots returns individual slot ROWS, so the table
-// looked for `total_slots` / `booked_slots` fields that no endpoint has ever
-// returned and fell back to `|| 24` and `Math.floor(total * 0.6)` — showing a
-// fabricated "24 slots, 60% booked" for every astrologer. Doing the aggregation
-// here keeps it one query instead of one request per expert.
+// GET /api/slots/availability (admin: per-expert slot utilisation)
 router.get(
   "/availability",
   adminRequired,
@@ -48,8 +43,7 @@ router.get(
       if (req.query.date_from) { slotWhere += " AND s.date >= ?"; params.push(req.query.date_from); }
       if (req.query.date_to) { slotWhere += " AND s.date <= ?"; params.push(req.query.date_to); }
     } else {
-      // Default window: today onward. Past slots are not "availability".
-      slotWhere = "AND s.date >= CURDATE()";
+      slotWhere = "AND s.date >= CURRENT_DATE";
     }
 
     const searchParams = [];
@@ -60,21 +54,21 @@ router.get(
       searchParams.push(`%${req.query.search}%`, `%${req.query.search}%`);
     }
 
-    // LEFT JOIN so an expert with no slots appears with zeroes rather than
-    // vanishing from the table.
-    const [rows] = await pool.query(
-      `SELECT e.id, e.name, e.avatar, e.specialties, e.status, e.rating,
-              COUNT(s.id) AS total_slots,
-              SUM(CASE WHEN s.status = 'booked'    THEN 1 ELSE 0 END) AS booked_slots,
-              SUM(CASE WHEN s.status = 'available' THEN 1 ELSE 0 END) AS available_slots,
-              SUM(CASE WHEN s.status = 'blocked'   THEN 1 ELSE 0 END) AS blocked_slots,
-              MIN(s.date) AS first_slot_date,
-              MAX(s.date) AS last_slot_date
-         FROM experts e
-         LEFT JOIN slots s ON s.expert_id = e.id ${slotWhere}
-         ${expertWhere}
-        GROUP BY e.id
-        ORDER BY booked_slots DESC, e.name ASC`,
+    const { rows } = await pool.query(
+      toPg(
+        `SELECT e.id, e.name, e.avatar, e.specialties, e.status, e.rating,
+                COUNT(s.id) AS total_slots,
+                SUM(CASE WHEN s.status = 'booked'    THEN 1 ELSE 0 END) AS booked_slots,
+                SUM(CASE WHEN s.status = 'available' THEN 1 ELSE 0 END) AS available_slots,
+                SUM(CASE WHEN s.status = 'blocked'   THEN 1 ELSE 0 END) AS blocked_slots,
+                MIN(s.date) AS first_slot_date,
+                MAX(s.date) AS last_slot_date
+           FROM experts e
+           LEFT JOIN slots s ON s.expert_id = e.id ${slotWhere}
+           ${expertWhere}
+          GROUP BY e.id
+          ORDER BY booked_slots DESC, e.name ASC`
+      ),
       [...params, ...searchParams]
     );
 
@@ -89,7 +83,6 @@ router.get(
           booked_slots: booked,
           available_slots: Number(r.available_slots) || 0,
           blocked_slots: Number(r.blocked_slots) || 0,
-          // Computed server-side so every consumer shows the same number.
           utilisation_pct: total > 0 ? Math.round((booked / total) * 100) : 0,
         };
       })
@@ -104,12 +97,13 @@ router.post(
   validate("slot"),
   asyncHandler(async (req, res) => {
     const { expert_id, date, start_time, end_time, status } = req.body;
-    const [result] = await pool.query(
-      "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES (?,?,?,?,?)",
+    const result = await pool.query(
+      "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES ($1,$2,$3,$4,$5) RETURNING id",
       [expert_id, date, start_time, end_time || null, status || "available"]
     );
-    req.audit("create", "slot", result.insertId, { expert_id });
-    created(res, { id: result.insertId });
+    const id = result.rows[0].id;
+    req.audit("create", "slot", id, { expert_id });
+    created(res, { id });
   })
 );
 
@@ -120,10 +114,8 @@ router.patch(
   validate("slotUpdate"),
   asyncHandler(async (req, res) => {
     const { status } = req.body;
-    const [result] = await pool.query("UPDATE slots SET status = ? WHERE id = ?", [status, req.params.id]);
-    // Reporting 200 for a slot that does not exist made the admin UI show a
-    // successful save against a row it had never loaded.
-    if (result.affectedRows === 0) throw new HttpError(404, "Slot not found");
+    const result = await pool.query("UPDATE slots SET status = $1 WHERE id = $2", [status, req.params.id]);
+    if (result.rowCount === 0) throw new HttpError(404, "Slot not found");
     req.audit("update", "slot", Number(req.params.id), { status });
     ok(res, { id: Number(req.params.id), status });
   })
@@ -134,9 +126,9 @@ router.delete(
   "/:id",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT id FROM slots WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT id FROM slots WHERE id = $1", [req.params.id]);
     if (assertFound(res, rows[0])) return;
-    await pool.query("DELETE FROM slots WHERE id = ?", [req.params.id]);
+    await pool.query("DELETE FROM slots WHERE id = $1", [req.params.id]);
     req.audit("delete", "slot", Number(req.params.id));
     ok(res, { id: Number(req.params.id), deleted: true });
   })

@@ -6,11 +6,11 @@ const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, parsePagination, fail } = require("../utils/response");
 
-async function ensureWallet(conn, userId) {
-  const [rows] = await conn.query("SELECT * FROM wallets WHERE user_id = ? FOR UPDATE", [userId]);
+async function ensureWallet(client, userId) {
+  const { rows } = await client.query("SELECT * FROM wallets WHERE user_id = $1 FOR UPDATE", [userId]);
   if (rows.length) return rows[0];
-  const [result] = await conn.query("INSERT INTO wallets (user_id) VALUES (?)", [userId]);
-  const [created] = await conn.query("SELECT * FROM wallets WHERE id = ?", [result.insertId]);
+  const result = await client.query("INSERT INTO wallets (user_id) VALUES ($1) RETURNING id", [userId]);
+  const { rows: created } = await client.query("SELECT * FROM wallets WHERE id = $1", [result.rows[0].id]);
   return created[0];
 }
 
@@ -21,14 +21,14 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
-    const [w] = await pool.query("SELECT * FROM wallets WHERE user_id = ?", [req.user.id]);
+    const { rows: w } = await pool.query("SELECT * FROM wallets WHERE user_id = $1", [req.user.id]);
     const wallet = w[0] || { balance: 0, currency: "INR", id: null };
-    const [[{ total }]] = await pool.query(
-      "SELECT COUNT(*) AS total FROM wallet_transactions WHERE wallet_id = ?",
+    const { rows: [{ total }] } = await pool.query(
+      "SELECT COUNT(*) AS total FROM wallet_transactions WHERE wallet_id = $1",
       [wallet.id || 0]
     );
-    const [txns] = await pool.query(
-      "SELECT * FROM wallet_transactions WHERE wallet_id = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    const { rows: txns } = await pool.query(
+      "SELECT * FROM wallet_transactions WHERE wallet_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",
       [wallet.id || 0, pageSize, offset]
     );
     ok(res, {
@@ -41,8 +41,6 @@ router.get(
 );
 
 // POST /api/wallet/credit  ->  DEPRECATED for users.
-// Direct balance crediting is a privilege-escalation / fraud vector and is now
-// admin-only (see /api/wallet/admin/credit). Reject user calls clearly.
 router.post(
   "/credit",
   authRequired,
@@ -59,24 +57,24 @@ router.post(
   asyncHandler(async (req, res) => {
     const { user_id, amount, reason, ref } = req.body;
     if (!user_id) throw new HttpError(400, "user_id is required");
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
-      const w = await ensureWallet(conn, Number(user_id));
-      await conn.query("UPDATE wallets SET balance = balance + ? WHERE id = ?", [amount, w.id]);
-      await conn.query(
-        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES (?, ?, 'credit', ?, ?)",
+      await client.query("BEGIN");
+      const w = await ensureWallet(client, Number(user_id));
+      await client.query("UPDATE wallets SET balance = balance + $1 WHERE id = $2", [amount, w.id]);
+      await client.query(
+        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES ($1, $2, 'credit', $3, $4)",
         [w.id, amount, reason || "Admin credited", ref || null]
       );
-      await conn.commit();
-      const [updated] = await conn.query("SELECT balance, currency FROM wallets WHERE id = ?", [w.id]);
+      await client.query("COMMIT");
+      const { rows: [updated] } = await client.query("SELECT balance, currency FROM wallets WHERE id = $1", [w.id]);
       req.audit("wallet-admin-credit", "wallet", w.id, { user_id, amount });
-      ok(res, updated[0]);
+      ok(res, updated);
     } catch (err) {
-      await conn.rollback();
+      await client.query("ROLLBACK");
       throw err;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -88,25 +86,25 @@ router.post(
   validate("walletTxn"),
   asyncHandler(async (req, res) => {
     const { amount, reason, ref } = req.body;
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
-      const w = await ensureWallet(conn, req.user.id);
+      await client.query("BEGIN");
+      const w = await ensureWallet(client, req.user.id);
       if (Number(w.balance) < amount) throw new HttpError(400, "Insufficient balance");
-      await conn.query("UPDATE wallets SET balance = balance - ? WHERE id = ?", [amount, w.id]);
-      await conn.query(
-        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES (?, ?, 'debit', ?, ?)",
+      await client.query("UPDATE wallets SET balance = balance - $1 WHERE id = $2", [amount, w.id]);
+      await client.query(
+        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES ($1, $2, 'debit', $3, $4)",
         [w.id, amount, reason || "Debited", ref || null]
       );
-      await conn.commit();
-      const [updated] = await conn.query("SELECT balance, currency FROM wallets WHERE id = ?", [w.id]);
+      await client.query("COMMIT");
+      const { rows: [updated] } = await client.query("SELECT balance, currency FROM wallets WHERE id = $1", [w.id]);
       req.audit("wallet-debit", "wallet", w.id, { amount });
-      ok(res, updated[0]);
+      ok(res, updated);
     } catch (err) {
-      await conn.rollback();
+      await client.query("ROLLBACK");
       throw err;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -119,30 +117,30 @@ router.post(
   asyncHandler(async (req, res) => {
     const { to_user_id, amount, note } = req.body;
     if (Number(to_user_id) === req.user.id) throw new HttpError(400, "Cannot transfer to yourself");
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
-      const wFrom = await ensureWallet(conn, req.user.id);
+      await client.query("BEGIN");
+      const wFrom = await ensureWallet(client, req.user.id);
       if (Number(wFrom.balance) < amount) throw new HttpError(400, "Insufficient balance");
-      const wTo = await ensureWallet(conn, Number(to_user_id));
-      await conn.query("UPDATE wallets SET balance = balance - ? WHERE id = ?", [amount, wFrom.id]);
-      await conn.query("UPDATE wallets SET balance = balance + ? WHERE id = ?", [amount, wTo.id]);
-      await conn.query(
-        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES (?, ?, 'debit', ?, ?)",
+      const wTo = await ensureWallet(client, Number(to_user_id));
+      await client.query("UPDATE wallets SET balance = balance - $1 WHERE id = $2", [amount, wFrom.id]);
+      await client.query("UPDATE wallets SET balance = balance + $1 WHERE id = $2", [amount, wTo.id]);
+      await client.query(
+        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES ($1, $2, 'debit', $3, $4)",
         [wFrom.id, amount, `Transfer to #${to_user_id}`, `TXF-${wTo.id}`]
       );
-      await conn.query(
-        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES (?, ?, 'credit', ?, ?)",
+      await client.query(
+        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES ($1, $2, 'credit', $3, $4)",
         [wTo.id, amount, `Transfer from #${req.user.id}`, `TXF-${wFrom.id}`]
       );
-      await conn.commit();
+      await client.query("COMMIT");
       req.audit("wallet-transfer", "wallet", wFrom.id, { to: to_user_id, amount });
       ok(res, { transferred: amount, to_user_id: Number(to_user_id) });
     } catch (err) {
-      await conn.rollback();
+      await client.query("ROLLBACK");
       throw err;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -154,10 +152,10 @@ router.get(
   validateQuery,
   asyncHandler(async (req, res) => {
     const threshold = Number(req.query.threshold) || 0;
-    const [rows] = await pool.query(
+    const { rows } = await pool.query(
       `SELECT u.id, u.name, u.email, w.balance, w.currency
        FROM wallets w JOIN users u ON u.id = w.user_id
-       WHERE w.balance <= ? ORDER BY w.balance ASC LIMIT 50`,
+       WHERE w.balance <= $1 ORDER BY w.balance ASC LIMIT 50`,
       [threshold]
     );
     ok(res, rows);
@@ -171,25 +169,25 @@ router.post(
   validate("walletAdjust"),
   asyncHandler(async (req, res) => {
     const { user_id, amount, reason } = req.body;
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
-      const w = await ensureWallet(conn, Number(user_id));
+      await client.query("BEGIN");
+      const w = await ensureWallet(client, Number(user_id));
       const type = amount >= 0 ? "credit" : "debit";
-      await conn.query("UPDATE wallets SET balance = balance + ? WHERE id = ?", [amount, w.id]);
-      await conn.query(
-        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES (?, ?, ?, ?, ?)",
+      await client.query("UPDATE wallets SET balance = balance + $1 WHERE id = $2", [amount, w.id]);
+      await client.query(
+        "INSERT INTO wallet_transactions (wallet_id, amount, type, reason, ref) VALUES ($1, $2, $3, $4, $5)",
         [w.id, Math.abs(amount), type, reason || "Admin adjustment", "ADJ"]
       );
-      await conn.commit();
-      const [updated] = await conn.query("SELECT balance, currency FROM wallets WHERE id = ?", [w.id]);
+      await client.query("COMMIT");
+      const { rows: [updated] } = await client.query("SELECT balance, currency FROM wallets WHERE id = $1", [w.id]);
       req.audit("wallet-admin-adjust", "wallet", w.id, { user_id, amount, reason });
-      ok(res, updated[0]);
+      ok(res, updated);
     } catch (err) {
-      await conn.rollback();
+      await client.query("ROLLBACK");
       throw err;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );

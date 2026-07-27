@@ -5,7 +5,7 @@ const { pool } = require("../config/db");
 async function logAudit({ actor_id, actor_type, action, entity, entity_id, meta, ip_address, user_agent, page_or_route }) {
   try {
     await pool.query(
-      "INSERT INTO audit_log (actor_id, actor_type, action, entity, entity_id, meta, ip_address, user_agent, page_or_route) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO audit_log (actor_id, actor_type, action, entity, entity_id, meta, ip_address, user_agent, page_or_route) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
       [
         actor_id ?? null,
         actor_type ?? "system",

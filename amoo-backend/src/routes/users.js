@@ -31,23 +31,25 @@ router.get(
     if (req.query.search) {
       // The admin search box is labelled "name, email or phone" — phone was
       // missing here, so searching by number always returned nothing.
-      where += " AND (name LIKE ? OR email LIKE ? OR phone LIKE ?)";
+      where += " AND (name LIKE $1 OR email LIKE $2 OR phone LIKE $3)";
       const term = `%${req.query.search}%`;
       params.push(term, term, term);
     }
-    if (req.query.status) { where += " AND status = ?"; params.push(req.query.status); }
-    if (req.query.role) { where += " AND role = ?"; params.push(req.query.role); }
+    if (req.query.status) { where += ` AND status = $${params.length + 1}`; params.push(req.query.status); }
+    if (req.query.role) { where += ` AND role = $${params.length + 1}`; params.push(req.query.role); }
     // Backs the admin "Verified Users" tab / verification dropdown.
     if (req.query.verified === "1" || req.query.verified === "0") {
-      where += " AND verified = ?";
-      params.push(Number(req.query.verified));
+      where += ` AND verified = $${params.length + 1}`;
+      params.push(req.query.verified === "1");
     }
-    if (req.query.date_from) { where += " AND created_at >= ?"; params.push(req.query.date_from); }
-    if (req.query.date_to) { where += " AND created_at <= ?"; params.push(req.query.date_to + " 23:59:59"); }
-    const [[{ total }]] = await pool.query(`SELECT COUNT(*) AS total FROM users ${where}`, params);
-    const [rows] = await pool.query(
-      `SELECT ${USER_SELECT} FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
+    if (req.query.date_from) { where += ` AND created_at >= $${params.length + 1}`; params.push(req.query.date_from); }
+    if (req.query.date_to) { where += ` AND created_at <= $${params.length + 1}`; params.push(req.query.date_to + " 23:59:59"); }
+    const { rows: [{ total }] } = await pool.query(`SELECT COUNT(*) AS total FROM users ${where}`, params);
+    const pageParams = [...params, pageSize, offset];
+    const n = params.length;
+    const { rows } = await pool.query(
+      `SELECT ${USER_SELECT} FROM users ${where} ORDER BY created_at DESC LIMIT $${n + 1} OFFSET $${n + 2}`,
+      pageParams
     );
     paginated(res, rows, { page, pageSize, total });
   })
@@ -58,11 +60,11 @@ router.get(
   "/stats",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [[total]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE deleted_at IS NULL");
-    const [[active]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE status='active' AND deleted_at IS NULL");
-    const [[premium]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE role='premium' AND deleted_at IS NULL");
-    const [[today]] = await pool.query("SELECT COUNT(*) AS total FROM users WHERE DATE(created_at) = CURDATE()");
-    const [byRole] = await pool.query(
+    const { rows: [{ total }] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE deleted_at IS NULL");
+    const { rows: [active] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE status='active' AND deleted_at IS NULL");
+    const { rows: [premium] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE role='premium' AND deleted_at IS NULL");
+    const { rows: [today] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE DATE(created_at) = CURRENT_DATE");
+    const { rows: byRole } = await pool.query(
       "SELECT role, COUNT(*) AS count FROM users WHERE deleted_at IS NULL GROUP BY role"
     );
     ok(res, { total: total.total, active: active.total, premium: premium.total, today: today.total, byRole });
@@ -74,8 +76,8 @@ router.get(
   "/me",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(
-      `SELECT ${USER_SELECT} FROM users WHERE id = ? AND deleted_at IS NULL`,
+    const { rows } = await pool.query(
+      `SELECT ${USER_SELECT} FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [req.user.id]
     );
     if (assertFound(res, rows[0])) return;
@@ -89,9 +91,9 @@ router.patch(
   authRequired,
   validate("updateProfile"),
   asyncHandler(async (req, res) => {
-    const { setClause, values } = buildUpdate(req.body, SELF_UPDATE_ALLOWED, [req.user.id]);
-    await pool.query(`UPDATE users SET ${setClause} WHERE id = ?`, values);
-    const [rows] = await pool.query(`SELECT ${USER_SELECT} FROM users WHERE id = ?`, [req.user.id]);
+    const { setClause, values } = buildUpdate(req.body, SELF_UPDATE_ALLOWED);
+    await pool.query(`UPDATE users SET ${setClause} WHERE id = $${values.length + 1}`, [...values, req.user.id]);
+    const { rows } = await pool.query(`SELECT ${USER_SELECT} FROM users WHERE id = $1`, [req.user.id]);
     ok(res, rows[0]);
   })
 );
@@ -101,7 +103,7 @@ router.get(
   "/:id",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(`SELECT * FROM users WHERE id = ? AND deleted_at IS NULL`, [req.params.id]);
+    const { rows } = await pool.query(`SELECT ${USER_SELECT} FROM users WHERE id = $1 AND deleted_at IS NULL`, [req.params.id]);
     if (assertFound(res, rows[0])) return;
     ok(res, rows[0]);
   })
@@ -113,8 +115,8 @@ router.patch(
   adminRequired,
   validate("userUpdateAdmin"),
   asyncHandler(async (req, res) => {
-    const { setClause, values } = buildUpdate(req.body, USER_UPDATE_ALLOWED, [req.params.id]);
-    await pool.query(`UPDATE users SET ${setClause} WHERE id = ?`, values);
+    const { setClause, values } = buildUpdate(req.body, USER_UPDATE_ALLOWED);
+    await pool.query(`UPDATE users SET ${setClause} WHERE id = $${values.length + 1}`, [...values, req.params.id]);
     req.audit("update", "user", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })
@@ -125,9 +127,9 @@ router.delete(
   "/:id",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT id FROM users WHERE id = ? AND deleted_at IS NULL", [req.params.id]);
+    const { rows } = await pool.query("SELECT id FROM users WHERE id = $1 AND deleted_at IS NULL", [req.params.id]);
     if (assertFound(res, rows[0])) return;
-    await pool.query("UPDATE users SET deleted_at = NOW(), status = 'blocked' WHERE id = ?", [req.params.id]);
+    await pool.query("UPDATE users SET deleted_at = NOW(), status = 'blocked' WHERE id = $1", [req.params.id]);
     req.audit("delete", "user", Number(req.params.id));
     ok(res, { id: Number(req.params.id), deleted: true });
   })

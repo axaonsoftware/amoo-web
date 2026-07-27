@@ -6,6 +6,7 @@ const { pool } = require("../config/db");
 const {
   signAccessToken,
   signRefreshToken,
+  generateJti,
   verifyRefreshToken,
   authRequired,
 } = require("../middleware/auth");
@@ -62,23 +63,26 @@ function publicExpert(u) {
   };
 }
 
-function issueTokens(user) {
-  const payload = { id: user.id, kind: "user", tokenVersion: user.token_version || 0 };
+function issueTokens(user, jti) {
+  const payload = { id: user.id, kind: "user", tokenVersion: user.token_version || 0, jti };
   const access = signAccessToken(payload);
   const refresh = signRefreshToken(payload);
   return { access, refresh };
 }
 
-function issueExpertTokens(expert) {
-  const payload = { id: expert.id, kind: "expert", tokenVersion: expert.token_version || 0 };
+function issueExpertTokens(expert, jti) {
+  const payload = { id: expert.id, kind: "expert", tokenVersion: expert.token_version || 0, jti };
   const access = signAccessToken(payload);
   const refresh = signRefreshToken(payload);
   return { access, refresh };
 }
+
+const ALLOWED_AUTH_TABLES = new Set(["users", "admins", "experts"]);
 
 async function checkLockout(table, id) {
-  const [rows] = await pool.query(
-    `SELECT failed_attempts, locked_until FROM ${table} WHERE id = ?`,
+  if (!ALLOWED_AUTH_TABLES.has(table)) throw new HttpError(500, "Invalid table");
+  const { rows } = await pool.query(
+    `SELECT failed_attempts, locked_until FROM ${table} WHERE id = $1`,
     [id]
   );
   if (!rows.length) return;
@@ -90,15 +94,16 @@ async function checkLockout(table, id) {
   // Lock has expired — reset so the next attempt can succeed
   if (row.locked_until && new Date(row.locked_until) <= new Date()) {
     await pool.query(
-      `UPDATE ${table} SET failed_attempts = 0, locked_until = NULL WHERE id = ?`,
+      `UPDATE ${table} SET failed_attempts = 0, locked_until = NULL WHERE id = $1`,
       [id]
     );
   }
 }
 
 async function recordFailedAttempt(table, id) {
-  const [rows] = await pool.query(
-    `SELECT failed_attempts FROM ${table} WHERE id = ?`,
+  if (!ALLOWED_AUTH_TABLES.has(table)) throw new HttpError(500, "Invalid table");
+  const { rows } = await pool.query(
+    `SELECT failed_attempts FROM ${table} WHERE id = $1`,
     [id]
   );
   if (!rows.length) return;
@@ -106,20 +111,21 @@ async function recordFailedAttempt(table, id) {
   if (attempts >= env.lockout.maxAttempts) {
     const lockedUntil = new Date(Date.now() + env.lockout.durationMin * 60000);
     await pool.query(
-      `UPDATE ${table} SET failed_attempts = ?, locked_until = ? WHERE id = ?`,
+      `UPDATE ${table} SET failed_attempts = $1, locked_until = $2 WHERE id = $3`,
       [attempts, lockedUntil, id]
     );
   } else {
     await pool.query(
-      `UPDATE ${table} SET failed_attempts = ? WHERE id = ?`,
+      `UPDATE ${table} SET failed_attempts = $1 WHERE id = $2`,
       [attempts, id]
     );
   }
 }
 
 async function resetFailedAttempts(table, id) {
+  if (!ALLOWED_AUTH_TABLES.has(table)) throw new HttpError(500, "Invalid table");
   await pool.query(
-    `UPDATE ${table} SET failed_attempts = 0, locked_until = NULL WHERE id = ?`,
+    `UPDATE ${table} SET failed_attempts = 0, locked_until = NULL WHERE id = $1`,
     [id]
   );
 }
@@ -130,19 +136,21 @@ router.post(
   validate("register"),
   asyncHandler(async (req, res) => {
     const { name, email, phone, password } = req.body;
-    const [existing] = await pool.query("SELECT id FROM users WHERE email = ?", [email]);
+    const { rows: existing } = await pool.query("SELECT id FROM users WHERE email = $1", [email]);
     if (existing.length) {
       // Generic error to prevent user enumeration.
       throw new HttpError(400, "Registration failed. Please try again with different information.");
     }
 
     const hash = await bcrypt.hash(password, 12);
-    const [result] = await pool.query(
-      "INSERT INTO users (name, email, phone, password_hash, status) VALUES (?, ?, ?, ?, 'active')",
+    const result = await pool.query(
+      "INSERT INTO users (name, email, phone, password_hash, status) VALUES ($1, $2, $3, $4, 'pending') RETURNING id",
       [name, email, phone || null, hash]
     );
-    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [result.insertId]);
-    const { access, refresh } = issueTokens(rows[0]);
+    const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [result.rows[0].id]);
+    const jti = generateJti();
+    await pool.query("UPDATE users SET refresh_jti = $1 WHERE id = $2", [jti, rows[0].id]);
+    const { access, refresh } = issueTokens(rows[0], jti);
     setAuthCookies(res, access, refresh);
     raw(res, 201, { token: access, user: publicUser(rows[0]) });
   })
@@ -152,7 +160,7 @@ router.post(
   validate("userLogin"),
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
+    const { rows } = await pool.query("SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL", [email]);
     const user = rows[0];
     if (!user || !user.password_hash) throw new HttpError(401, "Invalid credentials");
     if (user.status === "blocked") throw new HttpError(403, "Account is blocked");
@@ -165,7 +173,9 @@ router.post(
     }
     await resetFailedAttempts("users", user.id);
 
-    const { access, refresh } = issueTokens(user);
+    const jti = generateJti();
+    await pool.query("UPDATE users SET refresh_jti = $1 WHERE id = $2", [jti, user.id]);
+    const { access, refresh } = issueTokens(user, jti);
     setAuthCookies(res, access, refresh);
     raw(res, 200, { token: access, user: publicUser(user) });
   })
@@ -177,7 +187,7 @@ router.post(
   validate("adminLogin"),
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    const [rows] = await pool.query("SELECT * FROM admins WHERE email = ?", [email]);
+    const { rows } = await pool.query("SELECT * FROM admins WHERE email = $1", [email]);
     const admin = rows[0];
     if (!admin) throw new HttpError(401, "Invalid credentials");
 
@@ -189,7 +199,9 @@ router.post(
     }
     await resetFailedAttempts("admins", admin.id);
 
-    const payload = { id: admin.id, kind: "admin", tokenVersion: admin.token_version || 0 };
+    const jti = generateJti();
+    await pool.query("UPDATE admins SET refresh_jti = $1 WHERE id = $2", [jti, admin.id]);
+    const payload = { id: admin.id, kind: "admin", tokenVersion: admin.token_version || 0, jti };
     const access = signAccessToken(payload);
     const refresh = signRefreshToken(payload);
     setAuthCookies(res, access, refresh);
@@ -206,7 +218,7 @@ router.post(
   validate("expertLogin"),
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    const [rows] = await pool.query("SELECT * FROM experts WHERE email = ? AND deleted_at IS NULL", [email]);
+    const { rows } = await pool.query("SELECT * FROM experts WHERE email = $1 AND deleted_at IS NULL", [email]);
     const expert = rows[0];
     if (!expert || !expert.password_hash) throw new HttpError(401, "Invalid credentials");
     if (expert.status !== "active") throw new HttpError(403, "Account is not active");
@@ -219,7 +231,9 @@ router.post(
     }
     await resetFailedAttempts("experts", expert.id);
 
-    const { access, refresh } = issueExpertTokens(expert);
+    const jti = generateJti();
+    await pool.query("UPDATE experts SET refresh_jti = $1 WHERE id = $2", [jti, expert.id]);
+    const { access, refresh } = issueExpertTokens(expert, jti);
     setAuthCookies(res, access, refresh);
     raw(res, 200, { token: access, expert: publicExpert(expert) });
   })
@@ -239,13 +253,23 @@ router.post(
       throw new HttpError(401, "Invalid or expired refresh token");
     }
     const table = payload.kind === "admin" ? "admins" : payload.kind === "expert" ? "experts" : "users";
-    const [rows] = await pool.query(`SELECT id, token_version FROM ${table} WHERE id = ?`, [payload.id]);
+    const { rows } = await pool.query(`SELECT id, token_version, refresh_jti FROM ${table} WHERE id = $1`, [payload.id]);
     if (!rows.length) throw new HttpError(401, "Account no longer exists");
     if (rows[0].token_version !== payload.tokenVersion) {
       throw new HttpError(401, "Session revoked. Please login again.");
     }
 
-    const newPayload = { id: payload.id, kind: payload.kind, tokenVersion: rows[0].token_version || 0 };
+    // Refresh token rotation: the jti embedded in the token must match the
+    // one stored in the DB.  A mismatch means the old token is being reused
+    // (stolen or leaked), so we revoke every session for this account.
+    if (payload.jti && rows[0].refresh_jti && payload.jti !== rows[0].refresh_jti) {
+      await pool.query(`UPDATE ${table} SET token_version = token_version + 1, refresh_jti = NULL WHERE id = $1`, [payload.id]);
+      throw new HttpError(401, "Session revoked. Please login again.");
+    }
+
+    const newJti = generateJti();
+    await pool.query(`UPDATE ${table} SET refresh_jti = $1 WHERE id = $2`, [newJti, payload.id]);
+    const newPayload = { id: payload.id, kind: payload.kind, tokenVersion: rows[0].token_version || 0, jti: newJti };
     const access = signAccessToken(newPayload);
     const refresh = signRefreshToken(newPayload);
     setAuthCookies(res, access, refresh);
@@ -268,32 +292,33 @@ router.post(
   authRequired,
   asyncHandler(async (req, res) => {
     const table = req.user.kind === "admin" ? "admins" : req.user.kind === "expert" ? "experts" : "users";
-    await pool.query(`UPDATE ${table} SET token_version = token_version + 1 WHERE id = ?`, [req.user.id]);
+    await pool.query(`UPDATE ${table} SET token_version = token_version + 1, refresh_jti = NULL WHERE id = $1`, [req.user.id]);
     clearAuthCookies(res);
     req.audit("logout-all", req.user.kind, req.user.id);
     ok(res, { message: "Logged out of all sessions" });
   })
 );
 
-// POST /api/auth/change-password  (authenticated user)
+// POST /api/auth/change-password  (authenticated user / admin / expert)
 router.post(
   "/change-password",
   authRequired,
   validate("changePassword"),
   asyncHandler(async (req, res) => {
     const { current_password, password } = req.body;
-    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [req.user.id]);
+    const table = req.user.kind === "admin" ? "admins" : req.user.kind === "expert" ? "experts" : "users";
+    const { rows } = await pool.query(`SELECT * FROM ${table} WHERE id = $1`, [req.user.id]);
     const user = rows[0];
     if (!user || !user.password_hash) throw new HttpError(401, "Account not found");
     const okPw = await bcrypt.compare(current_password, user.password_hash);
     if (!okPw) throw new HttpError(400, "Current password is incorrect");
     const hash = await bcrypt.hash(password, 12);
     await pool.query(
-      "UPDATE users SET password_hash = ?, token_version = token_version + 1 WHERE id = ?",
+      `UPDATE ${table} SET password_hash = $1, token_version = token_version + 1, refresh_jti = NULL WHERE id = $2`,
       [hash, user.id]
     );
     clearAuthCookies(res);
-    req.audit("change-password", "user", user.id);
+    req.audit("change-password", req.user.kind, user.id);
     ok(res, { message: "Password updated. Please login again." });
   })
 );
@@ -304,7 +329,7 @@ router.post(
   validate("verifyEmail"),
   asyncHandler(async (req, res) => {
     const { email, token } = req.body;
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
+    const { rows } = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
     const user = rows[0];
     if (!user) throw new HttpError(404, "Account not found");
     if (user.verified) return ok(res, { verified: true, message: "Already verified" });
@@ -314,7 +339,7 @@ router.post(
     if (user.verify_token_expires && new Date(user.verify_token_expires) < new Date()) {
       throw new HttpError(400, "Verification token expired");
     }
-    await pool.query("UPDATE users SET verified = 1, verify_token = NULL, verify_token_expires = NULL WHERE id = ?", [user.id]);
+    await pool.query("UPDATE users SET verified = true, verify_token = NULL, verify_token_expires = NULL WHERE id = $1", [user.id]);
     req.audit("verify-email", "user", user.id);
     ok(res, { verified: true, message: "Email verified" });
   })
@@ -327,8 +352,8 @@ router.post(
   asyncHandler(async (req, res) => {
     // The JWT carries only { id, kind, tokenVersion } — there is no email on
     // it. Read the address from the row we're about to stamp the token onto.
-    const [rows] = await pool.query(
-      "SELECT id, email, verified FROM users WHERE id = ? AND deleted_at IS NULL",
+    const { rows } = await pool.query(
+      "SELECT id, email, verified FROM users WHERE id = $1 AND deleted_at IS NULL",
       [req.user.id]
     );
     const user = rows[0];
@@ -341,13 +366,13 @@ router.post(
     const token = crypto.randomBytes(24).toString("hex");
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await pool.query(
-      "UPDATE users SET verify_token = ?, verify_token_expires = ? WHERE id = ?",
+      "UPDATE users SET verify_token = $1, verify_token_expires = $2 WHERE id = $3",
       [token, expires, user.id]
     );
     // The /verify-email page is served by the Next.js frontend, not this API.
     // Building it on env.appUrl produced a link to the API origin, where the
     // path does not exist — every verification email was a dead 404.
-    const link = `${env.clientUrl}/verify-email?email=${encodeURIComponent(user.email)}&token=${token}`;
+    const link = `${env.clientUrl}/verify-email#email=${encodeURIComponent(user.email)}&token=${token}`;
     const mailResult = await sendMail({
       to: user.email,
       subject: "Amoo Guru — Verify your email",
@@ -355,7 +380,12 @@ router.post(
       html: `<p>Click to verify your email:</p><p><a href="${link}">${link}</a></p>`,
     });
     if (env.devDebugTokens) return ok(res, { message: "Verification token generated", dev_token: token });
-    if (!mailResult.sent && env.isProd) throw new HttpError(500, "Failed to send verification email. Please try again.");
+    if (!mailResult.sent) {
+      if (env.isProd) {
+        throw new HttpError(500, "Email service is not configured. Contact the site administrator to enable email sending.");
+      }
+      return ok(res, { message: "Verification email would be sent in production." });
+    }
     ok(res, { message: "Verification email sent" });
   })
 );
@@ -366,13 +396,13 @@ router.post(
   validate("forgotPassword"),
   asyncHandler(async (req, res) => {
     const { email } = req.body;
-    const [rows] = await pool.query("SELECT id, name, email FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
+    const { rows } = await pool.query("SELECT id, name, email FROM users WHERE email = $1 AND deleted_at IS NULL", [email]);
     // Always respond 200 to avoid user enumeration; only act if user exists.
     if (rows.length) {
       const otp = genOtp(env.otp.length || 6);
       const expires = new Date(Date.now() + env.jwt.resetExpiresMin * 60000);
       await pool.query(
-        "UPDATE users SET reset_otp = ?, reset_otp_expires = ? WHERE id = ?",
+        "UPDATE users SET reset_otp = $1, reset_otp_expires = $2 WHERE id = $3",
         [otp, expires, rows[0].id]
       );
       const mailResult = await sendMail({
@@ -382,7 +412,7 @@ router.post(
       });
       if (env.devDebugTokens) return ok(res, { message: "OTP generated", dev_otp: otp });
       if (!mailResult.sent && env.isProd) {
-        throw new HttpError(500, "Failed to send reset email. Please try again.");
+        throw new HttpError(500, "Password reset email service is not configured. Contact the site administrator.");
       }
     }
     ok(res, { message: "If the account exists, a reset OTP has been sent." });
@@ -395,7 +425,7 @@ router.post(
   validate("resetPassword"),
   asyncHandler(async (req, res) => {
     const { email, otp, password } = req.body;
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ? AND deleted_at IS NULL", [email]);
+    const { rows } = await pool.query("SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL", [email]);
     const user = rows[0];
 
     if (!user || !user.reset_otp) {
@@ -412,12 +442,12 @@ router.post(
       const attempts = (user.reset_otp_attempts || 0) + 1;
       if (attempts >= env.otp.maxAttempts) {
         await pool.query(
-          "UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL, reset_otp_attempts = 0 WHERE id = ?",
+          "UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL, reset_otp_attempts = 0 WHERE id = $1",
           [user.id]
         );
       } else {
         await pool.query(
-          "UPDATE users SET reset_otp_attempts = ? WHERE id = ?",
+          "UPDATE users SET reset_otp_attempts = $1 WHERE id = $2",
           [attempts, user.id]
         );
       }
@@ -438,11 +468,11 @@ router.post(
     // *because* they were locked out can actually log back in.
     await pool.query(
       `UPDATE users
-          SET password_hash = ?, reset_otp = NULL, reset_otp_expires = NULL,
+          SET password_hash = $1, reset_otp = NULL, reset_otp_expires = NULL,
               reset_otp_attempts = 0,
-              token_version = token_version + 1,
+              token_version = token_version + 1, refresh_jti = NULL,
               failed_attempts = 0, locked_until = NULL
-        WHERE id = ?`,
+        WHERE id = $2`,
       [hash, user.id]
     );
     clearAuthCookies(res);
@@ -457,16 +487,16 @@ router.get(
   authRequired,
   asyncHandler(async (req, res) => {
     if (req.user.kind === "admin") {
-      const [rows] = await pool.query("SELECT id, name, email, role FROM admins WHERE id = ?", [req.user.id]);
+      const { rows } = await pool.query("SELECT id, name, email, role FROM admins WHERE id = $1", [req.user.id]);
       if (!rows.length) throw new HttpError(404, "Admin not found");
       return ok(res, { kind: "admin", data: rows[0] });
     }
     if (req.user.kind === "expert") {
-      const [rows] = await pool.query("SELECT * FROM experts WHERE id = ? AND deleted_at IS NULL", [req.user.id]);
+      const { rows } = await pool.query("SELECT * FROM experts WHERE id = $1 AND deleted_at IS NULL", [req.user.id]);
       if (!rows.length) throw new HttpError(404, "Expert not found");
       return ok(res, { kind: "expert", data: publicExpert(rows[0]) });
     }
-    const [rows] = await pool.query("SELECT * FROM users WHERE id = ?", [req.user.id]);
+    const { rows } = await pool.query("SELECT * FROM users WHERE id = $1", [req.user.id]);
     if (!rows.length) throw new HttpError(404, "User not found");
     ok(res, { kind: "user", data: publicUser(rows[0]) });
   })

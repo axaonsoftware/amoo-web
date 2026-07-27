@@ -25,7 +25,7 @@ router.get(
     const params = [];
     let where = "";
     if (req.user.kind !== "admin") {
-      where = "WHERE b.user_id = ?";
+      where = "WHERE b.user_id = $1";
       params.push(req.user.id);
     }
     const add = (clause, val) => {
@@ -33,23 +33,26 @@ router.get(
       where += clause;
       params.push(val);
     };
-    if (req.query.status) add(" b.status = ?", req.query.status);
-    if (req.query.expert_id) add(" b.expert_id = ?", req.query.expert_id);
-    if (req.query.service_id) add(" b.service_id = ?", req.query.service_id);
-    if (req.query.user_id && req.user.kind === "admin") add(" b.user_id = ?", req.query.user_id);
-    if (req.query.date_from) add(" b.date >= ?", req.query.date_from);
-    if (req.query.date_to) add(" b.date <= ?", req.query.date_to);
+    if (req.query.status) add(` b.status = $${params.length}`, req.query.status);
+    if (req.query.expert_id) add(` b.expert_id = $${params.length}`, req.query.expert_id);
+    if (req.query.service_id) add(` b.service_id = $${params.length}`, req.query.service_id);
+    if (req.query.user_id && req.user.kind === "admin") add(` b.user_id = $${params.length}`, req.query.user_id);
+    if (req.query.date_from) add(` b.date >= $${params.length}`, req.query.date_from);
+    if (req.query.date_to) add(` b.date <= $${params.length}`, req.query.date_to);
     // The admin bookings table has a search box that sent `?search=` to an
     // endpoint that never parsed it, so it silently did nothing.
     if (req.query.search) {
       const term = `%${req.query.search}%`;
-      where += where ? " AND" : "WHERE";
-      where += " (b.booking_ref LIKE ? OR u.name LIKE ? OR s.name LIKE ?)";
+      if (where) {
+        where += ` AND (b.booking_ref LIKE $${params.length + 1} OR u.name LIKE $${params.length + 2} OR s.name LIKE $${params.length + 3})`;
+      } else {
+        where = `WHERE (b.booking_ref LIKE $${params.length + 1} OR u.name LIKE $${params.length + 2} OR s.name LIKE $${params.length + 3})`;
+      }
       params.push(term, term, term);
     }
     // The count must use the same joins as LIST_SELECT: `search` and
     // `expert_name` filters reference the joined tables.
-    const [[{ total }]] = await pool.query(
+    const { rows: [{ total }] } = await pool.query(
       `SELECT COUNT(*) AS total
        FROM bookings b
        JOIN users u ON u.id = b.user_id
@@ -57,8 +60,9 @@ router.get(
        JOIN services s ON s.id = b.service_id ${where}`,
       params
     );
-    const [rows] = await pool.query(
-      `${LIST_SELECT} ${where} ORDER BY b.date DESC, b.time DESC LIMIT ? OFFSET ?`,
+    const n = params.length;
+    const { rows } = await pool.query(
+      `${LIST_SELECT} ${where} ORDER BY b.date DESC, b.time DESC LIMIT $${n + 1} OFFSET $${n + 2}`,
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -70,7 +74,7 @@ router.get(
   "/:id",
   authRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query(`${LIST_SELECT} WHERE b.id = ?`, [req.params.id]);
+    const { rows } = await pool.query(`${LIST_SELECT} WHERE b.id = $1`, [req.params.id]);
     if (assertFound(res, rows[0])) return;
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
       return fail(res, 403, "Forbidden");
@@ -87,15 +91,15 @@ router.post(
   validate("booking"),
   asyncHandler(async (req, res) => {
     const { service_id, expert_id, slot_id, date, time, mode, amount, notes } = req.body;
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
+      await client.query("BEGIN");
 
       // Server-side price enforcement: never trust the client-supplied amount.
       // The booking always stores the real service price; the client `amount` is
       // only cross-checked so a stale UI price surfaces as a 400 rather than
       // silently charging something else. 0 means "pay later".
-      const [[svc]] = await conn.query("SELECT id, price FROM services WHERE id = ? AND deleted_at IS NULL", [service_id]);
+      const { rows: [svc] } = await client.query("SELECT id, price FROM services WHERE id = $1 AND deleted_at IS NULL", [service_id]);
       if (!svc) throw new HttpError(404, "Service not found");
       const expected = Number(svc.price);
       if (Number(amount) !== 0 && Math.abs(Number(amount) - expected) > 0.01) {
@@ -104,10 +108,10 @@ router.post(
 
       // Reserve slot if provided
       if (slot_id) {
-        const [slots] = await conn.query("SELECT * FROM slots WHERE id = ? FOR UPDATE", [slot_id]);
+        const { rows: slots } = await client.query("SELECT * FROM slots WHERE id = $1 FOR UPDATE", [slot_id]);
         if (!slots.length) throw new HttpError(404, "Slot not found");
         if (slots[0].status !== "available") throw new HttpError(409, "Slot not available");
-        await conn.query("UPDATE slots SET status = 'booked' WHERE id = ?", [slot_id]);
+        await client.query("UPDATE slots SET status = 'booked' WHERE id = $1", [slot_id]);
       }
 
       const ref = genBookingRef();
@@ -115,22 +119,22 @@ router.post(
       // payments row — only /api/payments/verify (signature-checked) and the
       // gateway webhook may mark a booking Paid. Anything else lets a client
       // conjure a confirmed booking without money moving.
-      const [result] = await conn.query(
+      const result = await client.query(
         `INSERT INTO bookings (booking_ref, user_id, expert_id, service_id, slot_id, date, time, mode, amount, payment, status, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Pending', 'pending-payment', ?)`,
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pending', 'pending-payment', $10) RETURNING id`,
         [ref, req.user.id, expert_id || null, service_id, slot_id || null, date, time, mode || null, expected, notes || null]
       );
-      const bookingId = result.insertId;
+      const bookingId = result.rows[0].id;
 
-      await conn.commit();
-      const [rows] = await conn.query("SELECT * FROM bookings WHERE id = ?", [bookingId]);
+      await client.query("COMMIT");
+      const { rows } = await client.query("SELECT * FROM bookings WHERE id = $1", [bookingId]);
       req.audit("create", "booking", bookingId, { booking_ref: ref });
       created(res, rows[0]);
     } catch (err) {
-      await conn.rollback();
+      await client.query("ROLLBACK");
       throw err;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -141,8 +145,8 @@ router.patch(
   adminRequired,
   validate("bookingUpdate"),
   asyncHandler(async (req, res) => {
-    const { setClause, values } = buildUpdate(req.body, BOOKING_UPDATE_ALLOWED, [req.params.id]);
-    await pool.query(`UPDATE bookings SET ${setClause} WHERE id = ?`, values);
+    const { setClause, values } = buildUpdate(req.body, BOOKING_UPDATE_ALLOWED);
+    await pool.query(`UPDATE bookings SET ${setClause} WHERE id = $${values.length + 1}`, [...values, req.params.id]);
     req.audit("update", "booking", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })
@@ -153,47 +157,47 @@ router.delete(
   "/:id",
   authRequired,
   asyncHandler(async (req, res) => {
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
+      await client.query("BEGIN");
       // FOR UPDATE so a double-clicked Cancel cannot run the slot release twice.
-      const [rows] = await conn.query(
-        "SELECT id, user_id, slot_id, status, payment, amount FROM bookings WHERE id = ? FOR UPDATE",
+      const { rows } = await client.query(
+        "SELECT id, user_id, slot_id, status, payment, amount FROM bookings WHERE id = $1 FOR UPDATE",
         [req.params.id]
       );
       const booking = rows[0];
       if (!booking) {
-        await conn.rollback();
+        await client.query("ROLLBACK");
         return fail(res, 404, "Resource not found");
       }
       if (req.user.kind !== "admin" && booking.user_id !== req.user.id) {
-        await conn.rollback();
+        await client.query("ROLLBACK");
         return fail(res, 403, "Forbidden");
       }
 
       // Cancelling an already-cancelled booking used to re-run the slot release,
       // which could free a slot that had since been re-booked by someone else.
       if (booking.status === "cancelled") {
-        await conn.rollback();
+        await client.query("ROLLBACK");
         return ok(res, { id: booking.id, cancelled: true, already_cancelled: true });
       }
       // A delivered consultation is not cancellable — that is a refund decision,
       // which is admin-only and goes through POST /api/payments/:id/refund.
       if (booking.status === "completed") {
-        await conn.rollback();
+        await client.query("ROLLBACK");
         return fail(res, 409, "A completed booking cannot be cancelled. Request a refund instead.");
       }
 
       if (booking.slot_id) {
         // Only release a slot this booking actually holds. Without the status
         // guard, cancelling could free a slot another booking now owns.
-        await conn.query(
-          "UPDATE slots SET status = 'available' WHERE id = ? AND status = 'booked'",
+        await client.query(
+          "UPDATE slots SET status = 'available' WHERE id = $1 AND status = 'booked'",
           [booking.slot_id]
         );
       }
-      await conn.query("UPDATE bookings SET status = 'cancelled' WHERE id = ?", [booking.id]);
-      await conn.commit();
+      await client.query("UPDATE bookings SET status = 'cancelled' WHERE id = $1", [booking.id]);
+      await client.query("COMMIT");
 
       req.audit("cancel", "booking", booking.id, {
         was_paid: booking.payment === "Paid",
@@ -213,10 +217,10 @@ router.delete(
           : "Booking cancelled.",
       });
     } catch (err) {
-      await conn.rollback();
+      await client.query("ROLLBACK");
       throw err;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -226,9 +230,9 @@ router.post(
   "/:id/complete",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const [rows] = await pool.query("SELECT id FROM bookings WHERE id = ?", [req.params.id]);
+    const { rows } = await pool.query("SELECT id FROM bookings WHERE id = $1", [req.params.id]);
     if (assertFound(res, rows[0])) return;
-    await pool.query("UPDATE bookings SET status = 'completed' WHERE id = ?", [req.params.id]);
+    await pool.query("UPDATE bookings SET status = 'completed' WHERE id = $1", [req.params.id]);
     req.audit("complete", "booking", Number(req.params.id));
     ok(res, { id: Number(req.params.id), status: "completed" });
   })

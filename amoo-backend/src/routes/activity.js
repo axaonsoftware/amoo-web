@@ -38,15 +38,16 @@ router.get(
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const userId = req.user.id;
-    const [[{ total }]] = await pool.query(
-      "SELECT COUNT(*) AS total FROM audit_log WHERE actor_id = ? AND actor_type = ?",
+    const resultCount = await pool.query(
+      "SELECT COUNT(*) AS total FROM audit_log WHERE actor_id = $1 AND actor_type = $2",
       [userId, "user"]
     );
-    const [rows] = await pool.query(
-      "SELECT id, action, meta AS action_details, page_or_route, ip_address, created_at FROM audit_log WHERE actor_id = ? AND actor_type = ? ORDER BY created_at DESC LIMIT ? OFFSET ?",
+    const total = Number(resultCount.rows[0].total);
+    const result = await pool.query(
+      "SELECT id, action, meta AS action_details, page_or_route, ip_address, created_at FROM audit_log WHERE actor_id = $1 AND actor_type = $2 ORDER BY created_at DESC LIMIT $3 OFFSET $4",
       [userId, "user", pageSize, offset]
     );
-    paginated(res, rows, { page, pageSize, total });
+    paginated(res, result.rows, { page, pageSize, total });
   })
 );
 

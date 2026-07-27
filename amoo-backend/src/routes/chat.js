@@ -17,7 +17,7 @@ const { ok, paginated, created, fail, assertFound, parsePagination } = require("
  * (kind "user") or the expert (kind "expert") named on it.
  */
 async function loadParticipantConversation(conn, id, user) {
-  const [rows] = await conn.query("SELECT * FROM conversations WHERE id = ?", [id]);
+  const { rows } = await conn.query("SELECT * FROM conversations WHERE id = $1", [id]);
   const conv = rows[0];
   if (!conv) return { conv: null, allowed: false };
   if (user.kind === "admin") return { conv, allowed: true };
@@ -43,25 +43,25 @@ router.post(
       return fail(res, 403, "Only customers can start a conversation");
     }
 
-    const [expert] = await pool.query(
-      "SELECT id FROM experts WHERE id = ? AND status = 'active' AND deleted_at IS NULL",
+    const { rows: expert } = await pool.query(
+      "SELECT id FROM experts WHERE id = $1 AND status = 'active' AND deleted_at IS NULL",
       [participant_id]
     );
     if (!expert.length) {
       return fail(res, 403, "You can only start a conversation with an active expert");
     }
 
-    // INSERT ... ON DUPLICATE KEY relies on uniq_conversation_pair to make
+    // INSERT ... ON CONFLICT relies on uniq_conversation_pair to make
     // "start or resume" atomic. The previous helper did SELECT ... FOR UPDATE
     // outside any transaction, so the lock was released immediately and two
     // simultaneous requests could both insert.
     await pool.query(
-      `INSERT INTO conversations (user_id, expert_id) VALUES (?, ?)
-       ON DUPLICATE KEY UPDATE id = id`,
+      `INSERT INTO conversations (user_id, expert_id) VALUES ($1, $2)
+       ON CONFLICT ON CONSTRAINT uniq_conversation_pair DO NOTHING`,
       [req.user.id, participant_id]
     );
-    const [rows] = await pool.query(
-      "SELECT * FROM conversations WHERE user_id = ? AND expert_id = ?",
+    const { rows } = await pool.query(
+      "SELECT * FROM conversations WHERE user_id = $1 AND expert_id = $2",
       [req.user.id, participant_id]
     );
     ok(res, rows[0]);
@@ -83,7 +83,7 @@ router.get(
              u.name   AS user_name,   u.avatar AS user_avatar,
              e.name   AS expert_name, e.avatar AS expert_avatar,
              (SELECT COUNT(*) FROM messages m
-               WHERE m.conversation_id = c.id AND m.is_read = 0 AND m.sender_type <> ?
+               WHERE m.conversation_id = c.id AND m.is_read = false AND m.sender_type <> $1
              ) AS unread_count
       FROM conversations c
       JOIN users   u ON u.id = c.user_id
@@ -91,24 +91,29 @@ router.get(
 
     const viewerType = req.user.kind === "expert" ? "expert" : "user";
 
-    let where = "";
-    const params = [viewerType];
+    let selectWhere = "";
+    let countWhere = "";
+    const selectParams = [viewerType];
+    const countParams = [];
     if (req.user.kind === "user") {
-      where = "WHERE c.user_id = ?";
-      params.push(req.user.id);
+      selectWhere = "WHERE c.user_id = $2";
+      countWhere = "WHERE c.user_id = $1";
+      selectParams.push(req.user.id);
+      countParams.push(req.user.id);
     } else if (req.user.kind === "expert") {
-      where = "WHERE c.expert_id = ?";
-      params.push(req.user.id);
+      selectWhere = "WHERE c.expert_id = $2";
+      countWhere = "WHERE c.expert_id = $1";
+      selectParams.push(req.user.id);
+      countParams.push(req.user.id);
     }
 
-    const countParams = params.slice(1);
-    const [[{ total }]] = await pool.query(
-      `SELECT COUNT(*) AS total FROM conversations c ${where}`,
+    const { rows: [{ total }] } = await pool.query(
+      `SELECT COUNT(*) AS total FROM conversations c ${countWhere}`,
       countParams
     );
-    const [rows] = await pool.query(
-      `${base} ${where} ORDER BY c.last_message_at IS NULL, c.last_message_at DESC LIMIT ? OFFSET ?`,
-      [...params, pageSize, offset]
+    const { rows } = await pool.query(
+      `${base} ${selectWhere} ORDER BY c.last_message_at IS NULL, c.last_message_at DESC LIMIT $${selectParams.length + 1} OFFSET $${selectParams.length + 2}`,
+      [...selectParams, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
   })
@@ -127,11 +132,11 @@ router.post(
     // sender_id: ids are only unique within their own table, so comparing them
     // across users/experts would mark the wrong messages.
     const viewerType = req.user.kind === "expert" ? "expert" : "user";
-    const [result] = await pool.query(
-      "UPDATE messages SET is_read = 1 WHERE conversation_id = ? AND sender_type <> ? AND is_read = 0",
+    const result = await pool.query(
+      "UPDATE messages SET is_read = true WHERE conversation_id = $1 AND sender_type <> $2 AND is_read = false",
       [conv.id, viewerType]
     );
-    ok(res, { id: conv.id, read: true, marked: result.affectedRows });
+    ok(res, { id: conv.id, read: true, marked: result.rowCount });
   })
 );
 
@@ -146,12 +151,12 @@ router.get(
     if (assertFound(res, conv)) return;
     if (!allowed) return fail(res, 403, "Forbidden");
 
-    const [[{ total }]] = await pool.query(
-      "SELECT COUNT(*) AS total FROM messages WHERE conversation_id = ?",
+    const { rows: [{ total }] } = await pool.query(
+      "SELECT COUNT(*) AS total FROM messages WHERE conversation_id = $1",
       [conv.id]
     );
-    const [rows] = await pool.query(
-      "SELECT id, conversation_id, sender_type, sender_id, content, is_read, created_at FROM messages WHERE conversation_id = ? ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?",
+    const { rows } = await pool.query(
+      "SELECT id, conversation_id, sender_type, sender_id, content, is_read, created_at FROM messages WHERE conversation_id = $1 ORDER BY created_at ASC, id ASC LIMIT $2 OFFSET $3",
       [conv.id, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -165,41 +170,41 @@ router.post(
   validate("chatMessage"),
   asyncHandler(async (req, res) => {
     const { content } = req.body;
-    const conn = await pool.getConnection();
+    const client = await pool.connect();
     try {
-      await conn.beginTransaction();
-      const { conv, allowed } = await loadParticipantConversation(conn, req.params.id, req.user);
+      await client.query('BEGIN');
+      const { conv, allowed } = await loadParticipantConversation(client, req.params.id, req.user);
       if (!conv) {
-        await conn.rollback();
+        await client.query('ROLLBACK');
         return fail(res, 404, "Resource not found");
       }
       if (!allowed) {
-        await conn.rollback();
+        await client.query('ROLLBACK');
         return fail(res, 403, "Forbidden");
       }
 
-      const [result] = await conn.query(
-        "INSERT INTO messages (conversation_id, sender_type, sender_id, content) VALUES (?, ?, ?, ?)",
+      const result = await client.query(
+        "INSERT INTO messages (conversation_id, sender_type, sender_id, content) VALUES ($1, $2, $3, $4) RETURNING id",
         [conv.id, req.user.kind, req.user.id, content]
       );
       // Written in the same transaction as the insert so the ordering used by
       // the conversation list can never disagree with the messages themselves.
-      await conn.query("UPDATE conversations SET last_message_at = NOW() WHERE id = ?", [conv.id]);
-      await conn.commit();
+      await client.query("UPDATE conversations SET last_message_at = NOW() WHERE id = $1", [conv.id]);
+      await client.query('COMMIT');
 
-      req.audit("chat-message", "conversation", conv.id, { message_id: result.insertId });
+      req.audit("chat-message", "conversation", conv.id, { message_id: result.rows[0].id });
       created(res, {
-        id: result.insertId,
+        id: result.rows[0].id,
         conversation_id: conv.id,
         sender_type: req.user.kind,
         sender_id: req.user.id,
         content,
       });
     } catch (e) {
-      await conn.rollback();
+      await client.query('ROLLBACK');
       throw e;
     } finally {
-      conn.release();
+      client.release();
     }
   })
 );
@@ -211,11 +216,11 @@ router.get(
   asyncHandler(async (req, res) => {
     const viewerType = req.user.kind === "expert" ? "expert" : "user";
     const column = req.user.kind === "expert" ? "expert_id" : "user_id";
-    const [[row]] = await pool.query(
+    const { rows: [row] } = await pool.query(
       `SELECT COUNT(*) AS count
          FROM messages m
          JOIN conversations c ON c.id = m.conversation_id
-        WHERE c.${column} = ? AND m.is_read = 0 AND m.sender_type <> ?`,
+        WHERE c.${column} = $1 AND m.is_read = false AND m.sender_type <> $2`,
       [req.user.id, viewerType]
     );
     ok(res, { count: Number(row.count) || 0 });
