@@ -31,15 +31,19 @@ for (const pattern of patterns) {
     
     if (content !== original) {
       fs.writeFileSync(filePath, content, 'utf8');
-      const count = (original.match(/\//g) || []).length - (content.match(/\//g) || []).length;
+      let fileReplacements = 0;
+      for (const [localPath] of Object.entries(mapping)) {
+        const searchStr = '/' + localPath.replace(/\\/g, '/');
+        fileReplacements += (original.split(searchStr).length - 1);
+      }
       changedFiles.add(relFile);
-      totalReplacements++;
-      console.log(`Updated: ${relFile}`);
+      totalReplacements += fileReplacements;
+      console.log(`Updated: ${relFile} (${fileReplacements} replacement${fileReplacements !== 1 ? 's' : ''})`);
     }
   }
 }
 
-console.log(`\nDone! ${totalReplacements} files updated.`);
+console.log(`\nDone! ${totalReplacements} replacements across ${changedFiles.size} files.`);
 console.log('Changed files:');
 for (const f of changedFiles) {
   console.log(`  - ${f}`);

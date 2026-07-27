@@ -2,6 +2,10 @@
 node_modules/
 **/node_modules/
 
+# Upload scripts (contain no secrets but excluded per audit policy)
+upload-to-cloudinary.js
+upload-part2.js
+
 # Secrets & env
 .env
 **/.env
@@ -33,4 +37,3 @@ Thumbs.db
 # Design exports / OS noise
 Website/
 __MACOSX/
-.DS_Store

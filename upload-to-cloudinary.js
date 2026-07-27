@@ -4,8 +4,8 @@ const path = require('path');
 
 cloudinary.config({
   cloud_name: 'iguqsxhj',
-  api_key: '732515548126786',
-  api_secret: 'XebKr-5iUJtLO3s0czO67hblXDU'
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 const imagesDir = path.join(__dirname, 'amoo-web', 'public');
@@ -126,10 +126,13 @@ async function main() {
     const r = await uploadImage(img.local, img.id);
     if (r) results.push(r);
   }
-  // Write mapping file
+  // Write mapping file as {localPath: cloudUrl} — the format expected by
+  // replace-local-images.js.  uploadImage returns {local, url} items, so we
+  // convert the array to an object keyed by local path.
   const mapPath = path.join(__dirname, 'cloudinary-map.json');
-  fs.writeFileSync(mapPath, JSON.stringify(results, null, 2));
-  console.log(`\nDone! ${results.length} images uploaded.`);
+  const mapping = Object.fromEntries(results.filter(Boolean).map((r) => [r.local, r.url]));
+  fs.writeFileSync(mapPath, JSON.stringify(mapping, null, 2));
+  console.log(`\nDone! ${Object.keys(mapping).length} images uploaded.`);
   console.log(`Mapping saved to: ${mapPath}`);
 }
 
