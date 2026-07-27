@@ -10,18 +10,18 @@
  * `savings` field that is really `discount`) would have been caught here.
  *
  * CONVENTIONS
- * - MySQL DECIMAL columns arrive from mysql2 as **strings** ("999.00"), so money
- *   is typed `number | string` and must go through `toNumber`/`formatCurrency`
+ * - DECIMAL columns arrive as **strings** ("999.00"), so money is typed
+ *   `number | string` and must go through `toNumber`/`formatCurrency`
  *   from `lib/format.ts` before arithmetic.
- * - DATE/DATETIME arrive as strings.
- * - TINYINT(1) booleans arrive as 0 | 1, not true/false.
+ * - DATE/DATETIME arrive as ISO strings (from JSON-serialised Date objects).
+ * - BOOLEAN columns (mapped from PostgreSQL BOOLEAN) arrive as true/false.
  */
 
-/** MySQL DECIMAL — always normalise with `toNumber()` before doing maths. */
+/** DECIMAL — always normalise with `toNumber()` before doing maths. */
 export type Decimal = number | string;
 
-/** MySQL TINYINT(1). Truthy check is safe; `=== true` is not. */
-export type Flag = 0 | 1 | boolean;
+/** PostgreSQL BOOLEAN. Truthy check is safe; `=== true` is not. */
+export type Flag = boolean;
 
 /** ISO date or datetime string. */
 export type DateString = string;
@@ -453,7 +453,7 @@ export interface BookingPatterns {
 /** `GET /api/users/stats`. */
 export interface UserStats {
   total: number;
-  active: number;
+  active: Flag;
   premium: number;
   today: number;
   byRole: { role: string; count: number }[];

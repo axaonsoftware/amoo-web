@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const REQUEST_TIMEOUT_MS = 30000;
 
 type Headers = Record<string, string>;
 
@@ -32,16 +33,24 @@ function readCsrfCookie(): string | null {
 
 // A mutating call can be the first request of the session, before any response
 // has handed us a token. One cheap GET makes the API issue one.
+// Deduplication: concurrent callers share the same in-flight promise.
+let csrfPromise: Promise<string | null> | null = null;
 async function ensureCsrfToken(): Promise<string | null> {
   const known = csrfToken || readCsrfCookie();
   if (known) return known;
-  try {
-    const res = await fetch(`${API_URL}/api/health`, { credentials: "include" });
-    rememberCsrfToken(res);
-  } catch {
-    return null;
-  }
-  return csrfToken || readCsrfCookie();
+  if (csrfPromise) return csrfPromise;
+  csrfPromise = (async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/health`, { credentials: "include" });
+      rememberCsrfToken(res);
+    } catch {
+      return null;
+    } finally {
+      csrfPromise = null;
+    }
+    return csrfToken || readCsrfCookie();
+  })();
+  return csrfPromise;
 }
 
 async function buildHeaders(method: string, base: Headers = {}): Promise<Headers> {
@@ -89,10 +98,20 @@ async function handleResponse(res: Response) {
   return data;
 }
 
+function fetchWithTimeout(url: string, options: RequestInit, timeoutMs = REQUEST_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const existingSignal = options.signal;
+  if (existingSignal) {
+    existingSignal.addEventListener("abort", () => { clearTimeout(timer); controller.abort(); }, { once: true });
+  }
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 async function request(method: string, path: string, body?: unknown) {
   const headers = await buildHeaders(method, { "Content-Type": "application/json" });
 
-  const res = await fetch(`${API_URL}${path}`, {
+  const res = await fetchWithTimeout(`${API_URL}${path}`, {
     method,
     headers,
     credentials: "include",
@@ -103,15 +122,21 @@ async function request(method: string, path: string, body?: unknown) {
   if (res.status === 401 && path !== "/api/auth/refresh") {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
-      const retryRes = await fetch(`${API_URL}${path}`, {
-        method,
-        // Rebuild: the refresh round-trip may have handed us a newer token.
-        headers: await buildHeaders(method, { "Content-Type": "application/json" }),
-        credentials: "include",
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      rememberCsrfToken(retryRes);
-      return handleResponse(retryRes);
+      // Retry budget: up to 2 attempts so a single flaky 401 after a successful
+      // refresh doesn't immediately redirect the user to login.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const retryRes = await fetchWithTimeout(`${API_URL}${path}`, {
+          method,
+          headers: await buildHeaders(method, { "Content-Type": "application/json" }),
+          credentials: "include",
+          body: body ? JSON.stringify(body) : undefined,
+        });
+        rememberCsrfToken(retryRes);
+        if (retryRes.status === 401 && attempt === 0) {
+          continue; // try once more
+        }
+        return handleResponse(retryRes);
+      }
     }
     // Admin pages have their own login; sending an admin to /user-login would
     // log them into the wrong realm (the backend keeps admins in a separate
@@ -283,10 +308,17 @@ export const api = {
     getBookingPatterns: () => request("GET", "/api/dashboard/bookings/patterns"),
 
     exportCSV: async (type: string) => {
-      const res = await fetch(`${API_URL}/api/dashboard/export/${type}`, {
+      const csrf = await ensureCsrfToken();
+      const headers: Headers = {};
+      if (csrf) headers["X-CSRF-Token"] = csrf;
+      const res = await fetchWithTimeout(`${API_URL}/api/dashboard/export/${type}`, {
         credentials: "include",
-      });
-      if (!res.ok) throw new Error("Export failed");
+        headers,
+      }, 60000);
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(text || "Export failed");
+      }
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -363,13 +395,12 @@ export const api = {
   uploadFile: async (file: File) => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetch(`${API_URL}/api/uploads`, {
+    const res = await fetchWithTimeout(`${API_URL}/api/uploads`, {
       method: "POST",
-      // No Content-Type: the browser must set the multipart boundary itself.
       headers: await buildHeaders("POST"),
       credentials: "include",
       body: form,
-    });
+    }, 120000);
     rememberCsrfToken(res);
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data && data.error) || "Upload failed");

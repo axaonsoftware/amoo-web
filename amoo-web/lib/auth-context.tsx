@@ -79,12 +79,14 @@ export function useAuth() {
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      router.replace("/user-login");
+      const loginUrl = `/user-login${pathname ? `?callbackUrl=${encodeURIComponent(pathname)}` : ""}`;
+      router.replace(loginUrl);
     }
-  }, [loading, isAuthenticated, router]);
+  }, [loading, isAuthenticated, router, pathname]);
 
   if (loading) return null;
   if (!isAuthenticated) return null;
@@ -94,12 +96,14 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isAdmin, loading } = useAuth();
   const router = useRouter();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
 
   useEffect(() => {
     if (!loading && !isAdmin) {
-      router.replace("/admin-login");
+      const loginUrl = `/admin-login${pathname ? `?callbackUrl=${encodeURIComponent(pathname)}` : ""}`;
+      router.replace(loginUrl);
     }
-  }, [loading, isAdmin, router]);
+  }, [loading, isAdmin, router, pathname]);
 
   if (loading) return null;
   if (!isAdmin) return null;
@@ -109,16 +113,17 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
 export function RequireExpert({ children, fallbackPath = "/" }: { children: React.ReactNode; fallbackPath?: string }) {
   const { isExpert, isAdmin, loading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
 
   useEffect(() => {
     if (loading) return;
     if (!isAuthenticated) {
-      router.replace("/astrologer-login");
+      const loginUrl = `/astrologer-login${pathname ? `?callbackUrl=${encodeURIComponent(pathname)}` : ""}`;
+      router.replace(loginUrl);
     } else if (!isExpert && !isAdmin) {
-      // Regular users hitting an expert-only route get sent home
       router.replace(fallbackPath);
     }
-  }, [loading, isAuthenticated, isExpert, isAdmin, router, fallbackPath]);
+  }, [loading, isAuthenticated, isExpert, isAdmin, router, pathname, fallbackPath]);
 
   if (loading) return null;
   if (!isAuthenticated) return null;
