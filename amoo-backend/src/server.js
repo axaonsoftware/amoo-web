@@ -4,6 +4,8 @@
 const { shutdownTelemetry } = require("./config/telemetry");
 
 const express = require("express");
+const sentry = require("./config/sentry");
+sentry.init();
 const path = require("path");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
@@ -52,6 +54,18 @@ app.set("trust proxy", env.isProd ? 1 : 0);
 app.use(helmetConfig);
 app.use(cors(corsOptions));
 app.use(compression());
+
+// Request timeout: return 503 if a request takes longer than 30 seconds.
+// Must be placed after body parsers so slow bodies don't count against the
+// timeout, but before routes so it covers every handler.
+app.use((req, res, next) => {
+  res.setTimeout(30000, () => {
+    if (!res.headersSent) {
+      res.status(503).json({ error: "Request timed out" });
+    }
+  });
+  next();
+});
 // JSON parser: use the standard parser for all routes EXCEPT the payment webhook
 // (which needs the raw body for HMAC signature verification).
 const jsonParser = express.json({ limit: "1mb" });
@@ -159,6 +173,9 @@ app.use((err, req, res, next) => {
   if (err.code === "LIMIT_FILE_SIZE") {
     return fail(res, 413, "File too large");
   }
+  // Send to Sentry (non-HTTP errors only — 4xx are expected)
+  if (err.status >= 500 || !err.status) sentry.error(err, req);
+
   // Log with request context (no request body — may contain sensitive data)
   logger.error(
     "Unhandled error:",
@@ -186,6 +203,8 @@ process.on("uncaughtException", (err) => {
 });
 process.on("unhandledRejection", (reason) => {
   logger.error("UNHANDLED_REJECTION:", typeof reason === "object" ? reason.message : reason, reason?.stack ?? "");
+  // eslint-disable-next-line no-process-exit
+  process.exit(1);
 });
 
 // Graceful shutdown: stop accepting requests, drain in-flight, then close DB
@@ -199,6 +218,7 @@ if (require.main === module) {
       // Flush buffered spans before exit, or the traces for the last requests
       // before a deploy are lost. No-op when tracing never started.
       await shutdownTelemetry();
+      await sentry.flush();
       const { pool } = require("./config/db");
       try {
         await pool.end();
