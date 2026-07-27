@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Inbox, Search, Trash2, Mail, Phone, Loader2, X, CheckCircle2 } from "lucide-react";
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
 import { formatDateTime, formatRelative } from "@/lib/format";
@@ -41,6 +41,44 @@ const STATUS_STYLES: Record<Contact["status"], string> = {
   replied: "bg-[#E8F5E9] text-[#2E7D32]",
   closed: "bg-[#EEF0F5] text-[#5A6472]",
 };
+
+const ContactItem = memo(function ContactItem({
+  c,
+  onSelect,
+}: {
+  c: Contact;
+  onSelect: (c: Contact) => void;
+}) {
+  return (
+    <li>
+      <button
+        type="button"
+        onClick={() => onSelect(c)}
+        className="flex w-full items-start gap-3 rounded-[8px] px-2 py-3 text-left hover:bg-[#FAF9FE]"
+      >
+        <span
+          aria-hidden="true"
+          className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[11px] font-bold text-white"
+        >
+          {(c.name || "?").slice(0, 2).toUpperCase()}
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-[12.5px] font-semibold text-[#231640]">{sanitize(c.name)}</p>
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${STATUS_STYLES[c.status]}`}>
+              {c.status}
+            </span>
+            <span className="ml-auto text-[10.5px] text-[#8B879C]">{formatRelative(c.created_at)}</span>
+          </div>
+          <p className="mt-0.5 truncate text-[11.5px] font-medium text-[#3D3752]">
+            {sanitize(c.subject) || "(no subject)"}
+          </p>
+          <p className="mt-0.5 truncate text-[11px] text-[#8B879C]">{sanitize(c.message)}</p>
+        </div>
+      </button>
+    </li>
+  );
+});
 
 export default function ContactInboxPage() {
   const [items, setItems] = useState<Contact[]>([]);
@@ -120,6 +158,11 @@ export default function ContactInboxPage() {
 
   const newCount = items.filter((c) => c.status === "new").length;
 
+  const handleSelectContact = useCallback((c: Contact) => {
+    setSelected(c);
+    setReplyText(c.reply ?? "");
+  }, []);
+
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
       <AdminPageHeader
@@ -178,33 +221,7 @@ export default function ContactInboxPage() {
         ) : (
           <ul className="divide-y divide-[#F0EDF5]">
             {items.map((c) => (
-              <li key={c.id}>
-                <button
-                  type="button"
-                  onClick={() => openDetail(c)}
-                  className="flex w-full items-start gap-3 rounded-[8px] px-2 py-3 text-left hover:bg-[#FAF9FE]"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[11px] font-bold text-white"
-                  >
-                    {(c.name || "?").slice(0, 2).toUpperCase()}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-[12.5px] font-semibold text-[#231640]">{sanitize(c.name)}</p>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${STATUS_STYLES[c.status]}`}>
-                        {c.status}
-                      </span>
-                      <span className="ml-auto text-[10.5px] text-[#8B879C]">{formatRelative(c.created_at)}</span>
-                    </div>
-                    <p className="mt-0.5 truncate text-[11.5px] font-medium text-[#3D3752]">
-                      {sanitize(c.subject) || "(no subject)"}
-                    </p>
-                    <p className="mt-0.5 truncate text-[11px] text-[#8B879C]">{sanitize(c.message)}</p>
-                  </div>
-                </button>
-              </li>
+              <ContactItem key={c.id} c={c} onSelect={handleSelectContact} />
             ))}
           </ul>
         )}

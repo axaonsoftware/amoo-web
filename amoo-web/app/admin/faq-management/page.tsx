@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { memo, useCallback, useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -19,7 +19,7 @@ interface Faq {
   answer: string;
   category: string;
   sort_order: number;
-  active: number;
+  active: boolean;
   created_at?: string;
   updated_at?: string;
 }
@@ -27,6 +27,57 @@ interface Faq {
 const CATEGORIES = ["General", "Services", "Booking", "Payment", "Spiritual", "Technical"];
 
 const EMPTY_FORM = { question: "", answer: "", category: "General", sort_order: 0, active: true };
+
+const FaqRow = memo(function FaqRow({
+  faq,
+  onEdit,
+  onDelete,
+}: {
+  faq: Faq;
+  onEdit: (faq: Faq) => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <tr key={faq.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
+      <td className="max-w-[300px] truncate px-4 py-3 text-[#3D3752]">
+        {faq.question}
+      </td>
+      <td className="px-4 py-3">
+        <span className="inline-block rounded-full bg-[#F0EAFF] px-2.5 py-0.5 text-[10px] font-medium text-[#6D28D9]">
+          {faq.category}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-[#3D3752]">{faq.sort_order}</td>
+      <td className="px-4 py-3">
+        <span
+          className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
+            faq.active
+              ? "bg-[#E8F5E9] text-[#2E7D32]"
+              : "bg-[#FFEBEE] text-[#C62828]"
+          }`}
+        >
+          {faq.active ? "Active" : "Inactive"}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onEdit(faq)}
+            className="rounded-md p-1.5 text-[#6D28D9] hover:bg-[#F0EAFF]"
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            onClick={() => onDelete(faq.id)}
+            className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export default function FaqManagementPage() {
   const [faqs, setFaqs] = useState<Faq[]>([]);
@@ -106,6 +157,9 @@ export default function FaqManagementPage() {
       alert("Failed to delete FAQ.");
     }
   };
+
+  const handleEditFaq = useCallback((faq: Faq) => openEdit(faq), []);
+  const handleDeleteFaq = useCallback((id: number) => setDeleteId(id), []);
 
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
@@ -206,44 +260,12 @@ export default function FaqManagementPage() {
               </tr>
             ) : (
               filtered.map((faq) => (
-                <tr key={faq.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
-                  <td className="max-w-[300px] truncate px-4 py-3 text-[#3D3752]">
-                    {faq.question}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="inline-block rounded-full bg-[#F0EAFF] px-2.5 py-0.5 text-[10px] font-medium text-[#6D28D9]">
-                      {faq.category}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-[#3D3752]">{faq.sort_order}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
-                        faq.active
-                          ? "bg-[#E8F5E9] text-[#2E7D32]"
-                          : "bg-[#FFEBEE] text-[#C62828]"
-                      }`}
-                    >
-                      {faq.active ? "Active" : "Inactive"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openEdit(faq)}
-                        className="rounded-md p-1.5 text-[#6D28D9] hover:bg-[#F0EAFF]"
-                      >
-                        <Pencil size={14} />
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(faq.id)}
-                        className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <FaqRow
+                  key={faq.id}
+                  faq={faq}
+                  onEdit={handleEditFaq}
+                  onDelete={handleDeleteFaq}
+                />
               ))
             )}
           </tbody>

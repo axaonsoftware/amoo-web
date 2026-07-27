@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -73,6 +73,135 @@ function fmtDate(iso: string) {
     time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
   };
 }
+
+const UserRow = memo(function UserRow({
+  u,
+  onEdit,
+  onBlock,
+  onDelete,
+}: {
+  u: any;
+  onEdit: (u: any) => void;
+  onBlock: (u: any) => void;
+  onDelete: (u: any) => void;
+}) {
+  const roleStyle = roleStyles[u.role as RoleKey] ?? {
+    label: u.role ?? "—",
+    bg: "bg-[#F5F4F9]",
+    text: "text-[#6B6480]",
+  };
+  const st = statusStyles[u.status as StatusKey] ?? {
+    label: u.status ?? "—",
+    bg: "bg-[#F5F4F9]",
+    text: "text-[#6B6480]",
+  };
+
+  return (
+    <tr
+      key={u.id}
+      className={`border-b border-[#F3F2F7] ${
+        u.selected ? "bg-[#F7F2FE]" : ""
+      }`}
+    >
+      <td className="py-[11px] pl-5 align-middle">
+        {u.selected ? (
+          <span className="grid h-[14px] w-[14px] place-items-center rounded-[4px] bg-[#6D28D9]">
+            <Check
+              size={10}
+              strokeWidth={3}
+              className="text-white"
+            />
+          </span>
+        ) : (
+          <span className="block h-[14px] w-[14px] rounded-[4px] border border-[#CFCBDB] bg-white" />
+        )}
+      </td>
+
+      <td className="py-[11px] pr-3">
+        <div className="flex items-center gap-[8px]">
+          {u.avatar ? (
+            <Image
+              src={u.avatar}
+              alt={sanitize(u.name)}
+              width={30}
+              height={30}
+              className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[11px] font-bold text-white">
+              {u.name?.slice(0, 2)?.toUpperCase() || "U"}
+            </span>
+          )}
+          <div className="leading-tight">
+            <div className="flex items-center gap-[6px]">
+              <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
+                {sanitize(u.name)}
+              </p>
+              {u.verified ? (
+                <span className="inline-flex h-[17px] items-center rounded-[5px] bg-[#EDE7FB] px-[6px] text-[9px] font-medium text-[#6D28D9]">
+                  Verified
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
+              ID: {u.id}
+            </p>
+          </div>
+        </div>
+      </td>
+
+      <td className="py-[11px] pr-3 leading-tight">
+        <p className="whitespace-nowrap text-[11.5px] text-[#2E2A3B]">
+          {sanitize(u.email)}
+        </p>
+        <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
+          {sanitize(u.phone)}
+        </p>
+      </td>
+
+      <td className="py-[11px] pr-3">
+        <span
+          className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${roleStyle.bg} ${roleStyle.text}`}
+        >
+          {roleStyle.label}
+        </span>
+      </td>
+
+      <td className="py-[11px] pr-3">
+        <span
+          className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${st.bg} ${st.text}`}
+        >
+          {st.label}
+        </span>
+      </td>
+
+      <td className="py-[11px] pr-3 leading-tight">
+        <p className="whitespace-nowrap text-[11.5px] text-[#2E2A3B]">
+          {u.date}
+        </p>
+        <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
+          {u.time}
+        </p>
+      </td>
+
+      <td className="py-[11px] pr-5">
+        <div className="flex items-center gap-[6px]">
+          <button type="button" aria-label="Edit" onClick={() => onEdit(u)} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]">
+            <Pencil size={14} />
+          </button>
+          {u.status !== "blocked" && (
+            <button type="button" aria-label="Block" onClick={() => onBlock(u)} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#F59E0B] hover:bg-[#FEF3C7]">
+              <Ban size={14} />
+            </button>
+          )}
+          <button type="button" aria-label="Delete" onClick={() => onDelete(u)} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEE2E2]">
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export default function UsersPanel() {
   const [page, setPage] = useState(1);
@@ -169,6 +298,17 @@ export default function UsersPanel() {
   };
 
   const reload = load;
+  const handleEditUser = useCallback((u: any) => {
+    setEditingUser(u);
+    setEditValues({ name: u.name, email: u.email, phone: u.phone || "", role: u.role, status: u.status });
+    setEditModalOpen(true);
+  }, []);
+  const handleBlockUser = useCallback((u: any) => {
+    setConfirmDialog({ open: true, type: "block", user: u });
+  }, []);
+  const handleDeleteUser = useCallback((u: any) => {
+    setConfirmDialog({ open: true, type: "delete", user: u });
+  }, []);
   const userRows = list;
   const totalPages = meta.totalPages || 1;
   const total = meta.total;
@@ -317,124 +457,15 @@ export default function UsersPanel() {
                 }
               />
             ) : null}
-            {userRows.map((u) => {
-              const roleStyle = roleStyles[u.role as RoleKey] ?? {
-                label: u.role ?? "—",
-                bg: "bg-[#F5F4F9]",
-                text: "text-[#6B6480]",
-              };
-              const st = statusStyles[u.status as StatusKey] ?? {
-                label: u.status ?? "—",
-                bg: "bg-[#F5F4F9]",
-                text: "text-[#6B6480]",
-              };
-
-              return (
-                <tr
-                  key={u.id}
-                  className={`border-b border-[#F3F2F7] ${
-                    u.selected ? "bg-[#F7F2FE]" : ""
-                  }`}
-                >
-                  <td className="py-[11px] pl-5 align-middle">
-                    {u.selected ? (
-                      <span className="grid h-[14px] w-[14px] place-items-center rounded-[4px] bg-[#6D28D9]">
-                        <Check
-                          size={10}
-                          strokeWidth={3}
-                          className="text-white"
-                        />
-                      </span>
-                    ) : (
-                      <span className="block h-[14px] w-[14px] rounded-[4px] border border-[#CFCBDB] bg-white" />
-                    )}
-                  </td>
-
-                  <td className="py-[11px] pr-3">
-                    <div className="flex items-center gap-[8px]">
-                      {u.avatar ? (
-                        <Image
-                          src={u.avatar}
-                          alt={sanitize(u.name)}
-                          width={30}
-                          height={30}
-                          className="h-[30px] w-[30px] shrink-0 rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[11px] font-bold text-white">
-                          {u.name?.slice(0, 2)?.toUpperCase() || "U"}
-                        </span>
-                      )}
-                      <div className="leading-tight">
-                        <div className="flex items-center gap-[6px]">
-                          <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#221C33]">
-                            {sanitize(u.name)}
-                          </p>
-                          {u.verified ? (
-                            <span className="inline-flex h-[17px] items-center rounded-[5px] bg-[#EDE7FB] px-[6px] text-[9px] font-medium text-[#6D28D9]">
-                              Verified
-                            </span>
-                          ) : null}
-                        </div>
-                        <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                          ID: {u.id}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="py-[11px] pr-3 leading-tight">
-                    <p className="whitespace-nowrap text-[11.5px] text-[#2E2A3B]">
-                      {sanitize(u.email)}
-                    </p>
-                    <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {sanitize(u.phone)}
-                    </p>
-                  </td>
-
-                  <td className="py-[11px] pr-3">
-                    <span
-                      className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${roleStyle.bg} ${roleStyle.text}`}
-                    >
-                      {roleStyle.label}
-                    </span>
-                  </td>
-
-                  <td className="py-[11px] pr-3">
-                    <span
-                      className={`inline-flex h-[24px] items-center whitespace-nowrap rounded-[7px] px-[10px] text-[10.5px] font-medium ${st.bg} ${st.text}`}
-                    >
-                      {st.label}
-                    </span>
-                  </td>
-
-                  <td className="py-[11px] pr-3 leading-tight">
-                    <p className="whitespace-nowrap text-[11.5px] text-[#2E2A3B]">
-                      {u.date}
-                    </p>
-                    <p className="mt-[2px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {u.time}
-                    </p>
-                  </td>
-
-                  <td className="py-[11px] pr-5">
-                    <div className="flex items-center gap-[6px]">
-                      <button type="button" aria-label="Edit" onClick={() => { setEditingUser(u); setEditValues({ name: u.name, email: u.email, phone: u.phone || "", role: u.role, status: u.status }); setEditModalOpen(true); }} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]">
-                        <Pencil size={14} />
-                      </button>
-                      {u.status !== "blocked" && (
-                        <button type="button" aria-label="Block" onClick={() => setConfirmDialog({ open: true, type: "block", user: u })} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#F59E0B] hover:bg-[#FEF3C7]">
-                          <Ban size={14} />
-                        </button>
-                      )}
-                      <button type="button" aria-label="Delete" onClick={() => setConfirmDialog({ open: true, type: "delete", user: u })} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEE2E2]">
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {userRows.map((u) => (
+              <UserRow
+                key={u.id}
+                u={u}
+                onEdit={handleEditUser}
+                onBlock={handleBlockUser}
+                onDelete={handleDeleteUser}
+              />
+            ))}
           </tbody>
         </table>
 

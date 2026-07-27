@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -57,6 +57,86 @@ const planTypes = ["All Plan Types", "Subscription", "One-time"];
 const statuses = ["All Status", "Active", "Inactive"];
 
 const PAGE_SIZE = 10;
+
+const PricingRow = memo(function PricingRow({
+  r,
+  onEdit,
+  onDelete,
+}: {
+  r: Row;
+  onEdit: (r: Row) => void;
+  onDelete: (id: number) => void;
+}) {
+  return (
+    <tr key={r.id} className="border-b border-[#F2F1F7]">
+      <td className="py-[12px] pl-3 pr-2">
+        <div>
+          <p className="text-[11.5px] font-semibold text-[#1F1836]">{r.name}</p>
+          <p className="mt-[2px] text-[9.5px] text-[#8B879C]">{r.sub}</p>
+        </div>
+      </td>
+
+      <td className="px-2 py-[12px]">
+        <span
+          className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
+            serviceTone[r.service as keyof typeof serviceTone] || "bg-[#E4F1FD] text-[#0E7FBF]"
+          }`}
+        >
+          {r.service}
+        </span>
+      </td>
+
+      <td className="px-2 py-[12px]">
+        <span
+          className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
+            planTypeTone[r.planType as keyof typeof planTypeTone] || "bg-[#F1EAFE] text-[#7C3AED]"
+          }`}
+        >
+          {r.planType}
+        </span>
+      </td>
+
+      <td className="px-2 py-[12px] text-[11.5px] font-semibold text-[#1F1836]">{r.price}</td>
+
+      <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">{r.duration}</td>
+
+      <td className="px-2 py-[12px]">
+        <span
+          className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
+            r.status === "Active"
+              ? "bg-[#E6F7EE] text-[#16A34A]"
+              : "bg-[#FDE8E8] text-[#EF4444]"
+          }`}
+        >
+          {r.status}
+        </span>
+      </td>
+
+      <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">{r.bookings}</td>
+
+      <td className="py-[12px] pl-2 pr-3">
+        <div className="flex items-center gap-[6px]">
+          <button
+            type="button"
+            onClick={() => onEdit(r)}
+            title="Edit"
+            className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#6B6480] hover:bg-[#F7F6FB]"
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(r.id)}
+            title="Delete"
+            className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#6B6480] hover:bg-[#FDE8E8] hover:text-[#EF4444]"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export default function PricingPanel({
   onReady,
@@ -272,6 +352,9 @@ export default function PricingPanel({
     );
   if (error) return <div className="flex justify-center py-10 text-[13px] text-[#EF4444]">{error}</div>;
 
+  const handleEditPlan = useCallback((r: Row) => handleOpenEdit(r), []);
+  const handleDeletePlan = useCallback((id: number) => { setDeletingId(id); setConfirmOpen(true); }, []);
+
   return (
     <>
       <section className="rounded-[14px] border border-[#EEEDF4] bg-white shadow-[0_1px_2px_rgba(20,16,40,.04)]">
@@ -333,73 +416,12 @@ export default function PricingPanel({
 
             <tbody>
               {filteredRows.map((r) => (
-                <tr key={r.id} className="border-b border-[#F2F1F7]">
-                  <td className="py-[12px] pl-3 pr-2">
-                    <div>
-                      <p className="text-[11.5px] font-semibold text-[#1F1836]">{r.name}</p>
-                      <p className="mt-[2px] text-[9.5px] text-[#8B879C]">{r.sub}</p>
-                    </div>
-                  </td>
-
-                  <td className="px-2 py-[12px]">
-                    <span
-                      className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
-                        serviceTone[r.service as keyof typeof serviceTone] || "bg-[#E4F1FD] text-[#0E7FBF]"
-                      }`}
-                    >
-                      {r.service}
-                    </span>
-                  </td>
-
-                  <td className="px-2 py-[12px]">
-                    <span
-                      className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
-                        planTypeTone[r.planType as keyof typeof planTypeTone] || "bg-[#F1EAFE] text-[#7C3AED]"
-                      }`}
-                    >
-                      {r.planType}
-                    </span>
-                  </td>
-
-                  <td className="px-2 py-[12px] text-[11.5px] font-semibold text-[#1F1836]">{r.price}</td>
-
-                  <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">{r.duration}</td>
-
-                  <td className="px-2 py-[12px]">
-                    <span
-                      className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
-                        r.status === "Active"
-                          ? "bg-[#E6F7EE] text-[#16A34A]"
-                          : "bg-[#FDE8E8] text-[#EF4444]"
-                      }`}
-                    >
-                      {r.status}
-                    </span>
-                  </td>
-
-                  <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">{r.bookings}</td>
-
-                  <td className="py-[12px] pl-2 pr-3">
-                    <div className="flex items-center gap-[6px]">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenEdit(r)}
-                        title="Edit"
-                        className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#6B6480] hover:bg-[#F7F6FB]"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setDeletingId(r.id); setConfirmOpen(true); }}
-                        title="Delete"
-                        className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#6B6480] hover:bg-[#FDE8E8] hover:text-[#EF4444]"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <PricingRow
+                  key={r.id}
+                  r={r}
+                  onEdit={handleEditPlan}
+                  onDelete={handleDeletePlan}
+                />
               ))}
               {!filteredRows.length && (
                 <tr>

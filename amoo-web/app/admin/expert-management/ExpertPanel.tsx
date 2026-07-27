@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { memo, useState, useEffect, useCallback, useRef } from "react";
 import {
   Search,
   Filter,
@@ -81,6 +81,87 @@ type PanelFns = {
   openCreate: () => void;
   exportData: () => void;
 };
+
+const ExpertRow = memo(function ExpertRow({
+  expert,
+  idx,
+  onEdit,
+  onSetPassword,
+  onDelete,
+}: {
+  expert: any;
+  idx: number;
+  onEdit: (e: any) => void;
+  onSetPassword: (e: any) => void;
+  onDelete: (e: any) => void;
+}) {
+  return (
+    <tr key={expert.id ?? idx} className="border-b border-[#FAF9FC] hover:bg-[#FAF9FC]/60">
+      <td className="px-[14px] py-[11px]">
+        <div className="flex items-center gap-[10px]">
+          <span
+            className={`flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${getAvatarBg(idx)} text-[11px] font-bold text-white shadow-[0_2px_6px_rgba(0,0,0,.15)]`}
+          >
+            {getInitials(expert.name || "E")}
+          </span>
+          <div>
+            <p className="font-medium text-[#1F1836]">{sanitize(expert.name)}</p>
+            <p className="text-[10px] text-[#A5A2B5]">{sanitize(expert.email)}</p>
+          </div>
+        </div>
+      </td>
+      <td className="px-[14px] py-[11px]">
+        <span className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialization] || "bg-[#F5F4F9] text-[#6B6480]"}`}>
+          {expert.specialization || "—"}
+        </span>
+      </td>
+      <td className="px-[14px] py-[11px] text-[11px] text-[#6B6480]">
+        {expert.experience ? `${expert.experience} yrs` : "—"}
+      </td>
+      <td className="px-[14px] py-[11px] text-[11px] text-[#6B6480]">
+        {expert.hourly_rate ? `₹${expert.hourly_rate}` : "—"}
+      </td>
+      <td className="px-[14px] py-[11px] text-[11px] font-medium text-[#D97706]">
+        {expert.rating ? `★ ${expert.rating}` : "—"}
+      </td>
+      <td className="px-[14px] py-[11px] text-[11px] text-[#6B6480]">
+        {expert.sessions ?? "—"}
+      </td>
+      <td className="px-[14px] py-[11px]">
+        <span className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${statusTone[expert.status] || "bg-[#F5F4F9] text-[#6B6480]"}`}>
+          {expert.status || "—"}
+        </span>
+      </td>
+      <td className="px-[14px] py-[11px]">
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onEdit(expert)}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#7C3AED] hover:bg-[#FAF7FF]"
+            title="Edit"
+          >
+            <Pencil size={13} strokeWidth={2} />
+          </button>
+          <button
+            onClick={() => onSetPassword(expert)}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#6D28D9] hover:bg-[#FAF7FF]"
+            title="Set login password"
+            aria-label={`Set login password for ${sanitize(expert.name) || "expert"}`}
+          >
+            <KeyRound size={13} strokeWidth={2} />
+          </button>
+          <button
+            onClick={() => onDelete(expert)}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEF2F2]"
+            title="Delete"
+            aria-label={`Delete ${sanitize(expert.name) || "expert"}`}
+          >
+            <Trash2 size={13} strokeWidth={2} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => void }) {
   const [experts, setExperts] = useState<any[]>([]);
@@ -226,6 +307,10 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
     onReady?.({ openCreate: openAdd, exportData: handleExport });
   }, [onReady, handleExport]);
 
+  const handleEditExpert = useCallback((e: any) => openEdit(e), []);
+  const handleSetPassword = useCallback((e: any) => setPasswordTarget(e), []);
+  const handleDeleteExpert = useCallback((e: any) => { setDeleting(e); setConfirmOpen(true); }, []);
+
   return (
     <>
       {/* Search and filter bar */}
@@ -294,74 +379,14 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
               </tr>
             ) : (
               filtered.map((expert, idx) => (
-                <tr key={expert.id ?? idx} className="border-b border-[#FAF9FC] hover:bg-[#FAF9FC]/60">
-                  <td className="px-[14px] py-[11px]">
-                    <div className="flex items-center gap-[10px]">
-                      <span
-                        className={`flex h-[32px] w-[32px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${getAvatarBg(idx)} text-[11px] font-bold text-white shadow-[0_2px_6px_rgba(0,0,0,.15)]`}
-                      >
-                        {getInitials(expert.name || "E")}
-                      </span>
-                      <div>
-                        <p className="font-medium text-[#1F1836]">{sanitize(expert.name)}</p>
-                        <p className="text-[10px] text-[#A5A2B5]">{sanitize(expert.email)}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-[14px] py-[11px]">
-                    <span className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialization] || "bg-[#F5F4F9] text-[#6B6480]"}`}>
-                      {expert.specialization || "—"}
-                    </span>
-                  </td>
-                  <td className="px-[14px] py-[11px] text-[11px] text-[#6B6480]">
-                    {expert.experience ? `${expert.experience} yrs` : "—"}
-                  </td>
-                  <td className="px-[14px] py-[11px] text-[11px] text-[#6B6480]">
-                    {expert.hourly_rate ? `₹${expert.hourly_rate}` : "—"}
-                  </td>
-                  <td className="px-[14px] py-[11px] text-[11px] font-medium text-[#D97706]">
-                    {expert.rating ? `★ ${expert.rating}` : "—"}
-                  </td>
-                  <td className="px-[14px] py-[11px] text-[11px] text-[#6B6480]">
-                    {expert.sessions ?? "—"}
-                  </td>
-                  <td className="px-[14px] py-[11px]">
-                    <span className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${statusTone[expert.status] || "bg-[#F5F4F9] text-[#6B6480]"}`}>
-                      {expert.status || "—"}
-                    </span>
-                  </td>
-                  <td className="px-[14px] py-[11px]">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => openEdit(expert)}
-                        className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#7C3AED] hover:bg-[#FAF7FF]"
-                        title="Edit"
-                      >
-                        <Pencil size={13} strokeWidth={2} />
-                      </button>
-                      {/* Without this, an expert created here can never log in:
-                          experts have no self-service signup or password reset,
-                          so POST /api/experts/:id/set-password is the only way
-                          experts.password_hash is ever populated. */}
-                      <button
-                        onClick={() => setPasswordTarget(expert)}
-                        className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#6D28D9] hover:bg-[#FAF7FF]"
-                        title="Set login password"
-                        aria-label={`Set login password for ${sanitize(expert.name) || "expert"}`}
-                      >
-                        <KeyRound size={13} strokeWidth={2} />
-                      </button>
-                      <button
-                        onClick={() => { setDeleting(expert); setConfirmOpen(true); }}
-                        className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEF2F2]"
-                        title="Delete"
-                        aria-label={`Delete ${sanitize(expert.name) || "expert"}`}
-                      >
-                        <Trash2 size={13} strokeWidth={2} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <ExpertRow
+                  key={expert.id ?? idx}
+                  expert={expert}
+                  idx={idx}
+                  onEdit={handleEditExpert}
+                  onSetPassword={handleSetPassword}
+                  onDelete={handleDeleteExpert}
+                />
               ))
             )}
           </tbody>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import { Ticket, Plus, Pencil, Trash2, Search, X, Loader2 } from "lucide-react";
 import { api, qs, unwrapList } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -30,7 +30,7 @@ type Coupon = {
   max_uses: number | null;
   used_count: number;
   expires_at: string | null;
-  active: number;
+  active: boolean;
   created_at?: string;
 };
 
@@ -62,6 +62,82 @@ function isExpired(c: Coupon): boolean {
 function isExhausted(c: Coupon): boolean {
   return c.max_uses != null && c.used_count >= c.max_uses;
 }
+
+const CouponRow = memo(function CouponRow({
+  c,
+  onEdit,
+  onDelete,
+}: {
+  c: Coupon;
+  onEdit: (c: Coupon) => void;
+  onDelete: (c: Coupon) => void;
+}) {
+  const expired = isExpired(c);
+  const exhausted = isExhausted(c);
+  const usable = !!c.active && !expired && !exhausted;
+  return (
+    <tr key={c.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
+      <td className="px-4 py-3">
+        <span className="font-mono font-semibold text-[#3D3752]">{sanitize(c.code)}</span>
+        {c.description && (
+          <p className="mt-0.5 max-w-[220px] truncate text-[10.5px] text-[#8B879C]">
+            {sanitize(c.description)}
+          </p>
+        )}
+      </td>
+      <td className="px-4 py-3 text-[#3D3752]">
+        {c.discount_type === "percent"
+          ? `${Number(c.discount_value)}%`
+          : formatCurrency(c.discount_value)}
+      </td>
+      <td className="px-4 py-3 text-[#3D3752]">
+        {Number(c.min_amount) > 0 ? formatCurrency(c.min_amount) : "—"}
+      </td>
+      <td className="px-4 py-3 text-[#3D3752]">
+        {c.used_count}
+        {c.max_uses != null && <span className="text-[#8B879C]"> / {c.max_uses}</span>}
+      </td>
+      <td className="px-4 py-3 text-[#3D3752]">
+        {c.expires_at ? formatDate(c.expires_at) : "Never"}
+      </td>
+      <td className="px-4 py-3">
+        <span
+          className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
+            usable
+              ? "bg-[#E8F5E9] text-[#2E7D32]"
+              : expired
+                ? "bg-[#FFF4E5] text-[#B26A00]"
+                : exhausted
+                  ? "bg-[#EEF0F5] text-[#5A6472]"
+                  : "bg-[#FFEBEE] text-[#C62828]"
+          }`}
+        >
+          {usable ? "Active" : expired ? "Expired" : exhausted ? "Exhausted" : "Inactive"}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onEdit(c)}
+            aria-label={`Edit coupon ${c.code}`}
+            className="rounded-md p-1.5 text-[#6D28D9] hover:bg-[#F0EAFF]"
+          >
+            <Pencil size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(c)}
+            aria-label={`Delete coupon ${c.code}`}
+            className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
+          >
+            <Trash2 size={14} aria-hidden="true" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export default function CouponManagementPage() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -187,6 +263,9 @@ export default function CouponManagementPage() {
   const activeCount = coupons.filter((c) => c.active && !isExpired(c) && !isExhausted(c)).length;
   const redemptions = coupons.reduce((sum, c) => sum + (Number(c.used_count) || 0), 0);
 
+  const handleEditCoupon = useCallback((c: Coupon) => openEdit(c), []);
+  const handleDeleteCoupon = useCallback((c: Coupon) => setDeleteTarget(c), []);
+
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
       <AdminPageHeader
@@ -266,76 +345,14 @@ export default function CouponManagementPage() {
                 message="Create one and customers can redeem it on the consultation checkout page."
               />
             ) : (
-              coupons.map((c) => {
-                const expired = isExpired(c);
-                const exhausted = isExhausted(c);
-                const usable = !!c.active && !expired && !exhausted;
-                return (
-                  <tr key={c.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
-                    <td className="px-4 py-3">
-                      <span className="font-mono font-semibold text-[#3D3752]">{sanitize(c.code)}</span>
-                      {c.description && (
-                        <p className="mt-0.5 max-w-[220px] truncate text-[10.5px] text-[#8B879C]">
-                          {sanitize(c.description)}
-                        </p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-[#3D3752]">
-                      {c.discount_type === "percent"
-                        ? `${Number(c.discount_value)}%`
-                        : formatCurrency(c.discount_value)}
-                    </td>
-                    <td className="px-4 py-3 text-[#3D3752]">
-                      {Number(c.min_amount) > 0 ? formatCurrency(c.min_amount) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-[#3D3752]">
-                      {c.used_count}
-                      {c.max_uses != null && <span className="text-[#8B879C]"> / {c.max_uses}</span>}
-                    </td>
-                    <td className="px-4 py-3 text-[#3D3752]">
-                      {c.expires_at ? formatDate(c.expires_at) : "Never"}
-                    </td>
-                    <td className="px-4 py-3">
-                      {/* Distinguishes the three ways a coupon stops working —
-                          the API returns `active` alone, which would show an
-                          expired or exhausted coupon as "Active". */}
-                      <span
-                        className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
-                          usable
-                            ? "bg-[#E8F5E9] text-[#2E7D32]"
-                            : expired
-                              ? "bg-[#FFF4E5] text-[#B26A00]"
-                              : exhausted
-                                ? "bg-[#EEF0F5] text-[#5A6472]"
-                                : "bg-[#FFEBEE] text-[#C62828]"
-                        }`}
-                      >
-                        {usable ? "Active" : expired ? "Expired" : exhausted ? "Exhausted" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEdit(c)}
-                          aria-label={`Edit coupon ${c.code}`}
-                          className="rounded-md p-1.5 text-[#6D28D9] hover:bg-[#F0EAFF]"
-                        >
-                          <Pencil size={14} aria-hidden="true" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(c)}
-                          aria-label={`Delete coupon ${c.code}`}
-                          className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
-                        >
-                          <Trash2 size={14} aria-hidden="true" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+              coupons.map((c) => (
+                <CouponRow
+                  key={c.id}
+                  c={c}
+                  onEdit={handleEditCoupon}
+                  onDelete={handleDeleteCoupon}
+                />
+              ))
             )}
           </tbody>
         </table>

@@ -11,9 +11,9 @@ function isToday(ts: string): boolean {
 }
 
 export default function TodaysCollection() {
-  const [amount, setAmount] = useState("₹ 1,24,650");
-  const [txnCount, setTxnCount] = useState(162);
-  const [avgOrder, setAvgOrder] = useState("₹ 769");
+  const [amount, setAmount] = useState<string | null>(null);
+  const [txnCount, setTxnCount] = useState<number | null>(null);
+  const [avgOrder, setAvgOrder] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +31,10 @@ export default function TodaysCollection() {
           setAmount(`₹ ${total.toLocaleString("en-IN")}`);
           setTxnCount(count);
           setAvgOrder(`₹ ${avg.toLocaleString("en-IN")}`);
+        } else {
+          setAmount(null);
+          setTxnCount(null);
+          setAvgOrder(null);
         }
       })
       .catch((err) => { if (!cancelled) setError(err?.message || "Failed to load today's collection"); })
@@ -58,6 +62,10 @@ export default function TodaysCollection() {
         <div className="flex justify-center py-6">
           <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
         </div>
+      ) : amount === null ? (
+        <div className="flex justify-center py-6 text-[12px] text-[#A5A2B5]">
+          No transactions today
+        </div>
       ) : (
         <>
           <div className="mt-5 flex items-center gap-[14px]">
@@ -67,13 +75,6 @@ export default function TodaysCollection() {
             <div className="min-w-0">
               <p className="text-[22px] font-semibold leading-[28px] text-[#1B1630]">
                 {amount}
-              </p>
-              <p className="mt-[3px] flex items-center gap-[3px] text-[10.5px] font-medium">
-                <span className="flex items-center gap-[2px] text-[#16A34A]">
-                  <ArrowUp size={11} />
-                  14.6%
-                </span>
-                <span className="text-[#A5A2B5]">from yesterday</span>
               </p>
             </div>
           </div>

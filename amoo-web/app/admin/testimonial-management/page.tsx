@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { MessageSquareQuote, Star, Check, EyeOff, Trash2, Loader2 } from "lucide-react";
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
@@ -50,6 +50,104 @@ function Stars({ rating }: { rating: number }) {
     </span>
   );
 }
+
+const TestimonialItem = memo(function TestimonialItem({
+  t,
+  busyId,
+  onPublish,
+  onHide,
+  onDelete,
+}: {
+  t: Testimonial;
+  busyId: number | null;
+  onPublish: (t: Testimonial) => void;
+  onHide: (t: Testimonial) => void;
+  onDelete: (t: Testimonial) => void;
+}) {
+  return (
+    <li key={t.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start">
+      {t.avatar ? (
+        <Image
+          src={t.avatar}
+          alt=""
+          width={40}
+          height={40}
+          unoptimized
+          className="h-10 w-10 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[12px] font-bold text-white"
+        >
+          {initials(t.name)}
+        </span>
+      )}
+
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-[12.5px] font-semibold text-[#231640]">
+            {sanitize(t.name) || "Anonymous"}
+          </p>
+          <Stars rating={t.rating} />
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              t.status === "Active"
+                ? "bg-[#E8F5E9] text-[#2E7D32]"
+                : "bg-[#FFF4E5] text-[#B26A00]"
+            }`}
+          >
+            {t.status === "Active" ? "Published" : "Pending"}
+          </span>
+          <span className="text-[10.5px] text-[#8B879C]">{formatDate(t.created_at)}</span>
+        </div>
+        <p className="mt-1.5 whitespace-pre-wrap text-[12px] leading-relaxed text-[#3D3752]">
+          {sanitize(t.comment)}
+        </p>
+      </div>
+
+      <div className="flex shrink-0 items-center gap-2">
+        {t.status === "Inactive" ? (
+          <button
+            type="button"
+            onClick={() => onPublish(t)}
+            disabled={busyId === t.id}
+            className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#E8F5E9] px-3 py-1.5 text-[11.5px] font-medium text-[#2E7D32] hover:bg-[#D6EFD8] disabled:opacity-50"
+          >
+            {busyId === t.id ? (
+              <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Check size={13} aria-hidden="true" />
+            )}
+            Publish
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => onHide(t)}
+            disabled={busyId === t.id}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border border-[#E5E1F0] px-3 py-1.5 text-[11.5px] font-medium text-[#8B879C] hover:bg-gray-50 disabled:opacity-50"
+          >
+            {busyId === t.id ? (
+              <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+            ) : (
+              <EyeOff size={13} aria-hidden="true" />
+            )}
+            Hide
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => onDelete(t)}
+          aria-label={`Delete testimonial from ${t.name || "Anonymous"}`}
+          className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
+        >
+          <Trash2 size={14} aria-hidden="true" />
+        </button>
+      </div>
+    </li>
+  );
+});
 
 export default function TestimonialManagementPage() {
   const [items, setItems] = useState<Testimonial[]>([]);
@@ -106,6 +204,10 @@ export default function TestimonialManagementPage() {
       setDeleting(false);
     }
   };
+
+  const handlePublishTestimonial = useCallback((t: Testimonial) => setStatusFor(t, "Active"), []);
+  const handleHideTestimonial = useCallback((t: Testimonial) => setStatusFor(t, "Inactive"), []);
+  const handleDeleteTestimonial = useCallback((t: Testimonial) => setDeleteTarget(t), []);
 
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
@@ -172,89 +274,14 @@ export default function TestimonialManagementPage() {
         ) : (
           <ul className="divide-y divide-[#F0EDF5]">
             {items.map((t) => (
-              <li key={t.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start">
-                {t.avatar ? (
-                  <Image
-                    src={t.avatar}
-                    alt=""
-                    width={40}
-                    height={40}
-                    unoptimized
-                    className="h-10 w-10 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <span
-                    aria-hidden="true"
-                    className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[12px] font-bold text-white"
-                  >
-                    {initials(t.name)}
-                  </span>
-                )}
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-[12.5px] font-semibold text-[#231640]">
-                      {sanitize(t.name) || "Anonymous"}
-                    </p>
-                    <Stars rating={t.rating} />
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        t.status === "Active"
-                          ? "bg-[#E8F5E9] text-[#2E7D32]"
-                          : "bg-[#FFF4E5] text-[#B26A00]"
-                      }`}
-                    >
-                      {t.status === "Active" ? "Published" : "Pending"}
-                    </span>
-                    <span className="text-[10.5px] text-[#8B879C]">{formatDate(t.created_at)}</span>
-                  </div>
-                  {/* Customer-written text: stripped of markup, rendered as a
-                      text node so React escapes whatever remains. */}
-                  <p className="mt-1.5 whitespace-pre-wrap text-[12px] leading-relaxed text-[#3D3752]">
-                    {sanitize(t.comment)}
-                  </p>
-                </div>
-
-                <div className="flex shrink-0 items-center gap-2">
-                  {t.status === "Inactive" ? (
-                    <button
-                      type="button"
-                      onClick={() => setStatusFor(t, "Active")}
-                      disabled={busyId === t.id}
-                      className="inline-flex items-center gap-1.5 rounded-[8px] bg-[#E8F5E9] px-3 py-1.5 text-[11.5px] font-medium text-[#2E7D32] hover:bg-[#D6EFD8] disabled:opacity-50"
-                    >
-                      {busyId === t.id ? (
-                        <Loader2 size={13} className="animate-spin" aria-hidden="true" />
-                      ) : (
-                        <Check size={13} aria-hidden="true" />
-                      )}
-                      Publish
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setStatusFor(t, "Inactive")}
-                      disabled={busyId === t.id}
-                      className="inline-flex items-center gap-1.5 rounded-[8px] border border-[#E5E1F0] px-3 py-1.5 text-[11.5px] font-medium text-[#8B879C] hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      {busyId === t.id ? (
-                        <Loader2 size={13} className="animate-spin" aria-hidden="true" />
-                      ) : (
-                        <EyeOff size={13} aria-hidden="true" />
-                      )}
-                      Hide
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setDeleteTarget(t)}
-                    aria-label={`Delete testimonial from ${t.name || "Anonymous"}`}
-                    className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
-                  >
-                    <Trash2 size={14} aria-hidden="true" />
-                  </button>
-                </div>
-              </li>
+              <TestimonialItem
+                key={t.id}
+                t={t}
+                busyId={busyId}
+                onPublish={handlePublishTestimonial}
+                onHide={handleHideTestimonial}
+                onDelete={handleDeleteTestimonial}
+              />
             ))}
           </ul>
         )}

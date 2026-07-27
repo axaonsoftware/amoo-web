@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { FileText, Plus, Pencil, Trash2, Search, X, Loader2, Eye } from "lucide-react";
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
@@ -76,6 +76,77 @@ function estimateReadTime(content: string): string {
   const words = content.trim().split(/\s+/).filter(Boolean).length;
   return `${Math.max(1, Math.round(words / 200))} min read`;
 }
+
+const BlogRow = memo(function BlogRow({
+  p,
+  onEdit,
+  onDelete,
+}: {
+  p: Blog;
+  onEdit: (p: Blog) => void;
+  onDelete: (p: Blog) => void;
+}) {
+  return (
+    <tr key={p.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
+      <td className="px-4 py-3">
+        <p className="max-w-[320px] truncate font-medium text-[#3D3752]">{sanitize(p.title)}</p>
+        <p className="mt-0.5 truncate font-mono text-[10.5px] text-[#8B879C]">/{sanitize(p.slug)}</p>
+      </td>
+      <td className="px-4 py-3">
+        {p.category ? (
+          <span className="inline-block rounded-full bg-[#F0EAFF] px-2.5 py-0.5 text-[10px] font-medium text-[#6D28D9]">
+            {sanitize(p.category)}
+          </span>
+        ) : (
+          <span className="text-[#8B879C]">—</span>
+        )}
+      </td>
+      <td className="px-4 py-3 text-[#3D3752]">{formatNumber(p.views)}</td>
+      <td className="px-4 py-3 text-[#3D3752]">{formatDate(p.created_at)}</td>
+      <td className="px-4 py-3">
+        <span
+          className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
+            p.status === "published"
+              ? "bg-[#E8F5E9] text-[#2E7D32]"
+              : "bg-[#FFF4E5] text-[#B26A00]"
+          }`}
+        >
+          {p.status === "published" ? "Published" : "Draft"}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          {p.status === "published" && (
+            <Link
+              href={`/blog/${p.slug}`}
+              target="_blank"
+              aria-label={`View ${p.title} on the public site`}
+              className="rounded-md p-1.5 text-[#3D3752] hover:bg-[#F0EDF5]"
+            >
+              <Eye size={14} aria-hidden="true" />
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => onEdit(p)}
+            aria-label={`Edit ${p.title}`}
+            className="rounded-md p-1.5 text-[#6D28D9] hover:bg-[#F0EAFF]"
+          >
+            <Pencil size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(p)}
+            aria-label={`Delete ${p.title}`}
+            className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
+          >
+            <Trash2 size={14} aria-hidden="true" />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export default function BlogManagementPage() {
   const [posts, setPosts] = useState<Blog[]>([]);
@@ -204,6 +275,9 @@ export default function BlogManagementPage() {
 
   const COLS = 6;
 
+  const handleEditPost = useCallback((p: Blog) => openEdit(p), []);
+  const handleDeletePost = useCallback((p: Blog) => setDeleteTarget(p), []);
+
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
       <AdminPageHeader
@@ -283,64 +357,12 @@ export default function BlogManagementPage() {
               />
             ) : (
               posts.map((p) => (
-                <tr key={p.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
-                  <td className="px-4 py-3">
-                    <p className="max-w-[320px] truncate font-medium text-[#3D3752]">{sanitize(p.title)}</p>
-                    <p className="mt-0.5 truncate font-mono text-[10.5px] text-[#8B879C]">/{sanitize(p.slug)}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    {p.category ? (
-                      <span className="inline-block rounded-full bg-[#F0EAFF] px-2.5 py-0.5 text-[10px] font-medium text-[#6D28D9]">
-                        {sanitize(p.category)}
-                      </span>
-                    ) : (
-                      <span className="text-[#8B879C]">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-[#3D3752]">{formatNumber(p.views)}</td>
-                  <td className="px-4 py-3 text-[#3D3752]">{formatDate(p.created_at)}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-medium ${
-                        p.status === "published"
-                          ? "bg-[#E8F5E9] text-[#2E7D32]"
-                          : "bg-[#FFF4E5] text-[#B26A00]"
-                      }`}
-                    >
-                      {p.status === "published" ? "Published" : "Draft"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      {p.status === "published" && (
-                        <Link
-                          href={`/blog/${p.slug}`}
-                          target="_blank"
-                          aria-label={`View ${p.title} on the public site`}
-                          className="rounded-md p-1.5 text-[#3D3752] hover:bg-[#F0EDF5]"
-                        >
-                          <Eye size={14} aria-hidden="true" />
-                        </Link>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => openEdit(p)}
-                        aria-label={`Edit ${p.title}`}
-                        className="rounded-md p-1.5 text-[#6D28D9] hover:bg-[#F0EAFF]"
-                      >
-                        <Pencil size={14} aria-hidden="true" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget(p)}
-                        aria-label={`Delete ${p.title}`}
-                        className="rounded-md p-1.5 text-[#C62828] hover:bg-[#FFEBEE]"
-                      >
-                        <Trash2 size={14} aria-hidden="true" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
+                <BlogRow
+                  key={p.id}
+                  p={p}
+                  onEdit={handleEditPost}
+                  onDelete={handleDeletePost}
+                />
               ))
             )}
           </tbody>

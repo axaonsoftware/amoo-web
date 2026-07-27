@@ -33,6 +33,14 @@ export default function RightPanel() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Read callbackUrl from the query string (set by middleware when redirecting
+  // an unauthenticated admin to login). After login we redirect there instead
+  // of the default admin dashboard.
+  const callbackUrl =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("callbackUrl") || "/admin/admin-dashboard"
+      : "/admin/admin-dashboard";
+
   function validate(): boolean {
     const newErrors: { email?: string; password?: string } = {};
     if (!email.trim()) {
@@ -60,7 +68,7 @@ export default function RightPanel() {
       loginUser({ ...data.admin, kind: "admin" });
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: "admin" });
-      setTimeout(() => router.push("/admin/admin-dashboard"), 1200);
+      setTimeout(() => router.push(callbackUrl), 1200);
     } catch (err: unknown) {
       setApiError(errorMessage(err, "Login failed. Please try again."));
     } finally {
@@ -103,14 +111,14 @@ export default function RightPanel() {
         </p>
 
         {loginSuccess && (
-          <div className="mt-6 flex items-center gap-3 rounded-xl bg-green-50 border border-green-200 p-4 text-green-700">
+          <div role="alert" className="mt-6 flex items-center gap-3 rounded-xl bg-green-50 border border-green-200 p-4 text-green-700">
             <CheckCircle2 size={20} />
             <span className="text-sm sm:text-base font-medium">Login successful! Redirecting...</span>
           </div>
         )}
 
         {apiError && (
-          <div className="mt-6 flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 p-4 text-red-700">
+          <div role="alert" className="mt-6 flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 p-4 text-red-700">
             <AlertCircle size={20} />
             <span className="text-sm sm:text-base font-medium">{apiError}</span>
           </div>

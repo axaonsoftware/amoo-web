@@ -56,14 +56,13 @@ export default function TopEarningAstrologers() {
         <div className="flex justify-center py-8">
           <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
         </div>
+      ) : astrologers.length === 0 ? (
+        <div className="flex justify-center py-8 text-[12px] text-[#A5A2B5]">
+          No data yet
+        </div>
       ) : (
         <ul className="mt-4 space-y-[14px]">
-          {(astrologers.length > 0 ? astrologers : [
-            { name: "Asha Verma", total_revenue: 185400 },
-            { name: "Meera Iyer", total_revenue: 142300 },
-            { name: "Vikram Joshi", total_revenue: 125600 },
-            { name: "Raghavendra", total_revenue: 102500 },
-          ]).map((a) => (
+          {astrologers.map((a) => (
             <li key={a.name || a.id} className="flex items-center gap-[10px]">
               <Image
                 src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"

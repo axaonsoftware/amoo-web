@@ -15,7 +15,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="mt-7 text-center text-[18px] text-white/85">
-          © 2025 {SITE_NAME}. All Rights Reserved.
+          © {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
         </p>
       </main>
     </>

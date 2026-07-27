@@ -17,7 +17,7 @@ import { sanitize } from "../../../lib/sanitize";
  * every expert created through the admin panel, because `experts.password_hash`
  * was always NULL and the login handler rejects that with "Invalid credentials".
  *
- * Setting a password also flips `experts.verified = 1` and bumps
+ * Setting a password also flips `experts.verified = true` and bumps
  * `token_version`, which signs out any session the expert already had.
  */
 

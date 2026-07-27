@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -75,6 +75,139 @@ type RawReport = {
 };
 
 type Toast = { id: number; message: string; kind: "success" | "error" };
+
+const SessionRow = memo(function SessionRow({
+  s,
+  onEdit,
+  onDelete,
+}: {
+  s: any;
+  onEdit: (raw: any) => void;
+  onDelete: (rawId: number) => void;
+}) {
+  const type = sessionTypeStyles[s.type as SessionType] ?? {
+    label: s.type ?? "—",
+    className: "border-[#E7E5EF] bg-[#F5F4F9] text-[#6B6480]",
+  };
+  return (
+    <tr
+      key={s.id}
+      className="border-b border-[#F2F0F7] last:border-b-0 hover:bg-[#FCFBFE]"
+    >
+      <td className="py-[13px] pl-4 align-middle">
+        <span className="block h-[14px] w-[14px] rounded-[4px] border border-[#D6D3E0] bg-white" />
+      </td>
+
+      <td className="whitespace-nowrap py-[13px] pr-4 align-middle text-[11.5px] font-semibold text-[#6D28D9]">
+        {s.id}
+      </td>
+
+      <td className="py-[13px] pr-4 align-middle">
+        <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#1B1630]">
+          {sanitize(s.client.name)}
+        </p>
+        <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
+          {sanitize(s.client.email)}
+        </p>
+        <p className="whitespace-nowrap text-[10px] text-[#8B879C]">
+          {sanitize(s.client.phone)}
+        </p>
+      </td>
+
+      <td className="py-[13px] pr-4 align-middle">
+        <div className="flex items-center gap-[8px]">
+          <Image
+            src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
+            alt={sanitize(s.master.name)}
+            width={28}
+            height={28}
+            className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
+          />
+          <div className="min-w-0">
+            <p className="whitespace-nowrap text-[11.5px] font-medium text-[#1B1630]">
+              {sanitize(s.master.name)}
+            </p>
+            <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
+              {sanitize(s.master.role)}
+            </p>
+          </div>
+        </div>
+      </td>
+
+      <td className="py-[13px] pr-4 align-middle">
+        <span
+          className={`inline-flex items-center whitespace-nowrap rounded-[6px] border px-[8px] py-[4px] text-[10.5px] font-medium ${type.className}`}
+        >
+          {type.label}
+        </span>
+      </td>
+
+      <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
+        <p className="text-[11px] font-medium text-[#1B1630]">
+          {s.date}
+        </p>
+        <p className="mt-[1px] text-[10px] text-[#8B879C]">
+          {s.time}
+        </p>
+      </td>
+
+      <td className="whitespace-nowrap py-[13px] pr-4 align-middle text-[11px] font-medium text-[#4A4557]">
+        {s.duration}
+      </td>
+
+      <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
+        <span
+          className={`inline-flex items-center justify-center rounded-[6px] px-[10px] py-[5px] text-[10.5px] font-semibold ${
+            statusStyles[s.status as SessionStatus] || "bg-[#F3F0FA] text-[#6D28D9]"
+          }`}
+        >
+          {s.status}
+        </span>
+      </td>
+
+      <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
+        <p className="text-[11.5px] font-semibold text-[#1B1630]">
+          {s.amount}
+        </p>
+        <p
+          className={`mt-[1px] text-[10px] font-medium ${
+            paymentStyles[s.payment as PaymentStatus] || "text-[#8B879C]"
+          }`}
+        >
+          {s.payment}
+        </p>
+      </td>
+
+      <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
+        <div className="flex items-center gap-[6px]">
+          <button
+            type="button"
+            aria-label="View"
+            className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#4A3B63] hover:bg-[#F7F6FB]"
+          >
+            <Eye size={13} />
+          </button>
+          <button
+            type="button"
+            aria-label="Edit"
+            onClick={() => onEdit(s.raw)}
+            className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#4A3B63] hover:bg-[#F7F6FB]"
+          >
+            <Pencil size={13} />
+          </button>
+          <button
+            type="button"
+            aria-label="Delete"
+            onClick={() => onDelete(s.rawId)}
+            className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEF2F2]"
+          >
+            <Trash2 size={13} />
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
 
 export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreate: () => void; exportData: () => void }) => void } = {}) {
   const [rawList, setRawList] = useState<RawReport[]>([]);
@@ -298,6 +431,9 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
   if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
   if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
 
+  const handleEditSession = useCallback((raw: RawReport) => handleOpenEdit(raw), []);
+  const handleDeleteSession = useCallback((rawId: number) => handleDeleteClick(rawId), []);
+
   return (
     <section className="overflow-hidden rounded-[12px] border border-[#EFEDF4] bg-white shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
       {/* Panel header */}
@@ -405,130 +541,14 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
           </thead>
 
           <tbody>
-            {sessionRows.map((s) => {
-              const type = sessionTypeStyles[s.type as SessionType] ?? {
-                label: s.type ?? "—",
-                className: "border-[#E7E5EF] bg-[#F5F4F9] text-[#6B6480]",
-              };
-              return (
-                <tr
-                  key={s.id}
-                  className="border-b border-[#F2F0F7] last:border-b-0 hover:bg-[#FCFBFE]"
-                >
-                  <td className="py-[13px] pl-4 align-middle">
-                    <span className="block h-[14px] w-[14px] rounded-[4px] border border-[#D6D3E0] bg-white" />
-                  </td>
-
-                  <td className="whitespace-nowrap py-[13px] pr-4 align-middle text-[11.5px] font-semibold text-[#6D28D9]">
-                    {s.id}
-                  </td>
-
-                  <td className="py-[13px] pr-4 align-middle">
-                    <p className="whitespace-nowrap text-[11.5px] font-semibold text-[#1B1630]">
-                      {sanitize(s.client.name)}
-                    </p>
-                    <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {sanitize(s.client.email)}
-                    </p>
-                    <p className="whitespace-nowrap text-[10px] text-[#8B879C]">
-                      {sanitize(s.client.phone)}
-                    </p>
-                  </td>
-
-                  <td className="py-[13px] pr-4 align-middle">
-                    <div className="flex items-center gap-[8px]">
-                      <Image
-                        src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
-                        alt={sanitize(s.master.name)}
-                        width={28}
-                        height={28}
-                        className="h-[28px] w-[28px] shrink-0 rounded-full object-cover"
-                      />
-                      <div className="min-w-0">
-                        <p className="whitespace-nowrap text-[11.5px] font-medium text-[#1B1630]">
-                          {sanitize(s.master.name)}
-                        </p>
-                        <p className="mt-[1px] whitespace-nowrap text-[10px] text-[#8B879C]">
-                          {sanitize(s.master.role)}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="py-[13px] pr-4 align-middle">
-                    <span
-                      className={`inline-flex items-center whitespace-nowrap rounded-[6px] border px-[8px] py-[4px] text-[10.5px] font-medium ${type.className}`}
-                    >
-                      {type.label}
-                    </span>
-                  </td>
-
-                  <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
-                    <p className="text-[11px] font-medium text-[#1B1630]">
-                      {s.date}
-                    </p>
-                    <p className="mt-[1px] text-[10px] text-[#8B879C]">
-                      {s.time}
-                    </p>
-                  </td>
-
-                  <td className="whitespace-nowrap py-[13px] pr-4 align-middle text-[11px] font-medium text-[#4A4557]">
-                    {s.duration}
-                  </td>
-
-                  <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
-                    <span
-                      className={`inline-flex items-center justify-center rounded-[6px] px-[10px] py-[5px] text-[10.5px] font-semibold ${
-                        statusStyles[s.status as SessionStatus] || "bg-[#F3F0FA] text-[#6D28D9]"
-                      }`}
-                    >
-                      {s.status}
-                    </span>
-                  </td>
-
-                  <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
-                    <p className="text-[11.5px] font-semibold text-[#1B1630]">
-                      {s.amount}
-                    </p>
-                    <p
-                      className={`mt-[1px] text-[10px] font-medium ${
-                        paymentStyles[s.payment as PaymentStatus] || "text-[#8B879C]"
-                      }`}
-                    >
-                      {s.payment}
-                    </p>
-                  </td>
-
-                  <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
-                    <div className="flex items-center gap-[6px]">
-                      <button
-                        type="button"
-                        aria-label="View"
-                        className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#4A3B63] hover:bg-[#F7F6FB]"
-                      >
-                        <Eye size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Edit"
-                        onClick={() => handleOpenEdit(s.raw)}
-                        className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#4A3B63] hover:bg-[#F7F6FB]"
-                      >
-                        <Pencil size={13} />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Delete"
-                        onClick={() => handleDeleteClick(s.rawId)}
-                        className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEF2F2]"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            {sessionRows.map((s) => (
+              <SessionRow
+                key={s.id}
+                s={s}
+                onEdit={handleEditSession}
+                onDelete={handleDeleteSession}
+              />
+            ))}
           </tbody>
         </table>
       </div>
