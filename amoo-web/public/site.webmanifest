@@ -1,0 +1,26 @@
+{
+  "name": "Amoo Guru",
+  "short_name": "Amoo Guru",
+  "description": "Numerology, Reiki Healing, Tarot Guidance & Spiritual Consultation",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#0a0410",
+  "background_color": "#0a0410",
+  "display": "standalone",
+  "start_url": "/"
+}
