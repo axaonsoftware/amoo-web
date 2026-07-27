@@ -353,3 +353,193 @@ export function StarSolidIcon(props: IconProps) {
     </svg>
   );
 }
+
+/* ---------- Shared icons (moved from icons.tsx) ---------- */
+
+const base = {
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.6,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  viewBox: "0 0 24 24",
+};
+
+export function TargetIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M12 1.8v3M12 19.2v3M1.8 12h3M19.2 12h3" />
+    </svg>
+  );
+}
+
+export function DocIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M14 2.8H6.6a1.6 1.6 0 0 0-1.6 1.6v15.2a1.6 1.6 0 0 0 1.6 1.6h10.8a1.6 1.6 0 0 0 1.6-1.6V7.8Z" />
+      <path d="M14 2.8v5h5" />
+      <path d="M8.4 12.4h7.2M8.4 15.6h7.2M8.4 18.4h4.4" />
+    </svg>
+  );
+}
+
+export function DocCheckIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M14 2.8H6.6a1.6 1.6 0 0 0-1.6 1.6v15.2a1.6 1.6 0 0 0 1.6 1.6h10.8a1.6 1.6 0 0 0 1.6-1.6V7.8Z" />
+      <path d="M14 2.8v5h5" />
+      <path d="M8.2 12.2h4.4M8.2 15.2h3" />
+      <circle cx="16" cy="16.4" r="3.4" />
+      <path d="m14.6 16.4 1 1 1.9-2" />
+    </svg>
+  );
+}
+
+export function ShieldIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 2.6 4.6 5.8v5.6c0 4.6 3.1 8.9 7.4 10 4.3-1.1 7.4-5.4 7.4-10V5.8Z" />
+      <path d="m12 8.2 1.2 2.5 2.7.4-2 1.9.5 2.7-2.4-1.3-2.4 1.3.5-2.7-2-1.9 2.7-.4Z" />
+    </svg>
+  );
+}
+
+export function ShieldCheckIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M12 2.6 4.6 5.8v5.6c0 4.6 3.1 8.9 7.4 10 4.3-1.1 7.4-5.4 7.4-10V5.8Z" />
+      <path d="m8.8 11.9 2.2 2.2 4.2-4.4" />
+    </svg>
+  );
+}
+
+export function CompassIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="11" cy="11" r="7.2" />
+      <circle cx="11" cy="11" r="3" />
+      <path d="M11 2.2v2.4M11 17.4v2.4M2.2 11h2.4M17.4 11h2.4" />
+      <path d="m16.4 16.4 4.4 4.4" />
+    </svg>
+  );
+}
+
+export function BoltIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M13.4 2.4 4.8 13.4h6L9.9 21.6l8.9-11.2h-6.2Z" />
+    </svg>
+  );
+}
+
+export function SmileIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M8.4 14.2a4.4 4.4 0 0 0 7.2 0" />
+      <path d="M9 9.4h.01M15 9.4h.01" strokeWidth={2.2} />
+    </svg>
+  );
+}
+
+export function StarIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="m12 2.8 2.8 6.1 6.7.7-5 4.5 1.4 6.6L12 17.4l-5.9 3.3 1.4-6.6-5-4.5 6.7-.7Z" />
+    </svg>
+  );
+}
+
+export function ChartLagnaIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="5.2" r="2.2" />
+      <circle cx="5" cy="17.4" r="2.2" />
+      <circle cx="19" cy="17.4" r="2.2" />
+      <path d="M10.4 7 6.4 15.4M13.6 7l4 8.4M7.2 17.4h9.6" />
+    </svg>
+  );
+}
+
+export function ChartGridIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="4" y="3.4" width="16" height="17.2" rx="1.6" />
+      <path d="M4 8.6h16M12 8.6v12" />
+      <path d="M6.6 12h2.8M6.6 15.4h2.8M14.6 12h2.8M14.6 15.4h2.8" />
+    </svg>
+  );
+}
+
+export function ChartHouseIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="3.6" y="3.6" width="16.8" height="16.8" rx="1.4" />
+      <path d="M3.6 3.6 20.4 20.4M20.4 3.6 3.6 20.4" />
+      <path d="M12 3.6 3.6 12l8.4 8.4L20.4 12Z" />
+    </svg>
+  );
+}
+
+export function ChartYogaIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <circle cx="12" cy="12" r="8.6" />
+      <circle cx="12" cy="12" r="4.2" />
+      <path d="M12 3.4v17.2M3.4 12h17.2M6 6l12 12M18 6 6 18" />
+    </svg>
+  );
+}
+
+export function ChartDashaIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <rect x="4" y="3.4" width="16" height="17.2" rx="1.6" />
+      <path d="M8 3.4v17.2M4 9h16M4 15h16" />
+      <path d="M5.6 6.2h1M5.6 12.2h1M5.6 18.2h1" strokeWidth={2} />
+    </svg>
+  );
+}
+
+export function CheckIcon(props: IconProps) {
+  return (
+    <svg {...base} strokeWidth={2.6} {...props}>
+      <path d="m5 12.6 4.4 4.4L19 7" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon(props: IconProps) {
+  return (
+    <svg {...base} strokeWidth={2} {...props}>
+      <path d="m9 5.5 6.5 6.5L9 18.5" />
+    </svg>
+  );
+}
+
+export function HomeIcon(props: IconProps) {
+  return (
+    <svg {...base} {...props}>
+      <path d="M3.6 10.4 12 3.6l8.4 6.8v8.4a1.6 1.6 0 0 1-1.6 1.6H5.2a1.6 1.6 0 0 1-1.6-1.6Z" />
+      <path d="M9.4 20.4v-7h5.2v7" />
+    </svg>
+  );
+}
+
+export function PlayIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M9.2 7.4 16.4 12l-7.2 4.6Z" />
+    </svg>
+  );
+}
+
+export function PinterestIcon(props: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+      <path d="M12.02 2.4c-5.3 0-8 3.6-8 6.9 0 2 .76 3.77 2.4 4.44.27.11.5 0 .58-.29l.24-.9c.08-.29.05-.4-.17-.65a3.6 3.6 0 0 1-.85-2.44c0-3.16 2.4-5.98 6.24-5.98 3.4 0 5.27 2.05 5.27 4.8 0 3.6-1.62 6.64-4.03 6.64a1.96 1.96 0 0 1-2.01-2.44c.37-1.55 1.09-3.23 1.09-4.35 0-1-.55-1.84-1.68-1.84-1.33 0-2.4 1.35-2.4 3.16 0 1.16.4 1.94.4 1.94l-1.58 6.6c-.47 1.96-.07 4.37-.04 4.61.02.15.21.19.3.08.12-.16 1.68-2.05 2.21-3.94.15-.53.86-3.3.86-3.3.43.8 1.68 1.5 3 1.5 3.95 0 6.63-3.55 6.63-8.3 0-3.6-3.07-6.94-7.73-6.94Z" />
+    </svg>
+  );
+}

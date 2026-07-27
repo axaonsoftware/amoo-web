@@ -693,7 +693,7 @@ export default function BlogArticlePage() {
                     and updates.
                   </p>
                   {newsletterSubmitted && (
-                    <p className="mt-2 text-[12px] text-green-400 font-medium">
+                    <p role="alert" className="mt-2 text-[12px] text-green-400 font-medium">
                       Subscribed successfully!
                     </p>
                   )}

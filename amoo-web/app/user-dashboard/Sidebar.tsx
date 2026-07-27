@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { SidebarShell } from "@/app/components/sidebar-shell";
 import {
   Home,
@@ -20,7 +21,7 @@ import {
 } from "lucide-react";
 
 const primaryNav = [
-  { label: "Dashboard", Icon: Home, href: "/user-dashboard", active: true },
+  { label: "Dashboard", Icon: Home, href: "/user-dashboard" },
   { label: "My Consultations", Icon: CircleDot, href: "/user-dashboard/consultations-booking" },
   { label: "My Reports", Icon: FileText, href: "/user-dashboard/my-reports" },
   { label: "Numerology", Icon: LayoutGrid, href: "/user-dashboard/numerology-dashboard" },
@@ -38,6 +39,13 @@ const secondaryNav = [
 ];
 
 export default function Sidebar() {
+  const pathname = usePathname();
+
+  const isActive = (href: string) => {
+    if (href === "/user-dashboard") return pathname === "/user-dashboard";
+    return pathname.startsWith(href);
+  };
+
   return (
     <SidebarShell className="bg-gradient-to-b from-[#200a36] via-[#1a0730] to-[#150525]">
       {/* Logo */}
@@ -66,20 +74,23 @@ export default function Sidebar() {
 
       {/* Primary nav */}
       <nav className="flex flex-col gap-[3px] px-3">
-        {primaryNav.map(({ label, Icon, active, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className={
-              active
-                ? "flex items-center gap-3 rounded-[12px] border border-[#a9762c] bg-gradient-to-r from-[#7a4b17] via-[#4d2c39] to-[#33174f] px-3 py-[11px] text-[13.5px] font-semibold text-[#f3c76e] shadow-[0_4px_14px_rgba(0,0,0,.35)]"
-                : "flex items-center gap-3 rounded-[12px] border border-transparent px-3 py-[10px] text-[13.5px] font-normal text-[#cec2de] transition-colors hover:bg-white/5 hover:text-white"
-            }
-          >
-            <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.6} />
-            <span>{label}</span>
-          </Link>
-        ))}
+        {primaryNav.map(({ label, Icon, href }) => {
+          const active = isActive(href);
+          return (
+            <Link
+              key={label}
+              href={href}
+              className={
+                active
+                  ? "flex items-center gap-3 rounded-[12px] border border-[#a9762c] bg-gradient-to-r from-[#7a4b17] via-[#4d2c39] to-[#33174f] px-3 py-[11px] text-[13.5px] font-semibold text-[#f3c76e] shadow-[0_4px_14px_rgba(0,0,0,.35)]"
+                  : "flex items-center gap-3 rounded-[12px] border border-transparent px-3 py-[10px] text-[13.5px] font-normal text-[#cec2de] transition-colors hover:bg-white/5 hover:text-white"
+              }
+            >
+              <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.6} />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
       </nav>
 
       <div className="mx-5 my-3 h-px bg-white/10" />

@@ -1,6 +1,8 @@
 import Image from "next/image";
+import Link from "next/link";
 import { StarSolidIcon, WhatsAppIcon } from "../../../components/home-icons";
 import { CheckCircleIcon, SparkleIcon } from "./icons";
+import { WHATSAPP_URL } from "../../../../lib/constants";
 
 const BENEFITS = [
   "Reduces stress, anxiety and depression",
@@ -171,13 +173,15 @@ export default function BenefitsChakras() {
                 personalized guidance.
               </p>
 
-              <button
-                type="button"
+              <Link
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mx-auto mt-[12px] flex h-[36px] w-full max-w-[176px] items-center justify-center gap-2 rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 text-[12.5px] font-semibold text-[#2b0a3d]"
               >
                 <WhatsAppIcon className="h-[15px] w-[15px]" />
                 Chat on WhatsApp
-              </button>
+              </Link>
             </div>
 
             <div className="border-t border-white/10 bg-black/25 px-[18px] py-[12px]">

@@ -1,4 +1,5 @@
 import { GiftIcon } from "../../components/home-icons";
+import { PROMO_CODE } from "../../../lib/constants";
 
 export default function OfferBar() {
   return (
@@ -11,7 +12,7 @@ export default function OfferBar() {
         </p>
         <span className="ml-2 hidden h-[26px] items-center rounded-[6px] border border-gold/70 px-3 text-[12.5px] font-medium text-white sm:flex">
           Use Code:&nbsp;
-          <span className="font-bold text-gold">AMOOGURU15</span>
+          <span className="font-bold text-gold">{PROMO_CODE}</span>
         </span>
       </div>
     </div>

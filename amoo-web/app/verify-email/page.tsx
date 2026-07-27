@@ -9,10 +9,14 @@ import { api } from "../../lib/api";
 type Status = "verifying" | "success" | "error";
 
 export default function VerifyEmailPage() {
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const email = searchParams.get("email") || "";
-  const token = searchParams.get("token") || "";
+  // Token is passed via URL hash fragment (#email=...&token=...) rather than
+  // query parameters, so it is never sent to the server in the HTTP request.
+  // This prevents leakage through email logs, proxies, and referrer headers.
+  const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+  const hashParams = new URLSearchParams(hash);
+  const email = hashParams.get("email") || "";
+  const token = hashParams.get("token") || "";
 
   const [status, setStatus] = useState<Status>("verifying");
   const [message, setMessage] = useState("Invalid verification link. Please check the link and try again.");

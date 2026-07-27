@@ -585,7 +585,7 @@ export default function BlogPage() {
                 and spiritual updates.
               </p>
               {newsletterSubmitted && (
-                <p className="mt-2 text-[13px] text-green-400 font-medium">
+                <p role="alert" className="mt-2 text-[13px] text-green-400 font-medium">
                   Subscribed successfully! Thank you.
                 </p>
               )}

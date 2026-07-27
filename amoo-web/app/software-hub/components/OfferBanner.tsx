@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRightIcon } from "./icons";
+import { PROMO_CODE } from "../../../lib/constants";
 
 export default function OfferBanner() {
   return (
@@ -43,7 +44,7 @@ export default function OfferBanner() {
           <span className="text-[13.5px] font-normal whitespace-nowrap text-white">
             Use Code:{" "}
             <span className="text-[15px] font-bold tracking-[0.02em] text-gold">
-              AMOOGURU15
+              {PROMO_CODE}
             </span>
           </span>
         </div>

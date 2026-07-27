@@ -16,7 +16,7 @@ import {
   StarIcon,
   TargetIcon,
   WhatsAppIcon,
-} from "../../components/icons";
+} from "../../components/home-icons";
 import {
   AvatarIcon,
   BirthDateIcon,

@@ -19,6 +19,14 @@ export default function UserRightPanel() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Read callbackUrl from the query string (set by middleware when redirecting
+  // an unauthenticated user to login). After a successful login we redirect
+  // there instead of the default home page.
+  const callbackUrl =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("callbackUrl") || "/"
+      : "/";
+
   function validate(): boolean {
     const newErrors: { email?: string; password?: string } = {};
     // The API authenticates on email only (POST /api/auth/login validates
@@ -49,7 +57,7 @@ export default function UserRightPanel() {
       loginUser({ ...data.user, kind: "user" });
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: "user" });
-      setTimeout(() => router.push("/"), 1200);
+      setTimeout(() => router.push(callbackUrl), 1200);
     } catch (err: unknown) {
       setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
     } finally {
@@ -85,14 +93,14 @@ export default function UserRightPanel() {
         </div>
 
         {loginSuccess && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-3 text-green-700 text-sm">
+          <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-3 text-green-700 text-sm">
             <CheckCircle2 size={16} />
             Login successful! Redirecting...
           </div>
         )}
 
         {apiError && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
+          <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
             <AlertCircle size={16} />
             {apiError}
           </div>

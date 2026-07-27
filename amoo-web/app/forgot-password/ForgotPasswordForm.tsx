@@ -54,7 +54,7 @@ export default function ForgotPasswordForm() {
           <span className="text-amber-500 text-lg">⟝</span>
         </div>
 
-        <div className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left">
+        <div role="alert" className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left">
           <CheckCircle2 size={18} className="shrink-0" />
           <span>
             If an account exists for <strong>{email}</strong>, a 6-digit OTP has been sent. It expires in 15 minutes.
@@ -105,7 +105,7 @@ export default function ForgotPasswordForm() {
         </div>
 
         {apiError && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
+          <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
             <AlertCircle size={16} />
             {apiError}
           </div>

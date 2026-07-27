@@ -13,7 +13,7 @@ import {
   PlayIcon,
   StarIcon,
   WhatsAppIcon,
-} from "../../components/icons";
+} from "../../components/home-icons";
 import {
   AiChipIcon,
   BrandBadgeIcon,

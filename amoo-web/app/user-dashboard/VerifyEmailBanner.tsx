@@ -46,7 +46,7 @@ export default function VerifyEmailBanner() {
         </div>
 
         <div className="min-w-0 flex-1">
-          <p className="text-[14px] font-semibold text-amber-900">
+          <p aria-live="polite" className="text-[14px] font-semibold text-amber-900">
             {sent ? "Verification email sent!" : "Verify your email address"}
           </p>
           <p className="mt-0.5 text-[12.5px] leading-[1.5] text-amber-700">

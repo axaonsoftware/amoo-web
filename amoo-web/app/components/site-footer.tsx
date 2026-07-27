@@ -10,7 +10,7 @@ import {
   WhatsAppIcon,
   YoutubeIcon,
 } from "./home-icons";
-import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../lib/constants";
+import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME, SOCIAL_LINKS, BUSINESS_HOURS } from "../../lib/constants";
 
 const QUICK_LINKS = [
   { label: "Home", href: "/" },
@@ -58,15 +58,16 @@ const COLUMNS = [
 ];
 
 const BRAND_SOCIALS = [
-  { label: "Facebook", Icon: FacebookIcon, className: "bg-[#3b5998] text-white" },
+  { label: "Facebook", Icon: FacebookIcon, className: "bg-[#3b5998] text-white", href: SOCIAL_LINKS.facebook },
   {
     label: "Instagram",
     Icon: InstagramIcon,
     className:
       "bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white",
+    href: SOCIAL_LINKS.instagram,
   },
-  { label: "YouTube", Icon: YoutubeIcon, className: "bg-[#ff0000] text-white" },
-  { label: "WhatsApp", Icon: WhatsAppIcon, className: "bg-[#25D366] text-white" },
+  { label: "YouTube", Icon: YoutubeIcon, className: "bg-[#ff0000] text-white", href: SOCIAL_LINKS.youtube },
+  { label: "WhatsApp", Icon: WhatsAppIcon, className: "bg-[#25D366] text-white", href: WHATSAPP_URL },
 ];
 
 export function SiteFooter() {
@@ -91,10 +92,10 @@ export function SiteFooter() {
               Clarity, Healing &amp; Abundance
             </p>
             <div className="mt-[14px] flex items-center gap-[10px]">
-              {BRAND_SOCIALS.map(({ label, Icon, className }) => (
+              {BRAND_SOCIALS.map(({ label, Icon, className, href }) => (
                 <Link
                   key={label}
-                  href={label === "WhatsApp" ? WHATSAPP_URL : label === "Facebook" ? "https://facebook.com/amoooguru" : label === "Instagram" ? "https://instagram.com/amooguru_official" : label === "YouTube" ? "https://youtube.com/@amoooguru" : "#"}
+                  href={href}
                   aria-label={label}
                   className={`flex h-[26px] w-[26px] items-center justify-center rounded-full ${className}`}
                 >
@@ -141,7 +142,7 @@ export function SiteFooter() {
               </li>
               <li className="flex items-center gap-2.5 text-[11.5px] text-white/85">
                 <ClockSolidIcon className="h-[14px] w-[14px] shrink-0 text-gold" />
-                Mon - Sat: 10 AM - 8 PM
+                {BUSINESS_HOURS}
               </li>
             </ul>
 
@@ -149,10 +150,10 @@ export function SiteFooter() {
               Follow Us
             </h3>
             <div className="flex items-center gap-2.5">
-              {BRAND_SOCIALS.map(({ label, Icon, className }) => (
+              {BRAND_SOCIALS.map(({ label, Icon, className, href }) => (
                 <Link
                   key={label}
-                  href={label === "WhatsApp" ? WHATSAPP_URL : label === "Facebook" ? "https://facebook.com/amoooguru" : label === "Instagram" ? "https://instagram.com/amooguru_official" : label === "YouTube" ? "https://youtube.com/@amoooguru" : "#"}
+                  href={href}
                   aria-label={label}
                   className={`flex h-[26px] w-[26px] items-center justify-center rounded-full ${className}`}
                 >

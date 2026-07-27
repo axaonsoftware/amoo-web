@@ -152,6 +152,7 @@ export default function ContactPage() {
     phone: "",
     subject: "",
     message: "",
+    honeypot: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -187,6 +188,8 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+    // Honeypot: silently discard if a bot filled the hidden field.
+    if (formData.honeypot) { setIsSubmitting(false); return; }
     setIsSubmitting(true);
     try {
       await api.sendContact({
@@ -197,7 +200,7 @@ export default function ContactPage() {
         message: formData.message,
       });
       setIsSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
+      setFormData({ name: "", email: "", phone: "", subject: "", message: "", honeypot: "" });
       setTimeout(() => setIsSubmitted(false), 5000);
     } catch (err: unknown) {
       setErrors({ message: err instanceof Error ? err.message : "Failed to send. Please try again." });
@@ -280,7 +283,7 @@ export default function ContactPage() {
                 </p>
 
                 {isSubmitted && (
-                  <div className="mt-4 flex items-center gap-2 rounded-[8px] bg-green-50 border border-green-200 p-3 text-green-700 text-[13px] font-medium">
+                  <div role="alert" className="mt-4 flex items-center gap-2 rounded-[8px] bg-green-50 border border-green-200 p-3 text-green-700 text-[13px] font-medium">
                     <svg
                       className="h-5 w-5 shrink-0"
                       viewBox="0 0 24 24"
@@ -399,6 +402,11 @@ export default function ContactPage() {
                     />
                   </div>
                   {errors.message && <p className="text-[12px] text-red-500">{errors.message}</p>}
+
+                  {/* Honeypot — hidden from humans, bots fill it automatically */}
+                  <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', opacity: 0 }} tabIndex={-1}>
+                    <input type="text" name="honeypot" value={formData.honeypot} onChange={handleChange} tabIndex={-1} autoComplete="off" />
+                  </div>
 
                   {/* Submit Button */}
                   <button

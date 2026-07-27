@@ -19,6 +19,14 @@ export default function AstrologerRightPanel() {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
+  // Read callbackUrl from the query string (set by middleware when redirecting
+  // an unauthenticated expert to login). After login we redirect there instead
+  // of the default dashboard.
+  const callbackUrl =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("callbackUrl") || "/user-dashboard"
+      : "/user-dashboard";
+
   function validate(): boolean {
     const newErrors: { email?: string; password?: string } = {};
     if (!email.trim()) {
@@ -46,7 +54,7 @@ export default function AstrologerRightPanel() {
       loginUser({ ...data.expert, kind: "expert" });
       setLoginSuccess(true);
       trackEvent("login", { method: "email", role: "expert" });
-      setTimeout(() => router.push("/user-dashboard"), 1200);
+      setTimeout(() => router.push(callbackUrl), 1200);
     } catch (err: unknown) {
       setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
     } finally {

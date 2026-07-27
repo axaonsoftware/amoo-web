@@ -6,7 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDownIcon, GiftIcon, WhatsAppIcon } from "./home-icons";
 import { Menu, X, LogOut } from "lucide-react";
-import { WHATSAPP_URL, SITE_NAME } from "../../lib/constants";
+import { WHATSAPP_URL, SITE_NAME, PROMO_CODE } from "../../lib/constants";
 import { useAuth } from "../../lib/auth-context";
 
 type DropdownItem = { label: string; href: string };
@@ -85,7 +85,7 @@ export function OfferBar() {
         <p className="ml-3 hidden text-[13px] text-white sm:block">
           Use Code:{" "}
           <span className="font-bold tracking-[0.01em] text-gold">
-            AMOOGURU15
+            {PROMO_CODE}
           </span>
         </p>
         <Link

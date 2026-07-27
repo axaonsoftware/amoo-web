@@ -14,8 +14,6 @@ import {
 } from "./icons";
 import { api } from "../../../lib/api";
 
-const LEADING_BLANKS = 1;
-const DAYS_IN_MONTH = 30;
 const UNAVAILABLE = [3, 4, 5];
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -54,6 +52,8 @@ export default function DateTimeCard({
   const [slotsByPeriod, setSlotsByPeriod] = useState<Record<string, string[]>>(DEFAULT_SLOTS);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [slotsError, setSlotsError] = useState("");
+  const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
+  const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
 
   useEffect(() => {
     api.getSlots()
@@ -73,20 +73,30 @@ export default function DateTimeCard({
       .finally(() => setLoadingSlots(false));
   }, []);
 
-  const now = new Date();
-  const month = MONTH_NAMES[now.getMonth()];
-  const year = now.getFullYear();
-  const monthLabel = `${month} ${year}`;
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
+  const month = MONTH_NAMES[viewMonth];
+  const monthLabel = `${month} ${viewYear}`;
 
   const cells: (number | null)[] = [
-    ...Array.from({ length: LEADING_BLANKS }, () => null),
-    ...Array.from({ length: DAYS_IN_MONTH }, (_, i) => i + 1),
+    ...Array.from({ length: firstDayOfWeek }, () => null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
+
+  const prevMonth = () => {
+    if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
+    else { setViewMonth((m) => m - 1); }
+  };
+
+  const nextMonth = () => {
+    if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
+    else { setViewMonth((m) => m + 1); }
+  };
 
   const slots = slotsByPeriod[selectedPeriod] || slotsByPeriod["Morning"] || DEFAULT_SLOTS["Morning"];
 
   const formatDate = (day: number) => {
-    const date = new Date(year, now.getMonth(), day);
+    const date = new Date(viewYear, viewMonth, day);
     return date.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   };
 
@@ -106,6 +116,7 @@ export default function DateTimeCard({
           <button
             type="button"
             aria-label="Previous month"
+            onClick={prevMonth}
             className="flex h-[30px] w-[30px] items-center justify-center rounded-full text-[#6b6879] transition-colors hover:bg-lilac"
           >
             <ChevronLeftIcon className="h-[16px] w-[16px]" />
@@ -116,6 +127,7 @@ export default function DateTimeCard({
           <button
             type="button"
             aria-label="Next month"
+            onClick={nextMonth}
             className="flex h-[30px] w-[30px] items-center justify-center rounded-full text-[#6b6879] transition-colors hover:bg-lilac"
           >
             <ChevronRightIcon className="h-[16px] w-[16px]" />

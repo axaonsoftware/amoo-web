@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { HomeHeader, OfferBar } from "./components/home-header";
+import { TestimonialsSection } from "./components/TestimonialsSection";
 import { PageViewTracker } from "./components/PageViewTracker";
 import { SiteFooter } from "./components/site-footer";
 import { WHATSAPP_URL, SITE_NAME } from "../lib/constants";
@@ -9,8 +10,6 @@ import {
   ArrowRightIcon,
   CalendarIcon,
   ChatIcon,
-  ChevronLeftThin,
-  ChevronRightThin,
   ClipboardCheckIcon,
   ClipboardClockIcon,
   ClockIcon,
@@ -24,7 +23,6 @@ import {
   RupeeCoinIcon,
   SparkBulletIcon,
   StarOutlineIcon,
-  StarSolidIcon,
   UsersIcon,
   VideoCallIcon,
   WhatsAppCircleIcon,
@@ -163,45 +161,6 @@ const SOFTWARE = [
     img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/sw-4.png",
     title: "Basic Kundali Software",
     desc: ["Generate accurate kundali and", "basic astrological reports."],
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
-    quote: [
-      "“Surinder Ji’s guidance changed",
-      "my life completely. Her numerology",
-      "reading was so accurate.”",
-    ],
-    name: "– Neha Sharma",
-  },
-  {
-    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-2.png",
-    quote: [
-      "“Reiki healing sessions helped me",
-      "overcome anxiety and stress. Highly",
-      "recommended!”",
-    ],
-    name: "– Rajeev Verma",
-  },
-  {
-    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-3.png",
-    quote: [
-      "“Tarot reading was very detailed",
-      "and gave me clear direction in",
-      "my career.”",
-    ],
-    name: "– Priya Malhotra",
-  },
-  {
-    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-4.png",
-    quote: [
-      "“Her predictions and remedies",
-      "are 100% accurate. I am truly",
-      "grateful.”",
-    ],
-    name: "– Ankit S.",
   },
 ];
 
@@ -447,14 +406,6 @@ export default function Home() {
             </p>
 
             <div className="mt-[14px] flex items-center justify-center gap-2">
-              <button
-                type="button"
-                aria-label="Previous chakra"
-                className="hidden h-[30px] w-[30px] shrink-0 items-center justify-center text-gold md:flex"
-              >
-                <ChevronLeftThin className="h-[20px] w-[20px]" />
-              </button>
-
               <ul className="flex flex-1 flex-wrap items-start justify-center gap-x-4 gap-y-6 sm:gap-x-[42px] lg:flex-nowrap lg:justify-between lg:px-[30px]">
                 {CHAKRAS.map(({ img, name, sub }) => (
 <li
@@ -477,14 +428,6 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-
-              <button
-                type="button"
-                aria-label="Next chakra"
-                className="hidden h-[30px] w-[30px] shrink-0 items-center justify-center text-gold md:flex"
-              >
-                <ChevronRightThin className="h-[20px] w-[20px]" />
-              </button>
             </div>
           </div>
         </section>
@@ -724,76 +667,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ---------------- TESTIMONIALS ---------------- */}
-        <section className="relative overflow-hidden rounded-[16px] bg-[radial-gradient(120%_150%_at_50%_40%,#3d1662_0%,#2c1049_50%,#200b36_100%)]">
-          <div className="haze pointer-events-none absolute inset-0 opacity-60" />
-          <Image
-            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-testi-left.png"
-            alt=""
-            width={174}
-            height={423}
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[58px] object-cover md:block"
-          />
-          <Image
-            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-testi-right.png"
-            alt=""
-            width={192}
-            height={423}
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[64px] object-cover md:block"
-          />
-
-          <div className="relative mx-auto w-full max-w-[1336px] px-5 pt-[22px] pb-[30px]">
-            <Heading tone="dark">What Our Clients Say</Heading>
-
-            <div className="relative mt-[24px] pb-[16px]">
-              <div className="grid grid-cols-1 gap-[12px] sm:grid-cols-2 lg:grid-cols-4">
-                {TESTIMONIALS.map(({ img, quote, name }) => (
-                  <article
-                    key={name}
-                    className="flex items-start gap-[14px] rounded-[10px] border border-white/10 bg-white/[0.05] px-[16px] py-[18px]"
-                  >
-                    <Image
-                      src={img}
-                      alt=""
-                      width={168}
-                      height={168}
-                      className="h-[62px] w-[62px] shrink-0 rounded-full border-2 border-gold/70 object-cover"
-                    />
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-[3px] text-gold">
-                        {Array.from({ length: 5 }).map((_, index) => (
-                          <StarSolidIcon
-                            key={index}
-                            className="h-[12px] w-[12px]"
-                          />
-                        ))}
-                      </div>
-                      <p className="mt-[10px] text-[11.5px] leading-[1.7] text-white/90">
-                        {quote[0]}
-                        <br />
-                        {quote[1]}
-                        <br />
-                        {quote[2]}
-                      </p>
-                      <p className="mt-[10px] text-[11.5px] text-white/75">
-                        {name}
-                      </p>
-                    </div>
-                  </article>
-                ))}
-              </div>
-
-              <Link
-                href="/about"
-                className="absolute -bottom-[4px] left-1/2 flex h-[32px] w-auto -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 px-5 text-[13px] font-semibold text-[#2b0a3d]"
-              >
-                View More Reviews
-              </Link>
-            </div>
-          </div>
-        </section>
+        <TestimonialsSection />
 
         {/* ---------------- TRUST BADGES ---------------- */}
         <section className="relative overflow-hidden rounded-[16px] bg-[linear-gradient(90deg,#fdf6e6_0%,#fbf3e4_60%,#f7ecd8_100%)]">

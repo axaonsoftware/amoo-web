@@ -7,7 +7,7 @@ import { AlertCircle } from "lucide-react";
 import { saveConsultationData } from "../lib/consultation-storage";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
-import { ArrowRightIcon } from "../../components/icons";
+import { ArrowRightIcon } from "../../components/home-icons";
 import { HomeHeader, OfferBar } from "../../components/home-header";
 import Stepper from "./Stepper";
 import DateTimeCard from "./DateTimeCard";

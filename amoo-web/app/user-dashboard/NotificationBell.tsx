@@ -19,7 +19,7 @@ type Notification = {
   title: string;
   message: string;
   type: string;
-  is_read: number | boolean;
+  is_read: boolean;
   created_at: string;
 };
 
@@ -94,14 +94,14 @@ export default function NotificationBell() {
 
   const markOne = async (id: number) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n))
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
     );
     setUnread((prev) => Math.max(0, (prev ?? 1) - 1));
     try { await api.markRead(id); } catch { /* best-effort */ }
   };
 
   const markAll = async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnread(0);
     try { await api.markAllRead(); } catch { /* best-effort */ }
   };
@@ -119,7 +119,7 @@ export default function NotificationBell() {
       >
         <Bell className="h-[22px] w-[22px]" strokeWidth={1.7} />
         {fetchingCount ? null : displayCount > 0 ? (
-          <span className="absolute -top-[1px] right-0 flex min-w-[17px] items-center justify-center rounded-full bg-[#e9b85c] px-1 text-[9.5px] font-bold leading-[17px] text-[#2a1148]">
+          <span aria-live="polite" className="absolute -top-[1px] right-0 flex min-w-[17px] items-center justify-center rounded-full bg-[#e9b85c] px-1 text-[9.5px] font-bold leading-[17px] text-[#2a1148]">
             {displayCount > 99 ? "99+" : displayCount}
           </span>
         ) : null}

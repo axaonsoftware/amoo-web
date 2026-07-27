@@ -6,11 +6,12 @@ import Link from "next/link";
 import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../../lib/constants";
 import { HomeHeader, OfferBar } from "../../components/home-header";
 import { sanitize } from "../../../lib/sanitize";
+import { resolveService } from "../lib/services";
 import {
   FacebookIcon,
   InstagramIcon,
   YoutubeIcon,
-} from "../../components/icons";
+} from "../../components/home-icons";
 import {
   Check,
   User,
@@ -126,11 +127,7 @@ const FOOTER_COLS = [
   },
 ];
 
-const MODE_PRICES: Record<string, { price: number; discount: number }> = {
-  "Audio Call": { price: 499, discount: 50 },
-  "Video Call": { price: 999, discount: 100 },
-  Chat: { price: 349, discount: 35 },
-};
+const FIXED_DISCOUNT = 50; // Flat discount applied to all consultations
 
 /* ------------------------------------------------------------------ */
 /*  Small building blocks                                              */
@@ -199,6 +196,7 @@ function OverviewRow({
 function BookingSummaryContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [servicePrice, setServicePrice] = useState<number | null>(null);
 
   const [data] = useState(() => {
     try {
@@ -257,6 +255,16 @@ function BookingSummaryContent() {
     setLoading(false);
   }, [validationErrors]);
 
+  useEffect(() => {
+    if (data.service) {
+      resolveService(data.service)
+        .then((svc) => setServicePrice(svc.price))
+        .catch(() => {
+          // Fallback: price will show as unavailable
+        });
+    }
+  }, [data.service]);
+
   if (loading) {
     return (
       <div className="bg-[#FBF6EE] min-h-screen flex items-center justify-center">
@@ -281,8 +289,9 @@ function BookingSummaryContent() {
     { label: "How did you find us?", value: foundUs || "—" },
   ];
 
-  const pricing = MODE_PRICES[mode] || MODE_PRICES["Video Call"];
-  const total = pricing.price - pricing.discount;
+  const price = servicePrice ?? 0;
+  const discount = FIXED_DISCOUNT;
+  const total = price - discount;
 
   const dateShort = date ? date.replace(/,?\s*\d{4}/, "") : "";
 
@@ -539,7 +548,7 @@ function BookingSummaryContent() {
                   Special Offer for You!
                 </p>
                 <p className="text-gray-300 text-sm">
-                  You saved ₹{pricing.discount} with code{" "}
+                  You saved ₹{discount} with code{" "}
                   <span className="text-amber-300 font-semibold">FIRST10</span>
                 </p>
                 <p className="text-gray-400 text-xs mt-1">
@@ -608,11 +617,11 @@ function BookingSummaryContent() {
               </p>
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-gray-600">Consultation Fee</span>
-                <span className="text-purple-950 font-medium">₹{pricing.price}</span>
+                <span className="text-purple-950 font-medium">₹{price}</span>
               </div>
               <div className="flex items-center justify-between text-sm mb-3">
                 <span className="text-gray-600">Discount (FIRST10)</span>
-                <span className="text-green-600 font-medium">- ₹{pricing.discount}</span>
+                <span className="text-green-600 font-medium">- ₹{discount}</span>
               </div>
               <div className="border-t border-dashed border-amber-200 pt-3 flex items-center justify-between">
                 <span className="font-bold text-purple-950">Total Amount</span>
@@ -776,7 +785,7 @@ function BookingSummaryContent() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500 relative">
-          <p>© 2025 {SITE_NAME}. All Rights Reserved.</p>
+          <p>© {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.</p>
           <p>Designed with ❤ for Spiritual Seekers</p>
         </div>
 

@@ -1,4 +1,4 @@
-import { CheckIcon } from "../../components/icons";
+import { CheckIcon } from "../../components/home-icons";
 
 type Step = {
   num: number;

@@ -26,7 +26,7 @@ import {
   StarIcon,
   TargetIcon,
   WhatsAppIcon,
-} from "../../components/icons";
+} from "../../components/home-icons";
 import { WHATSAPP_URL } from "../../../lib/constants";
 
 export const metadata: Metadata = {
