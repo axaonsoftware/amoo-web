@@ -1,21 +1,21 @@
 // Unified file storage: local disk (default) or S3-compatible (when configured).
 // Uploads route uses `saveFile(buffer, filename, mimetype)` and `deleteFile(key)`.
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
 const env = require("./env");
 
 const localDir = path.join(__dirname, "..", "..", "uploads");
 
 async function saveLocal(buffer, filename, mimetype) {
-  if (!fs.existsSync(localDir)) fs.mkdirSync(localDir, { recursive: true });
+  await fs.mkdir(localDir, { recursive: true });
   const filePath = path.join(localDir, filename);
-  fs.writeFileSync(filePath, buffer);
+  await fs.writeFile(filePath, buffer);
   return { key: filename, url: `/uploads/${filename}`, provider: "local" };
 }
 
 async function deleteLocal(key) {
   const filePath = path.join(localDir, path.basename(key));
-  if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  try { await fs.unlink(filePath); } catch (e) { if (e.code !== "ENOENT") throw e; }
 }
 
 // Lazy S3 client (only required when storage is enabled).

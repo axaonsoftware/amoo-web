@@ -15,23 +15,25 @@
 
 services:
   db:
-    image: mysql:8.0
+    image: postgres:16
     container_name: amoo_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
-      MYSQL_DATABASE: ${DB_NAME:-amoo_db}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      POSTGRES_DB: ${DB_NAME:-amoo_db}
     # SECURITY: the port is no longer published to the host. It was bound to
-    # 0.0.0.0:3306, which on any machine without a host firewall exposed MySQL —
-    # with the root password from this file — to the network. The `backend`
-    # service reaches it over the compose network by service name regardless.
+    # 0.0.0.0:5432, which on any machine without a host firewall exposed
+    # PostgreSQL — with the password from this file — to the network. The
+    # `backend` service reaches it over the compose network by service name
+    # regardless.
     # For local DB access, uncomment and bind to loopback only:
     # ports:
-    #   - "127.0.0.1:3306:3306"
+    #   - "127.0.0.1:5432:5432"
     volumes:
-      - amoo_db_data:/var/lib/mysql
+      - amoo_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}"]
+      test: ["CMD", "pg_isready", "-U", "${DB_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -48,8 +50,9 @@ services:
       NODE_ENV: production
       PORT: 4000
       DB_HOST: db
-      DB_PORT: 3306
-      DB_USER: root
+      DB_PORT: 5432
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD_FILE: /run/secrets/db_password
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       DB_NAME: ${DB_NAME:-amoo_db}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}

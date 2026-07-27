@@ -19,15 +19,16 @@ jobs:
         working-directory: amoo-backend
 
     services:
-      mysql:
-        image: mysql:8.0
+      postgres:
+        image: postgres:16
         env:
-          MYSQL_ROOT_PASSWORD: ci_root_password
-          MYSQL_DATABASE: amoo_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_root_password
+          POSTGRES_DB: amoo_ci
         ports:
-          - 3306:3306
+          - 5432:5432
         options: >-
-          --health-cmd="mysqladmin ping -h localhost -pci_root_password"
+          --health-cmd="pg_isready -U postgres"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
@@ -56,16 +57,16 @@ jobs:
       # Catches the class of bug this project shipped twice: a schema that is
       # missing columns the code writes to, so the app only works if you
       # happened to run the migration runner. Applies the migration against a
-      # real MySQL, then boots the server for real.
-      - name: Verify migrations and boot against MySQL
+      # real PostgreSQL, then boots the server for real.
+      - name: Verify migrations and boot against PostgreSQL
         run: |
           npm run migrate
           NODE_ENV=test node -e "require('./src/server.js'); console.log('server boots OK')"
         env:
           NODE_ENV: development
           DB_HOST: 127.0.0.1
-          DB_PORT: 3306
-          DB_USER: root
+          DB_PORT: 5432
+          DB_USER: postgres
           DB_PASSWORD: ci_root_password
           DB_NAME: amoo_ci
           JWT_SECRET: ci-access-secret-not-used-outside-ci

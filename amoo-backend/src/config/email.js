@@ -21,6 +21,13 @@ function getTransporter() {
 // sendMail({ to, subject, text, html }) -> { sent, dev }
 async function sendMail({ to, subject, text, html }) {
   if (!env.email.enabled) {
+    if (env.isProd) {
+      throw new Error(
+        "Cannot send email: EMAIL_ENABLED is false. " +
+        "Set EMAIL_ENABLED=true and configure EMAIL_HOST, EMAIL_PORT, " +
+        "EMAIL_USER, EMAIL_PASS (and optionally EMAIL_FROM) in production."
+      );
+    }
     // Dev mode: don't send. Caller decides what to surface.
     return { sent: false, dev: true };
   }

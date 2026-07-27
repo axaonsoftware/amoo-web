@@ -16,10 +16,11 @@ const env = {
 
   db: {
     host: required("DB_HOST", "127.0.0.1"),
-    port: Number(required("DB_PORT", 3306)),
+    port: Number(required("DB_PORT", 5432)),
     user: required("DB_USER", "root"),
     password: required("DB_PASSWORD", ""),
     database: required("DB_NAME", "amoo_db"),
+    url: process.env.DATABASE_URL || "",
   },
 
   jwt: {
@@ -63,14 +64,15 @@ const env = {
   // Public base URL of the Next.js frontend. Every link a human clicks in an
   // email must point here, NOT at appUrl: pages like /verify-email and
   // /user-dashboard are served by the frontend, so building them on the API
-  // origin produced a 404 for every recipient. Defaults to the first configured
-  // CLIENT_ORIGIN so a correct CORS setup gives a correct link for free.
-  clientUrl: (process.env.CLIENT_URL ||
-    (required("CLIENT_ORIGIN", "*")
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s && s !== "*")[0]) ||
-    "http://localhost:3000").replace(/\/$/, ""),
+  // origin produced a 404 for every recipient. Required in production so that
+  // email links never fall back to localhost in a deployed environment.
+  clientUrl: (() => {
+    const url = (process.env.CLIENT_URL || "http://localhost:3000").replace(/\/$/, "");
+    if ((process.env.NODE_ENV || "").includes("prod") && !process.env.CLIENT_URL) {
+      throw new Error("CLIENT_URL is required in production — set it to the public frontend origin");
+    }
+    return url;
+  })(),
 
   // Object storage (S3-compatible). When configured, uploads go here instead
   // of the local disk and files are served via signed URLs.
@@ -113,8 +115,18 @@ const env = {
   },
 };
 
-if (env.isProd && (env.jwt.secret === "dev_secret_change_me" || env.jwt.refreshSecret === "dev_refresh_secret_change_me")) {
-  throw new Error("JWT secrets must be set to strong values in production");
+const INSECURE_JWT_SECRETS = new Set([
+  "dev_secret_change_me",
+  "dev_refresh_secret_change_me",
+  "sQuHt6d1PANfzlc7nSX9KCpZLbmVE2WakOT45jrRgw0Me8hGFoyIiBJv3DqYxU",
+  "SopOQskKMlwTRBn80qXtyAfv2VY3cdZzuJ9ENGIbr5x1jUD7imLPeh6HaCF4Wg",
+]);
+
+if (env.isProd && (INSECURE_JWT_SECRETS.has(env.jwt.secret) || INSECURE_JWT_SECRETS.has(env.jwt.refreshSecret))) {
+  throw new Error(
+    "JWT secrets must be replaced with strong values in production. " +
+    "Run: openssl rand -base64 48"
+  );
 }
 
 if (env.isProd && env.clientOrigin.includes("*")) {
