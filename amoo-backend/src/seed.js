@@ -24,25 +24,25 @@ async function seed() {
   const adminHash = await bcrypt.hash("admin123", 12);
   await pool.query(
     `INSERT INTO admins (name, email, password_hash, role)
-     VALUES ('Admin', 'admin@amooguru.com', ?, 'admin')
-     ON DUPLICATE KEY UPDATE id = id`,
+       VALUES ('Admin', 'admin@amooguru.com', $1, 'admin')
+       ON CONFLICT (email) DO UPDATE SET id = EXCLUDED.id`,
     [adminHash]
   );
 
   // Users
   const userHash = await bcrypt.hash("user123", 12);
   const users = [
-    ["Vedika Desai", "vedika.desai@gmail.com", "+91 98765 43210", "premium", "active", 1],
-    ["Rahul Sharma", "rahulsharma@gmail.com", "+91 87654 32109", "premium", "active", 1],
-    ["Neha Verma", "neha.verma@gmail.com", "+91 91234 56789", "free", "active", 0],
-    ["Amit Patel", "amit.patel@gmail.com", "+91 99887 76655", "consultant", "active", 1],
-    ["Pooja Mehta", "pooja.mehta@gmail.com", "+91 88776 65544", "premium", "blocked", 1],
+    ["Vedika Desai", "vedika.desai@gmail.com", "+91 98765 43210", "premium", "active", true],
+    ["Rahul Sharma", "rahulsharma@gmail.com", "+91 87654 32109", "premium", "active", true],
+    ["Neha Verma", "neha.verma@gmail.com", "+91 91234 56789", "free", "active", false],
+    ["Amit Patel", "amit.patel@gmail.com", "+91 99887 76655", "consultant", "active", true],
+    ["Pooja Mehta", "pooja.mehta@gmail.com", "+91 88776 65544", "premium", "blocked", true],
   ];
   for (const u of users) {
     const row = [u[0], u[1], u[2], userHash, u[3], u[4], u[5]];
     await pool.query(
       `INSERT INTO users (name, email, phone, password_hash, role, status, verified)
-       VALUES (?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name`,
       row
     );
   }
@@ -58,7 +58,7 @@ async function seed() {
   for (const e of experts) {
     await pool.query(
       `INSERT INTO experts (name, email, password_hash, verified, role_title, specialties, rating)
-       VALUES (?,?,?,1,?,?,?) ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), verified = 1`,
+       VALUES ($1, $2, $3, true, $4, $5, $6) ON CONFLICT (email) DO UPDATE SET id = EXCLUDED.id`,
       [e[0], e[1], expertHash, e[2], e[3], e[4]]
     );
   }
@@ -77,7 +77,7 @@ async function seed() {
   for (const s of services) {
     await pool.query(
       `INSERT INTO services (name, sub, img, category, type, price, duration, status, bookings)
-       VALUES (?,?,?,?,?,?,?,?,?) ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name`,
       s
     );
   }
@@ -87,7 +87,7 @@ async function seed() {
     const date = new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
     for (const [start, end] of [["09:00:00", "09:30:00"], ["10:00:00", "10:30:00"], ["11:00:00", "11:30:00"]]) {
       await pool.query(
-        "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES (?,?,?,?, 'available') ON DUPLICATE KEY UPDATE status = status",
+        "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES ($1, $2, $3, $4, 'available') ON CONFLICT DO NOTHING",
         [1, date, start, end]
       );
     }
@@ -96,20 +96,20 @@ async function seed() {
   // Packages
   await pool.query(
     `INSERT INTO packages (name, description, price, duration_days, status)
-     VALUES (?,?,?,?,?) ON DUPLICATE KEY UPDATE name = VALUES(name)`,
+     VALUES ($1, $2, $3, $4, $5) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name`,
     ["Premium Healing Package", "Unlimited reiki + tarot for 3 months", 4999, 90, "Active"]
   );
 
   // Coupons
   await pool.query(
     `INSERT INTO coupons (code, description, discount_type, discount_value, min_amount, max_uses, expires_at, active)
-     VALUES ('WELCOME20', '20% off first booking', 'percent', 20, 0, 1000, DATE_ADD(NOW(), INTERVAL 60 DAY), 1)
-     ON DUPLICATE KEY UPDATE code = code`
+     VALUES ('WELCOME20', '20% off first booking', 'percent', 20, 0, 1000, NOW() + INTERVAL '60 days', true)
+     ON CONFLICT (code) DO UPDATE SET code = EXCLUDED.code`
   );
 
   // Wallet for first user
   await pool.query(
-    `INSERT INTO wallets (user_id, balance) VALUES (1, 1500) ON DUPLICATE KEY UPDATE balance = VALUES(balance)`
+    `INSERT INTO wallets (user_id, balance) VALUES (1, 1500) ON CONFLICT (user_id) DO UPDATE SET balance = EXCLUDED.balance`
   );
   await pool.query(
     "INSERT INTO wallet_transactions (wallet_id, amount, type, reason) SELECT id, 1500, 'credit', 'Welcome bonus' FROM wallets WHERE user_id = 1 AND NOT EXISTS (SELECT 1 FROM wallet_transactions wt WHERE wt.wallet_id = wallets.id)"
@@ -118,8 +118,8 @@ async function seed() {
   // Subscription for first user
   await pool.query(
     `INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at)
-     VALUES (1, 1, 'Premium Healing Package', DATE_ADD(NOW(), INTERVAL 90 DAY))
-     ON DUPLICATE KEY UPDATE plan_name = VALUES(plan_name)`
+     VALUES (1, 1, 'Premium Healing Package', NOW() + INTERVAL '90 days')
+     ON CONFLICT (user_id, package_id) DO UPDATE SET plan_name = EXCLUDED.plan_name`
   );
 
   // Notifications
@@ -141,7 +141,7 @@ async function seed() {
     `INSERT INTO testimonials (name, comment, rating, status) VALUES
      ('Riya Kapoor', 'The numerology report was spot on and transformative.', 5, 'Active'),
      ('Arjun Mehta', 'Tarot reading gave me clarity about my career path.', 5, 'Active')
-     ON DUPLICATE KEY UPDATE comment = comment`
+     ON CONFLICT DO NOTHING`
   );
 
   // Blogs
@@ -164,8 +164,8 @@ async function seed() {
   for (const b of blogs) {
     await pool.query(
       `INSERT INTO blogs (slug, title, excerpt, content, category, image, author, author_avatar, read_time)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE title = VALUES(title)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (slug) DO UPDATE SET title = EXCLUDED.title`,
       b
     );
   }
@@ -196,8 +196,8 @@ async function seed() {
   for (const f of faqs) {
     await pool.query(
       `INSERT INTO faqs (question, answer, category, sort_order, active)
-       VALUES (?, ?, ?, ?, 1)
-       ON DUPLICATE KEY UPDATE question = VALUES(question)`,
+       VALUES ($1, $2, $3, $4, true)
+       ON CONFLICT (question) DO UPDATE SET question = EXCLUDED.question`,
       f
     );
   }

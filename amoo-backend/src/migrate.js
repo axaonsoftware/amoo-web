@@ -50,50 +50,54 @@ const logger = require("./utils/logger");
   }
   if (buf.trim()) statements.push(buf.trim());
 
-  const conn = await pool.getConnection();
+  const client = await pool.connect();
   try {
+    await client.query("BEGIN");
     for (const stmt of statements) {
       if (!stmt) continue;
-      await conn.query(stmt);
+      await client.query(stmt);
     }
 
     // Add new columns to pre-existing tables BEFORE creating indexes (idempotent).
     const columnAdds = [
       ["users", "reset_otp", "VARCHAR(12)"],
-      ["users", "reset_otp_expires", "DATETIME"],
+      ["users", "reset_otp_expires", "TIMESTAMP"],
       ["users", "reset_otp_attempts", "INT NOT NULL DEFAULT 0"],
-      ["users", "updated_at", "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"],
+      ["users", "updated_at", "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP"],
       ["users", "token_version", "INT NOT NULL DEFAULT 0"],
       ["users", "verify_token", "VARCHAR(64)"],
-      ["users", "verify_token_expires", "DATETIME"],
-      ["users", "deleted_at", "DATETIME"],
+      ["users", "verify_token_expires", "TIMESTAMP"],
+      ["users", "deleted_at", "TIMESTAMP"],
       ["admins", "token_version", "INT NOT NULL DEFAULT 0"],
       ["users", "failed_attempts", "INT NOT NULL DEFAULT 0"],
-      ["users", "locked_until", "DATETIME"],
+      ["users", "locked_until", "TIMESTAMP"],
       ["admins", "failed_attempts", "INT NOT NULL DEFAULT 0"],
-      ["admins", "locked_until", "DATETIME"],
-      ["experts", "deleted_at", "DATETIME"],
+      ["admins", "locked_until", "TIMESTAMP"],
+      ["experts", "deleted_at", "TIMESTAMP"],
       ["experts", "password_hash", "VARCHAR(255)"],
       ["experts", "token_version", "INT NOT NULL DEFAULT 0"],
-      ["experts", "verified", "TINYINT(1) NOT NULL DEFAULT 0"],
+      ["experts", "verified", "BOOLEAN NOT NULL DEFAULT false"],
       ["experts", "verify_token", "VARCHAR(64)"],
-      ["experts", "verify_token_expires", "DATETIME"],
+      ["experts", "verify_token_expires", "TIMESTAMP"],
       ["experts", "failed_attempts", "INT NOT NULL DEFAULT 0"],
-      ["experts", "locked_until", "DATETIME"],
-      ["services", "deleted_at", "DATETIME"],
-      ["packages", "deleted_at", "DATETIME"],
-      ["testimonials", "deleted_at", "DATETIME"],
-      ["reports", "status", "ENUM('pending','ready','rejected') NOT NULL DEFAULT 'pending'"],
-      ["reports", "deleted_at", "DATETIME"],
-      ["subscriptions", "auto_renew", "TINYINT(1) NOT NULL DEFAULT 0"],
+      ["experts", "locked_until", "TIMESTAMP"],
+      ["users", "refresh_jti", "VARCHAR(64)"],
+      ["admins", "refresh_jti", "VARCHAR(64)"],
+      ["experts", "refresh_jti", "VARCHAR(64)"],
+      ["services", "deleted_at", "TIMESTAMP"],
+      ["packages", "deleted_at", "TIMESTAMP"],
+      ["testimonials", "deleted_at", "TIMESTAMP"],
+      ["reports", "status", "VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','ready','rejected'))"],
+      ["reports", "deleted_at", "TIMESTAMP"],
+      ["subscriptions", "auto_renew", "BOOLEAN NOT NULL DEFAULT false"],
       ["contacts", "reply", "TEXT"],
-      ["conversations", "last_message_at", "DATETIME"],
+      ["conversations", "last_message_at", "TIMESTAMP"],
       ["bookings", "slot_id", "INT"],
       ["payments", "gateway", "VARCHAR(40)"],
       ["payments", "subscription_id", "INT"],
       ["payments", "gateway_order_id", "VARCHAR(255)"],
       ["payments", "refund_id", "VARCHAR(255)"],
-      ["payments", "refunded_at", "DATETIME"],
+      ["payments", "refunded_at", "TIMESTAMP"],
       ["users", "dob", "DATE"],
       ["users", "tob", "TIME"],
       ["users", "birthplace", "VARCHAR(255)"],
@@ -108,12 +112,12 @@ const logger = require("./utils/logger");
       ["audit_log", "page_or_route", "VARCHAR(255)"],
     ];
     for (const [table, col, def] of columnAdds) {
-      const [existing] = await conn.query(
-        "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ? LIMIT 1",
+      const { rows } = await client.query(
+        "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 AND column_name = $2 LIMIT 1",
         [table, col]
       );
-      if (existing.length) continue;
-      await conn.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+      if (rows.length) continue;
+      await client.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
     }
 
     // ── Chat participant model (migration 006) ────────────────────────────
@@ -125,12 +129,12 @@ const logger = require("./utils/logger");
     // Rows in the old table are, by construction, either absent or pointing at
     // the wrong person — so they are never migrated. If any exist we stop and
     // ask for a human decision rather than destroy data unattended.
-    const [convCols] = await conn.query(
-      "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'conversations'"
+    const { rows: convCols } = await client.query(
+      "SELECT COLUMN_NAME FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'conversations'"
     );
     const hasLegacyChat = convCols.some((c) => c.COLUMN_NAME === "user_a");
     if (hasLegacyChat) {
-      const [[{ n }]] = await conn.query("SELECT COUNT(*) AS n FROM conversations");
+      const { rows: [{ n }] } = await client.query("SELECT COUNT(*)::int AS n FROM conversations");
       if (n > 0) {
         logger.error(
           `Refusing to rebuild 'conversations': ${n} legacy row(s) present. ` +
@@ -141,50 +145,45 @@ const logger = require("./utils/logger");
         process.exit(1);
       }
       logger.info("Rebuilding empty legacy chat tables (user_a/user_b -> user_id/expert_id)...");
-      await conn.query("DROP TABLE IF EXISTS messages");
-      await conn.query("DROP TABLE IF EXISTS conversations");
-      await conn.query(`
+      await client.query("DROP TABLE IF EXISTS messages");
+      await client.query("DROP TABLE IF EXISTS conversations");
+      await client.query(`
         CREATE TABLE conversations (
-          id INT AUTO_INCREMENT PRIMARY KEY,
+          id SERIAL PRIMARY KEY,
           user_id INT NOT NULL,
           expert_id INT NOT NULL,
-          last_message_at DATETIME,
-          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          last_message_at TIMESTAMP,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
           FOREIGN KEY (expert_id) REFERENCES experts(id) ON DELETE CASCADE,
-          UNIQUE KEY uniq_conversation_pair (user_id, expert_id),
-          INDEX idx_conversations_user (user_id),
-          INDEX idx_conversations_expert (expert_id),
-          INDEX idx_conversations_last_message (last_message_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
-      await conn.query(`
+          UNIQUE (user_id, expert_id)
+        )`);
+      await client.query("CREATE INDEX idx_conversations_user ON conversations (user_id)");
+      await client.query("CREATE INDEX idx_conversations_expert ON conversations (expert_id)");
+      await client.query("CREATE INDEX idx_conversations_last_message ON conversations (last_message_at)");
+      await client.query(`
         CREATE TABLE messages (
-          id INT AUTO_INCREMENT PRIMARY KEY,
+          id SERIAL PRIMARY KEY,
           conversation_id INT NOT NULL,
-          sender_type ENUM('user','expert','admin') NOT NULL,
+          sender_type VARCHAR(20) NOT NULL CHECK (sender_type IN ('user', 'expert', 'admin')),
           sender_id INT NOT NULL,
           content TEXT NOT NULL,
-          is_read TINYINT(1) NOT NULL DEFAULT 0,
-          created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE,
-          INDEX idx_messages_conversation (conversation_id, created_at),
-          INDEX idx_messages_unread (conversation_id, is_read, sender_type)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+          is_read BOOLEAN NOT NULL DEFAULT false,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+        )`);
+      await client.query("CREATE INDEX idx_messages_conversation ON messages (conversation_id, created_at)");
+      await client.query("CREATE INDEX idx_messages_unread ON messages (conversation_id, is_read, sender_type)");
       logger.info("Chat tables rebuilt.");
     }
 
-    // Extend the subscriptions `status` ENUM to allow 'pending-payment'
-    // (idempotent: only alter if the value isn't already present).
+    // Extend the subscriptions `status` CHECK to allow 'pending-payment'
+    // (idempotent: drop and recreate the constraint).
     try {
-      const [enumRows] = await conn.query(
-        "SELECT COLUMN_TYPE FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'subscriptions' AND column_name = 'status' LIMIT 1"
-      );
-      const enumDef = enumRows[0] && enumRows[0].COLUMN_TYPE;
-      if (enumDef && !/pending-payment/.test(enumDef)) {
-        await conn.query(
-          "ALTER TABLE subscriptions MODIFY COLUMN status ENUM('active','expired','cancelled','pending-payment') NOT NULL DEFAULT 'active'"
-        );
-      }
+      await client.query("ALTER TABLE subscriptions DROP CONSTRAINT IF EXISTS subscriptions_status_check");
+      await client.query("ALTER TABLE subscriptions ADD CONSTRAINT subscriptions_status_check CHECK (status IN ('active', 'expired', 'cancelled', 'pending-payment'))");
+      await client.query("ALTER TABLE subscriptions ALTER COLUMN status SET NOT NULL");
+      await client.query("ALTER TABLE subscriptions ALTER COLUMN status SET DEFAULT 'active'");
     } catch (e) {
       if (!/duplicate|already exists/i.test(e.message)) throw e;
     }
@@ -237,26 +236,31 @@ const logger = require("./utils/logger");
       ["idx_audit_entity", "audit_log", "entity"],
       ["idx_audit_page", "audit_log", "page_or_route"],
       ["idx_audit_actor_type", "audit_log", "actor_type"],
+      ["idx_coupon_usage_coupon", "coupon_usages", "coupon_id"],
+      ["idx_coupon_usage_booking", "coupon_usages", "booking_id"],
+      ["idx_coupon_usage_user", "coupon_usages", "user_id"],
     ];
     for (const [name, table, col] of indexes) {
-      const [existing] = await conn.query(
-        "SELECT INDEX_NAME FROM information_schema.statistics WHERE table_schema = DATABASE() AND index_name = ? LIMIT 1",
+      const { rows } = await client.query(
+        "SELECT indexname AS index_name FROM pg_indexes WHERE schemaname = 'public' AND indexname = $1",
         [name]
       );
-      if (existing.length) continue;
+      if (rows.length) continue;
       try {
-        await conn.query(`CREATE INDEX ${name} ON ${table} (${col})`);
+        await client.query(`CREATE INDEX ${name} ON ${table} (${col})`);
       } catch (e) {
         if (!/duplicate|already exists/i.test(e.message)) throw e;
       }
     }
 
+    await client.query("COMMIT");
     logger.info(`Migration applied: ${statements.length} statements executed. Schema is up to date.`);
     process.exit(0);
   } catch (e) {
+    await client.query("ROLLBACK");
     logger.error("Migration failed:", e.message);
     process.exit(1);
   } finally {
-    conn.release();
+    client.release();
   }
 })();
