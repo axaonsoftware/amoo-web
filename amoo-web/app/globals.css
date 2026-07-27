@@ -55,18 +55,11 @@ body {
   /* Break long unbroken strings (URLs, emails) instead of forcing
      horizontal overflow on narrow screens. */
   overflow-wrap: break-word;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 img, video, svg {
   -webkit-user-drag: none;
   user-drag: none;
-}
-
-input, textarea, select {
-  user-select: text;
-  -webkit-user-select: text;
 }
 
 /* Safe-area helpers for notched / gesture-bar devices (viewport-fit=cover). */

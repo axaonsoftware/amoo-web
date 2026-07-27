@@ -17,7 +17,7 @@ const poppins = Poppins({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
-  preload: false,
+  preload: true,
   fallback: ["system-ui", "sans-serif"],
 });
 
@@ -56,12 +56,24 @@ export const metadata: Metadata = {
     title: `${SITE_NAME} — Numerology, Reiki Healing & Spiritual Guidance`,
     description:
       "Transform your life through Numerology, Reiki Healing, Tarot Guidance and Spiritual Consultation with Reiki Grand Master Surinder Kaur Sehgal.",
+    images: [{ url: "/apple-touch-icon.png", width: 180, height: 180 }],
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE_NAME} — Numerology, Reiki Healing & Spiritual Guidance`,
     description:
       "Transform your life through Numerology, Reiki Healing, Tarot Guidance and Spiritual Consultation with Reiki Grand Master Surinder Kaur Sehgal.",
+    images: [{ url: "/apple-touch-icon.png", width: 180, height: 180 }],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    other: [{ rel: "manifest", url: "/site.webmanifest" }],
   },
 };
 

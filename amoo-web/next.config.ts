@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 // The API origin must be reachable from the browser, so it has to appear in
 // connect-src. Kept in sync with lib/api.ts, which reads the same variable.
@@ -11,22 +12,21 @@ const RAZORPAY = "https://checkout.razorpay.com https://api.razorpay.com https:/
 const isDev = process.env.NODE_ENV === "development";
 
 /**
- * Content-Security-Policy.
+ * Content-Security-Policy (fallback — see middleware.ts for the per-request
+ * nonce-based version that replaces this for HTML pages).
  *
- * 'unsafe-inline' is present for styles because Tailwind v4 and next/font both
- * emit inline <style> blocks; removing it needs a nonce plumbed through the
- * document, which is a larger change than this pass.
- *
- * script-src keeps 'unsafe-inline' only in development, where React's refresh
- * runtime and the error overlay require eval. Production drops 'unsafe-eval'.
+ * 'unsafe-inline' is kept for style-src because Tailwind v4 and next/font both
+ * emit inline <style> blocks that do not receive a nonce automatically in the
+ * Next.js App Router.  script-src keeps 'unsafe-eval' in development for
+ * React's refresh runtime.
  */
 const csp = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline' ${isDev ? "'unsafe-eval'" : ""} https://checkout.razorpay.com`,
+  `script-src 'self' ${isDev ? "'unsafe-eval'" : ""} https://checkout.razorpay.com`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://images.unsplash.com https://upload.wikimedia.org",
+  "img-src 'self' data: blob: https://images.unsplash.com https://upload.wikimedia.org https://res.cloudinary.com",
   "font-src 'self' data: https://fonts.gstatic.com",
-  `connect-src 'self' ${API_URL} ${RAZORPAY}`,
+  `connect-src 'self' ${API_URL} ${RAZORPAY} https://sentry.io https://browser.sentry-cdn.com https://*.ingest.sentry.io`,
   "frame-src https://api.razorpay.com https://checkout.razorpay.com",
   "object-src 'none'",
   "base-uri 'self'",
@@ -86,4 +86,9 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Automatically tree-shake Sentry logger to reduce bundle size
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+});
