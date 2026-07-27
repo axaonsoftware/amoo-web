@@ -12,7 +12,7 @@ const { createMockPool, createMockConnection } = require("./setup");
 const mockHandlers = [];
 
 function mockResolvedValue(rows) {
-  mockHandlers.push(() => Promise.resolve([rows]));
+  mockHandlers.push(() => Promise.resolve({ rows, rowCount: rows?.length || 0 }));
 }
 
 function mockReject(err) {
@@ -37,7 +37,7 @@ mockConn.query = makeQuery();
 
 const mockPool = createMockPool();
 mockPool.query = makeQuery();
-mockPool.getConnection = () => Promise.resolve(mockConn);
+mockPool.connect = () => Promise.resolve(mockConn);
 
 // Patch the real db module
 const db = require("../src/config/db");
@@ -102,7 +102,7 @@ describe("POST /api/auth/register", () => {
 
   it("creates a user and returns access token", async () => {
     mockResolvedValue([]);                                          // 0: SELECT existing — none
-    mockResolvedValue({ insertId: 2 });                             // 1: INSERT user
+    mockResolvedValue([{ id: 2 }]);                                 // 1: INSERT user RETURNING id
     mockResolvedValue([{                                            // 2: SELECT created
       id: 2, name: "Alice", email: "alice@test.com",
       password_hash: "$2a$12$x", role: "free", status: "active",
@@ -110,7 +110,8 @@ describe("POST /api/auth/register", () => {
       deleted_at: null, phone: null, avatar: null,
       created_at: "2025-01-01T00:00:00.000Z", updated_at: "2025-01-01T00:00:00.000Z",
     }]);
-    mockResolvedValue([{ token_version: 0 }]);                      // 3: checkTokenVersion
+    mockResolvedValue([]);                                          // 3: UPDATE refresh_jti
+    mockResolvedValue([{ token_version: 0 }]);                      // 4: checkTokenVersion
 
     const res = await api("POST", "/api/auth/register", {
       body: { name: "Alice", email: "alice@test.com", password: "password123" },
@@ -153,8 +154,9 @@ const hash = "$2a$12$WY2Yo.FGEW6NVvLhOJlSHuv4KoSKz0xqEPUiWx152PLiZbTvjs4C2";
   it("logs in with valid credentials", async () => {
     mockResolvedValue([userRow]);                                   // 0: SELECT user
     mockResolvedValue([{ failed_attempts: 0, locked_until: null }]);// 1: checkLockout
-    mockResolvedValue({});                                          // 2: resetFailedAttempts
-    mockResolvedValue([{ token_version: 0 }]);                      // 3: checkTokenVersion
+    mockResolvedValue([]);                                          // 2: resetFailedAttempts
+    mockResolvedValue([]);                                          // 3: UPDATE refresh_jti
+    mockResolvedValue([{ token_version: 0 }]);                      // 4: checkTokenVersion
 
     const res = await api("POST", "/api/auth/login", {
       body: { email: "test@example.com", password: "password123" },
@@ -166,7 +168,7 @@ const hash = "$2a$12$WY2Yo.FGEW6NVvLhOJlSHuv4KoSKz0xqEPUiWx152PLiZbTvjs4C2";
   it("rejects wrong password", async () => {
     mockResolvedValue([userRow]);                                   // SELECT user
     mockResolvedValue([{ failed_attempts: 0, locked_until: null }]);// checkLockout
-    mockResolvedValue({});                                          // recordFailedAttempt
+    mockResolvedValue([]);                                          // recordFailedAttempt (SELECT inside returns no rows → early return)
 
     const res = await api("POST", "/api/auth/login", {
       body: { email: "test@example.com", password: "wrongpass" },
@@ -227,8 +229,8 @@ describe("POST /api/bookings", () => {
     mockResolvedValue([{ verified: 1 }]);                           // 1: verifiedRequired
     mockResolvedValue([{ id: 1, price: 100 }]);                     // 2: SELECT service price
     mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// 3: SELECT slot FOR UPDATE
-    mockResolvedValue({});                                          // 4: UPDATE slot → booked
-    mockResolvedValue({ insertId: 1 });                             // 5: INSERT booking
+    mockResolvedValue([]);                                          // 4: UPDATE slot → booked
+    mockResolvedValue([{ id: 1 }]);                                 // 5: INSERT booking RETURNING id
     mockResolvedValue([{                                            // 6: SELECT created booking
       id: 1, booking_ref: "BOOK-T", user_id: 1, service_id: 1,
       date: "2025-06-15", time: "10:00", amount: 100,
@@ -275,7 +277,7 @@ describe("POST /api/bookings", () => {
     mockResolvedValue([{ token_version: 0 }]);                     // 0: checkTokenVersion
     mockResolvedValue([{ verified: 1 }]);                          // 1: verifiedRequired
     mockResolvedValue([{ id: 1, price: 100 }]);                    // 2: SELECT service (price=100)
-    mockResolvedValue({});                                          // 3: rollback
+    mockResolvedValue([]);                                          // 3: ROLLBACK
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
@@ -407,7 +409,7 @@ describe("POST /api/auth/forgot-password", () => {
 
   it("generates OTP for existing user and always returns 200", async () => {
     mockResolvedValue([{ id: 1, name: "Test", email: "test@test.com" }]); // SELECT user
-    mockResolvedValue({});                                                   // UPDATE reset_otp
+    mockResolvedValue([]);                                                   // UPDATE reset_otp
 
     const res = await api("POST", "/api/auth/forgot-password", {
       body: { email: "test@test.com" },
@@ -446,7 +448,7 @@ describe("POST /api/auth/reset-password", () => {
 
   it("resets password with valid OTP", async () => {
     mockResolvedValue([userRow]);                                      // 0: SELECT user
-    mockResolvedValue({});                                             // 1: UPDATE password + clear OTP
+    mockResolvedValue([]);                                             // 1: UPDATE password + clear OTP
     // Audit INSERT is fire-and-forget (no mock needed, caught by error handler)
 
     const res = await api("POST", "/api/auth/reset-password", {
@@ -458,7 +460,7 @@ describe("POST /api/auth/reset-password", () => {
 
   it("rejects wrong OTP", async () => {
     mockResolvedValue([userRow]);                                      // 0: SELECT user
-    mockResolvedValue({});                                             // 1: UPDATE increment attempts
+    mockResolvedValue([]);                                             // 1: UPDATE increment attempts
 
     const res = await api("POST", "/api/auth/reset-password", {
       body: { email: "test@test.com", otp: "000000", password: "NewPass123!" },
@@ -469,7 +471,7 @@ describe("POST /api/auth/reset-password", () => {
 
   it("increments attempt counter on wrong OTP", async () => {
     mockResolvedValue([{ ...userRow, reset_otp_attempts: 0 }]);        // 0: SELECT user
-    mockResolvedValue({});                                             // 1: UPDATE increment attempts
+    mockResolvedValue([]);                                             // 1: UPDATE increment attempts
 
     await api("POST", "/api/auth/reset-password", {
       body: { email: "test@test.com", otp: "000000", password: "NewPass123!" },
@@ -480,7 +482,7 @@ describe("POST /api/auth/reset-password", () => {
 
   it("invalidates OTP after max failed attempts", async () => {
     mockResolvedValue([{ ...userRow, reset_otp_attempts: 4 }]);        // 0: SELECT user
-    mockResolvedValue({});                                             // 1: UPDATE null OTP
+    mockResolvedValue([]);                                             // 1: UPDATE null OTP
 
     const res = await api("POST", "/api/auth/reset-password", {
       body: { email: "test@test.com", otp: "000000", password: "NewPass123!" },
@@ -531,7 +533,7 @@ describe("POST /api/auth/verify-email", () => {
 
   it("verifies email with valid token", async () => {
     mockResolvedValue([userRow]);                                      // 0: SELECT user
-    mockResolvedValue({});                                             // 1: UPDATE verified=1
+    mockResolvedValue([]);                                             // 1: UPDATE verified=1
     // audit fire-and-forget (no mock)
 
     const res = await api("POST", "/api/auth/verify-email", {
@@ -596,7 +598,7 @@ describe("POST /api/auth/verify-email/send", () => {
     mockResolvedValue([{                                               // 1: SELECT user
       id: 1, email: "test@test.com", verified: 0,
     }]);
-    mockResolvedValue({});                                             // 2: UPDATE verify_token
+    mockResolvedValue([]);                                             // 2: UPDATE verify_token
     // sendMail mock — email.js returns { sent: false, dev: true } when disabled
 
     const res = await api("POST", "/api/auth/verify-email/send", {
@@ -647,7 +649,8 @@ describe("access_token cookie auth", () => {
       failed_attempts: 0, locked_until: null, deleted_at: null,
     }]);                                                            // 0: SELECT user
     mockResolvedValue([{ failed_attempts: 0, locked_until: null }]);// 1: checkLockout
-    mockResolvedValue({});                                          // 2: resetFailedAttempts
+    mockResolvedValue([]);                                          // 2: resetFailedAttempts
+    mockResolvedValue([]);                                          // 3: UPDATE refresh_jti
 
     const res = await api("POST", "/api/auth/login", {
       body: { email: "test@example.com", password: "password123" },
@@ -676,7 +679,7 @@ describe("Admin-only routes reject regular users", () => {
   it("admin can complete a booking", async () => {
     mockResolvedValue([{ token_version: 0 }]);                     // adminRequired
     mockResolvedValue([{ id: 1 }]);                                // booking exists
-    mockResolvedValue({});                                          // UPDATE status
+    mockResolvedValue([]);                                          // UPDATE status
 
     const res = await api("POST", "/api/bookings/1/complete", {
       headers: { Authorization: `Bearer ${adminToken}` },

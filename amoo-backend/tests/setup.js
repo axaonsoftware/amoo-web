@@ -7,24 +7,21 @@ process.env.RATE_LIMIT_WINDOW_MS = "60000";
 process.env.RATE_LIMIT_MAX = "10000";
 process.env.MAX_FILE_SIZE = "1024";
 
-// Helper to create a mock MySQL pool.
+// Helper to create a mock pg pool.
 function createMockPool() {
   const query = (...args) => {
     throw new Error(
       "No mock query handler registered. Use mockPool.query.mockImplementation or mockResolvedValue."
     );
   };
-  const getConnection = () =>
+  const connect = () =>
     Promise.resolve(createMockConnection());
-  return { query, getConnection };
+  return { query, connect };
 }
 
 function createMockConnection() {
   return {
-    query: () => Promise.resolve([[]]),
-    beginTransaction: () => Promise.resolve(),
-    commit: () => Promise.resolve(),
-    rollback: () => Promise.resolve(),
+    query: () => Promise.resolve({ rows: [[]], rowCount: 1 }),
     release: () => {},
   };
 }

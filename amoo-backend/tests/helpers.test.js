@@ -48,7 +48,7 @@ describe("buildUpdate", () => {
       allowed,
       [42]
     );
-    assert.strictEqual(setClause, "`name` = ?, `email` = ?, `status` = ?");
+    assert.strictEqual(setClause, '"name" = $1, "email" = $2, "status" = $3');
     assert.deepStrictEqual(values, ["Alice", "a@b.com", "active", 42]);
     assert.deepStrictEqual(keys, ["name", "email", "status"]);
   });

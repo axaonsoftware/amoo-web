@@ -33,9 +33,9 @@ describe("Security Issue 3: seed.js production refusal & password protection", (
     assert.ok(code.includes("Refusing to seed"), "seed.js must log error on production");
   });
 
-  it("admin insertion uses ON DUPLICATE KEY UPDATE id = id", () => {
+  it("admin insertion uses ON CONFLICT ... DO UPDATE SET id = EXCLUDED.id", () => {
     const code = fs.readFileSync(path.join(__dirname, "../src/seed.js"), "utf8");
-    assert.ok(code.includes("ON DUPLICATE KEY UPDATE id = id"), "Admin insert must not overwrite existing password");
+    assert.ok(code.includes("ON CONFLICT (email) DO UPDATE SET id = EXCLUDED.id"), "Admin insert must not overwrite existing password");
   });
 });
 
