@@ -5,6 +5,7 @@ const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
+const logger = require("../utils/logger");
 
 // GET /api/blogs — public paginated list (published only)
 router.get(
@@ -61,8 +62,8 @@ router.get(
       [req.params.slug]
     );
     if (!row) throw new HttpError(404, "Blog post not found");
-    // fire-and-forget view count
-    pool.query("UPDATE blogs SET views = views + 1 WHERE id = $1", [row.id]);
+    // fire-and-forget view count (log errors, never crash)
+    pool.query("UPDATE blogs SET views = views + 1 WHERE id = $1", [row.id]).catch((e) => logger.warn("[blogs] view count increment failed:", e.message));
     ok(res, row);
   })
 );
