@@ -119,7 +119,9 @@ async function request(method: string, path: string, body?: unknown) {
   });
   rememberCsrfToken(res);
 
-  if (res.status === 401 && path !== "/api/auth/refresh") {
+  // /api/auth/me is expected to 401 for unauthenticated visitors — don't
+  // redirect them to login just because they loaded a public page.
+  if (res.status === 401 && path !== "/api/auth/refresh" && path !== "/api/auth/me") {
     const refreshed = await refreshAccessToken();
     if (refreshed) {
       // Retry budget: up to 2 attempts so a single flaky 401 after a successful
@@ -141,12 +143,27 @@ async function request(method: string, path: string, body?: unknown) {
     // Admin pages have their own login; sending an admin to /user-login would
     // log them into the wrong realm (the backend keeps admins in a separate
     // table and issues kind:"admin" tokens).
+    // Only redirect when the current page is a protected route — public pages
+    // (home, blog, services, etc.) should never redirect on 401.
     if (typeof window !== "undefined") {
       const { pathname } = window.location;
       const loginPaths = ["/user-login", "/admin-login", "/astrologer-login"];
       if (!loginPaths.includes(pathname)) {
-        const loginPath = pathname.startsWith("/admin") ? "/admin-login" : "/user-login";
-        window.location.href = loginPath;
+        const isProtected =
+          pathname.startsWith("/admin") ||
+          pathname.startsWith("/user-dashboard") ||
+          pathname === "/consultation/consultation-payment" ||
+          pathname.startsWith("/consultation/consultation-payment/") ||
+          pathname === "/consultation/booking-confirmation" ||
+          pathname.startsWith("/consultation/booking-confirmation/") ||
+          pathname === "/consultation/booking-summary" ||
+          pathname.startsWith("/consultation/booking-summary/") ||
+          pathname === "/consultation/consultation-booking" ||
+          pathname.startsWith("/consultation/consultation-booking/");
+        if (isProtected) {
+          const loginPath = pathname.startsWith("/admin") ? "/admin-login" : "/user-login";
+          window.location.href = loginPath;
+        }
       }
     }
   }

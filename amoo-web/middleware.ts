@@ -27,6 +27,7 @@ const PUBLIC_PREFIXES = [
   "/terms",
   "/cancellation",
   "/software-hub",
+  "/consultation",
   "/consultation/select-service",
   "/consultation/consultation-mode",
   "/consultation/select-date-time",
@@ -73,8 +74,16 @@ function cspWithNonce(nonce: string) {
 
 /* ── Route classification utils ───────────────────────────────────────── */
 
+function matchesAny(pathname: string, prefixes: string[]): boolean {
+  return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+function isPublicRoute(pathname: string): boolean {
+  return matchesAny(pathname, PUBLIC_PREFIXES);
+}
+
 function isProtectedRoute(pathname: string): boolean {
-  return PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+  return matchesAny(pathname, PROTECTED_PREFIXES);
 }
 
 /* ── Redirect helpers ─────────────────────────────────────────────────── */
@@ -107,25 +116,25 @@ export async function middleware(req: NextRequest) {
   const nonce = crypto.randomUUID().replace(/-/g, "");
   const { pathname } = req.nextUrl;
 
-  // Public routes: add CSP and pass through immediately.
-  if (!isProtectedRoute(pathname)) return htmlResponse(req, nonce);
+  // Protected routes: require authentication.
+  if (isProtectedRoute(pathname)) {
+    if (!key) return htmlResponse(req, nonce);
 
-  // Protected routes below — auth check first, then CSP.
-  if (!key) return htmlResponse(req, nonce);
+    const token = req.cookies.get("access_token")?.value;
+    if (!token) return redirectToLogin(pathname);
 
-  const token = req.cookies.get("access_token")?.value;
-  if (!token) return redirectToLogin(pathname);
-
-  try {
-    const { payload } = await jwtVerify(token, key);
-    if (pathname.startsWith("/admin") && payload.kind !== "admin") return redirectToLogin(pathname);
-    if (pathname.startsWith("/user-dashboard") && !payload.kind) return redirectToLogin(pathname);
-    // Consultation routes are user-only.
-    if (pathname.startsWith("/consultation") && payload.kind !== "user") return redirectToLogin(pathname);
-    return htmlResponse(req, nonce);
-  } catch {
-    return redirectToLogin(pathname);
+    try {
+      const { payload } = await jwtVerify(token, key);
+      if (pathname.startsWith("/admin") && payload.kind !== "admin") return redirectToLogin(pathname);
+      if (pathname.startsWith("/user-dashboard") && !payload.kind) return redirectToLogin(pathname);
+      if (pathname.startsWith("/consultation") && payload.kind !== "user") return redirectToLogin(pathname);
+    } catch {
+      return redirectToLogin(pathname);
+    }
   }
+
+  // Public (and unmatched) routes: add CSP and pass through.
+  return htmlResponse(req, nonce);
 }
 
 // Only run on routes that serve HTML (skip API, static, etc.).
