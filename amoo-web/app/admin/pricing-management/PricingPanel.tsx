@@ -342,6 +342,9 @@ export default function PricingPanel({
     { name: "status", label: "Status", type: "select", required: true, options: [{ label: "Active", value: "active" }, { label: "Inactive", value: "inactive" }] },
   ];
 
+  const handleEditPlan = useCallback((r: Row) => handleOpenEdit(r), []);
+  const handleDeletePlan = useCallback((id: number) => { setDeletingId(id); setConfirmOpen(true); }, []);
+
   if (loading)
     return (
       <div className="flex justify-center py-10">
@@ -351,9 +354,6 @@ export default function PricingPanel({
       </div>
     );
   if (error) return <div className="flex justify-center py-10 text-[13px] text-[#EF4444]">{error}</div>;
-
-  const handleEditPlan = useCallback((r: Row) => handleOpenEdit(r), []);
-  const handleDeletePlan = useCallback((id: number) => { setDeletingId(id); setConfirmOpen(true); }, []);
 
   return (
     <>
