@@ -9,7 +9,7 @@ function asyncHandler(fn) {
 // Format: BOOK-<base36 timestamp>-<random> e.g. BOOK-LZ8X2-3F9K
 function genBookingRef() {
   const t = Date.now().toString(36).toUpperCase();
-  const r = Math.random().toString(36).toUpperCase().slice(2, 6);
+  const r = crypto.randomInt(0x100000, 0x1000000).toString(36).toUpperCase();
   return `BOOK-${t}-${r}`;
 }
 
