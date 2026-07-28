@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -82,6 +82,16 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
 
   const [userList, setUserList] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState("");
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+      if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+    };
+  }, []);
 
   const [toast, setToast] = useState<{ msg: string; kind: "success" | "error" } | null>(null);
   const showToast = (msg: string, kind: "success" | "error" = "success") => {
@@ -180,32 +190,37 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
           title: String(formValues.title),
           content: String(formValues.content ?? ""),
         });
-        if (!formValues.content) {
-          const reportId = result?.id || result?.data?.id;
-          if (reportId) {
-            const poll = setInterval(async () => {
-              try {
-                const res = await api.admin.getReport(reportId);
-                const report = res?.data || res;
-                if (report && report.status !== "pending") {
-                  clearInterval(poll);
-                  setSaving(false);
-                  setModalOpen(false);
-                  loadReports();
-                  showToast("Report generated successfully");
-                }
-              } catch { /* continue polling */ }
-            }, 2000);
-            setTimeout(() => {
-              clearInterval(poll);
-              setSaving(false);
-              setModalOpen(false);
-              loadReports();
-              showToast("Report created — generation still in progress");
-            }, 30000);
-            return;
+          if (!formValues.content) {
+            const reportId = result?.id || result?.data?.id;
+            if (reportId) {
+              pollIntervalRef.current = setInterval(async () => {
+                try {
+                  const res = await api.admin.getReport(reportId);
+                  const report = res?.data || res;
+                  if (report && report.status !== "pending") {
+                    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                    if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
+                    pollIntervalRef.current = null;
+                    pollTimeoutRef.current = null;
+                    setSaving(false);
+                    setModalOpen(false);
+                    loadReports();
+                    showToast("Report generated successfully");
+                  }
+                } catch { /* continue polling */ }
+              }, 2000);
+              pollTimeoutRef.current = setTimeout(() => {
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                pollIntervalRef.current = null;
+                pollTimeoutRef.current = null;
+                setSaving(false);
+                setModalOpen(false);
+                loadReports();
+                showToast("Report created — generation still in progress");
+              }, 30000);
+              return;
+            }
           }
-        }
         setSaving(false);
         setModalOpen(false);
         loadReports();
