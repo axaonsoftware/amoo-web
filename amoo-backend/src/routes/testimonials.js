@@ -4,7 +4,7 @@ const { pool } = require("../config/db");
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
-const { ok, paginated, created, parsePagination } = require("../utils/response");
+const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
 
 const TESTIMONIAL_UPDATE_ALLOWED = ["status", "comment", "rating", "name"];
 
@@ -89,7 +89,7 @@ router.delete(
   adminRequired,
   asyncHandler(async (req, res) => {
     const { rows } = await pool.query("SELECT id FROM testimonials WHERE id = $1 AND deleted_at IS NULL", [req.params.id]);
-    if (!rows.length) return ok(res, { id: Number(req.params.id), deleted: true });
+    if (assertFound(res, rows[0])) return;
     await pool.query("UPDATE testimonials SET deleted_at = NOW(), status = 'Inactive' WHERE id = $1", [req.params.id]);
     req.audit("delete", "testimonial", Number(req.params.id));
     ok(res, { id: Number(req.params.id), deleted: true });
