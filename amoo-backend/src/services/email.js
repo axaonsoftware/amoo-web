@@ -92,7 +92,7 @@ async function sendBulk({ recipients, subject, html, text, chunkSize = 50 }) {
  * @param {object} [opts]    - { appUrl, unsubscribeHref }
  */
 async function sendNotificationEmail(to, title, message, opts = {}) {
-  const appUrl = opts.appUrl || env.clientUrl || "https://amooguru.com";
+  const appUrl = opts.appUrl || env.clientUrl;
   const html = [
     `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">`,
     `<style>`,
