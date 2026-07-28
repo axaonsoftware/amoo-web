@@ -120,6 +120,8 @@ const INSECURE_JWT_SECRETS = new Set([
   "dev_refresh_secret_change_me",
   "sQuHt6d1PANfzlc7nSX9KCpZLbmVE2WakOT45jrRgw0Me8hGFoyIiBJv3DqYxU",
   "SopOQskKMlwTRBn80qXtyAfv2VY3cdZzuJ9ENGIbr5x1jUD7imLPeh6HaCF4Wg",
+  "change_me_dev_env_only_not_for_production",
+  "change_me_dev_refresh_not_for_production",
 ]);
 
 if (env.isProd && (INSECURE_JWT_SECRETS.has(env.jwt.secret) || INSECURE_JWT_SECRETS.has(env.jwt.refreshSecret))) {
