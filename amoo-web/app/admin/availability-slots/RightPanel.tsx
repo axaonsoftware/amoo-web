@@ -22,7 +22,7 @@ export default function RightPanel() {
     specialties: string | null; status: string; rating: number | string | null;
     total_slots: number; booked_slots: number; available_slots: number;
     blocked_slots: number;
-  }>(() => api.request("GET", "/api/slots/availability"), []);
+  }>(() => api.admin.getSlotAvailability(), []);
 
   const expert = experts?.[0] ?? null;
   const now = new Date();
