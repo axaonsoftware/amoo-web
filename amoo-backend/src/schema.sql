@@ -406,7 +406,7 @@ CREATE TABLE IF NOT EXISTS blogs (
 -- FAQs
 -- --------------------------------------------------------
 CREATE TABLE IF NOT EXISTS faqs (
-  id BIGSERIAL PRIMARY KEY,
+  id          SERIAL PRIMARY KEY,
   question VARCHAR(500) NOT NULL,
   answer TEXT NOT NULL,
   category VARCHAR(100) NOT NULL DEFAULT 'General',
