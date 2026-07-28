@@ -8,6 +8,7 @@ const { ok, paginated, created, assertFound, parsePagination, fail } = require("
 const env = require("../config/env");
 const fs = require("fs");
 const path = require("path");
+const logger = require("../utils/logger");
 const { getGenerator } = require("../report-generators/index");
 const { resolveStoredFile } = require("../utils/paths");
 
@@ -141,8 +142,7 @@ router.post(
               ]
             );
           } catch (genErr) {
-            // Generation failed — leave status as "pending" so an admin
-            // knows something went wrong and can manually fill content.
+            logger.warn("[reports] auto-generation failed for report", reportId, genErr.message);
           }
         })();
       }
@@ -199,8 +199,7 @@ router.post(
               ]
             );
           } catch (genErr) {
-            // Generation failed — status stays as inserted ("ready" for admin,
-            // "pending" for user).  Admin can manually edit content.
+            logger.warn("[reports] admin auto-generation failed for report", reportId, genErr.message);
           }
         })();
       }
