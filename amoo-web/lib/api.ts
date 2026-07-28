@@ -434,6 +434,7 @@ export const api = {
       if (!res.ok && typeof window !== "undefined") {
         const { pathname } = window.location;
         const isProtected =
+          pathname.startsWith("/user-dashboard") ||
           pathname === "/consultation/consultation-booking" ||
           pathname.startsWith("/consultation/consultation-booking/") ||
           pathname === "/consultation/consultation-payment" ||
