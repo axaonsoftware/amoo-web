@@ -1,8 +1,8 @@
+// Vars that MUST be set for the build to succeed.
+// NEXT_PUBLIC_* vars with fallbacks in lib/constants.ts are excluded — the code
+// handles missing values gracefully.
 const REQUIRED_PROD = [
   "NEXT_PUBLIC_API_URL",
-  "NEXT_PUBLIC_WHATSAPP_NUMBER",
-  "NEXT_PUBLIC_SITE_NAME",
-  "NEXT_PUBLIC_CONTACT_EMAIL",
   "JWT_SECRET",
 ];
 

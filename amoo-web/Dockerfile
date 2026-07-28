@@ -18,9 +18,17 @@ COPY . .
 # must be the real production API origin, not the localhost default. It also
 # feeds the connect-src directive of the CSP in next.config.ts — a wrong value
 # here means the browser blocks every API call at runtime.
-# CI/CD pipelines MUST pass --build-arg NEXT_PUBLIC_API_URL=... explicitly.
+# CI/CD pipelines MUST pass --build-arg for each required variable.
 ARG NEXT_PUBLIC_API_URL=http://localhost:4000
+ARG NEXT_PUBLIC_WHATSAPP_NUMBER=
+ARG NEXT_PUBLIC_SITE_NAME=Amoo Guru
+ARG NEXT_PUBLIC_CONTACT_EMAIL=contact@amooguru.com
+ARG JWT_SECRET=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_WHATSAPP_NUMBER=$NEXT_PUBLIC_WHATSAPP_NUMBER
+ENV NEXT_PUBLIC_SITE_NAME=$NEXT_PUBLIC_SITE_NAME
+ENV NEXT_PUBLIC_CONTACT_EMAIL=$NEXT_PUBLIC_CONTACT_EMAIL
+ENV JWT_SECRET=$JWT_SECRET
 ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN npm run build
