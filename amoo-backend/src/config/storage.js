@@ -48,7 +48,8 @@ async function saveS3(buffer, filename, mimetype) {
 async function deleteS3(key) {
   // eslint-disable-next-line global-require
   const { DeleteObjectCommand } = require("@aws-sdk/client-s3");
-  await getS3().send(new DeleteObjectCommand({ Bucket: env.storage.bucket, Key: key }));
+  const normalizedKey = key.startsWith("uploads/") ? key : `uploads/${key}`;
+  await getS3().send(new DeleteObjectCommand({ Bucket: env.storage.bucket, Key: normalizedKey }));
 }
 
 async function saveFile(buffer, filename, mimetype) {
