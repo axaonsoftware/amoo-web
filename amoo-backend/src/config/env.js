@@ -135,6 +135,12 @@ if (env.isProd && env.clientOrigin.includes("*")) {
   throw new Error("CLIENT_ORIGIN must not be '*' in production. Set specific origins.");
 }
 
+if (env.isProd && !process.env.DATABASE_URL && env.db.host === "127.0.0.1" && env.db.database === "amoo_db") {
+  throw new Error(
+    "DATABASE_URL is required in production (or set DB_HOST, DB_NAME, DB_USER explicitly — do not rely on defaults)"
+  );
+}
+
 if (env.isProd && env.storage.enabled && !env.storage.bucket) {
   throw new Error("S3_BUCKET is required when S3_ENABLED=true in production");
 }
