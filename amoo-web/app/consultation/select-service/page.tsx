@@ -19,17 +19,12 @@ import {
   CheckCircleFillIcon,
   WhatsAppIcon,
   NumerologyIcon,
-  LotusLineIcon,
-  CardsIcon,
   CompassIcon,
-  ChakraFlowerIcon,
-  LinkedCirclesIcon,
   SparkleIcon,
   MonitorIcon,
   ReikiHandsIcon,
   TarotCardsIcon,
   KundaliWheelIcon,
-  MeditationIcon,
   LotusSolidIcon,
   LockIcon,
   ShieldStarIcon,
@@ -43,13 +38,12 @@ import {
 const STATIC_CATEGORIES = [
   { label: "All Services", Icon: StarFillIcon },
   { label: "Numerology", Icon: NumerologyIcon },
-  { label: "Reiki Healing", Icon: LotusLineIcon },
-  { label: "Tarot Reading", Icon: CardsIcon },
-  { label: "Kundali & Astrology", Icon: CompassIcon },
-  { label: "Chakra Healing", Icon: ChakraFlowerIcon },
-  { label: "Combination Services", Icon: LinkedCirclesIcon },
-  { label: "Spiritual Guidance", Icon: SparkleIcon },
-  { label: "Software Services", Icon: MonitorIcon },
+  { label: "Tarot", Icon: TarotCardsIcon },
+  { label: "Astrology", Icon: KundaliWheelIcon },
+  { label: "Healing", Icon: ReikiHandsIcon },
+  { label: "Vastu", Icon: CompassIcon },
+  { label: "AI Services", Icon: MonitorIcon },
+  { label: "Spiritual", Icon: SparkleIcon },
 ];
 
 type Service = {
@@ -82,15 +76,7 @@ const CATEGORY_VISUALS: Record<string, {
     btnBg: "#f7eef6",
     btnText: "#8a3f86",
   },
-  "Reiki Healing": {
-    icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" />,
-    popular: true,
-    priceColor: "#2f9e5f",
-    iconBg: "#e4f4e9",
-    btnBg: "#eef4ef",
-    btnText: "#3f8158",
-  },
-  "Tarot Reading": {
+  Tarot: {
     icon: <TarotCardsIcon className="h-[32px] w-[32px] text-[#7b3fb0]" />,
     popular: true,
     priceColor: "#7b3fb0",
@@ -98,21 +84,37 @@ const CATEGORY_VISUALS: Record<string, {
     btnBg: "#f2ecfb",
     btnText: "#6b3fa0",
   },
-  "Kundali & Astrology": {
+  Astrology: {
     icon: <KundaliWheelIcon className="h-[34px] w-[34px] text-[#e08a2e]" />,
     priceColor: "#e08a2e",
     iconBg: "#fdeede",
     btnBg: "#fcf1e2",
     btnText: "#c9791f",
   },
-  "Chakra Healing": {
-    icon: <MeditationIcon className="h-[34px] w-[34px] text-[#4a78d6]" />,
+  Healing: {
+    icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" />,
+    popular: true,
+    priceColor: "#2f9e5f",
+    iconBg: "#e4f4e9",
+    btnBg: "#eef4ef",
+    btnText: "#3f8158",
+  },
+  Vastu: {
+    icon: <CompassIcon className="h-[34px] w-[34px] text-[#e08a2e]" />,
+    priceColor: "#c9791f",
+    iconBg: "#fdeede",
+    btnBg: "#fcf1e2",
+    btnText: "#a06010",
+  },
+  "AI Services": {
+    icon: <MonitorIcon className="h-[34px] w-[34px] text-[#4a78d6]" />,
+    popular: true,
     priceColor: "#3f6fd0",
     iconBg: "#e7effb",
     btnBg: "#eaf0fb",
     btnText: "#3f6fc9",
   },
-  "Spiritual Guidance": {
+  Spiritual: {
     icon: <SparkleIcon className="h-[34px] w-[34px] text-[#b5711a]" />,
     priceColor: "#b5711a",
     iconBg: "#fdf0da",
@@ -123,19 +125,20 @@ const CATEGORY_VISUALS: Record<string, {
 
 const CATEGORY_DESCS: Record<string, string> = {
   Numerology: "Discover the power of numbers that influence your life path, career, relationships and more.",
-  "Reiki Healing": "Heal your mind, body and soul with divine Reiki energy from our expert healers.",
-  "Tarot Reading": "Get insights and guidance for your current situation and future path.",
-  "Kundali & Astrology": "Detailed analysis of your birth chart and planetary positions by expert astrologers.",
-  "Chakra Healing": "Balance your 7 chakras and bring harmony to your mind, body and spirit.",
-  "Spiritual Guidance": "Get clarity about your life path, career, relationships and personal growth.",
+  Tarot: "Get insights and guidance for your current situation and future path with Tarot card reading.",
+  Astrology: "Detailed analysis of your birth chart and planetary positions by expert astrologers.",
+  Healing: "Heal your mind, body and soul with divine energy from our expert healers.",
+  Vastu: "Harmonize your living and working spaces with ancient Vastu principles.",
+  "AI Services": "Get instant astrology answers and insights powered by AI technology.",
+  Spiritual: "Connect with your inner self and explore your spiritual journey.",
 };
 
 const LIFE_INCLUDES = [
   "Numerology Report",
   "Tarot Reading",
-  "Reiki Healing Guidance",
-  "Kundali Overview",
-  "Remedies & Solutions",
+  "Reiki Healing Session",
+  "Kundli Reading",
+  "Aura Report",
 ];
 
 const TRUST_ITEMS = [
@@ -147,6 +150,17 @@ const TRUST_ITEMS = [
 ];
 
 const SORT_OPTIONS = ["Popular First", "Price: Low to High", "Price: High to Low"];
+
+const STATIC_SERVICES: Service[] = [
+  { id: 1, name: "Numerology Report", desc: "Discover the power of numbers that influence your life path, career, relationships and more.", price: "₹999", category: "Numerology", popular: true, priceColor: "#d6417f", iconBg: "#efe7fb", btnBg: "#f7eef6", btnText: "#8a3f86", icon: <div className="grid h-[42px] w-[42px] grid-cols-3 place-items-center gap-x-[3px] rounded-[11px] bg-gradient-to-br from-[#6b3fa0] to-[#4b2583] text-[8.5px] font-semibold leading-none text-white">{([1, 4, 7, 2, 5, 8, 3, 6, 9]).map((n) => (<span key={n}>{n}</span>))}</div> },
+  { id: 2, name: "Tarot Reading", desc: "Get insights and guidance for your current situation and future path with Tarot card reading.", price: "₹799", category: "Tarot", popular: true, priceColor: "#7b3fb0", iconBg: "#efe6fb", btnBg: "#f2ecfb", btnText: "#6b3fa0", icon: <TarotCardsIcon className="h-[32px] w-[32px] text-[#7b3fb0]" /> },
+  { id: 3, name: "Kundli Reading", desc: "Detailed analysis of your birth chart and planetary positions by expert astrologers.", price: "₹1,499", category: "Astrology", priceColor: "#e08a2e", iconBg: "#fdeede", btnBg: "#fcf1e2", btnText: "#c9791f", icon: <KundaliWheelIcon className="h-[34px] w-[34px] text-[#e08a2e]" /> },
+  { id: 4, name: "Reiki Healing Session", desc: "Heal your mind, body and soul with divine energy from our expert healers.", price: "₹999", category: "Healing", popular: true, priceColor: "#2f9e5f", iconBg: "#e4f4e9", btnBg: "#eef4ef", btnText: "#3f8158", icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" /> },
+  { id: 5, name: "Vastu Consultation", desc: "Harmonize your living and working spaces with ancient Vastu principles.", price: "₹1,299", category: "Vastu", priceColor: "#c9791f", iconBg: "#fdeede", btnBg: "#fcf1e2", btnText: "#a06010", icon: <CompassIcon className="h-[34px] w-[34px] text-[#e08a2e]" /> },
+  { id: 6, name: "AI Astro Chat", desc: "Get instant astrology answers and insights powered by AI technology.", price: "₹199", category: "AI Services", popular: true, priceColor: "#3f6fd0", iconBg: "#e7effb", btnBg: "#eaf0fb", btnText: "#3f6fc9", icon: <MonitorIcon className="h-[34px] w-[34px] text-[#4a78d6]" /> },
+  { id: 7, name: "Aura Report", desc: "Energy Aura Analysis — discover the energy field surrounding you.", price: "₹599", category: "Healing", priceColor: "#2f9e5f", iconBg: "#e4f4e9", btnBg: "#eef4ef", btnText: "#3f8158", icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" /> },
+  { id: 8, name: "Past Life Reading", desc: "Explore your past lives and understand the karmic patterns affecting your present.", price: "₹1,199", category: "Spiritual", priceColor: "#b5711a", iconBg: "#fdf0da", btnBg: "#fcf1de", btnText: "#b5711a", icon: <SparkleIcon className="h-[34px] w-[34px] text-[#b5711a]" /> },
+];
 
 /* ───────────── Page ───────────── */
 
@@ -175,11 +189,11 @@ export default function SelectServicePage() {
     const derived = apiServices
       ? [...new Set(apiServices.map((s: any) => s.category as string).filter(Boolean))]
       : [];
-    const fromStatic = STATIC_CATEGORIES.map((c) => c.label);
-    const labels = derived.length ? derived : fromStatic.slice(1);
+    const staticLabels = STATIC_CATEGORIES.slice(1).map((c) => c.label);
+    const allLabels = derived.length ? [...new Set([...derived, ...staticLabels])] : staticLabels;
     return [
       STATIC_CATEGORIES[0],
-      ...labels.map((label: string) => {
+      ...allLabels.map((label: string) => {
         const found = STATIC_CATEGORIES.find((c) => c.label === label);
         return found || { label, Icon: StarFillIcon };
       }),
@@ -189,7 +203,7 @@ export default function SelectServicePage() {
   const allServices: Service[] = useMemo(() => {
     if (apiServices && apiServices.length) {
       return apiServices.map((s: any) => {
-        const v = CATEGORY_VISUALS[s.category] || CATEGORY_VISUALS["Spiritual Guidance"];
+        const v = CATEGORY_VISUALS[s.category] || CATEGORY_VISUALS["Spiritual"];
         return {
           id: Number(s.id),
           name: s.name,
@@ -205,7 +219,7 @@ export default function SelectServicePage() {
         };
       });
     }
-    return [];
+    return STATIC_SERVICES;
   }, [apiServices]);
 
   const filtered = useMemo(() => {
