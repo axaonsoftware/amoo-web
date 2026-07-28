@@ -412,13 +412,39 @@ export const api = {
   uploadFile: async (file: File) => {
     const form = new FormData();
     form.append("file", file);
-    const res = await fetchWithTimeout(`${API_URL}/api/uploads`, {
+    let res = await fetchWithTimeout(`${API_URL}/api/uploads`, {
       method: "POST",
       headers: await buildHeaders("POST"),
       credentials: "include",
       body: form,
     }, 120000);
     rememberCsrfToken(res);
+
+    if (res.status === 401) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        res = await fetchWithTimeout(`${API_URL}/api/uploads`, {
+          method: "POST",
+          headers: await buildHeaders("POST"),
+          credentials: "include",
+          body: form,
+        }, 120000);
+        rememberCsrfToken(res);
+      }
+      if (!res.ok && typeof window !== "undefined") {
+        const { pathname } = window.location;
+        const isProtected =
+          pathname === "/consultation/consultation-booking" ||
+          pathname.startsWith("/consultation/consultation-booking/") ||
+          pathname === "/consultation/consultation-payment" ||
+          pathname.startsWith("/consultation/consultation-payment/");
+        if (isProtected) {
+          window.location.href = "/user-login";
+          throw new Error("Session expired. Redirecting to login…");
+        }
+      }
+    }
+
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error((data && data.error) || "Upload failed");
     return data;
