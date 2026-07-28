@@ -30,8 +30,10 @@ export function trackEvent(
       ...(actionDetails ? { action_details: actionDetails } : {}),
       page_or_route: pageOrRoute || window.location.pathname,
     })
-    .catch(() => {
-      // Analytics is best-effort: a failure here must never surface to the user.
+    .catch((err) => {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("[tracking] failed to log activity:", err);
+      }
     });
 }
 
