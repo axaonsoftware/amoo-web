@@ -3,8 +3,9 @@ import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Without a secret we can't verify tokens — fall through to client-side auth.
-// Set JWT_SECRET in .env.local (same value as the backend's JWT_SECRET).
+// Without a secret we can't verify tokens — block access to
+// protected routes with a 503. Set JWT_SECRET in .env.local
+// (same value as the backend's JWT_SECRET).
 if (!JWT_SECRET && process.env.NODE_ENV === "production") {
   console.error("CRITICAL: JWT_SECRET is not set. Route protection is DISABLED.");
 }
@@ -118,7 +119,9 @@ export async function middleware(req: NextRequest) {
 
   // Protected routes: require authentication.
   if (isProtectedRoute(pathname)) {
-    if (!key) return htmlResponse(req, nonce);
+    if (!key) {
+      return new Response("JWT_SECRET is not configured. Route protection is disabled.", { status: 503 });
+    }
 
     const token = req.cookies.get("access_token")?.value;
     if (!token) return redirectToLogin(pathname);
