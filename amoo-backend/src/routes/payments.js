@@ -298,6 +298,9 @@ router.post(
     const { rows: payments } = await pool.query("SELECT * FROM payments WHERE id = $1", [req.params.id]);
     if (assertFound(res, payments[0])) return;
     const p = payments[0];
+    if (req.user.kind !== "admin" && p.user_id !== req.user.id) {
+      return fail(res, 403, "Forbidden");
+    }
     if (p.status === "refunded") {
       return fail(res, 400, "Payment already refunded");
     }
