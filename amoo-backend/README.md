@@ -1,4 +1,4 @@
-# Amoo Guru — Backend (Node.js + Express + MySQL)
+# Amoo Guru — Backend (Node.js + Express + PostgreSQL)
 
 Production-grade REST API for the Amoo Guru spiritual/astrology platform
 (users, experts, services, bookings, payments, refunds, wallets, subscriptions,
@@ -7,7 +7,7 @@ dashboard, audit log).
 
 ## Stack
 - Node.js + Express 4
-- MySQL 8 via `mysql2` connection pool (with retries)
+- PostgreSQL 16 via `pg` connection pool (with retries)
 - JWT auth (access + refresh tokens, rotation, password reset OTP)
 - Joi validation, helmet, CORS, compression, rate limiting
 - Transactions for wallet / booking / payment / refund flows
@@ -82,7 +82,7 @@ Server listens on `PORT` (default 4000). Health: `GET /api/health`.
 - Graceful shutdown on `SIGTERM`/`SIGINT`
 
 ## Database
-Single source of truth: `src/schema.sql` (create-if-not-exists + indexes).
+Single source of truth: `src/schema.sql` (PostgreSQL, create-if-not-exists + indexes).
 New tables vs. earlier versions: `refunds`, `conversations`/`messages`,
 `coupons`, `audit_log`, and `reset_otp` columns on `users`.
 
@@ -102,7 +102,7 @@ Copy `.env.example` → `.env` and set real values. In production you MUST set:
 ```bash
 cp .env.example .env        # set DB_PASSWORD etc.
 docker compose up --build
-# API on :4000, MySQL on :3306
+# API on :4000, PostgreSQL on :5432
 ```
 
 ### Docker (image only)
@@ -112,7 +112,7 @@ docker run -p 4000:4000 --env-file .env amoo-backend
 ```
 
 ### Platforms
-- **Render**: `render.yaml` blueprint provisions the web service + MySQL.
+- **Render**: `render.yaml` blueprint provisions the web service + PostgreSQL.
 - **Railway**: `railway.toml` builds from `./amoo-backend` and runs migrate+start.
 - **VPS / PM2**: `npm run pm2` (uses `ecosystem.config.js`, cluster mode).
 
