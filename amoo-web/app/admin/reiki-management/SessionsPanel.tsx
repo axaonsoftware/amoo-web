@@ -428,11 +428,11 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
     // the every-render loop. They read state only when invoked.
   }, [onReady]);
 
-  if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
-
   const handleEditSession = useCallback((raw: RawReport) => handleOpenEdit(raw), []);
   const handleDeleteSession = useCallback((rawId: number) => handleDeleteClick(rawId), []);
+
+  if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
+  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
 
   return (
     <section className="overflow-hidden rounded-[12px] border border-[#EFEDF4] bg-white shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
