@@ -21,7 +21,7 @@ const allImages = [
   'imagesP/certificate_1.png', 'imagesP/certificate_2.png', 'imagesP/certificate_3.png',
   'imagesP/certificate_4.png', 'imagesP/certificate_5.png',
   'imagesP/adminloginRightBg.jpg',
-  'imagesP/amooLogoP.png', 'imagesP/blogPageHeroBgN.png',
+  'imagesP/amooLogoPNew.png', 'imagesP/blogPageHeroBgN.png',
   'imagesP/consultation_pricing.png', 'imagesP/serviceHeroBg.png',
   'imagesP/userRightSideLogin.png', 'imagesP/amooHomeHeroBgP.png',
   'imagesP/chakra_1.png', 'imagesP/chakra_2.png', 'imagesP/chakra_3.png',
@@ -54,4 +54,4 @@ const mapPath = path.join(__dirname, 'cloudinary-map.json');
 fs.writeFileSync(mapPath, JSON.stringify(mapping, null, 2));
 console.log(`Mapping saved with ${Object.keys(mapping).length} entries.`);
 console.log('Sample:', mapping['images/logo-footer.png']);
-console.log('Sample:', mapping['imagesP/amooLogoP.png']);
+console.log('Sample:', mapping['imagesP/amooLogoPNew.png']);

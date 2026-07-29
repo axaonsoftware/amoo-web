@@ -59,7 +59,7 @@ const imagesToUpload = [
   { local: 'imagesP/certificate_4.png', id: 'amoo/imagesP/certificate_4' },
   { local: 'imagesP/certificate_5.png', id: 'amoo/imagesP/certificate_5' },
   { local: 'imagesP/adminloginRightBg.jpg', id: 'amoo/imagesP/adminloginRightBg' },
-  { local: 'imagesP/amooLogoP.png', id: 'amoo/imagesP/amooLogoP' },
+  { local: 'imagesP/amooLogoPNew.png', id: 'amoo/imagesP/amooLogoPNew' },
   { local: 'imagesP/blogPageHeroBgN.png', id: 'amoo/imagesP/blogPageHeroBgN' },
   { local: 'imagesP/consultation_pricing.png', id: 'amoo/imagesP/consultation_pricing' },
   { local: 'imagesP/serviceHeroBg.png', id: 'amoo/imagesP/serviceHeroBg' },
