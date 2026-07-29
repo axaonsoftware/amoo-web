@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "path";
 
 // The API origin must be reachable from the browser, so it has to appear in
 // connect-src. Kept in sync with lib/api.ts, which reads the same variable.
@@ -12,7 +13,7 @@ const RAZORPAY = "https://checkout.razorpay.com https://api.razorpay.com https:/
 const isDev = process.env.NODE_ENV === "development";
 
 /**
- * Content-Security-Policy (fallback — see middleware.ts for the per-request
+ * Content-Security-Policy (fallback — see proxy.ts for the per-request
  * nonce-based version that replaces this for HTML pages).
  *
  * 'unsafe-inline' is kept for style-src because Tailwind v4 and next/font both
@@ -61,6 +62,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  outputFileTracingRoot: path.resolve(__dirname),
   // Hides the framework/version banner from responses.
   poweredByHeader: false,
   images: {
