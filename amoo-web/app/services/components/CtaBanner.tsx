@@ -6,7 +6,7 @@ import { WHATSAPP_URL } from "../../../lib/constants";
 
 export default function CtaBanner() {
   return (
-    <section className="relative w-full overflow-hidden bg-[linear-gradient(90deg,#33124f_0%,#43195f_35%,#4b1c6d_55%,#331350_100%)]">
+    <section className="relative w-full bg-[linear-gradient(90deg,#33124f_0%,#43195f_35%,#4b1c6d_55%,#331350_100%)]">
       <div className="stars pointer-events-none absolute inset-0 opacity-70" />
       <MandalaRing className="pointer-events-none absolute -top-[70px] right-[300px] hidden h-[380px] w-[380px] text-gold/20 lg:block" />
 
@@ -17,7 +17,7 @@ export default function CtaBanner() {
         width={324}
         height={108}
         aria-hidden
-        className="pointer-events-none absolute right-[300px] bottom-[26px] hidden h-[130px] w-[210px] object-contain object-bottom lg:block"
+        className="pointer-events-none absolute right-[300px] bottom-[26px] hidden h-[130px] w-[210px] max-w-full object-contain object-bottom lg:block"
       />
       <Image
         src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
@@ -25,7 +25,7 @@ export default function CtaBanner() {
         width={356}
         height={173}
         aria-hidden
-        className="pointer-events-none absolute right-[10px] bottom-0 hidden h-[200px] w-[300px] object-contain object-bottom lg:block"
+        className="pointer-events-none absolute right-[10px] bottom-0 hidden max-w-full h-[200px] w-[300px] object-contain object-bottom lg:block"
       />
 
       <div className="relative mx-auto w-full max-w-[1336px] px-5 py-[32px]">

@@ -7,7 +7,7 @@ export default function CtaBanner() {
   return (
     <section className="bg-white">
       <div className="mx-auto w-full max-w-[1440px] px-[22px] pb-[34px]">
-        <div className="relative h-[150px] overflow-hidden rounded-[16px] border border-gold/20 bg-[linear-gradient(90deg,#3d1157_0%,#2a0940_50%,#3d1157_100%)]">
+        <div className="relative h-[150px] rounded-[16px] border border-gold/20 bg-[linear-gradient(90deg,#3d1157_0%,#2a0940_50%,#3d1157_100%)]">
           <div className="stars pointer-events-none absolute inset-0 opacity-40" />
 
           <Image

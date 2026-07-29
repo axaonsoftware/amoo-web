@@ -13,7 +13,7 @@ export default function Hero() {
         fill
         priority
         sizes="100vw"
-        className="object-cover  sm:object-[65%_center]"
+        className="object-cover object-center"
       />
 
       {/* Left-side darkening so the copy stays legible over the artwork */}

@@ -135,7 +135,7 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
             width={350}
             height={150}
             priority
-            className="h-[48px] w-auto object-contain sm:h-[72px]"
+            className="h-[48px] w-auto max-w-full object-contain sm:h-[72px]"
           />
         </Link>
 

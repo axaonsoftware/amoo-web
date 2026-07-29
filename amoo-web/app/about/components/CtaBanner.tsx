@@ -5,7 +5,7 @@ import { WHATSAPP_URL } from "../../../lib/constants";
 
 export default function CtaBanner() {
   return (
-    <section className="relative min-h-[132px] w-full overflow-hidden bg-gradient-to-r from-[#3d1157] via-[#2a0940] to-[#3d1157]">
+    <section className="relative min-h-[132px] w-full bg-gradient-to-r from-[#3d1157] via-[#2a0940] to-[#3d1157]">
       <Image
         src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/lotus_candles_no_bg.png"
         alt=""
