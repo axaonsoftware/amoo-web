@@ -113,7 +113,7 @@ function htmlResponse(req: NextRequest, nonce: string): NextResponse {
 
 /* ── Middleware ────────────────────────────────────────────────────────── */
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const nonce = crypto.randomUUID().replace(/-/g, "");
   const { pathname } = req.nextUrl;
 

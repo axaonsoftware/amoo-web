@@ -13,7 +13,7 @@ const RAZORPAY = "https://checkout.razorpay.com https://api.razorpay.com https:/
 const isDev = process.env.NODE_ENV === "development";
 
 /**
- * Content-Security-Policy (fallback — see proxy.ts for the per-request
+ * Content-Security-Policy (fallback — see middleware.ts for the per-request
  * nonce-based version that replaces this for HTML pages).
  *
  * 'unsafe-inline' is kept for style-src because Tailwind v4 and next/font both
