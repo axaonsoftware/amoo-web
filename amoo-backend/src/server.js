@@ -42,6 +42,7 @@ const auditRoutes = require("./routes/audit");
 const activityRoutes = require("./routes/activity");
 const blogRoutes = require("./routes/blogs");
 const faqRoutes = require("./routes/faqs");
+const { setupSwagger } = require("./config/swagger");
 
 const app = express();
 const PORT = env.port;
@@ -79,6 +80,9 @@ app.use((req, res, next) => {
 });
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// --- Swagger API Docs (before CSRF — static assets need no token) ---
+setupSwagger(app);
 
 // --- CSRF (double-submit cookie) ---
 // Auth rides on an httpOnly cookie, which the browser attaches to cross-site
