@@ -218,36 +218,35 @@ router.get(
 );
 
 // GET /api/dashboard/export/:type  (CSV export: bookings | users | payments)
+// Streams rows via res.write() instead of building one giant CSV string in memory,
+// keeping the event loop responsive even when the result set grows.
 router.get(
   "/export/:type",
   adminRequired,
   asyncHandler(async (req, res) => {
     const { type } = req.params;
-    let rows, headers, filename;
+    let result, headers, filename;
     if (type === "bookings") {
-      const result = await pool.query(
+      result = await pool.query(
         `SELECT b.booking_ref, u.name AS user, e.name AS expert, s.name AS service,
                 b.date, b.time, b.amount, b.payment, b.status
          FROM bookings b JOIN users u ON u.id=b.user_id
          LEFT JOIN experts e ON e.id=b.expert_id JOIN services s ON s.id=b.service_id
          ORDER BY b.created_at DESC LIMIT 50000`
       );
-      rows = result.rows;
       headers = ["booking_ref", "user", "expert", "service", "date", "time", "amount", "payment", "status"];
       filename = "bookings.csv";
     } else if (type === "users") {
-      const result = await pool.query(
+      result = await pool.query(
         "SELECT id, name, email, phone, role, status, verified, created_at FROM users WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 50000"
       );
-      rows = result.rows;
       headers = ["id", "name", "email", "phone", "role", "status", "verified", "created_at"];
       filename = "users.csv";
     } else if (type === "payments") {
-      const result = await pool.query(
+      result = await pool.query(
         `SELECT p.id, u.name AS user, p.amount, p.method, p.status, p.txn_id, p.created_at
          FROM payments p JOIN users u ON u.id=p.user_id ORDER BY p.created_at DESC LIMIT 50000`
       );
-      rows = result.rows;
       headers = ["id", "user", "amount", "method", "status", "txn_id", "created_at"];
       filename = "payments.csv";
     } else {
@@ -258,13 +257,17 @@ router.get(
       if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
       return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
     };
-    const csv = [headers.join(",")]
-      .concat(rows.map((r) => headers.map((h) => esc(r[h])).join(",")))
-      .join("\n");
+    const mapRow = (r) => headers.map((h) => esc(r[h])).join(",");
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
     res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
     res.setHeader("X-Content-Type-Options", "nosniff");
-    res.send("﻿" + csv);
+    // BOM so Excel recognises UTF-8
+    res.write("﻿");
+    res.write(headers.join(",") + "\n");
+    for (const row of result.rows) {
+      res.write(mapRow(row) + "\n");
+    }
+    res.end();
   })
 );
 

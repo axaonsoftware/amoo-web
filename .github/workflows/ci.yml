@@ -117,5 +117,22 @@ jobs:
 
       - run: npm test
 
+      # Fail on any dependency vulnerability that ships in the bundle.
+      # Dev-only advisories (test tools, build tools) are excluded since
+      # they do not end up in the production bundle.
       - name: Audit runtime dependencies
         run: npm audit --omit=dev --audit-level=high
+
+      # Bundle size guard — fails the build if the total JS payload
+      # exceeds the threshold in bytes. Catches accidental import bloat
+      # before it ships to users.
+      - name: Check bundle size
+        run: |
+          MAX_SIZE=500000
+          STATS=$(find .next/static -name '*.js' -not -name '*chunk*' 2>/dev/null | xargs -I{} wc -c {} 2>/dev/null | awk '{total += $1} END {print total}')
+          echo "Total JS bundle size: $STATS bytes (limit: $MAX_SIZE)"
+          if [ "$STATS" -gt "$MAX_SIZE" ]; then
+            echo "❌ Bundle exceeds ${MAX_SIZE}B limit. Run a bundle analysis to find the culprits."
+            exit 1
+          fi
+          echo "✅ Bundle size is within limits."

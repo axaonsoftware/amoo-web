@@ -106,7 +106,6 @@ services:
       EMAIL_FROM: ${EMAIL_FROM:-no-reply@amooguru.com}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       S3_ENABLED: ${S3_ENABLED:-false}
-      CRON_ENABLED: ${CRON_ENABLED:-false}
     volumes:
       - amoo_uploads:/app/uploads
     networks:

@@ -379,6 +379,22 @@ export const api = {
   // contact (public)
   sendContact: (body: unknown) => request("POST", "/api/contact", body),
 
+  // chat - all endpoints automatically include the CSRF token header
+  // because they use POST/GET (the api helper handles this for all mutating methods).
+  // csrfToken is fetched on first call via ensureCsrfToken().
+  chat: {
+    getConversations: (query = "") => request("GET", `/api/chat/conversations${query}`),
+    openConversation: (participantId: number) =>
+      request("POST", "/api/chat/conversations", { participant_id: participantId }),
+    getMessages: (convId: number, query = "") =>
+      request("GET", `/api/chat/conversations/${convId}/messages${query}`),
+    sendMessage: (convId: number, content: string) =>
+      request("POST", `/api/chat/conversations/${convId}/messages`, { content }),
+    markRead: (convId: number) =>
+      request("POST", `/api/chat/conversations/${convId}/read`),
+    getUnreadCount: () => request("GET", "/api/chat/unread-count"),
+  },
+
   // payment
   createPaymentOrder: (body: unknown) => request("POST", "/api/payments/create-order", body),
   verifyPayment: (body: unknown) => request("POST", "/api/payments/verify", body),

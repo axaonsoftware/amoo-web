@@ -99,11 +99,14 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging (skip in test)
+morgan.token("req-id", (req) => req.id || "-");
 if (env.nodeEnv !== "test") {
-  app.use(morgan(env.isProd ? "combined" : "dev", {
-    skip: (req) => req.path === "/api/health",
-  }));
+  app.use(morgan(
+    env.isProd
+      ? ":req-id :remote-addr :remote-user :method :url :status :res[content-length] :response-time ms"
+      : "dev",
+    { skip: (req) => req.path === "/api/health" }
+  ));
 }
 
 // Rate limiters (skipped in test mode to avoid false test failures)
@@ -253,6 +256,11 @@ if (require.main === module) {
           task: expireSubscriptions,
         },
       ]);
+      // WebSocket server for real-time chat.
+      // Clients connect to ws://host:port/chat with the access token
+      // in a query parameter (?token=<jwt>) or via the access_token cookie.
+      const { attachChat } = require("./websocket");
+      attachChat(server);
     });
   });
 }

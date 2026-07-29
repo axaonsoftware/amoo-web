@@ -2,6 +2,12 @@ import { ChevronLeft, Send, Sparkles } from "lucide-react";
 
 import Phone, { StatusBar } from "../Phone";
 
+// NOTE: All chat API calls must go through the `api` helper from `@/lib/api`.
+// The `api` helper automatically attaches the `X-CSRF-Token` header to every
+// state-changing request (POST, PATCH, PUT, DELETE) and handles token refresh.
+// Do NOT use raw `fetch()` here — that would bypass CSRF protection and cause
+// 403 errors on the double-submit cookie check. See lib/api.ts for details.
+
 export default function ChatPhone() {
   return (
     <Phone>
