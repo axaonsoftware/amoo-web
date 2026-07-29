@@ -6,7 +6,6 @@ const REQUIRED_PROD = [
   "NEXT_PUBLIC_SITE_NAME",
   "NEXT_PUBLIC_CONTACT_EMAIL",
   "NEXT_PUBLIC_WHATSAPP_NUMBER",
-  "JWT_SECRET",
 ];
 
 const missing = REQUIRED_PROD.filter((name) => !process.env[name]);

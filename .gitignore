@@ -34,6 +34,12 @@ Thumbs.db
 .claude/
 **/.claude/
 
+# Cloudinary
+cloudinary-map.json
+
+# Nested duplicate frontend directory
+amoo-web/amoo-web/
+
 # Design exports / OS noise
 Website/
 __MACOSX/

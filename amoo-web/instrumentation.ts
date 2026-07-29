@@ -11,5 +11,5 @@ export function register() {
 }
 
 export function onRequestError(error: unknown) {
-  Sentry.captureRequestError(error);
+  Sentry.captureException(error);
 }
