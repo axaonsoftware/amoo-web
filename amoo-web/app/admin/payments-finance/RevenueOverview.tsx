@@ -5,13 +5,13 @@ import api from "../../../lib/api";
 
 const W = 700;
 const H = 200;
-const MAX = 2;
-const x = (i: number) => (i / 17) * W;
-const y = (v: number) => H - (v / MAX) * H;
+const x = (i: number, len: number) => (i / Math.max(len - 1, 1)) * W;
+const y = (v: number, max: number) => H - (v / Math.max(max, 1)) * H;
 
 export default function RevenueOverview() {
   const [revenue, setRevenue] = useState<number[]>([]);
   const [netEarnings, setNetEarnings] = useState<number[]>([]);
+  const [labels, setLabels] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,14 +22,21 @@ export default function RevenueOverview() {
         if (cancelled) return;
         const data = res?.data || res;
         if (Array.isArray(data) && data.length >= 7) {
-          const rev = data.map((d: any) => {
+          const rev: number[] = [];
+          const lbls: string[] = [];
+          data.forEach((d: any) => {
             const v = Number(d.amount || d.revenue || d.total || 0);
-            return v > 0 ? v / 100000 : 0;
-          }).filter((v: number) => v > 0);
+            if (v > 0) {
+              rev.push(v / 100000);
+              const date = d.date || d.label || "";
+              lbls.push(date ? new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "");
+            }
+          });
           if (rev.length >= 7) {
             const sliced = rev.slice(0, 18);
             setRevenue(sliced);
             setNetEarnings(sliced.map((v: number) => v * 0.34));
+            setLabels(lbls.slice(0, 18));
           }
         }
       })
@@ -38,7 +45,8 @@ export default function RevenueOverview() {
     return () => { cancelled = true; };
   }, []);
 
-  const areaPath = `M0,${H} L${revenue.map((v, i) => `${x(i)},${y(v)}`).join(" L")} L${W},${H} Z`;
+  const maxVal = Math.max(...revenue, ...netEarnings, 1);
+  const areaPath = `M0,${H} L${revenue.map((v, i) => `${x(i, revenue.length)},${y(v, maxVal)}`).join(" L")} L${W},${H} Z`;
 
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
@@ -79,7 +87,9 @@ export default function RevenueOverview() {
 
             <div className="mt-3 flex gap-2">
               <div className="flex w-[34px] shrink-0 flex-col justify-between py-[2px] text-right text-[9px] text-[#A5A2B5]">
-                {["₹2.0L", "₹1.5L", "₹1.0L", "₹50K", "0"].map((t) => <span key={t}>{t}</span>)}
+                {[maxVal, maxVal * 0.75, maxVal * 0.5, maxVal * 0.25, 0].map((v, i) => (
+                  <span key={i}>₹{(v * 100000).toLocaleString("en-IN")}</span>
+                ))}
               </div>
               <div className="min-w-0 flex-1">
                 <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-[168px] w-full overflow-visible">
@@ -93,13 +103,13 @@ export default function RevenueOverview() {
                     <line key={p} x1="0" x2={W} y1={p * H} y2={p * H} stroke="#F1EFF6" strokeWidth="1" vectorEffect="non-scaling-stroke" />
                   ))}
                   <path d={areaPath} fill="url(#pfRevFill)" />
-                  <polyline points={revenue.map((v, i) => `${x(i)},${y(v)}`).join(" ")} fill="none" stroke="#6D28D9" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points={netEarnings.map((v, i) => `${x(i)},${y(v)}`).join(" ")} fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  {revenue.map((v, i) => <circle key={`r${i}`} cx={x(i)} cy={y(v)} r="3" fill="#6D28D9" vectorEffect="non-scaling-stroke" />)}
-                  {netEarnings.map((v, i) => <circle key={`n${i}`} cx={x(i)} cy={y(v)} r="3" fill="#F59E0B" vectorEffect="non-scaling-stroke" />)}
+                  <polyline points={revenue.map((v, i) => `${x(i, revenue.length)},${y(v, maxVal)}`).join(" ")} fill="none" stroke="#6D28D9" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  <polyline points={netEarnings.map((v, i) => `${x(i, netEarnings.length)},${y(v, maxVal)}`).join(" ")} fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+                  {revenue.map((v, i) => <circle key={`r${i}`} cx={x(i, revenue.length)} cy={y(v, maxVal)} r="3" fill="#6D28D9" vectorEffect="non-scaling-stroke" />)}
+                  {netEarnings.map((v, i) => <circle key={`n${i}`} cx={x(i, netEarnings.length)} cy={y(v, maxVal)} r="3" fill="#F59E0B" vectorEffect="non-scaling-stroke" />)}
                 </svg>
                 <div className="mt-[10px] flex justify-between text-[9px] text-[#A5A2B5]">
-                  {["1 May", "3 May", "5 May", "7 May", "9 May", "11 May", "13 May", "15 May", "17 May", "18 May"].map((l) => <span key={l}>{l}</span>)}
+                  {labels.map((l, i) => <span key={i}>{l}</span>)}
                 </div>
               </div>
             </div>

@@ -64,7 +64,7 @@ export default function RightPanel() {
           <>
             <div className="mt-3.5 flex items-start gap-3">
               <Image
-                src={expert.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"}
+                src={expert.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name)}&background=4c159f&color=fff&size=112`}
                 alt={expert.name}
                 width={112} height={112} unoptimized
                 className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"

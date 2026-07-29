@@ -2546,7 +2546,7 @@ const options = {
       contact: { name: "Amoo Support", email: "support@amoo.guru" },
     },
     servers: [
-      { url: `http://localhost:${env.port || 3000}`, description: "Development" },
+      { url: env.appUrl, description: "API Server" },
     ],
     tags: [
       { name: "Auth", description: "Authentication & account management" },

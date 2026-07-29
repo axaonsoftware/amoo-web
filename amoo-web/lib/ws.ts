@@ -1,4 +1,4 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const WS_URL = API_URL.replace(/^http/, "ws");
 
 type EventHandler = (data: unknown) => void;
@@ -10,7 +10,7 @@ export function connectChatWebSocket(
   const ws = new WebSocket(`${WS_URL}/chat?token=${token}`);
 
   ws.onopen = () => {
-    handlers.onOpen?.();
+    handlers.onOpen?.(null);
   };
 
   ws.onmessage = (event) => {
@@ -26,7 +26,7 @@ export function connectChatWebSocket(
   };
 
   ws.onerror = () => {
-    handlers.onError?.();
+    handlers.onError?.(null);
   };
 
   ws.onclose = (event) => {

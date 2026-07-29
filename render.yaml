@@ -1,0 +1,75 @@
+services:
+  - type: web
+    name: amoo-backend
+    env: docker
+    dockerfilePath: amoo-backend/Dockerfile
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: DB_HOST
+        fromService:
+          type: pserv
+          name: amoo-db
+          property: host
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_USER
+        fromService:
+          type: pserv
+          name: amoo-db
+          property: user
+      - key: DB_PASSWORD
+        fromService:
+          type: pserv
+          name: amoo-db
+          property: password
+      - key: DB_NAME
+        value: amoo_db
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: CLIENT_ORIGIN
+        sync: false
+      - key: PAYMENT_GATEWAY
+        sync: false
+      - key: PAYMENT_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+  - type: web
+    name: amoo-web
+    env: docker
+    dockerfilePath: amoo-web/Dockerfile
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        sync: false
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NEXT_PUBLIC_WHATSAPP_NUMBER
+        sync: false
+      - key: NEXT_PUBLIC_SITE_NAME
+        value: Amoo Guru
+      - key: NEXT_PUBLIC_CONTACT_EMAIL
+        sync: false
+
+  - type: pserv
+    name: amoo-db
+    plan: starter
+    env: docker
+    dockerCommand: postgres:16
+    autoDeploy: false
+    disk:
+      name: data
+      mountPath: /var/lib/postgresql/data
+      sizeGB: 10

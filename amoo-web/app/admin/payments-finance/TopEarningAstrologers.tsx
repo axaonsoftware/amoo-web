@@ -8,6 +8,7 @@ import api from "../../../lib/api";
 type Expert = {
   id?: number;
   name?: string;
+  avatar?: string | null;
   total_revenue?: number;
   earnings?: number;
   bookings_count?: number;
@@ -62,10 +63,10 @@ export default function TopEarningAstrologers() {
         </div>
       ) : (
         <ul className="mt-4 space-y-[14px]">
-          {astrologers.map((a) => (
-            <li key={a.name || a.id} className="flex items-center gap-[10px]">
+          {astrologers.map((a, idx) => (
+            <li key={a.id ?? a.name ?? idx} className="flex items-center gap-[10px]">
               <Image
-                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
+                src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name || "A")}&background=7C3AED&color=fff&size=30`}
                 alt={a.name || "Astrologer"}
                 width={30}
                 height={30}

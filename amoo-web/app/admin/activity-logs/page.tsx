@@ -11,7 +11,7 @@ import {
   RefreshCw,
   X,
 } from "lucide-react";
-import api from "../../../lib/api";
+import { api } from "@/lib/api";
 
 type ActivityItem = {
   id: number;

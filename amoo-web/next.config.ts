@@ -4,7 +4,7 @@ import path from "path";
 
 // The API origin must be reachable from the browser, so it has to appear in
 // connect-src. Kept in sync with lib/api.ts, which reads the same variable.
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 // Razorpay Checkout is loaded from the gateway's CDN at payment time and opens
 // its own iframe, so its origins have to be allowed explicitly.

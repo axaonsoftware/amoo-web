@@ -54,7 +54,7 @@ const PROTECTED_PREFIXES = [
 
 /* ── CSP helpers ──────────────────────────────────────────────────────── */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const RAZORPAY = "https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com";
 function cspWithNonce(nonce: string) {
   return [

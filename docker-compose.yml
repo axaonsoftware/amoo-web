@@ -35,8 +35,9 @@ services:
       backend:
         condition: service_started
     volumes:
-      # Mount a real certificate for HTTPS in production
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Mount real certificates for HTTPS in production
+      - ./certs:/etc/nginx/certs:ro
     networks:
       - amoo_network
     healthcheck:

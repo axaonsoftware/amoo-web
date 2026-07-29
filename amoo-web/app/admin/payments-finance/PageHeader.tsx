@@ -1,9 +1,17 @@
+"use client";
+
 import { ChevronRight, Wallet, CalendarDays, Download } from "lucide-react";
 
+function fmt(d: Date): string {
+  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+}
+
 export default function PageHeader() {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
   return (
     <div>
-      {/* Breadcrumb */}
       <nav className="flex items-center gap-[6px] text-[11.5px] text-[#8B879C]">
         <span>Dashboard</span>
         <ChevronRight size={12} className="text-[#B9B6C6]" />
@@ -29,9 +37,9 @@ export default function PageHeader() {
             type="button"
             className="inline-flex h-[42px] items-center gap-[10px] rounded-[10px] border border-[#E3E0EC] bg-white px-4 text-[12.5px] font-medium text-[#2E2A3B] shadow-[0_1px_2px_rgba(16,12,40,0.04)] hover:bg-[#FAF9FC]"
           >
-            <span>01 May 2025</span>
+            <span>{fmt(startOfMonth)}</span>
             <span className="text-[#B9B6C6]">·</span>
-            <span>18 May 2025</span>
+            <span>{fmt(now)}</span>
             <CalendarDays size={15} className="text-[#7C3AED]" />
           </button>
 

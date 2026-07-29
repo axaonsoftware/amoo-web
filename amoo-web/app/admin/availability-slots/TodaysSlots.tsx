@@ -15,29 +15,7 @@ function to12h(t: string) {
   return `${String(hr).padStart(2, "0")}:${m || "00"} ${ap}`;
 }
 
-const slots: { time: string; state: State; label: string }[] = [
-  { time: "07:00 AM", state: "available", label: "Available" },
-  { time: "07:30 AM", state: "booked", label: "Booked" },
-  { time: "08:00 AM", state: "available", label: "Available" },
-  { time: "08:30 AM", state: "booked", label: "Booked" },
-  { time: "09:00 AM", state: "available", label: "Available" },
-  { time: "09:30 AM", state: "break", label: "Break" },
-  { time: "10:00 AM", state: "available", label: "Available" },
-  { time: "10:30 AM", state: "booked", label: "Booked" },
-  { time: "11:00 AM", state: "available", label: "Available" },
-  { time: "11:30 AM", state: "booked", label: "Booked" },
-  { time: "12:00 PM", state: "break", label: "Break" },
-  { time: "12:30 PM", state: "available", label: "Available" },
-  { time: "01:00 PM", state: "available", label: "Available" },
-  { time: "01:30 PM", state: "booked", label: "Booked" },
-  { time: "02:00 PM", state: "available", label: "Available" },
-  { time: "02:30 PM", state: "booked", label: "Booked" },
-  { time: "03:00 PM", state: "available", label: "Available" },
-  { time: "03:30 PM", state: "booked", label: "Booked" },
-  { time: "04:00 PM", state: "available", label: "Available" },
-  { time: "04:30 PM", state: "booked", label: "Booked" },
-  { time: "05:00 PM", state: "available", label: "Available" },
-];
+const fallbackSlots: { time: string; state: State; label: string }[] = [];
 
 const stateStyles: Record<State, string> = {
   available: "border-[#dcefdd] bg-[#f5fbf5]",
@@ -118,13 +96,13 @@ export default function TodaysSlots() {
     );
   }
 
-  const slotRows = list || slots;
+  const slotRows = list || fallbackSlots;
 
   return (
     <section className="mt-4 rounded-[14px] border border-[#ecebf1] bg-white px-5 pb-5 pt-4 shadow-[0_1px_2px_rgba(23,16,45,.03)]">
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <h2 className="text-[13.5px] font-semibold text-[#241f3d]">
-          Today&apos;s Slots - Ast. Neha Sharma
+          Today&apos;s Slots
         </h2>
 
         <div className="flex flex-wrap items-center gap-4">
@@ -145,6 +123,9 @@ export default function TodaysSlots() {
         </button>
       </div>
 
+      {slotRows.length === 0 ? (
+        <div className="mt-4 py-8 text-center text-[12px] text-[#8a86a0]">No slots available today</div>
+      ) : (
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
         {slotRows.map(({ time, state, label }, i) => (
           <div
@@ -172,6 +153,7 @@ export default function TodaysSlots() {
           </div>
         ))}
       </div>
+      )}
 
       <div className="mt-5 flex justify-center">
         <button
