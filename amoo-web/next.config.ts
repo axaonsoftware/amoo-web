@@ -3,7 +3,7 @@ import { withSentryConfig } from "@sentry/nextjs";
 import path from "path";
 
 // The Content-Security-Policy header is intentionally NOT set here. It is set
-// per-request in middleware.ts, which generates a fresh nonce and propagates it
+// per-request in proxy.ts, which generates a fresh nonce and propagates it
 // to every inline script Next.js renders. A static policy here would conflict
 // with the nonce-based one (browsers enforce both headers, so the nonce-less
 // policy would still block the nonced inline scripts).

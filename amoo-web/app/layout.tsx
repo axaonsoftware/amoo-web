@@ -92,7 +92,7 @@ export default async function RootLayout({
 }>) {
   // The per-request CSP nonce is only injected during server-side rendering,
   // so every page must render dynamically (wait for the request) instead of
-  // being prerendered at build time. See middleware.ts.
+  // being prerendered at build time. See proxy.ts.
   await connection();
   return (
     <html

@@ -127,11 +127,13 @@ jobs:
 
       # Bundle size guard — fails the build if the total JS payload
       # exceeds the threshold in bytes. Catches accidental import bloat
-      # before it ships to users.
+      # before it ships to users. The threshold is deliberately above the
+      # current ~2.5MB so normal churn never trips it, but a runaway
+      # dependency (adding multiple MB) will.
       - name: Check bundle size
         run: |
-          MAX_SIZE=500000
-          STATS=$(find .next/static -name '*.js' -not -name '*chunk*' 2>/dev/null | xargs -I{} wc -c {} 2>/dev/null | awk '{total += $1} END {print total}')
+          MAX_SIZE=5000000
+          STATS=$(find .next/static -name '*.js' 2>/dev/null | xargs -I{} wc -c {} 2>/dev/null | awk '{total += $1} END {print total}')
           echo "Total JS bundle size: $STATS bytes (limit: $MAX_SIZE)"
           if [ "$STATS" -gt "$MAX_SIZE" ]; then
             echo "❌ Bundle exceeds ${MAX_SIZE}B limit. Run a bundle analysis to find the culprits."

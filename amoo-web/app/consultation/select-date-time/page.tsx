@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AlertCircle } from "lucide-react";
@@ -153,5 +153,15 @@ function SelectDateTimeInner() {
 }
 
 export default function SelectDateTimePage() {
-  return <SelectDateTimeInner />;
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#5B2A9D] border-t-transparent" />
+        </div>
+      }
+    >
+      <SelectDateTimeInner />
+    </Suspense>
+  );
 }

@@ -13,35 +13,6 @@ const key = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
 
 /* ── Route classification ─────────────────────────────────────────────── */
 
-// Routes that do NOT require authentication (everyone can view).
-const PUBLIC_PREFIXES = [
-  "/",            // home
-  "/about",
-  "/services",
-  "/blog",
-  "/contact",
-  "/faq",
-  "/privacy",
-  "/refund",
-  "/cookie",
-  "/html-sitemap",
-  "/terms",
-  "/cancellation",
-  "/software-hub",
-  "/consultation",
-  "/consultation/select-service",
-  "/consultation/consultation-mode",
-  "/consultation/select-date-time",
-  "/consultation/consultation-pricing",
-  "/signup",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-email",
-  "/user-login",
-  "/admin-login",
-  "/astrologer-login",
-];
-
 // Routes that DO require authentication.
 const PROTECTED_PREFIXES = [
   "/admin",
@@ -79,10 +50,6 @@ function matchesAny(pathname: string, prefixes: string[]): boolean {
   return prefixes.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 
-function isPublicRoute(pathname: string): boolean {
-  return matchesAny(pathname, PUBLIC_PREFIXES);
-}
-
 function isProtectedRoute(pathname: string): boolean {
   return matchesAny(pathname, PROTECTED_PREFIXES);
 }
@@ -117,9 +84,9 @@ function htmlResponse(req: NextRequest, nonce: string): NextResponse {
   return res;
 }
 
-/* ── Middleware ────────────────────────────────────────────────────────── */
+/* ── Proxy ────────────────────────────────────────────────────────────── */
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const nonce = crypto.randomUUID().replace(/-/g, "");
   const { pathname } = req.nextUrl;
 
