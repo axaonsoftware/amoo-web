@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { Playfair_Display, Poppins } from "next/font/google";
 // NOTE: <ContentProtection /> was unmounted here. It is a no-op — its own
 // `ENABLE_INSPECT = true` constant makes the effect return before registering
@@ -84,11 +85,15 @@ export const viewport: Viewport = {
   themeColor: "#0a0410",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // The per-request CSP nonce is only injected during server-side rendering,
+  // so every page must render dynamically (wait for the request) instead of
+  // being prerendered at build time. See middleware.ts.
+  await connection();
   return (
     <html
       lang="en"

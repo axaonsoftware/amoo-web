@@ -64,7 +64,7 @@ function cspWithNonce(nonce: string) {
     "img-src 'self' data: blob: https://images.unsplash.com https://upload.wikimedia.org https://res.cloudinary.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src 'self' ${API_URL} ${RAZORPAY} https://sentry.io https://browser.sentry-cdn.com https://*.ingest.sentry.io`,
-    "frame-src https://api.razorpay.com https://checkout.razorpay.com",
+    "frame-src https://api.razorpay.com https://checkout.razorpay.com https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
@@ -89,7 +89,7 @@ function isProtectedRoute(pathname: string): boolean {
 
 /* ── Redirect helpers ─────────────────────────────────────────────────── */
 
-function redirectToLogin(pathname: string): NextResponse {
+function redirectToLogin(requestUrl: string, pathname: string): NextResponse {
   let loginPath: string;
   if (pathname.startsWith("/admin")) {
     loginPath = "/admin-login";
@@ -98,16 +98,22 @@ function redirectToLogin(pathname: string): NextResponse {
   } else {
     loginPath = "/user-login";
   }
-  const url = new URL(loginPath, pathname);
+  const url = new URL(loginPath, requestUrl);
   url.searchParams.set("callbackUrl", pathname);
   return NextResponse.redirect(url);
 }
 
 function htmlResponse(req: NextRequest, nonce: string): NextResponse {
+  const csp = cspWithNonce(nonce);
   const requestHeaders = new Headers(req.headers);
   requestHeaders.set("x-csp-nonce", nonce);
+  // Next.js parses the CSP header from the *request* during server-side
+  // rendering to extract the nonce and attach it to every inline script and
+  // style it emits. Without it, framework scripts render without a nonce
+  // attribute and are then blocked by the policy in the response header.
+  requestHeaders.set("Content-Security-Policy", csp);
   const res = NextResponse.next({ request: { headers: requestHeaders } });
-  res.headers.set("Content-Security-Policy", cspWithNonce(nonce));
+  res.headers.set("Content-Security-Policy", csp);
   return res;
 }
 
@@ -124,15 +130,15 @@ export async function middleware(req: NextRequest) {
     }
 
     const token = req.cookies.get("access_token")?.value;
-    if (!token) return redirectToLogin(pathname);
+    if (!token) return redirectToLogin(req.url, pathname);
 
     try {
       const { payload } = await jwtVerify(token, key);
-      if (pathname.startsWith("/admin") && payload.kind !== "admin") return redirectToLogin(pathname);
-      if (pathname.startsWith("/user-dashboard") && !payload.kind) return redirectToLogin(pathname);
-      if (pathname.startsWith("/consultation") && payload.kind !== "user") return redirectToLogin(pathname);
+      if (pathname.startsWith("/admin") && payload.kind !== "admin") return redirectToLogin(req.url, pathname);
+      if (pathname.startsWith("/user-dashboard") && !payload.kind) return redirectToLogin(req.url, pathname);
+      if (pathname.startsWith("/consultation") && payload.kind !== "user") return redirectToLogin(req.url, pathname);
     } catch {
-      return redirectToLogin(pathname);
+      return redirectToLogin(req.url, pathname);
     }
   }
 

@@ -5,7 +5,6 @@ const REQUIRED_PROD = [
   "NEXT_PUBLIC_API_URL",
   "NEXT_PUBLIC_SITE_NAME",
   "NEXT_PUBLIC_CONTACT_EMAIL",
-  "NEXT_PUBLIC_WHATSAPP_NUMBER",
 ];
 
 const missing = REQUIRED_PROD.filter((name) => !process.env[name]);
