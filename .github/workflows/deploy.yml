@@ -45,10 +45,10 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository }}/frontend:${{ env.IMAGE_TAG }},${{ env.REGISTRY }}/${{ github.repository }}/frontend:latest
           build-args: |
-            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || secrets.NEXT_PUBLIC_API_URL }}
-            NEXT_PUBLIC_WHATSAPP_NUMBER=${{ vars.NEXT_PUBLIC_WHATSAPP_NUMBER || secrets.NEXT_PUBLIC_WHATSAPP_NUMBER }}
+            NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || secrets.NEXT_PUBLIC_API_URL || 'http://localhost:4000' }}
+            NEXT_PUBLIC_WHATSAPP_NUMBER=${{ vars.NEXT_PUBLIC_WHATSAPP_NUMBER || secrets.NEXT_PUBLIC_WHATSAPP_NUMBER || '' }}
             NEXT_PUBLIC_SITE_NAME=${{ vars.NEXT_PUBLIC_SITE_NAME || 'Amoo Guru' }}
-            NEXT_PUBLIC_CONTACT_EMAIL=${{ vars.NEXT_PUBLIC_CONTACT_EMAIL || secrets.NEXT_PUBLIC_CONTACT_EMAIL }}
+            NEXT_PUBLIC_CONTACT_EMAIL=${{ vars.NEXT_PUBLIC_CONTACT_EMAIL || secrets.NEXT_PUBLIC_CONTACT_EMAIL || 'contact@amooguru.com' }}
 
       - name: Build & push nginx
         uses: docker/build-push-action@v5
@@ -70,8 +70,12 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: ${{ secrets.DEPLOY_USER }}
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: REGISTRY,IMAGE_TAG,GITHUB_REPOSITORY
           script: |
             cd /opt/amoo-web
+            export REGISTRY=${{ env.REGISTRY }}
+            export IMAGE_TAG=${{ env.IMAGE_TAG }}
+            export GITHUB_REPOSITORY=${{ github.repository }}
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
