@@ -54,20 +54,22 @@ setInterval(() => {
   for (const [k, v] of tvCache) { if (now >= v.expires) tvCache.delete(k); }
 }, TV_TTL_MS).unref();
 
+function clearTokenVersionCache() { tvCache.clear(); }
+
 // Verify the token's embedded tokenVersion still matches the DB (revocation).
 async function checkTokenVersion(user) {
   if (user.tokenVersion === undefined) return true; // legacy tokens: trust
   const cacheKey = `${user.kind}:${user.id}`;
   const cached = tvCache.get(cacheKey);
   if (cached !== undefined) {
-    if (cached !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
+    if (cached.value !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
     return true;
   }
   const table = resolveTable(user.kind);
   const result = await pool.query(`SELECT token_version FROM ${table} WHERE id = $1`, [user.id]);
   if (!result.rows.length) throw new HttpError(401, "Account no longer exists");
   const dbVersion = result.rows[0].token_version;
-  tvCache.set(cacheKey, dbVersion);
+  tvCache.set(cacheKey, { value: dbVersion, expires: Date.now() + TV_TTL_MS });
   setTimeout(() => tvCache.delete(cacheKey), TV_TTL_MS).unref();
   if (dbVersion !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
   return true;
@@ -189,4 +191,5 @@ module.exports = {
   adminRequired,
   expertRequired,
   withAudit,
+  clearTokenVersionCache,
 };

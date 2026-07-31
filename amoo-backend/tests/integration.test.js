@@ -48,7 +48,7 @@ db.testConnection = () => Promise.resolve(true);
 // Load the app
 // ---------------------------------------------------------------------------
 const app = require("../src/server");
-const { signAccessToken } = require("../src/middleware/auth");
+const { signAccessToken, clearTokenVersionCache } = require("../src/middleware/auth");
 
 const userToken = signAccessToken({ id: 1, kind: "user", tokenVersion: 0 });
 const user2Token = signAccessToken({ id: 2, kind: "user", tokenVersion: 0 });
@@ -57,6 +57,7 @@ const adminToken = signAccessToken({ id: 1, kind: "admin", tokenVersion: 0 });
 function resetMocks() {
   mockHandlers.length = 0;
   queryLog.length = 0;
+  clearTokenVersionCache();
 }
 
 // ---------------------------------------------------------------------------
@@ -225,13 +226,15 @@ describe("POST /api/bookings", () => {
 
   /** The exact query sequence a successful create now makes. */
   function mockCreateBooking() {
-    mockResolvedValue([{ token_version: 0 }]);                      // 0: checkTokenVersion
-    mockResolvedValue([{ verified: 1 }]);                           // 1: verifiedRequired
-    mockResolvedValue([{ id: 1, price: 100 }]);                     // 2: SELECT service price
-    mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// 3: SELECT slot FOR UPDATE
-    mockResolvedValue([]);                                          // 4: UPDATE slot → booked
-    mockResolvedValue([{ id: 1 }]);                                 // 5: INSERT booking RETURNING id
-    mockResolvedValue([{                                            // 6: SELECT created booking
+    mockResolvedValue([{ token_version: 0 }]);                      // 0: checkTokenVersion (pool.query)
+    mockResolvedValue([{ verified: 1 }]);                           // 1: verifiedRequired (pool.query)
+    mockResolvedValue([{ }]);                                        // 2: BEGIN (client.query)
+    mockResolvedValue([{ id: 1, price: 100 }]);                     // 3: SELECT service price
+    mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// 4: SELECT slot FOR UPDATE
+    mockResolvedValue([]);                                          // 5: UPDATE slot → booked
+    mockResolvedValue([{ id: 1 }]);                                 // 6: INSERT booking RETURNING id
+    mockResolvedValue([{ }]);                                        // 7: COMMIT (client.query)
+    mockResolvedValue([{                                          // 8: SELECT created booking
       id: 1, booking_ref: "BOOK-T", user_id: 1, service_id: 1,
       date: "2025-06-15", time: "10:00", amount: 100,
       payment: "Pending", status: "pending-payment",
@@ -276,8 +279,9 @@ describe("POST /api/bookings", () => {
   it("rejects amount mismatch with service price", async () => {
     mockResolvedValue([{ token_version: 0 }]);                     // 0: checkTokenVersion
     mockResolvedValue([{ verified: 1 }]);                          // 1: verifiedRequired
-    mockResolvedValue([{ id: 1, price: 100 }]);                    // 2: SELECT service (price=100)
-    mockResolvedValue([]);                                          // 3: ROLLBACK
+    mockResolvedValue([{ }]);                                       // 2: BEGIN
+    mockResolvedValue([{ id: 1, price: 100 }]);                    // 3: SELECT service (price=100)
+    mockResolvedValue([{ }]);                                       // 4: ROLLBACK
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
