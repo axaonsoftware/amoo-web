@@ -18,12 +18,19 @@
 #   NEXT_PUBLIC_API_URL=https://your-domain/api
 #   NEXT_PUBLIC_WHATSAPP_NUMBER=...
 #
+# For production deploys via GitHub Actions, set these in the shell or .env
+# on the server before running `docker compose pull`:
+#   REGISTRY=ghcr.io
+#   IMAGE_TAG=latest   (or the git SHA)
+#   GITHUB_REPOSITORY=axaonsoftware/amoo-web
+#
 # See amoo-backend/.env.example for the full list.
 
 services:
   # ── Reverse proxy ──────────────────────────────────────────────────────
   nginx:
     build: ./nginx
+    image: ${REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-axaonsoftware/amoo-web}/nginx:${IMAGE_TAG:-latest}
     container_name: amoo_nginx
     restart: unless-stopped
     ports:
@@ -56,6 +63,7 @@ services:
         NEXT_PUBLIC_WHATSAPP_NUMBER: ${NEXT_PUBLIC_WHATSAPP_NUMBER:-}
         NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME:-Amoo Guru}
         NEXT_PUBLIC_CONTACT_EMAIL: ${NEXT_PUBLIC_CONTACT_EMAIL:-contact@amooguru.com}
+    image: ${REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-axaonsoftware/amoo-web}/frontend:${IMAGE_TAG:-latest}
     container_name: amoo_frontend
     restart: unless-stopped
     depends_on:
@@ -76,6 +84,7 @@ services:
   # ── Backend (Express API) ──────────────────────────────────────────────
   backend:
     build: ./amoo-backend
+    image: ${REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-axaonsoftware/amoo-web}/backend:${IMAGE_TAG:-latest}
     container_name: amoo_backend
     restart: unless-stopped
     depends_on:
