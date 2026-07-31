@@ -29,8 +29,19 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This app ships as a Docker image (standalone Next.js build — see `Dockerfile`
+and `next.config.ts`'s `output: "standalone"`). The full-stack deployment
+(nginx reverse proxy + this frontend + the Express backend + PostgreSQL) lives
+in the repository-root `docker-compose.yml` — that is the single supported
+deployment environment, driven by the GitHub Actions `deploy.yml` workflow.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+At build time the Docker image requires these build args (`NEXT_PUBLIC_*`
+values are inlined into the client bundle and also feed the CSP
+`connect-src` directive):
+
+- `NEXT_PUBLIC_API_URL` — real production API origin (e.g. `https://your-domain/api`)
+- `NEXT_PUBLIC_SITE_NAME`
+- `NEXT_PUBLIC_CONTACT_EMAIL`
+- `NEXT_PUBLIC_WHATSAPP_NUMBER`

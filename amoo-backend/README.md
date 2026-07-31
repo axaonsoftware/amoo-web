@@ -87,8 +87,8 @@ New tables vs. earlier versions: `refunds`, `conversations`/`messages`,
 `coupons`, `audit_log`, and `reset_otp` columns on `users`.
 
 ## Deployment
-The API is container-ready and platform-ready. Migrations run automatically
-on container start (`node src/migrate.js && node src/server.js`).
+The API is container-ready. Migrations run automatically on container start
+(`node src/migrate.js && node src/server.js`).
 
 ### Environment
 Copy `.env.example` → `.env` and set real values. In production you MUST set:
@@ -98,23 +98,15 @@ Copy `.env.example` → `.env` and set real values. In production you MUST set:
 - Email: `EMAIL_ENABLED=true` + `EMAIL_*` (sends OTP + verification emails)
 - Payments: `PAYMENT_GATEWAY=razorpay|stripe` + `PAYMENT_*` (webhook signature verified in prod)
 
-### Docker (local full stack)
-```bash
-cp .env.example .env        # set DB_PASSWORD etc.
-docker compose up --build
-# API on :4000, PostgreSQL on :5432
-```
-
 ### Docker (image only)
 ```bash
 docker build -t amoo-backend .
 docker run -p 4000:4000 --env-file .env amoo-backend
 ```
 
-### Platforms
-- **Render**: `render.yaml` blueprint provisions the web service + PostgreSQL.
-- **Railway**: `railway.toml` builds from `./amoo-backend` and runs migrate+start.
-- **VPS / PM2**: `npm run pm2` (uses `ecosystem.config.js`, cluster mode).
+The full-stack deployment (nginx reverse proxy + Next.js frontend + this
+backend + PostgreSQL) lives in the repository-root `docker-compose.yml` — that
+is the single supported deployment environment.
 
 ### Frontend
 The Next.js app reads `NEXT_PUBLIC_API_URL`. In production set it to the

@@ -47,7 +47,7 @@ const { setupSwagger } = require("./config/swagger");
 const app = express();
 const PORT = env.port;
 
-// Trust the first upstream proxy when behind a reverse proxy (Railway, Nginx, Cloudflare).
+// Trust the first upstream proxy when behind a reverse proxy (Nginx, Cloudflare).
 // Required for rate-limiting + IP logging to use the real client IP.
 app.set("trust proxy", env.isProd ? 1 : 0);
 

@@ -15,8 +15,7 @@
     "test:unit": "node --test tests/helpers.test.js tests/validate.test.js tests/paths.test.js tests/security_audits.test.js",
     "test:int": "node --experimental-test-module-mocks --test tests/integration.test.js",
     "seed": "node src/seed.js",
-    "migrate": "node src/migrate.js",
-    "pm2": "pm2 start ecosystem.config.js --env production"
+    "migrate": "node src/migrate.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",

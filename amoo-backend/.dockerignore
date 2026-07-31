@@ -6,6 +6,5 @@ npm-debug.log
 uploads
 *.log
 Dockerfile
-docker-compose.yml
 README.md
 .DS_Store
