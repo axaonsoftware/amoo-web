@@ -2579,20 +2579,33 @@ const options = {
 
 const spec = swaggerJsdoc(options);
 
+// Resolve the public API origin from the incoming request so the docs work on
+// localhost (http://localhost:4000) and on the deployed domain
+// (https://amooguru.com) without any config. nginx forwards Host and
+// X-Forwarded-Proto, and `trust proxy` is enabled in production.
+function specForRequest(req) {
+  const host = req.get("host") || new URL(env.appUrl).host;
+  const proto = env.isProd ? "https" : req.protocol || "http";
+  return { ...spec, servers: [{ url: `${proto}://${host}`, description: "API Server" }] };
+}
+
 function setupSwagger(app) {
   const CSS_URL = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css";
   const swaggerPath = "/api/docs";
   const swaggerJsonPath = "/api/docs.json";
-  app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(spec, {
+  app.use(swaggerPath, swaggerUi.serve, swaggerUi.setup(undefined, {
     customCssUrl: CSS_URL,
     customSiteTitle: "Amoo Guru API Docs",
     swaggerOptions: {
+      // Relative URL — Swagger UI fetches the spec from the origin it is
+      // opened on, so it always matches the host the docs are served from.
+      url: swaggerJsonPath,
       persistAuthorization: true,
       displayRequestDuration: true,
       filter: true,
     },
   }));
-  app.get(swaggerJsonPath, (req, res) => res.json(spec));
+  app.get(swaggerJsonPath, (req, res) => res.json(specForRequest(req)));
 }
 
 module.exports = { setupSwagger, spec };
