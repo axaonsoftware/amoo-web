@@ -91,9 +91,25 @@ router.post(
   validate("booking"),
   asyncHandler(async (req, res) => {
     const { service_id, expert_id, slot_id, date, time, mode, amount, notes } = req.body;
+    // Idempotency: the client sends the same Idempotency-Key on retries (e.g.
+    // after a token-refresh race or a timeout). A replay returns the original
+    // booking instead of double-reserving a slot / double-inserting a booking.
+    const idemKey = (req.headers["idempotency-key"] || "").slice(0, 64) || null;
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
+
+      // Short-circuit the common replay case before any side effects.
+      if (idemKey) {
+        const existing = await client.query(
+          "SELECT * FROM bookings WHERE user_id = $1 AND idempotency_key = $2",
+          [req.user.id, idemKey]
+        );
+        if (existing.rows.length) {
+          await client.query("COMMIT");
+          return ok(res, existing.rows[0]);
+        }
+      }
 
       // Server-side price enforcement: never trust the client-supplied amount.
       // The booking always stores the real service price; the client `amount` is
@@ -119,12 +135,28 @@ router.post(
       // payments row — only /api/payments/verify (signature-checked) and the
       // gateway webhook may mark a booking Paid. Anything else lets a client
       // conjure a confirmed booking without money moving.
+      //
+      // ON CONFLICT guards the concurrent-double-submit race: two requests with
+      // the same key both pass the pre-check above, then one wins the insert and
+      // the other conflicts, falls through to the existing-row lookup, and
+      // returns the original booking.
       const result = await client.query(
-        `INSERT INTO bookings (booking_ref, user_id, expert_id, service_id, slot_id, date, time, mode, amount, payment, status, notes)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pending', 'pending-payment', $10) RETURNING id`,
-        [ref, req.user.id, expert_id || null, service_id, slot_id || null, date, time, mode || null, expected, notes || null]
+        `INSERT INTO bookings (booking_ref, user_id, expert_id, service_id, slot_id, date, time, mode, amount, payment, status, notes, idempotency_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pending', 'pending-payment', $10, $11)
+         ON CONFLICT ON CONSTRAINT uq_bookings_idempotency DO NOTHING RETURNING id`,
+        [ref, req.user.id, expert_id || null, service_id, slot_id || null, date, time, mode || null, expected, notes || null, idemKey]
       );
-      const bookingId = result.rows[0].id;
+      let bookingId = result.rows[0]?.id;
+
+      if (!bookingId && idemKey) {
+        const { rows } = await client.query(
+          "SELECT * FROM bookings WHERE user_id = $1 AND idempotency_key = $2",
+          [req.user.id, idemKey]
+        );
+        if (!rows.length) throw new HttpError(409, "Booking already created");
+        await client.query("COMMIT");
+        return ok(res, rows[0]);
+      }
 
       await client.query("COMMIT");
       const { rows } = await client.query("SELECT * FROM bookings WHERE id = $1", [bookingId]);
