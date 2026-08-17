@@ -10,7 +10,8 @@ const {
   verifyRefreshToken,
   authRequired,
 } = require("../middleware/auth");
-const { asyncHandler, HttpError, genOtp, timingSafeEqualStr } = require("../utils/helpers");
+const { asyncHandler, HttpError, genOtp } = require("../utils/helpers");
+const { hashSecret, verifySecret } = require("../utils/secrets");
 const { validate, schemas } = require("../middleware/validate");
 const { ok, created, raw, fail } = require("../utils/response");
 const env = require("../config/env");
@@ -350,7 +351,10 @@ router.post(
     const user = rows[0];
     if (!user) throw new HttpError(404, "Account not found");
     if (user.verified) return ok(res, { verified: true, message: "Already verified" });
-    if (!user.verify_token || !timingSafeEqualStr(user.verify_token, token)) {
+    // The stored token is a SHA-256 hash — a DB read never yields a usable
+    // token. verifySecret() also accepts legacy plaintext values written before
+    // hashing shipped, compared in constant time.
+    if (!user.verify_token || !verifySecret(user.verify_token, token)) {
       throw new HttpError(400, "Invalid verification token");
     }
     if (user.verify_token_expires && new Date(user.verify_token_expires) < new Date()) {
@@ -379,12 +383,12 @@ router.post(
 
     // A link token, not an OTP: genOtp(32) would compute 10^32 and blow past
     // MAX_SAFE_INTEGER, which makes crypto.randomInt throw. 48 hex chars fits
-    // users.verify_token VARCHAR(64).
+    // users.verify_token VARCHAR(64) even when stored as a 64-char hash.
     const token = crypto.randomBytes(24).toString("hex");
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await pool.query(
       "UPDATE users SET verify_token = $1, verify_token_expires = $2 WHERE id = $3",
-      [token, expires, user.id]
+      [hashSecret(token), expires, user.id]
     );
     // The /verify-email page is served by the Next.js frontend, not this API.
     // Building it on env.appUrl produced a link to the API origin, where the
@@ -418,9 +422,10 @@ router.post(
     if (rows.length) {
       const otp = genOtp(env.otp.length || 6);
       const expires = new Date(Date.now() + env.jwt.resetExpiresMin * 60000);
+      // Store the OTP hashed so a database read cannot leak a usable reset code.
       await pool.query(
         "UPDATE users SET reset_otp = $1, reset_otp_expires = $2 WHERE id = $3",
-        [otp, expires, rows[0].id]
+        [hashSecret(otp), expires, rows[0].id]
       );
       const mailResult = await sendMail({
         to: rows[0].email,
@@ -454,8 +459,10 @@ router.post(
       throw new HttpError(400, "Invalid OTP");
     }
 
-    // Constant-time comparison so response duration can't leak the OTP digit by digit.
-    if (!timingSafeEqualStr(user.reset_otp, otp)) {
+    // Constant-time comparison so response duration can't leak the OTP digit by
+    // digit. The stored value is a SHA-256 hash; verifySecret() also accepts
+    // legacy plaintext rows written before hashing shipped.
+    if (!verifySecret(user.reset_otp, otp)) {
       const attempts = (user.reset_otp_attempts || 0) + 1;
       if (attempts >= env.otp.maxAttempts) {
         await pool.query(
