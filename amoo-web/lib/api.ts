@@ -133,9 +133,15 @@ function fetchWithTimeout(
 }
 
 async function request(method: string, path: string, body?: unknown) {
-  const headers = await buildHeaders(method, {
-    "Content-Type": "application/json",
-  });
+  // Idempotency: generated once per logical request so the 401-refresh retry
+  // below re-sends the SAME key. The backend dedupes on it (POST /api/bookings),
+  // so a flaky refresh can never double-reserve a slot or double-insert.
+  const isMutating = MUTATING_METHODS.has(method.toUpperCase());
+  const idempotencyKey = isMutating ? crypto.randomUUID() : undefined;
+  const headers = await buildHeaders(
+    method,
+    idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
+  );
 
   // Same-origin path; nginx (production) or the Next.js rewrite (local dev)
   // forwards it to the backend.
@@ -161,9 +167,10 @@ async function request(method: string, path: string, body?: unknown) {
       for (let attempt = 0; attempt < 2; attempt++) {
         const retryRes = await fetchWithTimeout(`${API_URL}${path}`, {
           method,
-          headers: await buildHeaders(method, {
-            "Content-Type": "application/json",
-          }),
+          headers: await buildHeaders(
+            method,
+            idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
+          ),
           credentials: "include",
           body: body ? JSON.stringify(body) : undefined,
         });
