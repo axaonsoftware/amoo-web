@@ -12,6 +12,10 @@ upload-part2.js
 .env.local
 **/.env.local
 
+# TLS certificates for nginx — private keys must never be committed
+certs/
+**/certs/
+
 # Uploads / runtime artifacts
 uploads/
 **/uploads/
