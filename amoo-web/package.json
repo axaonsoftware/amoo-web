@@ -9,6 +9,7 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "test": "tsx --test \"lib/__tests__/*.test.ts\"",
+    "test:e2e": "playwright test",
     "validate-env": "node scripts/validate-env.mjs"
   },
   "dependencies": {
