@@ -18,6 +18,14 @@ const fallbackCompleted = [
   72, 60, 84, 66, 92, 74, 96, 68, 84, 74, 90, 76, 106, 80,
 ];
 
+type TrendPoint = {
+  total?: number;
+  count?: number;
+  bookings?: number;
+  completed?: number;
+  completed_bookings?: number;
+};
+
 export default function BookingsOverview() {
   const [bookings, setBookings] = useState(fallbackBookings);
   const [completed, setCompleted] = useState(fallbackCompleted);
@@ -30,12 +38,13 @@ export default function BookingsOverview() {
       .getBookingsTrends("month")
       .then((res) => {
         if (cancelled) return;
-        const data = res?.data || res;
+        const data = (res as { data?: unknown } | null)?.data ?? res;
         if (Array.isArray(data)) {
-          const b = data.map((d: any) =>
+          const typed = data as TrendPoint[];
+          const b = typed.map((d) =>
             Number(d.total || d.count || d.bookings || 0),
           );
-          const c = data.map((d: any) =>
+          const c = typed.map((d) =>
             Number(d.completed || d.completed_bookings || 0),
           );
           if (b.length >= 7) {

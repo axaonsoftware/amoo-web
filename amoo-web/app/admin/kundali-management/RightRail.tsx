@@ -14,6 +14,17 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import type { TopExpert } from "../../../lib/types";
+
+interface AstrologerRow {
+  name: string;
+  count: string;
+  rating: number | string;
+}
+
+interface TopExpertRow extends TopExpert {
+  sessions?: number;
+}
 
 const DONUT =
   "conic-gradient(#1173BB 0deg 127deg, #FFFFFF 127deg 129deg," +
@@ -98,7 +109,7 @@ function ViewAll() {
 
 export default function RightRail() {
   const [totalKundali, setTotalKundali] = useState("—");
-  const [astrologers, setAstrologers] = useState<any[]>([]);
+  const [astrologers, setAstrologers] = useState<AstrologerRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,16 +117,18 @@ export default function RightRail() {
     setLoading(true);
     setError(null);
     Promise.all([
-      api.admin.getOverview().then((data: any) => {
-        const s = data?.stats ?? data;
+      api.admin.getOverview().then((data: unknown) => {
+        const s =
+          (data as { stats?: { kundalis?: number } } | undefined)?.stats ??
+          (data as { kundalis?: number } | null);
         if (s?.kundalis != null)
           setTotalKundali(Number(s.kundalis).toLocaleString("en-IN"));
       }),
-      api.admin.getTopExperts().then((data: any) => {
-        const items = data?.data ?? data;
+      api.admin.getTopExperts().then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items)) {
           setAstrologers(
-            items.slice(0, 5).map((a: any) => ({
+            (items as TopExpertRow[]).slice(0, 5).map((a) => ({
               name: a.name || "Unknown",
               count: `${a.sessions || a.bookings || 0} kundalis`,
               rating: a.rating || "—",

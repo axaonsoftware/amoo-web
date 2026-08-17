@@ -23,7 +23,7 @@ import {
   type SessionStatus,
   type PaymentStatus,
 } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
@@ -84,13 +84,30 @@ type RawReport = {
 
 type Toast = { id: number; message: string; kind: "success" | "error" };
 
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
+
+type SessionView = {
+  id: string;
+  rawId: number;
+  client: { name: string; email: string; phone: string };
+  master: { name: string; role: string };
+  type: string;
+  date: string;
+  time: string;
+  duration: string;
+  status: string;
+  amount: string;
+  payment: string;
+  raw: RawReport;
+};
+
 const SessionRow = memo(function SessionRow({
   s,
   onEdit,
   onDelete,
 }: {
-  s: any;
-  onEdit: (raw: any) => void;
+  s: SessionView;
+  onEdit: (raw: RawReport) => void;
   onDelete: (rawId: number) => void;
 }) {
   const type = sessionTypeStyles[s.type as SessionType] ?? {
@@ -218,7 +235,7 @@ export default function SessionsPanel({
   onReady?: (fns: { openCreate: () => void; exportData: () => void }) => void;
 } = {}) {
   const [rawList, setRawList] = useState<RawReport[]>([]);
-  const [list, setList] = useState<any[] | null>(null);
+  const [list, setList] = useState<SessionView[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [total, setTotal] = useState(0);
@@ -253,17 +270,20 @@ export default function SessionsPanel({
     setError("");
     api.admin
       .getReports()
-      .then((data: any) => {
-        const items = data?.data ?? data ?? [];
-        if (data?.meta?.total) setTotal(data.meta.total);
-        const rows: RawReport[] = items.filter((r: any) =>
+      .then((data: ListResponse<RawReport> | RawReport[]) => {
+        const items: RawReport[] = Array.isArray(data)
+          ? data
+          : (data?.data ?? []);
+        const meta = Array.isArray(data) ? undefined : data?.meta;
+        if (meta?.total) setTotal(meta.total);
+        const rows = items.filter((r) =>
           (r.type || "").toLowerCase().includes("reiki"),
         );
         const src = rows.length ? rows : items;
         setRawList(src);
         if (src.length) {
           setList(
-            src.map((r: RawReport) => {
+            src.map((r) => {
               const { date, time } = fmtRK(r.created_at);
               return {
                 id: `REIKI-${r.id}`,

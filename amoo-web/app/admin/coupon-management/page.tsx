@@ -227,12 +227,31 @@ export default function CouponManagementPage() {
       return;
     }
 
+    const minAmount = Number(form.min_amount);
+    if (!Number.isFinite(minAmount) || minAmount < 0) {
+      setFormError("Minimum order value must be a non-negative number.");
+      return;
+    }
+
+    if (
+      form.max_uses &&
+      (!Number.isInteger(Number(form.max_uses)) || Number(form.max_uses) < 1)
+    ) {
+      setFormError("Max uses must be a positive whole number.");
+      return;
+    }
+
+    if (form.expires_at && new Date(form.expires_at) <= new Date()) {
+      setFormError("Expiry date must be in the future.");
+      return;
+    }
+
     const payload = {
       code: form.code.trim().toUpperCase(),
       description: form.description.trim(),
       discount_type: form.discount_type,
       discount_value: value,
-      min_amount: Number(form.min_amount) || 0,
+      min_amount: minAmount || 0,
       // Joi rejects "" for these; send null so the column is cleared instead.
       max_uses: form.max_uses ? Number(form.max_uses) : null,
       expires_at: form.expires_at || null,

@@ -16,7 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { kundaliTypeStyles, statusStyles, doshaStyles } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
@@ -125,6 +125,8 @@ interface DisplayRow {
   payment: string;
 }
 
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
+
 function toRow(r: RawReport): DisplayRow {
   const { date, time } = fmtKD(r.created_at ?? "");
   const rawType = (r.type || "").toLowerCase();
@@ -178,9 +180,12 @@ export default function KundaliPanel() {
     setLoading(true);
     api.admin
       .getReports()
-      .then((data: any) => {
-        const items = (data?.data ?? data ?? []) as RawReport[];
-        if (data?.meta?.total) setTotal(data.meta.total);
+      .then((data: ListResponse<RawReport> | RawReport[]) => {
+        const items: RawReport[] = Array.isArray(data)
+          ? data
+          : (data?.data ?? []);
+        const meta = Array.isArray(data) ? undefined : data?.meta;
+        if (meta?.total) setTotal(meta.total);
         const filtered = items.filter(
           (r) =>
             (r.type || "").toLowerCase().includes("kundli") ||
@@ -190,7 +195,7 @@ export default function KundaliPanel() {
         setRawReports(src);
         setList(src.map(toRow));
       })
-      .catch((e: any) => setError(errorMessage(e)))
+      .catch((e: unknown) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
 

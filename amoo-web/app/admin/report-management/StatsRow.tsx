@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { FileText, Clock, CircleCheck, Ban, Loader2 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { errorMessage } from "../../../lib/errors";
+import type { Report } from "../../../lib/types";
 
 const statDefs: {
   label: string;
@@ -50,17 +52,20 @@ export default function StatsRow() {
     setError(null);
     api.admin
       .getReports()
-      .then((res: any) => {
-        const data = Array.isArray(res?.data) ? res.data : [];
-        const total = res?.meta?.total ?? data.length;
-        const pending = data.filter((r: any) => r?.status === "pending").length;
-        const ready = data.filter((r: any) => r?.status === "ready").length;
-        const rejected = data.filter(
-          (r: any) => r?.status === "rejected",
-        ).length;
+      .then((res: unknown) => {
+        const envelope = res as {
+          data?: Report[];
+          meta?: { total?: number };
+        } | null;
+        const rows = envelope?.data;
+        const data = Array.isArray(rows) ? rows : [];
+        const total = envelope?.meta?.total ?? data.length;
+        const pending = data.filter((r) => r?.status === "pending").length;
+        const ready = data.filter((r) => r?.status === "ready").length;
+        const rejected = data.filter((r) => r?.status === "rejected").length;
         setStats({ total, pending, ready, rejected });
       })
-      .catch((e: any) => setError(e?.message || "Failed to load stats"))
+      .catch((e: unknown) => setError(errorMessage(e, "Failed to load stats")))
       .finally(() => setLoading(false));
   }, []);
 

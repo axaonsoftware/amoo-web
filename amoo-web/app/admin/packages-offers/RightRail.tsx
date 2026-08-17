@@ -14,6 +14,19 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import type { Package } from "../../../lib/types";
+
+interface PackageRow {
+  name: string;
+  img: string;
+  bookings: string;
+  revenue: string;
+}
+
+interface PackageListItem extends Package {
+  bookings?: number;
+  revenue?: number;
+}
 
 const donut = [
   {
@@ -46,7 +59,7 @@ const segments = donut.map((d, i) => ({
 }));
 
 export default function RightRail() {
-  const [topPackages, setTopPackages] = useState<any[]>([]);
+  const [topPackages, setTopPackages] = useState<PackageRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,11 +68,11 @@ export default function RightRail() {
     setError(null);
     api.admin
       .getPackages()
-      .then((data: any) => {
-        const items = data?.data ?? data;
+      .then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items)) {
           setTopPackages(
-            items.slice(0, 5).map((p: any) => ({
+            (items as PackageListItem[]).slice(0, 5).map((p) => ({
               name: p.name || "Unknown",
               img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aura_scanner.png",
               bookings: `${p.bookings || 0} bookings`,

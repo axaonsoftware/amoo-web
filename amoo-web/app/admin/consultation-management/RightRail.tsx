@@ -13,6 +13,17 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import type { Booking } from "../../../lib/types";
+
+interface ScheduleBooking extends Booking {
+  date_time?: string;
+}
+
+interface ScheduleItem {
+  time: string;
+  name: string;
+  service: string;
+}
 
 const legend = [
   { label: "Upcoming", value: "248 (19.3%)", color: "#F59E0B", pct: 19.3 },
@@ -69,7 +80,7 @@ function isToday(iso: string) {
 }
 
 export default function RightRail() {
-  const [schedule, setSchedule] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,16 +89,14 @@ export default function RightRail() {
     setError(null);
     api.admin
       .getBookings()
-      .then((data: any) => {
-        const items = data?.data ?? data;
+      .then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items)) {
           setSchedule(
-            items
-              .filter((b: any) =>
-                isToday(b.date || b.date_time || b.created_at),
-              )
+            (items as ScheduleBooking[])
+              .filter((b) => isToday(b.date || b.date_time || b.created_at))
               .slice(0, 5)
-              .map((b: any) => ({
+              .map((b) => ({
                 time: b.time || "",
                 name: b.user_name || "Guest",
                 service: b.service_name || "",

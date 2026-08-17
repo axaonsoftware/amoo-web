@@ -17,6 +17,7 @@ import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import { errorMessage } from "../../../lib/errors";
+import type { Decimal, Service } from "../../../lib/types";
 
 const tabs = [
   { label: "All Services", active: true },
@@ -32,20 +33,38 @@ const selects = [
   { label: "All Service Types", w: "w-[162px]" },
 ];
 
+interface ServiceRowData {
+  id: number;
+  name: string;
+  sub: string | null;
+  img: string | null;
+  category: Service["category"];
+  type: Service["type"];
+  price: string;
+  priceRaw: Decimal;
+  duration: string | null;
+  status: Service["status"];
+  bookings: number;
+}
+
+type ServicesResponse = { data?: Service[]; meta?: { total?: number } };
+
 export default function ServicesPanel() {
-  const [rows, setRows] = useState<any[] | null>(null);
+  const [rows, setRows] = useState<ServiceRowData[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [total, setTotal] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingService, setEditingService] = useState<any>(null);
+  const [editingService, setEditingService] = useState<ServiceRowData | null>(
+    null,
+  );
   const [editValues, setEditValues] = useState<Record<string, string | number>>(
     {},
   );
   const [editSaving, setEditSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<{
     open: boolean;
-    service: any;
+    service: ServiceRowData | null;
   }>({ open: false, service: null });
   const [deleteSaving, setDeleteSaving] = useState(false);
   const [toast, setToast] = useState<{
@@ -56,12 +75,12 @@ export default function ServicesPanel() {
   useEffect(() => {
     api.admin
       .getServices()
-      .then((data: any) => {
+      .then((data: ServicesResponse) => {
         const items = data?.data ?? data;
         if (data?.meta?.total) setTotal(data.meta.total);
         if (Array.isArray(items) && items.length) {
           setRows(
-            items.map((s: any) => ({
+            items.map((s: Service) => ({
               id: s.id,
               name: s.name,
               sub: s.sub,
@@ -90,12 +109,12 @@ export default function ServicesPanel() {
     setLoading(true);
     api.admin
       .getServices()
-      .then((data: any) => {
+      .then((data: ServicesResponse) => {
         const items = data?.data ?? data;
         if (data?.meta?.total) setTotal(data.meta.total);
         if (Array.isArray(items) && items.length) {
           setRows(
-            items.map((s: any) => ({
+            items.map((s: Service) => ({
               id: s.id,
               name: s.name,
               sub: s.sub,
@@ -207,14 +226,11 @@ export default function ServicesPanel() {
 
           <tbody>
             {list.map((r) => (
-              <tr
-                key={(r as any).id ?? r.name}
-                className="border-b border-[#F2F1F7]"
-              >
+              <tr key={r.id ?? r.name} className="border-b border-[#F2F1F7]">
                 <td className="py-[13px] pl-6 pr-2">
                   <div className="flex items-center gap-[10px]">
                     <Image
-                      src={r.img}
+                      src={r.img ?? ""}
                       alt=""
                       width={34}
                       height={34}
@@ -284,7 +300,7 @@ export default function ServicesPanel() {
                           category: r.category,
                           type: r.type,
                           price: r.priceRaw ?? r.price,
-                          duration: r.duration,
+                          duration: r.duration ?? "",
                           status: r.status === "Active" ? "active" : "inactive",
                         });
                         setEditModalOpen(true);
@@ -461,6 +477,7 @@ export default function ServicesPanel() {
         title="Delete Service"
         message={`Are you sure you want to delete "${confirmDelete.service?.name}"? This action cannot be undone.`}
         onConfirm={async () => {
+          if (!confirmDelete.service) return;
           setDeleteSaving(true);
           try {
             await api.admin.deleteService(confirmDelete.service.id);

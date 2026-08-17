@@ -15,6 +15,20 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import type { TopExpert } from "../../../lib/types";
+
+interface ServiceRow {
+  name: string;
+  img: string;
+  bookings: number | string;
+  revenue: string;
+  rank: number;
+}
+
+interface TopExpertRow extends TopExpert {
+  image?: string;
+  sessions?: number;
+}
 
 const donut = [
   { label: "Numerology", value: "18 (32.1%)", pct: 32.1, color: "#7C3AED" },
@@ -79,7 +93,7 @@ const segments = donut.map((d, i) => ({
 }));
 
 export default function RightRail() {
-  const [topServices, setTopServices] = useState<any[]>([]);
+  const [topServices, setTopServices] = useState<ServiceRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -88,11 +102,11 @@ export default function RightRail() {
     setError(null);
     api.admin
       .getTopExperts()
-      .then((data: any) => {
-        const items = data?.data ?? data;
+      .then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items)) {
           setTopServices(
-            items.slice(0, 5).map((e: any, i: number) => ({
+            (items as TopExpertRow[]).slice(0, 5).map((e, i) => ({
               name: e.name || "Unknown",
               img: e.avatar || e.image || "",
               bookings: e.sessions || e.bookings || `${e.rating || "—"} rating`,

@@ -10,6 +10,9 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import type { Slot } from "../../../lib/types";
+
+type SlotLike = Omit<Slot, "status"> & { status: Slot["status"] | "break" };
 
 type State = "available" | "booked" | "break";
 
@@ -60,11 +63,11 @@ export default function TodaysSlots() {
     setLoading(true);
     api
       .getSlots()
-      .then((data: any) => {
-        const items = data?.data ?? data;
+      .then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items) && items.length) {
           setList(
-            items.map((s: any) => {
+            (items as SlotLike[]).map((s) => {
               const state: State =
                 s.status === "booked"
                   ? "booked"

@@ -16,7 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { reportTypeStyles, statusStyles } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
@@ -91,6 +91,8 @@ interface DisplayRow {
   amount: string;
 }
 
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
+
 function toRow(r: RawReport): DisplayRow {
   const { date, time } = fmt(r.created_at ?? "");
   return {
@@ -99,7 +101,7 @@ function toRow(r: RawReport): DisplayRow {
     client: { name: r.title || "Client", email: "", phone: "" },
     subject: { name: r.type || "Numerology", birth: "" },
     master: { name: "System", role: "Auto-generated" },
-    type: (r.type as any) || "full",
+    type: r.type ?? "full",
     date,
     time,
     status: statusLabelMap[r.status ?? ""] || r.status || "Pending",
@@ -144,15 +146,18 @@ export default function ReportsPanel() {
     setLoading(true);
     api.admin
       .getReports()
-      .then((data: any) => {
-        const items = (data?.data ?? data ?? []) as RawReport[];
-        if (data?.meta?.total) setTotal(data.meta.total);
+      .then((data: ListResponse<RawReport> | RawReport[]) => {
+        const items: RawReport[] = Array.isArray(data)
+          ? data
+          : (data?.data ?? []);
+        const meta = Array.isArray(data) ? undefined : data?.meta;
+        if (meta?.total) setTotal(meta.total);
         setRawReports(items);
         if (Array.isArray(items) && items.length) {
           setList(items.map(toRow));
         }
       })
-      .catch((e: any) => setError(errorMessage(e)))
+      .catch((e: unknown) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
 

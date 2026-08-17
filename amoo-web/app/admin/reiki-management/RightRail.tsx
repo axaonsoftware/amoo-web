@@ -15,6 +15,19 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import type { TopExpert } from "../../../lib/types";
+
+interface MasterRow {
+  name: string;
+  role: string;
+  rating: number | string;
+  count: string;
+}
+
+interface TopExpertRow extends TopExpert {
+  expertise?: string;
+  sessions?: number;
+}
 
 const quickActions = [
   { label: "Add Reiki Session", Icon: Plus, color: "text-[#7C3AED]" },
@@ -26,7 +39,7 @@ const quickActions = [
 ];
 
 export default function RightRail() {
-  const [masters, setMasters] = useState<any[]>([]);
+  const [masters, setMasters] = useState<MasterRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,11 +48,11 @@ export default function RightRail() {
     setError(null);
     api.admin
       .getTopExperts()
-      .then((data: any) => {
-        const items = data?.data ?? data;
+      .then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items)) {
           setMasters(
-            items.slice(0, 5).map((m: any) => ({
+            (items as TopExpertRow[]).slice(0, 5).map((m) => ({
               name: m.name || "Unknown",
               role: m.expertise || "Practitioner",
               rating: m.rating || "—",

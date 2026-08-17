@@ -12,10 +12,11 @@ import {
   Users,
 } from "lucide-react";
 import { typeTone } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { sanitize } from "../../../lib/sanitize";
 import { errorMessage } from "../../../lib/errors";
+import type { Notification, User } from "../../../lib/types";
 
 const statusOptions = [
   { label: "All Types", value: "" },
@@ -32,6 +33,8 @@ const targetOptions = [
 ];
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
 
 function fmtDateTime(iso: string) {
   if (!iso) return { date: "", time: "" };
@@ -58,13 +61,13 @@ export default function NotificationsPanel({
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [typeFilter, setTypeFilter] = useState("");
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState<Notification | null>(null);
   const [deleteSaving, setDeleteSaving] = useState(false);
 
   const [composeOpen, setComposeOpen] = useState(false);
@@ -80,7 +83,7 @@ export default function NotificationsPanel({
     kind: "success" | "error";
   } | null>(null);
 
-  const [userList, setUserList] = useState<any[]>([]);
+  const [userList, setUserList] = useState<User[]>([]);
   const [userSearch, setUserSearch] = useState("");
 
   const showToast = (msg: string, kind: "success" | "error" = "success") => {
@@ -98,20 +101,20 @@ export default function NotificationsPanel({
 
     api.admin
       .getNotifications(`?${q.toString()}`)
-      .then((res: any) => {
+      .then((res: ListResponse<Notification>) => {
         const items = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
             ? res
             : [];
-        const m = res?.meta ?? {};
+        const m = res?.meta;
         setMeta({
-          total: m.total ?? items.length,
-          totalPages: m.totalPages ?? 1,
+          total: m?.total ?? items.length,
+          totalPages: m?.totalPages ?? 1,
         });
         setList(items);
       })
-      .catch((e: any) => setError(e.message || "Failed to load"))
+      .catch((e: unknown) => setError(errorMessage(e, "Failed to load")))
       .finally(() => setLoading(false));
   }, [page, limit, typeFilter]);
 
@@ -122,7 +125,7 @@ export default function NotificationsPanel({
   const loadUsers = useCallback(() => {
     api.admin
       .getUsers("page=1&pageSize=50")
-      .then((res: any) => {
+      .then((res: ListResponse<User>) => {
         const items = res?.data ?? res ?? [];
         if (Array.isArray(items)) setUserList(items);
       })
@@ -300,7 +303,7 @@ export default function NotificationsPanel({
                       className="h-[36px] w-full rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#2E2A3B] outline-none"
                     >
                       <option value="">Select a user…</option>
-                      {filteredUsers.map((u: any) => (
+                      {filteredUsers.map((u: User) => (
                         <option key={u.id} value={u.id}>
                           {sanitize(u.name)} ({sanitize(u.email)})
                         </option>

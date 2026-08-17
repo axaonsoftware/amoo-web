@@ -14,6 +14,14 @@ const fallbackRevenue = [
   1.62, 1.3, 1.46, 1.36, 1.42,
 ];
 
+type RevenuePoint = {
+  date?: string;
+  label?: string;
+  amount?: number | string;
+  revenue?: number | string;
+  total?: number | string;
+};
+
 export default function RevenueOverview() {
   const [revenue, setRevenue] = useState(fallbackRevenue);
   const [loading, setLoading] = useState(true);
@@ -28,7 +36,7 @@ export default function RevenueOverview() {
         const data = res?.data || res;
         if (Array.isArray(data) && data.length >= 7) {
           const rev = data
-            .map((d: any) => {
+            .map((d: RevenuePoint) => {
               const v = Number(d.amount || d.revenue || d.total || 0);
               return v > 0 ? v / 100000 : 0;
             })

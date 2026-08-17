@@ -52,7 +52,7 @@ export default function RightRail() {
     setError(null);
     api.admin
       .getOverview()
-      .then((data: any) => {
+      .then((data: { stats?: { plans?: number } | null; plans?: number }) => {
         const s = data?.stats ?? data;
         if (s?.plans != null)
           setTotalPlans(Number(s.plans).toLocaleString("en-IN"));

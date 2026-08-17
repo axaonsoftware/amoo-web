@@ -10,6 +10,9 @@ import {
   Loader2,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import type { Expert } from "../../../lib/types";
+
+type StatsExpert = Expert & { sessions?: number; revenue?: number };
 
 const statDefs: {
   label: string;
@@ -66,7 +69,7 @@ const statDefs: {
   },
 ];
 
-export default function StatsRow({ experts }: { experts: any[] }) {
+export default function StatsRow({ experts }: { experts: StatsExpert[] }) {
   const fmt = (n: number | undefined) =>
     n != null ? n.toLocaleString("en-IN") : "—";
   const fmtCurrency = (n: number | undefined) =>

@@ -5,10 +5,14 @@ import StatsRow from "./StatsRow";
 import ExpertPanel from "./ExpertPanel";
 import RightRail from "./RightRail";
 import { api } from "../../../lib/api";
+import type { Expert } from "../../../lib/types";
 
 export default function ExpertManagementPage() {
-  const [experts, setExperts] = useState<any[]>([]);
-  const panelRef = useRef<any>(null);
+  const [experts, setExperts] = useState<Expert[]>([]);
+  const panelRef = useRef<{
+    openCreate: () => void;
+    exportData: () => void;
+  } | null>(null);
 
   const loadExperts = async () => {
     try {

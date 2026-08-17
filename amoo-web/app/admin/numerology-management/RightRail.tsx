@@ -15,6 +15,17 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import type { TopExpert } from "../../../lib/types";
+
+interface MasterRow {
+  name: string;
+  reports: string;
+  rating: number | string;
+}
+
+interface TopExpertRow extends TopExpert {
+  sessions?: number;
+}
 
 const quickActions = [
   { label: "Generate Report", Icon: Plus, color: "text-[#7C3AED]" },
@@ -26,7 +37,7 @@ const quickActions = [
 ];
 
 export default function RightRail() {
-  const [masters, setMasters] = useState<any[]>([]);
+  const [masters, setMasters] = useState<MasterRow[]>([]);
   const [totalReports, setTotalReports] = useState<string>("—");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +46,11 @@ export default function RightRail() {
     setLoading(true);
     setError(null);
     Promise.all([
-      api.admin.getTopExperts().then((data: any) => {
-        const items = data?.data ?? data;
+      api.admin.getTopExperts().then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items)) {
           setMasters(
-            items.slice(0, 5).map((m: any) => ({
+            (items as TopExpertRow[]).slice(0, 5).map((m) => ({
               name: m.name || "Unknown",
               reports: `${m.sessions || m.bookings || 0} reports`,
               rating: m.rating || "—",
@@ -47,8 +58,10 @@ export default function RightRail() {
           );
         }
       }),
-      api.admin.getOverview().then((data: any) => {
-        const s = data?.stats ?? data;
+      api.admin.getOverview().then((data: unknown) => {
+        const s =
+          (data as { stats?: { reports?: number } } | undefined)?.stats ??
+          (data as { reports?: number } | null);
         if (s?.reports != null)
           setTotalReports(Number(s.reports).toLocaleString("en-IN"));
       }),

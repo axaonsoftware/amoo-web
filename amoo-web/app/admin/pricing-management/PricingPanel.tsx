@@ -12,7 +12,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { serviceTone, planTypeTone } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
@@ -26,8 +26,16 @@ type RawPackage = {
   duration_days: number;
   status: string;
   plan_type?: string;
+  service_name?: string;
   created_at?: string;
 };
+
+type RawService = {
+  name: string;
+  title?: string;
+};
+
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
 
 type Row = {
   id: number;
@@ -191,48 +199,56 @@ export default function PricingPanel({
     setLoading(true);
     setError("");
     Promise.all([api.admin.getPackages(), api.admin.getServices()])
-      .then(([pkgData, svcData]: any[]) => {
-        const pkgItems = (pkgData?.data ?? pkgData) as RawPackage[];
-        if (pkgData?.meta?.total) setTotal(pkgData.meta.total);
-        const svcItems = Array.isArray(svcData?.data ?? svcData)
-          ? (svcData?.data ?? svcData)
-          : [];
-        const svcNames = svcItems
-          .map((s: any) => s.name || s.title)
-          .filter(Boolean);
-        setServices(svcNames);
+      .then(
+        ([pkgData, svcData]: [
+          ListResponse<RawPackage> | RawPackage[],
+          ListResponse<RawService> | RawService[],
+        ]) => {
+          const pkgItems: RawPackage[] = Array.isArray(pkgData)
+            ? pkgData
+            : (pkgData?.data ?? []);
+          const meta = Array.isArray(pkgData) ? undefined : pkgData?.meta;
+          if (meta?.total) setTotal(meta.total);
+          const svcItems: RawService[] = Array.isArray(svcData)
+            ? svcData
+            : (svcData?.data ?? []);
+          const svcNames = svcItems
+            .map((s) => s.name || s.title)
+            .filter((n): n is string => Boolean(n));
+          setServices(svcNames);
 
-        if (Array.isArray(pkgItems)) {
-          setRawList(pkgItems);
-          setList(
-            pkgItems.map((p: any) => {
-              const matchedSvc = svcNames.find(
-                (name: string) =>
-                  name.toLowerCase() === (p.service_name || "").toLowerCase(),
-              );
-              return {
-                id: p.id,
-                name: p.name,
-                sub: p.description || "",
-                service: matchedSvc || "All",
-                planType: p.plan_type || "Subscription",
-                price: `₹ ${Number(p.price).toLocaleString("en-IN")}`,
-                priceRaw: Number(p.price),
-                duration: p.duration_days ? `${p.duration_days} days` : "-",
-                durationDaysRaw: p.duration_days || 0,
-                status:
-                  p.status === "active"
-                    ? "Active"
-                    : p.status === "inactive"
-                      ? "Inactive"
-                      : p.status,
-                bookings: "-",
-                _raw: p,
-              };
-            }),
-          );
-        }
-      })
+          if (Array.isArray(pkgItems)) {
+            setRawList(pkgItems);
+            setList(
+              pkgItems.map((p) => {
+                const matchedSvc = svcNames.find(
+                  (name: string) =>
+                    name.toLowerCase() === (p.service_name || "").toLowerCase(),
+                );
+                return {
+                  id: p.id,
+                  name: p.name,
+                  sub: p.description || "",
+                  service: matchedSvc || "All",
+                  planType: p.plan_type || "Subscription",
+                  price: `₹ ${Number(p.price).toLocaleString("en-IN")}`,
+                  priceRaw: Number(p.price),
+                  duration: p.duration_days ? `${p.duration_days} days` : "-",
+                  durationDaysRaw: p.duration_days || 0,
+                  status:
+                    p.status === "active"
+                      ? "Active"
+                      : p.status === "inactive"
+                        ? "Inactive"
+                        : p.status,
+                  bookings: "-",
+                  _raw: p,
+                };
+              }),
+            );
+          }
+        },
+      )
       .catch((e) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
   }, []);
@@ -290,17 +306,24 @@ export default function PricingPanel({
 
   const handleSave = async () => {
     const errs: Record<string, string> = {};
-    if (!formValues.name) errs.name = "Name is required";
+
+    const priceVal = Number(formValues.price);
+    const durationVal = Number(formValues.duration_days);
+
+    if (!formValues.name?.toString().trim()) errs.name = "Name is required";
     if (formValues.price === "" || formValues.price === undefined)
       errs.price = "Price is required";
-    if (Number(formValues.price) < 0) errs.price = "Price must be ≥ 0";
+    else if (!Number.isFinite(priceVal) || priceVal < 0)
+      errs.price = "Price must be a number ≥ 0";
     if (
       formValues.duration_days === "" ||
       formValues.duration_days === undefined
     )
       errs.duration_days = "Duration is required";
-    if (Number(formValues.duration_days) < 1)
-      errs.duration_days = "Duration must be ≥ 1 day";
+    else if (!Number.isFinite(durationVal) || durationVal < 1)
+      errs.duration_days = "Duration must be a whole number ≥ 1";
+    else if (!Number.isInteger(durationVal))
+      errs.duration_days = "Duration must be a whole number";
     if (!formValues.status) errs.status = "Status is required";
     if (Object.keys(errs).length) {
       setFormErrors(errs);

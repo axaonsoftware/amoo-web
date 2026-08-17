@@ -18,6 +18,7 @@ import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
 import { specializationTone, statusTone } from "./data";
 import { errorMessage } from "../../../lib/errors";
+import type { Expert } from "../../../lib/types";
 
 const expertFields: ModalField[] = [
   {
@@ -109,6 +110,13 @@ type PanelFns = {
   exportData: () => void;
 };
 
+type AdminExpert = Expert & {
+  specialization?: string | null;
+  experience?: string | number | null;
+  hourly_rate?: string | number | null;
+  sessions?: number | null;
+};
+
 const ExpertRow = memo(function ExpertRow({
   expert,
   idx,
@@ -116,11 +124,11 @@ const ExpertRow = memo(function ExpertRow({
   onSetPassword,
   onDelete,
 }: {
-  expert: any;
+  expert: AdminExpert;
   idx: number;
-  onEdit: (e: any) => void;
-  onSetPassword: (e: any) => void;
-  onDelete: (e: any) => void;
+  onEdit: (e: AdminExpert) => void;
+  onSetPassword: (e: AdminExpert) => void;
+  onDelete: (e: AdminExpert) => void;
 }) {
   return (
     <tr
@@ -146,7 +154,7 @@ const ExpertRow = memo(function ExpertRow({
       </td>
       <td className="px-[14px] py-[11px]">
         <span
-          className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialization] || "bg-[#F5F4F9] text-[#6B6480]"}`}
+          className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialization ?? ""] || "bg-[#F5F4F9] text-[#6B6480]"}`}
         >
           {expert.specialization || "—"}
         </span>
@@ -206,22 +214,24 @@ export default function ExpertPanel({
 }: {
   onReady?: (fns: PanelFns) => void;
 }) {
-  const [experts, setExperts] = useState<any[]>([]);
+  const [experts, setExperts] = useState<AdminExpert[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [specializationFilter, setSpecializationFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<AdminExpert | null>(null);
   const [values, setValues] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState<AdminExpert | null>(null);
   const [deleting2, setDeleting2] = useState(false);
 
-  const [passwordTarget, setPasswordTarget] = useState<any | null>(null);
+  const [passwordTarget, setPasswordTarget] = useState<AdminExpert | null>(
+    null,
+  );
   const { showToast, Toast } = useToast();
 
   const cancelled = useRef(false);
@@ -249,7 +259,7 @@ export default function ExpertPanel({
     setModalOpen(true);
   };
 
-  const openEdit = (expert: any) => {
+  const openEdit = (expert: AdminExpert) => {
     setEditing(expert);
     setValues({
       name: expert.name || "",
@@ -271,7 +281,7 @@ export default function ExpertPanel({
     }
     setSaving(true);
     try {
-      const body: any = { ...values };
+      const body: Record<string, unknown> = { ...values };
       if (body.experience) body.experience = Number(body.experience);
       if (body.hourly_rate) body.hourly_rate = Number(body.hourly_rate);
       if (editing) {
@@ -355,9 +365,12 @@ export default function ExpertPanel({
     onReady?.({ openCreate: openAdd, exportData: handleExport });
   }, [onReady, handleExport]);
 
-  const handleEditExpert = useCallback((e: any) => openEdit(e), []);
-  const handleSetPassword = useCallback((e: any) => setPasswordTarget(e), []);
-  const handleDeleteExpert = useCallback((e: any) => {
+  const handleEditExpert = useCallback((e: AdminExpert) => openEdit(e), []);
+  const handleSetPassword = useCallback(
+    (e: AdminExpert) => setPasswordTarget(e),
+    [],
+  );
+  const handleDeleteExpert = useCallback((e: AdminExpert) => {
     setDeleting(e);
     setConfirmOpen(true);
   }, []);

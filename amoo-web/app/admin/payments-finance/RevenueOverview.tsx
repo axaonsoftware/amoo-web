@@ -8,6 +8,14 @@ const H = 200;
 const x = (i: number, len: number) => (i / Math.max(len - 1, 1)) * W;
 const y = (v: number, max: number) => H - (v / Math.max(max, 1)) * H;
 
+type RevenuePoint = {
+  date?: string;
+  label?: string;
+  amount?: number | string;
+  revenue?: number | string;
+  total?: number | string;
+};
+
 export default function RevenueOverview() {
   const [revenue, setRevenue] = useState<number[]>([]);
   const [netEarnings, setNetEarnings] = useState<number[]>([]);
@@ -25,7 +33,7 @@ export default function RevenueOverview() {
         if (Array.isArray(data) && data.length >= 7) {
           const rev: number[] = [];
           const lbls: string[] = [];
-          data.forEach((d: any) => {
+          data.forEach((d: RevenuePoint) => {
             const v = Number(d.amount || d.revenue || d.total || 0);
             if (v > 0) {
               rev.push(v / 100000);

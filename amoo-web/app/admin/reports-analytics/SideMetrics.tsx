@@ -11,6 +11,12 @@ type Payment = {
   [key: string]: unknown;
 };
 
+type OverviewStatsLike = {
+  conversionRate?: number;
+  avgOrderDelta?: string;
+  payoutsDelta?: string;
+};
+
 const R = 30;
 const C = 2 * Math.PI * R;
 const SW = 70;
@@ -97,11 +103,11 @@ export default function SideMetrics() {
           setPayouts(payoutsVal);
         }
         if (o) {
-          const convRate = ((o as any).conversionRate as number) || 78.4;
+          const convRate = (o as OverviewStatsLike).conversionRate || 78.4;
           setPct(Math.round(convRate * 10) / 10);
-          const avgDeltaVal = ((o as any).avgOrderDelta as string) || "6.3%";
+          const avgDeltaVal = (o as OverviewStatsLike).avgOrderDelta || "6.3%";
           setAvgDelta(avgDeltaVal);
-          const payDelta = ((o as any).payoutsDelta as string) || "16.1%";
+          const payDelta = (o as OverviewStatsLike).payoutsDelta || "16.1%";
           setPayoutsDelta(payDelta);
         }
       })

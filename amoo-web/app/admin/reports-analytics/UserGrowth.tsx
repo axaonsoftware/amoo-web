@@ -14,6 +14,12 @@ const fallbackUsers = [
   1940, 2320, 2180, 2360, 2440,
 ];
 
+type GrowthPoint = {
+  count?: number | string;
+  users?: number | string;
+  total?: number | string;
+};
+
 export default function UserGrowth() {
   const [users, setUsers] = useState(fallbackUsers);
   const [total, setTotal] = useState("18,542");
@@ -30,7 +36,7 @@ export default function UserGrowth() {
         const data = res?.data || res;
         if (Array.isArray(data)) {
           const vals = data
-            .map((d: any) => Number(d.count || d.users || d.total || 0))
+            .map((d: GrowthPoint) => Number(d.count || d.users || d.total || 0))
             .filter((n: number) => n > 0);
           if (vals.length >= 7) {
             const padded =

@@ -21,10 +21,11 @@ import {
   Loader2,
 } from "lucide-react";
 import { serviceStyles, statusStyles, type ServiceKey } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { sanitize } from "../../../lib/sanitize";
 import { errorMessage } from "../../../lib/errors";
+import type { Booking } from "../../../lib/types";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50];
 
@@ -77,6 +78,25 @@ function buildQuery(params: {
   return q.toString();
 }
 
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
+
+interface AdminBooking extends Booking {
+  expert_role?: string | null;
+  expert_avatar?: string | null;
+}
+
+interface BookingRow {
+  id: string;
+  user: { name: string; email: string; phone: string };
+  expert: { name: string; role: string; avatar: string };
+  service: ServiceKey;
+  date: string;
+  time: string;
+  amount: string;
+  payment: Booking["payment"];
+  status: Booking["status"];
+}
+
 export default function BookingsPanel() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
@@ -84,14 +104,14 @@ export default function BookingsPanel() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
 
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<BookingRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     type: "complete" | "cancel";
-    booking: any;
+    booking: BookingRow | null;
   }>({ open: false, type: "complete", booking: null });
   const [confirmSaving, setConfirmSaving] = useState(false);
   const [toast, setToast] = useState<{
@@ -110,27 +130,27 @@ export default function BookingsPanel() {
     const query = buildQuery({ page, limit, search: debouncedSearch, status });
     api.admin
       .getBookings(`?${query}`)
-      .then((res: any) => {
+      .then((res: ListResponse<AdminBooking>) => {
         const items = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
             ? res
             : [];
-        const m = res?.meta ?? {};
+        const m = res?.meta;
         setMeta({
-          total: m.total ?? items.length,
-          totalPages: m.totalPages ?? 1,
+          total: m?.total ?? items.length,
+          totalPages: m?.totalPages ?? 1,
         });
         setList(
-          items.map((b: any) => ({
+          items.map((b: AdminBooking) => ({
             id: b.booking_ref,
-            user: { name: b.user_name, email: "", phone: "" },
+            user: { name: b.user_name ?? "", email: "", phone: "" },
             expert: {
               name: b.expert_name || "Unassigned",
               role: b.expert_role || "",
               avatar: b.expert_avatar || "",
             },
-            service: mapStatusToKey(b.service_name),
+            service: mapStatusToKey(b.service_name ?? ""),
             date: b.date,
             time: b.time,
             amount: `₹ ${Number(b.amount).toLocaleString("en-IN")}`,
@@ -169,28 +189,28 @@ export default function BookingsPanel() {
 
     api.admin
       .getBookings(`?${query}`)
-      .then((res: any) => {
+      .then((res: ListResponse<AdminBooking>) => {
         if (cancelled) return;
         const items = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
             ? res
             : [];
-        const m = res?.meta ?? {};
+        const m = res?.meta;
         setMeta({
-          total: m.total ?? items.length,
-          totalPages: m.totalPages ?? 1,
+          total: m?.total ?? items.length,
+          totalPages: m?.totalPages ?? 1,
         });
         setList(
-          items.map((b: any) => ({
+          items.map((b: AdminBooking) => ({
             id: b.booking_ref,
-            user: { name: b.user_name, email: "", phone: "" },
+            user: { name: b.user_name ?? "", email: "", phone: "" },
             expert: {
               name: b.expert_name || "Unassigned",
               role: b.expert_role || "",
               avatar: b.expert_avatar || "",
             },
-            service: mapStatusToKey(b.service_name),
+            service: mapStatusToKey(b.service_name ?? ""),
             date: b.date,
             time: b.time,
             amount: `₹ ${Number(b.amount).toLocaleString("en-IN")}`,
@@ -609,13 +629,18 @@ export default function BookingsPanel() {
             : `Are you sure you want to cancel booking ${confirmDialog.booking?.id}? This action cannot be undone.`
         }
         onConfirm={async () => {
+          if (!confirmDialog.booking) return;
           setConfirmSaving(true);
           try {
             if (confirmDialog.type === "complete") {
-              await api.admin.completeBooking(confirmDialog.booking.id);
+              await api.admin.completeBooking(
+                confirmDialog.booking.id as unknown as number,
+              );
               showToast("Booking marked as completed");
             } else {
-              await api.admin.cancelBooking(confirmDialog.booking.id);
+              await api.admin.cancelBooking(
+                confirmDialog.booking.id as unknown as number,
+              );
               showToast("Booking cancelled");
             }
             setConfirmDialog({ open: false, type: "complete", booking: null });

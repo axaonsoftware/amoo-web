@@ -14,8 +14,31 @@ import {
   MoreVertical,
 } from "lucide-react";
 import { statusStyles, type StatusKey } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+
+type RawReport = {
+  id: number;
+  type?: string;
+  title?: string | null;
+  created_at: string;
+};
+
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
+
+type ReadingView = {
+  id: string;
+  client: { name: string; email: string; phone: string };
+  master: { name: string; role: string; avatar: string };
+  spread: string;
+  type: string;
+  date: string;
+  time: string;
+  duration: string;
+  status: string;
+  amount: string;
+  payment: string;
+};
 
 function fmtDate(iso: string) {
   if (!iso) return { date: "", time: "" };
@@ -68,7 +91,7 @@ function Checkbox() {
 }
 
 export default function ReadingsPanel() {
-  const [list, setList] = useState<any[] | null>(null);
+  const [list, setList] = useState<ReadingView[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [total, setTotal] = useState(0);
@@ -76,16 +99,19 @@ export default function ReadingsPanel() {
   useEffect(() => {
     api.admin
       .getReports()
-      .then((data: any) => {
-        const items = data?.data ?? data ?? [];
-        if (data?.meta?.total) setTotal(data.meta.total);
-        const rows = items.filter((r: any) =>
+      .then((data: ListResponse<RawReport> | RawReport[]) => {
+        const items: RawReport[] = Array.isArray(data)
+          ? data
+          : (data?.data ?? []);
+        const meta = Array.isArray(data) ? undefined : data?.meta;
+        if (meta?.total) setTotal(meta.total);
+        const rows = items.filter((r) =>
           (r.type || "").toLowerCase().includes("tarot"),
         );
         const src = rows.length ? rows : items;
         if (src.length) {
           setList(
-            src.map((r: any) => {
+            src.map((r) => {
               const { date, time } = fmtDate(r.created_at);
               return {
                 id: `TAROT-${r.id}`,

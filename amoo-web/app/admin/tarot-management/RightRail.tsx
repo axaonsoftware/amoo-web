@@ -16,6 +16,19 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import type { TopExpert } from "../../../lib/types";
+
+interface MasterRow {
+  name: string;
+  role: string;
+  rating: number | string;
+  count: number;
+}
+
+interface TopExpertRow extends TopExpert {
+  expertise?: string;
+  sessions?: number;
+}
 
 const DONUT =
   "conic-gradient(#1B76BD 0deg 94.68deg, #FFFFFF 94.68deg 96.68deg," +
@@ -96,7 +109,7 @@ function ViewAll() {
 
 export default function RightRail() {
   const [totalReadings, setTotalReadings] = useState("—");
-  const [masters, setMasters] = useState<any[]>([]);
+  const [masters, setMasters] = useState<MasterRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -104,16 +117,18 @@ export default function RightRail() {
     setLoading(true);
     setError(null);
     Promise.all([
-      api.admin.getOverview().then((data: any) => {
-        const s = data?.stats ?? data;
+      api.admin.getOverview().then((data: unknown) => {
+        const s =
+          (data as { stats?: { readings?: number } } | undefined)?.stats ??
+          (data as { readings?: number } | null);
         if (s?.readings != null)
           setTotalReadings(Number(s.readings).toLocaleString("en-IN"));
       }),
-      api.admin.getTopExperts().then((data: any) => {
-        const items = data?.data ?? data;
+      api.admin.getTopExperts().then((data: unknown) => {
+        const items = (data as { data?: unknown } | null)?.data ?? data;
         if (Array.isArray(items)) {
           setMasters(
-            items.slice(0, 5).map((m: any) => ({
+            (items as TopExpertRow[]).slice(0, 5).map((m) => ({
               name: m.name || "Unknown",
               role: m.expertise || "Tarot Master",
               rating: m.rating || "—",

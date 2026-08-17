@@ -137,7 +137,7 @@ export default function PackagesPanel({
       if (data?.meta?.total) setTotal(data.meta.total);
       if (Array.isArray(items) && items.length) {
         setList(
-          items.map((p: any) => ({
+          items.map((p: Package) => ({
             id: Number(p.id),
             name: p.name,
             sub: p.description,

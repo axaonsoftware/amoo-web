@@ -24,6 +24,7 @@ import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import { sanitize } from "../../../lib/sanitize";
 import { errorMessage } from "../../../lib/errors";
+import type { User } from "../../../lib/types";
 
 // Each tab is a preset over the filters `GET /api/users` actually parses:
 // search, status, role, verified, date_from, date_to, page, limit|pageSize.
@@ -104,16 +105,30 @@ function fmtDate(iso: string) {
   };
 }
 
+interface UserRowData {
+  id: number;
+  name: string;
+  avatar: string;
+  verified: boolean;
+  email: string;
+  phone: string | null;
+  role: User["role"];
+  status: User["status"];
+  date: string;
+  time: string;
+  selected?: boolean;
+}
+
 const UserRow = memo(function UserRow({
   u,
   onEdit,
   onBlock,
   onDelete,
 }: {
-  u: any;
-  onEdit: (u: any) => void;
-  onBlock: (u: any) => void;
-  onDelete: (u: any) => void;
+  u: UserRowData;
+  onEdit: (u: UserRowData) => void;
+  onBlock: (u: UserRowData) => void;
+  onDelete: (u: UserRowData) => void;
 }) {
   const roleStyle = roleStyles[u.role as RoleKey] ?? {
     label: u.role ?? "—",
@@ -251,13 +266,13 @@ export default function UsersPanel() {
   const [activeTab, setActiveTab] = useState(0);
   const [{ status, role, verified, date_from: dateFrom }, setFilters] =
     useState<Filters>(NO_FILTERS);
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<UserRowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
 
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<UserRowData | null>(null);
   const [editValues, setEditValues] = useState<Record<string, string | number>>(
     {},
   );
@@ -265,7 +280,7 @@ export default function UsersPanel() {
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
     type: "delete" | "block";
-    user: any;
+    user: UserRowData | null;
   }>({ open: false, type: "delete", user: null });
   const [confirmSaving, setConfirmSaving] = useState(false);
   const { showToast, Toast } = useToast();
@@ -305,7 +320,7 @@ export default function UsersPanel() {
         const meta = unwrapMeta(res);
         if (meta) setMeta({ total: meta.total, totalPages: meta.totalPages });
         setList(
-          unwrapList<any>(res).map((u: any) => {
+          unwrapList<User>(res).map((u: User) => {
             const { date, time } = fmtDate(u.created_at);
             return {
               id: u.id,
@@ -345,7 +360,7 @@ export default function UsersPanel() {
   };
 
   const reload = load;
-  const handleEditUser = useCallback((u: any) => {
+  const handleEditUser = useCallback((u: UserRowData) => {
     setEditingUser(u);
     setEditValues({
       name: u.name,
@@ -356,10 +371,10 @@ export default function UsersPanel() {
     });
     setEditModalOpen(true);
   }, []);
-  const handleBlockUser = useCallback((u: any) => {
+  const handleBlockUser = useCallback((u: UserRowData) => {
     setConfirmDialog({ open: true, type: "block", user: u });
   }, []);
-  const handleDeleteUser = useCallback((u: any) => {
+  const handleDeleteUser = useCallback((u: UserRowData) => {
     setConfirmDialog({ open: true, type: "delete", user: u });
   }, []);
   const userRows = list;
@@ -682,6 +697,7 @@ export default function UsersPanel() {
             : `Are you sure you want to block ${sanitize(confirmDialog.user?.name)}? They will no longer be able to access the platform.`
         }
         onConfirm={async () => {
+          if (!confirmDialog.user) return;
           setConfirmSaving(true);
           try {
             if (confirmDialog.type === "delete") {

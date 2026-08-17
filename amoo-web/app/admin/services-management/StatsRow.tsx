@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { errorMessage } from "../../../lib/errors";
 
 const statDefs: {
   label: string;
@@ -77,8 +78,11 @@ export default function StatsRow() {
     setError(null);
     api.admin
       .getOverview()
-      .then((data: any) => setStats(data?.stats ?? data))
-      .catch((e: any) => setError(e?.message || "Failed to load stats"))
+      .then((data: unknown) => {
+        const s = (data as { stats?: Record<string, number> } | null)?.stats;
+        setStats(s ?? (data as Record<string, number> | null));
+      })
+      .catch((e: unknown) => setError(errorMessage(e, "Failed to load stats")))
       .finally(() => setLoading(false));
   }, []);
 

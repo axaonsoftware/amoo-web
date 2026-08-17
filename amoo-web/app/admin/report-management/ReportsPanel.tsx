@@ -12,12 +12,13 @@ import {
   Eye,
 } from "lucide-react";
 import { reportTypeStyles, statusStyles } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
 import { errorMessage } from "../../../lib/errors";
+import type { Report, User } from "../../../lib/types";
 
 const typeOptions = [
   { label: "All Types", value: "" },
@@ -60,27 +61,31 @@ function fmtDateTime(iso: string) {
   };
 }
 
+type PanelFns = { openCompose: () => void };
+
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
+
 export default function ReportsPanel({
   onReady,
 }: {
-  onReady?: (fns: any) => void;
+  onReady?: (fns: PanelFns) => void;
 }) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [typeFilter, setTypeFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [search, setSearch] = useState("");
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [deleting, setDeleting] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState<Report | null>(null);
   const [deleteSaving, setDeleteSaving] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<Report | null>(null);
   const [formValues, setFormValues] = useState({
     user_id: "",
     type: "numerology",
@@ -92,7 +97,7 @@ export default function ReportsPanel({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  const [userList, setUserList] = useState<any[]>([]);
+  const [userList, setUserList] = useState<User[]>([]);
   const [userSearch, setUserSearch] = useState("");
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -126,20 +131,20 @@ export default function ReportsPanel({
 
     api.admin
       .getReports(`?${q.toString()}`)
-      .then((res: any) => {
+      .then((res: ListResponse<Report>) => {
         const items = Array.isArray(res?.data)
           ? res.data
           : Array.isArray(res)
             ? res
             : [];
-        const m = res?.meta ?? {};
+        const m = res?.meta;
         setMeta({
-          total: m.total ?? items.length,
-          totalPages: m.totalPages ?? 1,
+          total: m?.total ?? items.length,
+          totalPages: m?.totalPages ?? 1,
         });
         setList(items);
       })
-      .catch((e: any) => setError(errorMessage(e, "Failed to load")))
+      .catch((e: unknown) => setError(errorMessage(e, "Failed to load")))
       .finally(() => setLoading(false));
   }, [page, limit, typeFilter, statusFilter, search]);
 
@@ -150,7 +155,7 @@ export default function ReportsPanel({
   const loadUsers = useCallback(() => {
     api.admin
       .getUsers("page=1&pageSize=100")
-      .then((res: any) => {
+      .then((res: ListResponse<User>) => {
         const items = res?.data ?? res ?? [];
         if (Array.isArray(items)) setUserList(items);
       })
@@ -162,7 +167,7 @@ export default function ReportsPanel({
     const q = userSearch.toLowerCase();
     return userList
       .filter(
-        (u: any) =>
+        (u: User) =>
           (u.name || "").toLowerCase().includes(q) ||
           (u.email || "").toLowerCase().includes(q),
       )
@@ -184,7 +189,7 @@ export default function ReportsPanel({
     setModalOpen(true);
   };
 
-  const openEdit = (report: any) => {
+  const openEdit = (report: Report) => {
     setEditing(report);
     setFormValues({
       user_id: String(report.user_id ?? ""),
@@ -275,7 +280,7 @@ export default function ReportsPanel({
     }
   };
 
-  const handleDeleteClick = (report: any) => {
+  const handleDeleteClick = (report: Report) => {
     setDeleting(report);
     setConfirmOpen(true);
   };
@@ -423,7 +428,12 @@ export default function ReportsPanel({
 
         <button
           type="button"
-          onClick={() => exportCSV(list, "reports-export.csv")}
+          onClick={() =>
+            exportCSV(
+              list.map((r) => ({ ...r })),
+              "reports-export.csv",
+            )
+          }
           className="flex h-[38px] items-center gap-2 rounded-[9px] border border-[#E7E5EF] bg-white px-[14px] text-[12px] font-medium text-[#3D3752] hover:bg-[#F7F6FB]"
         >
           Export CSV
@@ -458,10 +468,10 @@ export default function ReportsPanel({
               </tr>
             </thead>
             <tbody>
-              {list.map((r: any) => {
+              {list.map((r: Report) => {
                 const dt = fmtDateTime(r.created_at);
                 const typeClass =
-                  reportTypeStyles[r.type?.toLowerCase()] ??
+                  reportTypeStyles[(r.type ?? "").toLowerCase()] ??
                   "bg-[#F0EAFB] text-[#7C3AED]";
                 const statClass =
                   statusStyles[r.status] ?? "bg-[#F0EAFB] text-[#7C3AED]";

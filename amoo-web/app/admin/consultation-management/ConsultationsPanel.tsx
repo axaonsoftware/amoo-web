@@ -25,8 +25,24 @@ import {
   type StatusTone,
   type TypeKey,
 } from "./data";
-import { api } from "../../../lib/api";
+import { api, type PageMeta } from "../../../lib/api";
+import type { Booking } from "../../../lib/types";
 import { sanitize } from "../../../lib/sanitize";
+
+type ListResponse<T> = { data?: T[]; meta?: PageMeta };
+
+type ConsultationView = {
+  id: string;
+  user: string | undefined;
+  phone: string;
+  expert: string;
+  expertRole: string;
+  type: string;
+  date: string;
+  time: string;
+  amount: string;
+  status: string;
+};
 
 const tabs = [
   { label: "All Consultations", active: true },
@@ -86,7 +102,7 @@ export default function ConsultationsPanel() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
 
-  const [list, setList] = useState<any[]>([]);
+  const [list, setList] = useState<ConsultationView[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
@@ -121,15 +137,15 @@ export default function ConsultationsPanel() {
 
     api.admin
       .getBookings(`?${q.toString()}`)
-      .then((res: any) => {
+      .then((res: ListResponse<Booking> | Booking[]) => {
         if (cancelled) return;
-        const items = (res?.data ?? res) as any[];
-        if (res?.meta)
-          setMeta({ total: res.meta.total, totalPages: res.meta.totalPages });
+        const items = Array.isArray(res) ? res : (res?.data ?? []);
+        const meta = Array.isArray(res) ? undefined : res?.meta;
+        if (meta) setMeta({ total: meta.total, totalPages: meta.totalPages });
         if (Array.isArray(items)) {
           setList(
-            items.map((b: any) => {
-              const type = serviceToType[b.service_name] || "numerology";
+            items.map((b) => {
+              const type = serviceToType[b.service_name || ""] || "numerology";
               return {
                 id: b.booking_ref,
                 user: b.user_name,

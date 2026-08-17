@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Wallet, ArrowUp, Loader2, AlertCircle } from "lucide-react";
 import api from "../../../lib/api";
+import type { Payment } from "../../../lib/types";
+import { errorMessage } from "../../../lib/errors";
 
 function isToday(ts: string): boolean {
   const d = new Date(ts);
@@ -25,19 +27,18 @@ export default function TodaysCollection() {
     let cancelled = false;
     api.admin
       .getPayments()
-      .then((res) => {
+      .then((res: unknown) => {
         if (cancelled) return;
-        const payments = Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res)
-            ? res
-            : [];
+        const payload = res as { data?: Payment[] } | Payment[];
+        const payments = Array.isArray(payload)
+          ? (payload as Payment[])
+          : (payload?.data ?? []);
         const todayPayments = payments.filter(
-          (p: any) => p.created_at && isToday(p.created_at as string),
+          (p) => p.created_at && isToday(p.created_at),
         );
         if (todayPayments.length > 0) {
           const total = todayPayments.reduce(
-            (s: number, p: any) => s + ((p.amount as number) || 0),
+            (s: number, p) => s + (Number(p.amount) || 0),
             0,
           );
           const count = todayPayments.length;
@@ -51,9 +52,9 @@ export default function TodaysCollection() {
           setAvgOrder(null);
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (!cancelled)
-          setError(err?.message || "Failed to load today's collection");
+          setError(errorMessage(err, "Failed to load today's collection"));
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
