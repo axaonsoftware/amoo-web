@@ -47,9 +47,17 @@ const { setupSwagger } = require("./config/swagger");
 const app = express();
 const PORT = env.port;
 
-// Trust the first upstream proxy when behind a reverse proxy (Nginx, Cloudflare).
-// Required for rate-limiting + IP logging to use the real client IP.
-app.set("trust proxy", env.isProd ? 1 : 0);
+// Trust the configured number of upstream proxies (nginx, optionally
+// Cloudflare). Required for rate-limiting + IP logging to use the real client IP.
+app.set("trust proxy", env.trustProxy);
+
+// Request correlation id — set before body parsing and CSRF so even rejected
+// requests (bad JSON, missing CSRF token) carry an id in logs.
+app.use((req, res, next) => {
+  req.id = require("crypto").randomUUID();
+  res.setHeader("X-Request-Id", req.id);
+  next();
+});
 
 // --- Core middleware ---
 app.use(helmetConfig);
@@ -82,7 +90,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // --- Swagger API Docs (before CSRF — static assets need no token) ---
-setupSwagger(app);
+// Off by default in production (ENABLE_SWAGGER=true to expose); API docs are
+// an information-leak surface that production traffic does not need.
+if (!env.isProd || env.enableSwagger) {
+  setupSwagger(app);
+}
 
 // --- CSRF (double-submit cookie) ---
 // SameSite=Lax prevents cookies from being sent on cross-site requests, but
@@ -94,13 +106,8 @@ setupSwagger(app);
 app.use(generateCsrfToken);
 app.use(csrfGuard);
 
-// Request correlation id (traced in logs / errors)
-app.use((req, res, next) => {
-  req.id = require("crypto").randomUUID();
-  res.setHeader("X-Request-Id", req.id);
-  next();
-});
-
+// Request correlation id is set at the top of the chain (see above) so morgan
+// and the error handler can always rely on req.id.
 morgan.token("req-id", (req) => req.id || "-");
 if (env.nodeEnv !== "test") {
   app.use(morgan(

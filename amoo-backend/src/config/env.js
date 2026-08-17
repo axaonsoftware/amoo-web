@@ -13,6 +13,11 @@ const env = {
   port: Number(required("PORT", 4000)),
   nodeEnv: required("NODE_ENV", "development"),
   isProd: required("NODE_ENV", "development") === "production",
+  // Number of reverse proxies in front of the API (nginx, then optionally
+  // Cloudflare). express-rate-limit and audit logging key on req.ip, which only
+  // resolves to the real client IP when trust proxy counts every hop. Set
+  // TRUST_PROXY=2 when Cloudflare sits in front of nginx.
+  trustProxy: Number(required("TRUST_PROXY", process.env.NODE_ENV === "production" ? "1" : "0")),
 
   db: {
     host: required("DB_HOST", "127.0.0.1"),
@@ -21,6 +26,9 @@ const env = {
     password: required("DB_PASSWORD", ""),
     database: required("DB_NAME", "amoo_db"),
     url: process.env.DATABASE_URL || "",
+    // Set DB_SSL=true (or pass sslmode=require in DATABASE_URL) when the
+    // database requires TLS — e.g. any managed cloud Postgres.
+    ssl: required("DB_SSL", "false") === "true",
   },
 
   jwt: {
@@ -53,10 +61,15 @@ const env = {
 
   maxFileSize: Number(required("MAX_FILE_SIZE", "5242880")),
   // When true, OTPs and verification tokens are returned in API responses for
-  // debugging. Never enable this in production or on any internet-facing host.
+  // debugging. Never enable this in production or on any internet-facing host
+  // (a production guard below refuses to boot with it on).
   devDebugTokens: process.env.DEV_DEBUG_TOKENS === "true",
 
   logLevel: required("LOG_LEVEL", "info"),
+
+  // Serve the Swagger UI (GET /api/docs) outside development. Off by default;
+  // API docs are an attack-surface / information leak in production.
+  enableSwagger: required("ENABLE_SWAGGER", "false") === "true",
 
   // Public base URL of this API (webhook callbacks, absolute asset URLs).
   appUrl: required("APP_URL", `http://localhost:${required("PORT", 4000)}`),
@@ -96,10 +109,11 @@ const env = {
     from: required("EMAIL_FROM", "no-reply@amooguru.com"),
   },
 
-  // Payment gateway (Razorpay / Stripe). Webhook signature verification
-  // should be enabled in production.
+  // Payment gateway (Razorpay). Webhook signature verification is mandatory in
+  // production. 'mock' is dev-only; 'stripe' is rejected in production because
+  // the frontend checkout and webhook verification are Razorpay-only.
   payments: {
-    gateway: required("PAYMENT_GATEWAY", "mock"), // mock | razorpay | stripe
+    gateway: required("PAYMENT_GATEWAY", "mock"), // mock | razorpay
     key: required("PAYMENT_KEY", ""),
     secret: required("PAYMENT_SECRET", ""),
     webhookSecret: required("PAYMENT_WEBHOOK_SECRET", ""),
@@ -155,8 +169,31 @@ if (env.isProd && env.payments.gateway === "mock") {
   );
 }
 
+if (env.isProd && env.payments.gateway === "stripe") {
+  throw new Error(
+    "PAYMENT_GATEWAY=stripe is not supported by this build — the frontend checkout and webhook are Razorpay-only. Set PAYMENT_GATEWAY=razorpay."
+  );
+}
+
 if (env.isProd && !env.payments.webhookSecret) {
   throw new Error("PAYMENT_WEBHOOK_SECRET is required in production");
+}
+
+if (env.isProd && env.devDebugTokens) {
+  throw new Error(
+    "DEV_DEBUG_TOKENS must be disabled in production — it returns OTPs and verification tokens in API responses."
+  );
+}
+
+// Email backs the forgot-password OTP and verify-email flows, both of which
+// 500 in production when email is unconfigured. Require it at boot so a deploy
+// that forgets SMTP fails loudly instead of breaking those flows for users.
+if (env.isProd && !env.email.enabled) {
+  throw new Error("EMAIL_ENABLED must be true in production — forgot-password and verify-email depend on SMTP.");
+}
+
+if (env.isProd && env.email.enabled && !env.email.host) {
+  throw new Error("EMAIL_HOST is required when EMAIL_ENABLED=true in production.");
 }
 
 // Email links are built on clientUrl. A localhost value in production means
