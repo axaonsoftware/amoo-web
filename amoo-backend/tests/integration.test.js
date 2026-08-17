@@ -77,6 +77,11 @@ after(() => new Promise((ok) => server.close(ok)));
 // pass `csrf: false` (or an explicit `csrf` value) to exercise the guard.
 const CSRF_TOKEN = "a".repeat(64);
 
+// Booking dates must satisfy the booking schema's future-date rule
+// (Joi .min("now")), so always derive them relative to "now" rather than
+// hardcoding a calendar year that drifts into the past.
+const FUTURE_DATE = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 async function api(method, path, opts = {}) {
   const headers = { "Content-Type": "application/json", ...opts.headers };
   const csrf = opts.csrf === undefined ? CSRF_TOKEN : opts.csrf;
@@ -236,7 +241,7 @@ describe("POST /api/bookings", () => {
     mockResolvedValue([{ }]);                                        // 7: COMMIT (client.query)
     mockResolvedValue([{                                          // 8: SELECT created booking
       id: 1, booking_ref: "BOOK-T", user_id: 1, service_id: 1,
-      date: "2025-06-15", time: "10:00", amount: 100,
+      date: FUTURE_DATE, time: "10:00", amount: 100,
       payment: "Pending", status: "pending-payment",
     }]);
   }
@@ -246,7 +251,7 @@ describe("POST /api/bookings", () => {
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
-      body: { service_id: 1, slot_id: 1, date: "2025-06-15", time: "10:00",
+      body: { service_id: 1, slot_id: 1, date: FUTURE_DATE, time: "10:00",
               amount: 100, method: "card" },
     });
     assert.strictEqual(res.status, 201);
@@ -262,7 +267,7 @@ describe("POST /api/bookings", () => {
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
-      body: { service_id: 1, slot_id: 1, date: "2025-06-15", time: "10:00",
+      body: { service_id: 1, slot_id: 1, date: FUTURE_DATE, time: "10:00",
               amount: 100, payment: "Paid", method: "card" },
     });
     assert.strictEqual(res.status, 201);
@@ -285,14 +290,14 @@ describe("POST /api/bookings", () => {
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
-      body: { service_id: 1, date: "2025-06-15", time: "10:00", amount: 999 },
+      body: { service_id: 1, date: FUTURE_DATE, time: "10:00", amount: 999 },
     });
     assert.strictEqual(res.status, 400);
   });
 
   it("rejects unauthenticated requests", async () => {
     const res = await api("POST", "/api/bookings", {
-      body: { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0 },
+      body: { service_id: 1, date: FUTURE_DATE, time: "10:00", amount: 0 },
     });
     assert.strictEqual(res.status, 401);
   });
@@ -304,7 +309,7 @@ describe("GET /api/bookings/:id — cross-user security", () => {
   it("user can see own booking", async () => {
     mockResolvedValue([{ token_version: 0 }]);                     // checkTokenVersion
     mockResolvedValue([{                                            // SELECT booking
-      id: 1, user_id: 1, service_id: 1, date: "2025-06-15",
+      id: 1, user_id: 1, service_id: 1, date: FUTURE_DATE,
       time: "10:00", amount: 100, payment: "Paid", status: "upcoming",
       user_name: "Test", expert_name: null, service_name: "Svc",
     }]);
@@ -318,7 +323,7 @@ describe("GET /api/bookings/:id — cross-user security", () => {
   it("user CANNOT see another user's booking", async () => {
     mockResolvedValue([{ token_version: 0 }]);                     // checkTokenVersion
     mockResolvedValue([{                                            // booking owned by user_id=1
-      id: 1, user_id: 1, service_id: 1, date: "2025-06-15",
+      id: 1, user_id: 1, service_id: 1, date: FUTURE_DATE,
       time: "10:00", amount: 100, payment: "Paid", status: "upcoming",
       user_name: "Test", expert_name: null, service_name: "Svc",
     }]);
@@ -332,7 +337,7 @@ describe("GET /api/bookings/:id — cross-user security", () => {
   it("admin can see any user's booking", async () => {
     mockResolvedValue([{ token_version: 0 }]);                     // adminRequired
     mockResolvedValue([{                                            // SELECT booking
-      id: 1, user_id: 1, service_id: 1, date: "2025-06-15",
+      id: 1, user_id: 1, service_id: 1, date: FUTURE_DATE,
       time: "10:00", amount: 100, payment: "Paid", status: "upcoming",
       user_name: "Test", expert_name: null, service_name: "Svc",
     }]);
@@ -354,7 +359,7 @@ describe("CSRF protection", () => {
     const res = await api("POST", "/api/bookings", {
       csrf: false,
       headers: { Authorization: `Bearer ${userToken}` },
-      body: { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0 },
+      body: { service_id: 1, date: FUTURE_DATE, time: "10:00", amount: 0 },
     });
     assert.strictEqual(res.status, 403);
     assert.match(res.body.error, /CSRF/);
@@ -364,7 +369,7 @@ describe("CSRF protection", () => {
     const res = await api("POST", "/api/bookings", {
       csrf: "b".repeat(64), // valid shape, wrong value
       headers: { Authorization: `Bearer ${userToken}` },
-      body: { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0 },
+      body: { service_id: 1, date: FUTURE_DATE, time: "10:00", amount: 0 },
     });
     assert.strictEqual(res.status, 403);
     assert.match(res.body.error, /CSRF/);

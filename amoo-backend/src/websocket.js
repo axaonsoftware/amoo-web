@@ -1,5 +1,5 @@
 const { WebSocketServer } = require("ws");
-const { authRequired } = require("./middleware/auth");
+const { checkTokenVersion } = require("./middleware/auth");
 const { pool } = require("./config/db");
 const logger = require("./utils/logger");
 
@@ -18,7 +18,7 @@ function attachChat(server) {
   // Map: ws._id -> { ws, userId, kind, convId }
   const clients = new Map();
 
-  wss.on("connection", (ws, req) => {
+  wss.on("connection", async (ws, req) => {
     // Try to authenticate the connection. Accept either:
     //   1. A Bearer token in the URL query string (?token=...)
     //   2. The access_token cookie (browser sends it automatically).
@@ -34,6 +34,7 @@ function attachChat(server) {
       const jwt = require("jsonwebtoken");
       const env = require("./config/env");
       const decoded = jwt.verify(token, env.jwt.secret);
+      await checkTokenVersion(decoded);
       ws._userId = decoded.id;
       ws._kind = decoded.kind;
     } catch {

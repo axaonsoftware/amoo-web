@@ -85,10 +85,12 @@ app.use(cookieParser());
 setupSwagger(app);
 
 // --- CSRF (double-submit cookie) ---
-// Auth rides on an httpOnly cookie, which the browser attaches to cross-site
-// requests too, so every state-changing call must also echo a token that only
-// our own frontend can read. generateCsrfToken issues/refreshes the readable
-// cookie; csrfGuard enforces the match on unsafe methods.
+// SameSite=Lax prevents cookies from being sent on cross-site requests, but
+// CSRF is still needed as defense-in-depth: a malicious page can trigger
+// top-level navigations and HTML form POSTs that carry cookies. The
+// double-submit pattern issues a readable csrf_token cookie; the frontend
+// echoes it in the X-CSRF-Token header on every mutating call, and csrfGuard
+// enforces the match.
 app.use(generateCsrfToken);
 app.use(csrfGuard);
 

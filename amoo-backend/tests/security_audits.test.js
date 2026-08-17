@@ -6,7 +6,7 @@ const path = require("path");
 describe("Security Issue 1: POST /api/bookings payment field stripping & pending status", () => {
   it("schema strips client-supplied payment field", () => {
     const { schemas } = require("../src/middleware/validate");
-    const input = { service_id: 1, date: "2026-08-01", time: "10:00", amount: 100, payment: "Paid" };
+    const input = { service_id: 1, date: "2027-01-01", time: "10:00", amount: 100, payment: "Paid" };
     const { value } = schemas.booking.validate(input, { stripUnknown: true });
     assert.strictEqual(value.payment, undefined);
   });

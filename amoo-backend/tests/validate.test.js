@@ -31,7 +31,7 @@ describe("register schema", () => {
 });
 
 describe("booking schema", () => {
-  const valid = { service_id: 1, date: "2025-06-15", time: "10:00", amount: 0 };
+  const valid = { service_id: 1, date: "2027-01-01", time: "10:00", amount: 0 };
 
   it("accepts valid input", () => {
     assert.strictEqual(check(schemas.booking, valid), null);

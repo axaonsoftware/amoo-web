@@ -253,7 +253,11 @@ router.post(
       throw new HttpError(401, "Invalid or expired refresh token");
     }
     const table = payload.kind === "admin" ? "admins" : payload.kind === "expert" ? "experts" : "users";
-    const { rows } = await pool.query(`SELECT id, token_version, refresh_jti FROM ${table} WHERE id = $1`, [payload.id]);
+    const deletedAtFilter = table === "users" ? " AND deleted_at IS NULL" : "";
+    const { rows } = await pool.query(
+      `SELECT id, token_version, refresh_jti FROM ${table} WHERE id = $1${deletedAtFilter}`,
+      [payload.id]
+    );
     if (!rows.length) throw new HttpError(401, "Account no longer exists");
     if (rows[0].token_version !== payload.tokenVersion) {
       throw new HttpError(401, "Session revoked. Please login again.");
@@ -281,6 +285,19 @@ router.post(
 router.post(
   "/logout",
   asyncHandler(async (req, res) => {
+    const refreshToken = req.cookies?.refresh_token;
+    if (refreshToken) {
+      try {
+        const payload = verifyRefreshToken(refreshToken);
+        const table = payload.kind === "admin" ? "admins" : payload.kind === "expert" ? "experts" : "users";
+        await pool.query(
+          `UPDATE ${table} SET token_version = token_version + 1, refresh_jti = NULL WHERE id = $1`,
+          [payload.id]
+        );
+      } catch {
+        // Token already invalid/expired — nothing to revoke server-side.
+      }
+    }
     clearAuthCookies(res);
     ok(res, { message: "Logged out" });
   })

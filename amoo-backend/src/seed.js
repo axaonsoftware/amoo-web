@@ -75,9 +75,13 @@ async function seed() {
     ["Aura Report", "Energy Aura Analysis", "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aura_scanner.png", "Healing", "Report", 599, "Instant", "Active", 213],
   ];
   for (const s of services) {
+    // No UNIQUE constraint on services.name, so `ON CONFLICT (name)` would
+    // error with 42P10. Insert only when absent (idempotent).
+    const { rows } = await pool.query("SELECT 1 FROM services WHERE name = $1", [s[0]]);
+    if (rows.length) continue;
     await pool.query(
       `INSERT INTO services (name, sub, img, category, type, price, duration, status, bookings)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
       s
     );
   }
@@ -94,11 +98,15 @@ async function seed() {
   }
 
   // Packages
-  await pool.query(
-    `INSERT INTO packages (name, description, price, duration_days, status)
-     VALUES ($1, $2, $3, $4, $5) ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name`,
-    ["Premium Healing Package", "Unlimited reiki + tarot for 3 months", 4999, 90, "Active"]
-  );
+  const pkg = ["Premium Healing Package", "Unlimited reiki + tarot for 3 months", 4999, 90, "Active"];
+  const pkgExists = await pool.query("SELECT 1 FROM packages WHERE name = $1", [pkg[0]]);
+  if (!pkgExists.rows.length) {
+    await pool.query(
+      `INSERT INTO packages (name, description, price, duration_days, status)
+       VALUES ($1, $2, $3, $4, $5)`,
+      pkg
+    );
+  }
 
   // Coupons
   await pool.query(
@@ -116,11 +124,17 @@ async function seed() {
   );
 
   // Subscription for first user
-  await pool.query(
-    `INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at)
-     VALUES (1, 1, 'Premium Healing Package', NOW() + INTERVAL '90 days')
-     ON CONFLICT (user_id, package_id) DO UPDATE SET plan_name = EXCLUDED.plan_name`
+  const subExists = await pool.query(
+    "SELECT 1 FROM subscriptions WHERE user_id = $1 AND package_id = $2",
+    [1, 1]
   );
+  if (!subExists.rows.length) {
+    await pool.query(
+      `INSERT INTO subscriptions (user_id, package_id, plan_name, expires_at)
+       VALUES ($1, $2, $3, NOW() + INTERVAL '90 days')`,
+      [1, 1, 'Premium Healing Package']
+    );
+  }
 
   // Notifications
   await pool.query(
@@ -194,10 +208,11 @@ async function seed() {
     ["Do you offer corporate or group sessions?", "Yes, we offer special group sessions for corporate wellness programs, team building, and family gatherings. Contact us for customised packages and pricing.", "General", 6],
   ];
   for (const f of faqs) {
+    const { rows } = await pool.query("SELECT 1 FROM faqs WHERE question = $1", [f[0]]);
+    if (rows.length) continue;
     await pool.query(
       `INSERT INTO faqs (question, answer, category, sort_order, active)
-       VALUES ($1, $2, $3, $4, true)
-       ON CONFLICT (question) DO UPDATE SET question = EXCLUDED.question`,
+       VALUES ($1, $2, $3, $4, true)`,
       f
     );
   }

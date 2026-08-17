@@ -117,8 +117,16 @@ const schemas = {
     service_id: Joi.number().integer().positive().required(),
     expert_id: optionalNumber.integer().positive(),
     slot_id: optionalNumber.integer().positive(),
-    date: Joi.date().iso().min("now").required()
-      .messages({ "date.min": "Booking date must be in the future" }),
+    // Same-day bookings are allowed, so reject only dates before today 00:00.
+    date: Joi.date().iso()
+      .custom((value, helpers) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (new Date(value) < today) return helpers.error("date.min");
+        return value;
+      }, "today or later")
+      .messages({ "date.min": "Booking date cannot be in the past" })
+      .required(),
     time: Joi.string().required(),
     mode: Joi.string().valid("chat", "video", "in-person", "").allow(null),
     amount: Joi.number().min(0).required(),
