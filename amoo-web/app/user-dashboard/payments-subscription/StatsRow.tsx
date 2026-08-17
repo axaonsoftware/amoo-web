@@ -38,10 +38,9 @@ export default function StatsRow() {
     () => api.getWallet(),
     [],
   );
-  const { data: subsData, loading: sLoading } = useApi<any>(
-    () => api.getSubscriptions(),
-    [],
-  );
+  const { data: subsData, loading: sLoading } = useApi<{
+    data?: Subscription[];
+  }>(() => api.getSubscriptions(), []);
 
   const loading = wLoading || sLoading;
 

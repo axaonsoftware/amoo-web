@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import type { Slot } from "@/lib/types";
 
 const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -21,7 +22,7 @@ const legend = [
   { label: "Cancelled", color: "bg-[#f43f5e]" },
 ];
 
-function buildDays(slots: any[]): Day[] {
+function buildDays(slots: Slot[]): Day[] {
   const now = new Date();
   const today = now.getDate();
   const year = now.getFullYear();
@@ -31,7 +32,7 @@ function buildDays(slots: any[]): Day[] {
   const startPad = first.getDay();
   const totalDays = last.getDate();
   const slotDates = new Set<number>();
-  (slots || []).forEach((s: any) => {
+  (slots || []).forEach((s) => {
     try {
       const d = new Date(s.date || s.start_time);
       if (!isNaN(d.getTime()) && d.getMonth() === month)
@@ -67,7 +68,7 @@ export default function CalendarCard() {
     items: slotArray,
     loading,
     error,
-  } = useApiList<any>(() => api.getSlots());
+  } = useApiList<Slot>(() => api.getSlots());
   const days = buildDays(slotArray);
 
   if (loading) {

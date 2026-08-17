@@ -40,15 +40,20 @@ const ICON_COLOR_MAP: Record<string, string> = {
   "Reiki Healing": "text-[#8b5cf6]",
 };
 
+type ServiceEntry = {
+  category?: string;
+  type?: string;
+};
+
 export default function ReportCategories() {
   // /api/services is paginated -> `{ data, meta }`, never a bare array.
   const {
     items: services,
     loading,
     error,
-  } = useApiList<any>(() => api.getServices());
+  } = useApiList<ServiceEntry>(() => api.getServices());
   const grouped: Record<string, number> = {};
-  services.forEach((s: any) => {
+  services.forEach((s) => {
     const key = s.category || s.type || "Other";
     grouped[key] = (grouped[key] || 0) + 1;
   });

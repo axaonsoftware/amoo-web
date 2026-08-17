@@ -23,15 +23,22 @@ const ICON_MAP: Record<
   Target,
 };
 
+type Tool = {
+  id: number;
+  name: string;
+  category?: string;
+  description?: string | null;
+};
+
 export default function PopularTools() {
   // /api/services is paginated -> `{ data, meta }`, never a bare array.
   const {
     items: services,
     loading,
     error,
-  } = useApiList<any>(() => api.getServices());
+  } = useApiList<Tool>(() => api.getServices());
   const numerologyServices = services.filter(
-    (s: any) => ((s.category as string) || "").toLowerCase() === "numerology",
+    (s) => ((s.category as string) || "").toLowerCase() === "numerology",
   );
   return (
     <section className="rounded-[14px] border border-[#ece9f3] bg-white px-5 py-[16px] shadow-[0_1px_3px_rgba(43,15,71,.04)]">
@@ -61,7 +68,7 @@ export default function PopularTools() {
         </p>
       ) : (
         <div className="mt-3.5 grid grid-cols-2 gap-[10px] sm:grid-cols-3 lg:grid-cols-5">
-          {numerologyServices.slice(0, 5).map((s: any, i: number) => {
+          {numerologyServices.slice(0, 5).map((s, i: number) => {
             const iconNames = ["Star", "Heart", "Smile", "Mountain", "Target"];
             const Icon = ICON_MAP[iconNames[i]] || Star;
             return (

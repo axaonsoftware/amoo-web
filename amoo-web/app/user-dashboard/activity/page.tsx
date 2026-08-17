@@ -7,7 +7,7 @@ import api from "../../../lib/api";
 type ActivityItem = {
   id: number;
   action: string;
-  action_details: any | null;
+  action_details: Record<string, unknown> | null;
   page_or_route: string | null;
   created_at: string;
 };

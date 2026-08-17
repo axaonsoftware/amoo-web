@@ -4,17 +4,23 @@ import Link from "next/link";
 import { ArrowRight, Gift, Loader2 } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import type { Package } from "@/lib/types";
+
+type OfferPackage = Omit<Package, "status"> & {
+  code?: string;
+  status: string;
+};
 
 export default function AvailableOffers() {
   const {
     data: packages,
     loading,
     error,
-  } = useApi<any[]>(() => api.getPackages());
+  } = useApi<OfferPackage[]>(() => api.getPackages());
   const offers = (packages ?? [])
-    .filter((p: any) => p.status !== "inactive")
+    .filter((p) => p.status !== "inactive")
     .slice(0, 2)
-    .map((p: any) => ({
+    .map((p) => ({
       code: p.name || p.code || "OFFER",
       desc: p.description || `Special offer`,
       Icon: Gift,

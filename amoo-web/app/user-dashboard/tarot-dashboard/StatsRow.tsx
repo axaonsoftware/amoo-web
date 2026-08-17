@@ -10,7 +10,12 @@ export default function StatsRow() {
     data: stats,
     loading,
     error,
-  } = useApi<any>(() => api.getReportStats());
+  } = useApi<{
+    tarot_total?: number;
+    tarot_favorites?: number;
+    tarot_downloaded?: number;
+    tarot_this_month?: number;
+  }>(() => api.getReportStats());
   const s = stats || {};
 
   const statItems = [

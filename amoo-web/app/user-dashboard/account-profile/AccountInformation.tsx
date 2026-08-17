@@ -11,19 +11,27 @@ import {
 } from "lucide-react";
 import { useApi, useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import type { Subscription, User } from "@/lib/types";
+
+type ProfileUser = User & {
+  points?: number | string;
+  wallet_balance?: number | string;
+};
+
+type ProfilePayload = { user?: ProfileUser } & Partial<ProfileUser>;
 
 export default function AccountInformation() {
   const {
     data: profile,
     loading: pLoading,
     error: pError,
-  } = useApi<any>(() => api.getProfile());
+  } = useApi<ProfilePayload>(() => api.getProfile());
   // /api/subscriptions is paginated -> `{ data, meta }`, never a bare array.
-  const { items: subs, loading: sLoading } = useApiList<any>(() =>
+  const { items: subs, loading: sLoading } = useApiList<Subscription>(() =>
     api.getSubscriptions(),
   );
-  const user = profile?.user || profile || {};
-  const hasPremium = subs.some((s: any) => s.status === "active");
+  const user = (profile?.user || profile || {}) as ProfileUser;
+  const hasPremium = subs.some((s) => s.status === "active");
   const loading = pLoading || sLoading;
 
   const tiles = [

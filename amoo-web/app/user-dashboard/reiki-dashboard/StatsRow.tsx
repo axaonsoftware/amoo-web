@@ -3,31 +3,36 @@ import { ArrowRight, CalendarDays, HeartPulse, Leaf, Star } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { LotusGlyph } from "./icons";
 import { useApi } from "@/lib/useApi";
-import { api } from "@/lib/api";
+import { api, unwrapList } from "@/lib/api";
+import type { Booking } from "@/lib/types";
+
+type ReportStats = {
+  reiki_has_chakra_data?: number;
+};
 
 export default function StatsRow() {
   const {
     data: reportStats,
     loading: statsLoading,
     error: statsError,
-  } = useApi<any>(() => api.getReportStats());
-  const { data: bookings } = useApi<any>(() => api.getBookings());
+  } = useApi<ReportStats>(() => api.getReportStats());
+  const { data: bookings } = useApi<unknown>(() => api.getBookings());
 
-  const allBookings: any[] = ((bookings as any)?.data as any[]) ?? [];
+  const allBookings: Booking[] = unwrapList<Booking>(bookings);
 
   const upcomingReiki = allBookings.find(
-    (b: any) =>
+    (b) =>
       (b.service_name || "").toLowerCase().includes("reiki") &&
       (b.status === "upcoming" || b.status === "pending-payment"),
   );
 
   const completedSessions = allBookings.filter(
-    (b: any) =>
+    (b) =>
       (b.service_name || "").toLowerCase().includes("reiki") &&
       b.status === "completed",
   ).length;
 
-  const s = reportStats || {};
+  const s: ReportStats = reportStats ?? {};
   const totalReiki = s.reiki_has_chakra_data ?? completedSessions;
 
   const stats = [

@@ -212,7 +212,7 @@ export default function PersonalInformation() {
     loading,
     error,
     refetch,
-  } = useApi<any>(() => api.getProfile());
+  } = useApi<{ user?: Profile } & Partial<Profile>>(() => api.getProfile());
   const user: Profile = profile?.user || profile || {};
 
   const [editing, setEditing] = useState(false);

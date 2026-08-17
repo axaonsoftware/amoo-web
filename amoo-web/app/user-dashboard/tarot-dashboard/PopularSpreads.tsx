@@ -19,15 +19,24 @@ const ART_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   "Celtic Cross": CelticCrossArt,
 };
 
+type Spread = {
+  id: number;
+  name: string;
+  category?: string;
+  type?: string;
+  duration?: string | null;
+  description?: string | null;
+};
+
 export default function PopularSpreads() {
   // /api/services is paginated -> `{ data, meta }`, never a bare array.
   const {
     items: services,
     loading,
     error,
-  } = useApiList<any>(() => api.getServices());
+  } = useApiList<Spread>(() => api.getServices());
   const tarotServices = services.filter(
-    (s: any) =>
+    (s) =>
       s.category === "Tarot" ||
       ((s.type as string) || "").toLowerCase() === "tarot",
   );
@@ -59,7 +68,7 @@ export default function PopularSpreads() {
         </p>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-[10px] sm:grid-cols-3 lg:grid-cols-5">
-          {tarotServices.slice(0, 5).map((s: any, i: number) => {
+          {tarotServices.slice(0, 5).map((s, i: number) => {
             const Art = ART_MAP[s.name] || DailyGuidanceArt;
             return (
               <div

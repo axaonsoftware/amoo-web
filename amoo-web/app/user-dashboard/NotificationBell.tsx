@@ -67,7 +67,7 @@ export default function NotificationBell() {
       api
         .getUnreadCount()
         .then((res: unknown) => {
-          setUnread(Number((res as any)?.count ?? 0));
+          setUnread(Number((res as { count?: number })?.count ?? 0));
         })
         .catch(() => {})
         .finally(() => setFetchingCount(false));
@@ -85,7 +85,7 @@ export default function NotificationBell() {
     api
       .getNotifications()
       .then((res: unknown) => {
-        const d = res as any;
+        const d = res as { data?: Notification[] };
         const list = Array.isArray(d?.data)
           ? d.data
           : Array.isArray(res)

@@ -15,7 +15,9 @@ type Sub = {
 
 export default function SubscriptionCard() {
   const { data, loading, error } = useApi<Sub[]>(() => api.getSubscriptions());
-  const subs = Array.isArray(data) ? data : ((data as any)?.data ?? []);
+  const subs = Array.isArray(data)
+    ? data
+    : (((data as unknown as { data?: Sub[] })?.data ?? []) as Sub[]);
   const sub: Sub | undefined = Array.isArray(subs) ? subs[0] : undefined;
   const planDetails = sub
     ? [

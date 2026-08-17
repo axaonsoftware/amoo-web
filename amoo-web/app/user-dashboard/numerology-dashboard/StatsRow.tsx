@@ -15,7 +15,12 @@ export default function StatsRow() {
     data: stats,
     loading,
     error,
-  } = useApi<any>(() => api.getReportStats());
+  } = useApi<{
+    numerology_total?: number;
+    numerology_downloaded?: number;
+    numerology_favorites?: number;
+    numerology_this_year?: number;
+  }>(() => api.getReportStats());
   const s = stats || {};
 
   const statItems = [

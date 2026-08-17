@@ -6,12 +6,18 @@ import { ChakraGlyph, SparkleGlyph } from "./icons";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
+type ChakraPoint = {
+  label?: string;
+  pct?: number;
+  color?: string;
+};
+
 type Report = {
   id: number;
   title: string;
   type: string;
   created_at: string;
-  chakra_data?: any[];
+  chakra_data?: ChakraPoint[];
 };
 
 const DEFAULT_CHAKRAS = [
@@ -33,7 +39,7 @@ export default function ChakraBalance() {
   );
   const chakras =
     reikiReports.length > 0 && reikiReports[0].chakra_data
-      ? (reikiReports[0].chakra_data as any[]).map((c: any, i: number) => ({
+      ? (reikiReports[0].chakra_data as ChakraPoint[]).map((c, i) => ({
           label: c.label || DEFAULT_CHAKRAS[i]?.label || "",
           pct: c.pct ?? DEFAULT_CHAKRAS[i]?.pct ?? 0,
           color: c.color || DEFAULT_CHAKRAS[i]?.color || "#888",

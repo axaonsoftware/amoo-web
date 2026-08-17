@@ -16,7 +16,12 @@ export default function StatsRow() {
     data: stats,
     loading,
     error,
-  } = useApi<any>(() => api.getReportStats());
+  } = useApi<{
+    kundali_total?: number;
+    kundali_this_year?: number;
+    kundali_compatibility?: number;
+    kundali_downloaded?: number;
+  }>(() => api.getReportStats());
   const s = stats || {};
 
   const statItems = [
