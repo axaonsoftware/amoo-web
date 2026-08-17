@@ -40,8 +40,8 @@ const limiter = rateLimit({
 
 // Stricter limit for auth/security-sensitive endpoints.
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 30,
+  windowMs: env.rateLimit.authWindowMs,
+  max: env.rateLimit.authMax,
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: "Too many attempts, please try again later." },
@@ -49,8 +49,8 @@ const authLimiter = rateLimit({
 
 // Registration is its own target: prevents account/email spam & enumeration floods.
 const registerLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // per IP
+  windowMs: env.rateLimit.registerWindowMs, // 1 hour by default
+  max: env.rateLimit.registerMax, // per IP
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: "Too many registrations from this address, please try later." },

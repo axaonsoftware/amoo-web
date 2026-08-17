@@ -47,6 +47,14 @@ const env = {
   rateLimit: {
     windowMs: Number(required("RATE_LIMIT_WINDOW_MS", "900000")),
     max: Number(required("RATE_LIMIT_MAX", "200")),
+    // Auth-sensitive endpoints get a stricter per-IP budget. Configurable so a
+    // deploy can tune it without a code change; defaults are the production
+    // policy (deliberately conservative against credential stuffing).
+    authWindowMs: Number(required("RATE_LIMIT_AUTH_WINDOW_MS", "900000")),
+    authMax: Number(required("RATE_LIMIT_AUTH_MAX", "30")),
+    // Registration spam / enumeration guard gets its own per-IP budget.
+    registerWindowMs: Number(required("RATE_LIMIT_REGISTER_WINDOW_MS", "3600000")),
+    registerMax: Number(required("RATE_LIMIT_REGISTER_MAX", "10")),
   },
 
   lockout: {
