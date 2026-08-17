@@ -33,9 +33,10 @@ describe("Security Issue 3: seed.js production refusal & password protection", (
     assert.ok(code.includes("Refusing to seed"), "seed.js must log error on production");
   });
 
-  it("admin insertion uses ON CONFLICT ... DO UPDATE SET id = EXCLUDED.id", () => {
+  it("admin insertion never overwrites an existing password hash or primary key", () => {
     const code = fs.readFileSync(path.join(__dirname, "../src/seed.js"), "utf8");
-    assert.ok(code.includes("ON CONFLICT (email) DO UPDATE SET id = EXCLUDED.id"), "Admin insert must not overwrite existing password");
+    assert.ok(code.includes("ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name"), "Admin insert must not overwrite existing password");
+    assert.ok(!code.includes("DO UPDATE SET id = EXCLUDED.id"), "Admin insert must not reassign the primary key (breaks dependent FKs on re-seed)");
   });
 });
 

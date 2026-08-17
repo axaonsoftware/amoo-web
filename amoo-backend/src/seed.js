@@ -26,7 +26,7 @@ async function seed() {
   await pool.query(
     `INSERT INTO admins (name, email, password_hash, role)
        VALUES ('Admin', 'admin@amooguru.com', $1, 'admin')
-       ON CONFLICT (email) DO UPDATE SET id = EXCLUDED.id`,
+       ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name`,
     [adminHash]
   );
 
@@ -59,7 +59,7 @@ async function seed() {
   for (const e of experts) {
     await pool.query(
       `INSERT INTO experts (name, email, password_hash, verified, role_title, specialties, rating)
-       VALUES ($1, $2, $3, true, $4, $5, $6) ON CONFLICT (email) DO UPDATE SET id = EXCLUDED.id`,
+       VALUES ($1, $2, $3, true, $4, $5, $6) ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name`,
       [e[0], e[1], expertHash, e[2], e[3], e[4]]
     );
   }
