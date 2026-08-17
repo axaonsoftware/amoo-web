@@ -26,11 +26,11 @@ function generateJti() {
 }
 
 function verifyAccessToken(token) {
-  return jwt.verify(token, env.jwt.secret);
+  return jwt.verify(token, env.jwt.secret, { algorithms: ["HS256"] });
 }
 
 function verifyRefreshToken(token) {
-  return jwt.verify(token, env.jwt.refreshSecret);
+  return jwt.verify(token, env.jwt.refreshSecret, { algorithms: ["HS256"] });
 }
 
 // Browsers authenticate via the httpOnly `access_token` cookie; non-browser API
@@ -191,5 +191,6 @@ module.exports = {
   adminRequired,
   expertRequired,
   withAudit,
+  checkTokenVersion,
   clearTokenVersionCache,
 };
