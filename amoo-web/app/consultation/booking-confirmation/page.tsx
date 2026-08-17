@@ -1,4 +1,7 @@
+"use client";
+
 import { HomeHeader, OfferBar } from "../../components/home-header";
+import { RequireAuth } from "../../../lib/auth-context";
 import Stepper from "./Stepper";
 import ConfirmationHeader from "./ConfirmationHeader";
 import BookingDetailsCard from "./BookingDetailsCard";
@@ -11,7 +14,7 @@ import ActionButtons from "./ActionButtons";
 import { SiteFooter } from "../../components/site-footer";
 import WhatsAppFloatButton from "./WhatsAppFloatButton";
 
-export default function BookingConfirmationPage() {
+function BookingConfirmationPageInner() {
   return (
     <main id="main-content" className="min-h-screen bg-[#FCF9F3]">
       <OfferBar />
@@ -45,5 +48,13 @@ export default function BookingConfirmationPage() {
       <SiteFooter />
       <WhatsAppFloatButton />
     </main>
+  );
+}
+
+export default function BookingConfirmationPage() {
+  return (
+    <RequireAuth>
+      <BookingConfirmationPageInner />
+    </RequireAuth>
   );
 }

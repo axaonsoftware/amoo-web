@@ -10,11 +10,24 @@ import {
   MessageCircle,
   Loader2,
   AlertCircle,
+  type LucideIcon,
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { WHATSAPP_URL } from "../../../lib/constants";
+import type { Package } from "../../../lib/types";
 
-const STATIC_PACKAGES = [
+interface SpecialPackage {
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  items: string[];
+}
+
+interface ApiPackage extends Package {
+  sub?: string | null;
+}
+
+const STATIC_PACKAGES: SpecialPackage[] = [
   {
     icon: Flower2,
     title: "REIKI HEALING PACKAGES",
@@ -47,32 +60,41 @@ const STATIC_PACKAGES = [
   },
 ];
 
-const PKG_ICONS = [Flower2, Hash, Layers, CircleDot, InfinityIcon];
+const PKG_ICONS: LucideIcon[] = [
+  Flower2,
+  Hash,
+  Layers,
+  CircleDot,
+  InfinityIcon,
+];
 
 export default function SpecialPackages() {
-  const [packages, setPackages] = useState<any[] | null>(null);
+  const [packages, setPackages] = useState<ApiPackage[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .getPackages()
-      .then((res: any) => {
-        const items = (res?.data ?? Array.isArray(res)) ? res : [];
+      .then((res: unknown) => {
+        const payload = res as { data?: ApiPackage[] } | ApiPackage[];
+        const items = Array.isArray(payload)
+          ? (payload as ApiPackage[])
+          : (payload?.data ?? []);
         if (items.length) setPackages(items);
       })
       .catch(() => setError("Failed to load packages. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 
-  const displayPackages =
+  const displayPackages: SpecialPackage[] =
     packages && packages.length
-      ? packages.map((pkg: any, i: number) => ({
+      ? packages.map((pkg, i) => ({
           icon: PKG_ICONS[i % PKG_ICONS.length],
           title: (pkg.name || "Package").toUpperCase(),
           desc: pkg.description || "",
           items: pkg.sub
-            ? pkg.sub.split(",").map((s: string) => s.trim())
+            ? pkg.sub.split(",").map((s) => s.trim())
             : ["Available"],
         }))
       : STATIC_PACKAGES;
@@ -112,7 +134,7 @@ export default function SpecialPackages() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[repeat(5,1fr)_260px] gap-5 items-stretch">
-          {displayPackages.map((pkg: any) => {
+          {displayPackages.map((pkg) => {
             const Icon = pkg.icon;
             return (
               <div

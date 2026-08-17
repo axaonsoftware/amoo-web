@@ -16,6 +16,15 @@ import { api } from "../../../lib/api";
 
 const UNAVAILABLE = [3, 4, 5];
 
+// The backend rejects bookings whose date is not strictly in the future
+// (`date.min("now")` in the booking schema). Computing the disabled set once
+// per render keeps past AND today's cells out of the picker.
+function todayMidnight(): number {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const PERIODS = [
@@ -114,6 +123,7 @@ export default function DateTimeCard({
   const firstDayOfWeek = new Date(selectedYear, selectedMonth, 1).getDay();
   const month = MONTH_NAMES[selectedMonth];
   const monthLabel = `${month} ${selectedYear}`;
+  const minDate = todayMidnight();
 
   const prevMonth = () => {
     if (selectedMonth === 0) {
@@ -147,18 +157,24 @@ export default function DateTimeCard({
   useEffect(() => {
     api
       .getSlots()
-      .then((res: any) => {
-        const list = Array.isArray(res) ? res : (res?.data ?? []);
-        if (list.length) {
-          const grouped: Record<string, string[]> = {};
-          for (const slot of list) {
-            const period = slot.period || "Morning";
-            if (!grouped[period]) grouped[period] = [];
-            grouped[period].push(slot.time || slot.label);
+      .then(
+        (
+          res:
+            | { data?: { period?: string; time?: string; label?: string }[] }
+            | { period?: string; time?: string; label?: string }[],
+        ) => {
+          const list = Array.isArray(res) ? res : (res?.data ?? []);
+          if (list.length) {
+            const grouped: Record<string, string[]> = {};
+            for (const slot of list) {
+              const period = slot.period || "Morning";
+              if (!grouped[period]) grouped[period] = [];
+              grouped[period].push(slot.time || slot.label || "");
+            }
+            setSlotsByPeriod((prev) => ({ ...prev, ...grouped }));
           }
-          setSlotsByPeriod((prev) => ({ ...prev, ...grouped }));
-        }
-      })
+        },
+      )
       .catch((e: Error) => setSlotsError(e?.message || "Failed to load slots."))
       .finally(() => setLoadingSlots(false));
   }, []);
@@ -232,6 +248,8 @@ export default function DateTimeCard({
             }
             const isSelected = day === selectedDate;
             const isUnavailable = UNAVAILABLE.includes(day);
+            const isPastOrToday =
+              new Date(selectedYear, selectedMonth, day).getTime() <= minDate;
             const isWeekend = i % 7 === 0 || i % 7 === 6;
             return (
               <span
@@ -240,12 +258,13 @@ export default function DateTimeCard({
               >
                 <button
                   type="button"
-                  disabled={isUnavailable}
+                  disabled={isUnavailable || isPastOrToday}
                   onClick={() => onSelectDate(day)}
+                  aria-disabled={isUnavailable || isPastOrToday}
                   className={`flex h-[36px] w-[36px] items-center justify-center rounded-full text-[13.5px] transition-colors ${
                     isSelected
                       ? "bg-[#3d1a6d] font-semibold text-white shadow-[0_0_0_2px_#fff,0_0_0_4px_#e0a33e]"
-                      : isUnavailable
+                      : isUnavailable || isPastOrToday
                         ? "font-normal text-[#cdc9d4] cursor-not-allowed"
                         : isWeekend
                           ? "font-medium text-[#c9932f] hover:bg-lilac"

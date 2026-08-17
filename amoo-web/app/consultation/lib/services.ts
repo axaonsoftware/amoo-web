@@ -1,4 +1,5 @@
-import { api } from "@/lib/api";
+import { api } from "../../../lib/api";
+import type { Service } from "../../../lib/types";
 
 export type ConsultationService = {
   id: number;
@@ -11,12 +12,16 @@ export type ConsultationService = {
 // /api/services answers the paginated envelope { data, meta }, and MySQL hands
 // DECIMAL columns back as strings ("999.00"), so price needs a Number() here
 // rather than at every call site that does arithmetic on it.
-function unwrapServices(res: any): ConsultationService[] {
-  const rows = Array.isArray(res) ? res : (res?.data ?? []);
-  return rows.map((s: any) => ({
+function unwrapServices(res: unknown): ConsultationService[] {
+  const rows = Array.isArray(res)
+    ? res
+    : ((res as { data?: Service[] })?.data ?? []);
+  return rows.map((s) => ({
     ...s,
     id: Number(s.id),
     price: Number(s.price),
+    duration: s.duration ?? undefined,
+    sub: s.sub ?? undefined,
   }));
 }
 

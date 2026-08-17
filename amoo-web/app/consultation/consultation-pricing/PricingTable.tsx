@@ -9,8 +9,20 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import type { Service } from "../../../lib/types";
 
-const STATIC_ROWS = [
+interface PricingRow {
+  icon: React.FC<{ size?: number; className?: string }>;
+  mode: string;
+  prices: string[];
+  bestFor: string;
+}
+
+interface PricingService extends Service {
+  description?: string | null;
+}
+
+const STATIC_ROWS: PricingRow[] = [
   {
     icon: MessageSquare,
     mode: "Chat Consultation",
@@ -41,40 +53,41 @@ const MODE_ICONS: Record<
 };
 
 export default function PricingTable() {
-  const [services, setServices] = useState<any[] | null>(null);
+  const [services, setServices] = useState<PricingService[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .getServices()
-      .then((res: any) => {
-        const items = ((res?.data ?? Array.isArray(res)) ? res : []) as any[];
+      .then((res: unknown) => {
+        const payload = res as { data?: PricingService[] } | PricingService[];
+        const items = Array.isArray(payload)
+          ? (payload as PricingService[])
+          : (payload?.data ?? []);
         if (items.length) setServices(items);
       })
       .catch(() => setError("Failed to load pricing. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 
-  const rows =
+  const rows: PricingRow[] =
     services && services.length
-      ? services.map((svc: any) => {
+      ? services.map((svc) => {
           const Icon =
-            MODE_ICONS[svc.type as string] ||
+            MODE_ICONS[svc.type] ||
             MODE_ICONS[
-              Object.keys(MODE_ICONS).find((k) =>
-                (svc.name as string)?.includes(k),
-              ) || ""
+              Object.keys(MODE_ICONS).find((k) => svc.name.includes(k)) || ""
             ] ||
             MessageSquare;
           const price = svc.price
-            ? `₹${Number(svc.price as string).toLocaleString("en-IN")}`
+            ? `₹${Number(svc.price).toLocaleString("en-IN")}`
             : "—";
           return {
             icon: Icon,
-            mode: (svc.name as string) || "Service",
+            mode: svc.name || "Service",
             prices: [price, price, price, price],
-            bestFor: (svc.sub as string) || (svc.description as string) || "",
+            bestFor: svc.sub || svc.description || "",
           };
         })
       : STATIC_ROWS;
@@ -111,14 +124,11 @@ export default function PricingTable() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row: any, i: number) => {
-              const Icon = row.icon as React.FC<{
-                size?: number;
-                className?: string;
-              }>;
+            {rows.map((row, i) => {
+              const Icon = row.icon;
               return (
                 <tr
-                  key={row.mode as string}
+                  key={row.mode}
                   className={i % 2 === 0 ? "bg-white" : "bg-gray-50"}
                 >
                   <td className="px-5 py-3.5 flex items-center gap-2 text-gray-700 font-medium">

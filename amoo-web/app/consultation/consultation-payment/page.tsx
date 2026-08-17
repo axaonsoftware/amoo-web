@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { RequireAuth } from "../../../lib/auth-context";
 import Link from "next/link";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { loadConsultationData } from "../lib/consultation-storage";
@@ -47,7 +48,7 @@ function readParams(): BookingParams | null {
   return { service, mode: mode || "Video Call", date, time };
 }
 
-export default function ConsultationPaymentPage() {
+function ConsultationPaymentPageInner() {
   // Resolved on the client only: the selection lives in sessionStorage and the
   // query string, neither of which exists during prerender. Reading them in a
   // useState initialiser would render different HTML on server and client.
@@ -183,5 +184,13 @@ export default function ConsultationPaymentPage() {
       <SiteFooter />
       <WhatsAppFloatButton />
     </main>
+  );
+}
+
+export default function ConsultationPaymentPage() {
+  return (
+    <RequireAuth>
+      <ConsultationPaymentPageInner />
+    </RequireAuth>
   );
 }

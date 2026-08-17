@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect, useRef } from "react";
+import { RequireAuth } from "../../../lib/auth-context";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -21,7 +22,7 @@ import { HomeHeader, OfferBar } from "../../components/home-header";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
 import { WHATSAPP_URL } from "../../../lib/constants";
-import { errorMessage } from "../../../lib/errors";
+import { errorMessage, validationDetails } from "../../../lib/errors";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -211,8 +212,8 @@ function BookingForm() {
   const [params, setParams] = useState({
     service: "Reiki Healing Session",
     mode: "Video Call",
-    date: "Tuesday, 10 June 2026",
-    time: "08:00 AM",
+    date: "",
+    time: "",
   });
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -248,8 +249,8 @@ function BookingForm() {
       service:
         stored.service || urlParams.get("service") || "Reiki Healing Session",
       mode: stored.mode || urlParams.get("mode") || "Video Call",
-      date: stored.date || urlParams.get("date") || "Tuesday, 10 June 2026",
-      time: stored.time || urlParams.get("time") || "08:00 AM",
+      date: stored.date || urlParams.get("date") || "",
+      time: stored.time || urlParams.get("time") || "",
     });
   }, []);
 
@@ -289,6 +290,18 @@ function BookingForm() {
     if (!phone.trim()) errs.phone = "Phone number is required";
     else if (!/^[+]?[\d\s()-]{7,15}$/.test(phone.trim()))
       errs.phone = "Please enter a valid phone number";
+    if (dob) {
+      const dobDate = new Date(dob);
+      const now = new Date();
+      if (Number.isNaN(dobDate.getTime()))
+        errs.dob = "Please enter a valid date of birth";
+      else if (dobDate > now)
+        errs.dob = "Date of birth cannot be in the future";
+      else {
+        const age = now.getFullYear() - dobDate.getFullYear();
+        if (age > 120) errs.dob = "Date of birth looks incorrect";
+      }
+    }
     if (!concern.trim()) errs.concern = "Please describe your concern";
     if (!agree) errs.agree = "You must confirm to proceed";
     setErrors(errs);
@@ -340,7 +353,12 @@ function BookingForm() {
         `/consultation/booking-summary?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(date)}&time=${encodeURIComponent(time)}`,
       );
     } catch (e: unknown) {
-      setSubmitError(errorMessage(e, "Booking failed. Please try again."));
+      const details = validationDetails(e);
+      setSubmitError(
+        details.length
+          ? details.join(" ")
+          : errorMessage(e, "Booking failed. Please try again."),
+      );
     } finally {
       setSubmitting(false);
     }
@@ -580,9 +598,23 @@ function BookingForm() {
                         type="date"
                         value={dob}
                         onChange={(e) => setDob(e.target.value)}
+                        aria-invalid={errors.dob ? true : undefined}
+                        aria-describedby={
+                          errors.dob ? "page-dob-error" : undefined
+                        }
                         className="h-[44px] w-full rounded-lg border border-line bg-white pl-10 pr-4 text-[13.5px] text-ink focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/30 [color-scheme:light]"
                       />
                     </div>
+                    {errors.dob && (
+                      <p
+                        id="page-dob-error"
+                        role="alert"
+                        className="mt-1 flex items-center gap-1 text-[12px] text-red-500"
+                      >
+                        <AlertCircle className="h-[13px] w-[13px]" />
+                        {errors.dob}
+                      </p>
+                    )}
                   </div>
 
                   {/* Gender */}
@@ -1228,8 +1260,10 @@ function BookingForm() {
 
 export default function ConsultationBookingPage() {
   return (
-    <Suspense fallback={null}>
-      <BookingForm />
-    </Suspense>
+    <RequireAuth>
+      <Suspense fallback={null}>
+        <BookingForm />
+      </Suspense>
+    </RequireAuth>
   );
 }

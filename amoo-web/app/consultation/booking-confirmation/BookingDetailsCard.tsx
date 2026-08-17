@@ -16,20 +16,22 @@ import {
 import { api } from "../../../lib/api";
 import { loadConsultationData } from "../lib/consultation-storage";
 
+type BookingInfo = {
+  booking_ref?: string;
+  service_name?: string;
+  mode?: string;
+  date?: string;
+  time?: string;
+  amount?: number;
+  payment?: string;
+};
+
 function BookingDetailsInner() {
   const params = useSearchParams();
   const bookingId = params.get("bookingId");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [booking, setBooking] = useState<{
-    booking_ref?: string;
-    service_name?: string;
-    mode?: string;
-    date?: string;
-    time?: string;
-    amount?: number;
-    payment?: string;
-  } | null>(null);
+  const [booking, setBooking] = useState<BookingInfo | null>(null);
 
   useEffect(() => {
     const stored = loadConsultationData();
@@ -49,7 +51,7 @@ function BookingDetailsInner() {
     setLoading(true);
     api.admin
       .getBooking(Number(bookingId))
-      .then((data: any) => {
+      .then((data: BookingInfo) => {
         if (data) setBooking(data);
       })
       .catch((err: unknown) =>

@@ -60,6 +60,14 @@ type Service = {
   icon: React.ReactNode;
 };
 
+interface ApiServiceRow {
+  id: number;
+  name: string;
+  description?: string | null;
+  price: string | number;
+  category: string;
+}
+
 const CATEGORY_VISUALS: Record<
   string,
   {
@@ -299,16 +307,19 @@ export default function SelectServicePage() {
   const [activeCategory, setActiveCategory] = useState("All Services");
   const [sort, setSort] = useState("Popular First");
   const [selectedService, setSelectedService] = useState<string | null>(null);
-  const [apiServices, setApiServices] = useState<any[] | null>(null);
+  const [apiServices, setApiServices] = useState<ApiServiceRow[] | null>(null);
   const [loadingServices, setLoadingServices] = useState(true);
   const [servicesError, setServicesError] = useState("");
 
   useEffect(() => {
     api
       .getServices("?pageSize=100")
-      .then((res: any) => {
-        const items = res?.data ?? [];
-        if (Array.isArray(items) && items.length) {
+      .then((res: unknown) => {
+        const payload = res as { data?: ApiServiceRow[] } | ApiServiceRow[];
+        const items = Array.isArray(payload)
+          ? (payload as ApiServiceRow[])
+          : (payload?.data ?? []);
+        if (items.length) {
           setApiServices(items);
         }
       })
@@ -320,11 +331,7 @@ export default function SelectServicePage() {
 
   const CATEGORIES = useMemo(() => {
     const derived = apiServices
-      ? [
-          ...new Set(
-            apiServices.map((s: any) => s.category as string).filter(Boolean),
-          ),
-        ]
+      ? [...new Set(apiServices.map((s) => s.category).filter(Boolean))]
       : [];
     const staticLabels = STATIC_CATEGORIES.slice(1).map((c) => c.label);
     const allLabels = derived.length
@@ -341,7 +348,7 @@ export default function SelectServicePage() {
 
   const allServices: Service[] = useMemo(() => {
     if (apiServices && apiServices.length) {
-      return apiServices.map((s: any) => {
+      return apiServices.map((s) => {
         const v = CATEGORY_VISUALS[s.category] || CATEGORY_VISUALS["Spiritual"];
         return {
           id: Number(s.id),

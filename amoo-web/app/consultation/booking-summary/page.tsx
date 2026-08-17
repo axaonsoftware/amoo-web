@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { RequireAuth } from "../../../lib/auth-context";
 import { loadConsultationData } from "../lib/consultation-storage";
 import Link from "next/link";
 import {
@@ -500,7 +501,7 @@ function BookingSummaryContent() {
                 </div>
               </div>
               <div>
-                {CONSULTATION_DETAILS_RIGHT.map((d: any) => (
+                {CONSULTATION_DETAILS_RIGHT.map((d) => (
                   <div
                     key={d.label}
                     className="flex items-start gap-2 text-sm mb-3 last:mb-0"
@@ -866,5 +867,9 @@ function BookingSummaryContent() {
 }
 
 export default function Page() {
-  return <BookingSummaryContent />;
+  return (
+    <RequireAuth>
+      <BookingSummaryContent />
+    </RequireAuth>
+  );
 }

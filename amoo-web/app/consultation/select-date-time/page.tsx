@@ -14,6 +14,7 @@ import DateTimeCard from "./DateTimeCard";
 import SummaryCard from "./SummaryCard";
 import TrustStrip from "./TrustStrip";
 import { LockIcon, ShieldTickIcon } from "./icons";
+import { RequireAuth } from "../../../lib/auth-context";
 
 function SelectDateTimeInner() {
   const router = useRouter();
@@ -22,9 +23,20 @@ function SelectDateTimeInner() {
   const mode = searchParams.get("mode") || "Selected Mode";
 
   const now = new Date();
-  const [selectedDate, setSelectedDate] = useState<number>(now.getDate());
-  const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth());
-  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
+  // Default to tomorrow: the backend rejects bookings for today/past dates
+  // (booking schema `date.min("now")`), so today must not be the starting pick.
+  const tomorrow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+  );
+  const [selectedDate, setSelectedDate] = useState<number>(tomorrow.getDate());
+  const [selectedMonth, setSelectedMonth] = useState<number>(
+    tomorrow.getMonth(),
+  );
+  const [selectedYear, setSelectedYear] = useState<number>(
+    tomorrow.getFullYear(),
+  );
   const [selectedPeriod, setSelectedPeriod] = useState("Morning");
   const [selectedSlot, setSelectedSlot] = useState("");
   const [validationError, setValidationError] = useState("");
@@ -195,14 +207,16 @@ function SelectDateTimeInner() {
 
 export default function SelectDateTimePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center py-20">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#5B2A9D] border-t-transparent" />
-        </div>
-      }
-    >
-      <SelectDateTimeInner />
-    </Suspense>
+    <RequireAuth>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center py-20">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#5B2A9D] border-t-transparent" />
+          </div>
+        }
+      >
+        <SelectDateTimeInner />
+      </Suspense>
+    </RequireAuth>
   );
 }
