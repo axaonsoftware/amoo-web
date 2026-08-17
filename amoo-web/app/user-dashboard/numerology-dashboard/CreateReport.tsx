@@ -1,6 +1,15 @@
 "use client";
 
-import { FileText, CalendarDays, FileHeart, Compass, ClipboardList, HeartHandshake, Plus, Loader2 } from "lucide-react";
+import {
+  FileText,
+  CalendarDays,
+  FileHeart,
+  Compass,
+  ClipboardList,
+  HeartHandshake,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import { useState } from "react";
 import { api } from "@/lib/api";
 
@@ -57,7 +66,10 @@ export default function CreateReport() {
     setSubmitting(true);
     setMessage(null);
     try {
-      await api.createBooking({ service: "Numerology Report", type: "numerology" });
+      await api.createBooking({
+        service: "Numerology Report",
+        type: "numerology",
+      });
       setMessage("Report created successfully!");
     } catch (e: unknown) {
       setMessage(e instanceof Error ? e.message : "Failed to create report");
@@ -90,13 +102,17 @@ export default function CreateReport() {
             <p className="mt-1.5 text-[11px] font-semibold leading-[1.3] text-[#2b0f47]">
               {title}
             </p>
-            <p className="mt-[2px] text-[10px] leading-[1.4] text-[#8b8697]">{sub}</p>
+            <p className="mt-[2px] text-[10px] leading-[1.4] text-[#8b8697]">
+              {sub}
+            </p>
           </button>
         ))}
       </div>
 
       {message ? (
-        <p className="mt-3 text-center text-[12.5px] font-medium text-[#2f9e56]">{message}</p>
+        <p className="mt-3 text-center text-[12.5px] font-medium text-[#2f9e56]">
+          {message}
+        </p>
       ) : null}
       <button
         type="button"

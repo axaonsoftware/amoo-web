@@ -18,12 +18,48 @@ const statDefs: {
   iconWrap: string;
   iconColor: string;
 }[] = [
-  { label: "Total Reiki Sessions", field: "reikiSessions", Icon: CalendarDays, iconWrap: "bg-[#F1EAFE]", iconColor: "text-[#7C3AED]" },
-  { label: "Upcoming Sessions", field: "upcomingSessions", Icon: CalendarClock, iconWrap: "bg-[#FEF1E3]", iconColor: "text-[#F59E0B]" },
-  { label: "Completed Sessions", field: "completedSessions", Icon: CircleCheckBig, iconWrap: "bg-[#E3F7EA]", iconColor: "text-[#16A34A]" },
-  { label: "Distance Healing", field: "distanceHealing", Icon: Globe, iconWrap: "bg-[#F1EAFE]", iconColor: "text-[#7C3AED]" },
-  { label: "Active Practitioners", field: "activePractitioners", Icon: UserRound, iconWrap: "bg-[#E7F0FE]", iconColor: "text-[#3B82F6]" },
-  { label: "Healing Hours", field: "healingHours", Icon: Clock, iconWrap: "bg-[#FEF1E3]", iconColor: "text-[#F59E0B]" },
+  {
+    label: "Total Reiki Sessions",
+    field: "reikiSessions",
+    Icon: CalendarDays,
+    iconWrap: "bg-[#F1EAFE]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Upcoming Sessions",
+    field: "upcomingSessions",
+    Icon: CalendarClock,
+    iconWrap: "bg-[#FEF1E3]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Completed Sessions",
+    field: "completedSessions",
+    Icon: CircleCheckBig,
+    iconWrap: "bg-[#E3F7EA]",
+    iconColor: "text-[#16A34A]",
+  },
+  {
+    label: "Distance Healing",
+    field: "distanceHealing",
+    Icon: Globe,
+    iconWrap: "bg-[#F1EAFE]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Active Practitioners",
+    field: "activePractitioners",
+    Icon: UserRound,
+    iconWrap: "bg-[#E7F0FE]",
+    iconColor: "text-[#3B82F6]",
+  },
+  {
+    label: "Healing Hours",
+    field: "healingHours",
+    Icon: Clock,
+    iconWrap: "bg-[#FEF1E3]",
+    iconColor: "text-[#F59E0B]",
+  },
 ];
 
 export default function StatsRow() {
@@ -41,7 +77,8 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
 
   if (loading) {
     return (
@@ -63,7 +100,10 @@ export default function StatsRow() {
     <div className="mt-5 grid grid-cols-1 gap-[10px] sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
       {statDefs.map(({ label, field, Icon, iconWrap, iconColor }) => {
         const raw = stats ? stats[field] : undefined;
-        const value = field === "healingHours" && raw ? `${raw.toLocaleString("en-IN")} hrs` : fmt(raw);
+        const value =
+          field === "healingHours" && raw
+            ? `${raw.toLocaleString("en-IN")} hrs`
+            : fmt(raw);
         return (
           <div
             key={label}
@@ -76,8 +116,12 @@ export default function StatsRow() {
                 <Icon size={19} className={iconColor} />
               </div>
               <div className="min-w-0 pt-[1px]">
-                <p className="truncate text-[11px] font-medium text-[#8B879C]">{label}</p>
-                <p className="mt-[2px] whitespace-nowrap text-[21px] font-semibold leading-[27px] text-[#1B1630]">{value}</p>
+                <p className="truncate text-[11px] font-medium text-[#8B879C]">
+                  {label}
+                </p>
+                <p className="mt-[2px] whitespace-nowrap text-[21px] font-semibold leading-[27px] text-[#1B1630]">
+                  {value}
+                </p>
               </div>
             </div>
           </div>

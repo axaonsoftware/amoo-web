@@ -41,7 +41,7 @@ At build time the Docker image requires these build args (`NEXT_PUBLIC_*`
 values are inlined into the client bundle and also feed the CSP
 `connect-src` directive):
 
-- `NEXT_PUBLIC_API_URL` — real production API origin (e.g. `https://your-domain/api`)
+- `NEXT_PUBLIC_API_URL` — real production origin, **without** `/api` (e.g. `https://your-domain`). The app appends `/api` to every request itself, so including it here produces `.../api/api/...` 404s.
 - `NEXT_PUBLIC_SITE_NAME`
 - `NEXT_PUBLIC_CONTACT_EMAIL`
 - `NEXT_PUBLIC_WHATSAPP_NUMBER`

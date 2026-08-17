@@ -20,7 +20,7 @@ export function toNumber(v: unknown, fallback = 0): number {
 /** "₹12,500" — whole rupees. Use for stat tiles, table cells, totals. */
 export function formatCurrency(
   value: unknown,
-  currency: string = DEFAULT_CURRENCY
+  currency: string = DEFAULT_CURRENCY,
 ): string {
   return new Intl.NumberFormat(LOCALE, {
     style: "currency",
@@ -32,7 +32,7 @@ export function formatCurrency(
 /** "₹12,500.00" — keeps paise. Use on invoices/receipts where exactness matters. */
 export function formatCurrencyExact(
   value: unknown,
-  currency: string = DEFAULT_CURRENCY
+  currency: string = DEFAULT_CURRENCY,
 ): string {
   return new Intl.NumberFormat(LOCALE, {
     style: "currency",
@@ -50,7 +50,8 @@ export function formatNumber(value: unknown): string {
 /** "12.5k" / "1.2L" — compact, for chart axes and dense tiles. */
 export function formatCompact(value: unknown): string {
   const n = toNumber(value);
-  if (Math.abs(n) >= 1e7) return (n / 1e7).toFixed(1).replace(/\.0$/, "") + "Cr";
+  if (Math.abs(n) >= 1e7)
+    return (n / 1e7).toFixed(1).replace(/\.0$/, "") + "Cr";
   if (Math.abs(n) >= 1e5) return (n / 1e5).toFixed(1).replace(/\.0$/, "") + "L";
   if (Math.abs(n) >= 1e3) return (n / 1e3).toFixed(1).replace(/\.0$/, "") + "k";
   return String(n);
@@ -140,7 +141,8 @@ export function initials(name: unknown, fallback = "U"): string {
   if (!s) return fallback;
   const parts = s.split(/\s+/);
   return (
-    (parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() ||
-    fallback
+    (
+      parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : "")
+    ).toUpperCase() || fallback
   );
 }

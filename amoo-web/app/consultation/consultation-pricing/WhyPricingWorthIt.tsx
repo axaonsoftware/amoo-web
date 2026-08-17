@@ -42,7 +42,10 @@ export default function WhyPricingWorthIt() {
 
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-8">
           {points.map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="flex flex-col items-center text-center gap-3">
+            <div
+              key={title}
+              className="flex flex-col items-center text-center gap-3"
+            >
               <span className="w-14 h-14 rounded-full border border-amber-300 flex items-center justify-center">
                 <Icon size={22} className="text-[#5B2A9D]" />
               </span>

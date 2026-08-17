@@ -6,7 +6,11 @@ import { SiteFooter } from "@/app/components/site-footer";
 
 const CancellationPage = () => {
   return (
-    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
+    <main
+      id="main-content"
+      className="min-h-screen"
+      style={{ backgroundColor: "#fdf8f0" }}
+    >
       <OfferBar />
       <HomeHeader />
 
@@ -21,7 +25,10 @@ const CancellationPage = () => {
           Last updated: July 21, 2026
         </p>
 
-        <div className="mt-12 space-y-10 font-sans" style={{ color: "#6c6b78" }}>
+        <div
+          className="mt-12 space-y-10 font-sans"
+          style={{ color: "#6c6b78" }}
+        >
           <section>
             <h2
               className="font-display text-2xl font-semibold"
@@ -31,10 +38,11 @@ const CancellationPage = () => {
             </h2>
             <p className="mt-4 leading-relaxed">
               You can cancel your booking by logging into your account and
-              navigating to the My Bookings section, or by contacting our support
-              team via WhatsApp or email. Please provide your booking reference
-              number and reason for cancellation. Our team will confirm the
-              cancellation and any applicable refund within 2 business days.
+              navigating to the My Bookings section, or by contacting our
+              support team via WhatsApp or email. Please provide your booking
+              reference number and reason for cancellation. Our team will
+              confirm the cancellation and any applicable refund within 2
+              business days.
             </p>
           </section>
 
@@ -46,12 +54,12 @@ const CancellationPage = () => {
               2. Cancellation Timeframes
             </h2>
             <p className="mt-4 leading-relaxed">
-              Free cancellation is available up to 24 hours before your scheduled
-              consultation. Cancellations made between 12-24 hours before the
-              session may incur a 50% cancellation fee. Cancellations made less
-              than 12 hours before the session are not eligible for a refund.
-              For distance healing sessions, cancellation must be made before the
-              session initiation time.
+              Free cancellation is available up to 24 hours before your
+              scheduled consultation. Cancellations made between 12-24 hours
+              before the session may incur a 50% cancellation fee. Cancellations
+              made less than 12 hours before the session are not eligible for a
+              refund. For distance healing sessions, cancellation must be made
+              before the session initiation time.
             </p>
           </section>
 
@@ -63,10 +71,10 @@ const CancellationPage = () => {
               3. Effects of Cancellation
             </h2>
             <p className="mt-4 leading-relaxed">
-              Upon cancellation, your booking will be marked as cancelled and the
-              time slot will be released. If you have a package deal, the
-              cancelled session will be deducted from your package balance.
-              Any promotional discounts applied to the booking may not be
+              Upon cancellation, your booking will be marked as cancelled and
+              the time slot will be released. If you have a package deal, the
+              cancelled session will be deducted from your package balance. Any
+              promotional discounts applied to the booking may not be
               transferable to future bookings. You will receive a confirmation
               notification via email and WhatsApp once the cancellation is
               processed.
@@ -84,9 +92,9 @@ const CancellationPage = () => {
               If you have an active subscription plan, you may cancel your
               subscription at any time. The cancellation will take effect at the
               end of the current billing cycle. You will continue to have access
-              to your subscription benefits until the end of the paid period.
-              No partial refunds are provided for unused portions of a
-              subscription period.
+              to your subscription benefits until the end of the paid period. No
+              partial refunds are provided for unused portions of a subscription
+              period.
             </p>
           </section>
 

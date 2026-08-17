@@ -5,9 +5,21 @@ import { useApi } from "../../../lib/useApi";
 import { EmptyState, ErrorState, Skeleton } from "../../components/states";
 import { formatCurrency, toNumber } from "../../../lib/format";
 
-type ServiceRevenue = { id: number; name: string; payments: number | string; revenue: number | string };
+type ServiceRevenue = {
+  id: number;
+  name: string;
+  payments: number | string;
+  revenue: number | string;
+};
 
-const COLORS = ["#4C1D95", "#22C55E", "#F59E0B", "#3B82F6", "#8B5CF6", "#EC4899"];
+const COLORS = [
+  "#4C1D95",
+  "#22C55E",
+  "#F59E0B",
+  "#3B82F6",
+  "#8B5CF6",
+  "#EC4899",
+];
 
 const R = 52;
 const C = 2 * Math.PI * R;
@@ -20,14 +32,16 @@ const C = 2 * Math.PI * R;
  */
 export default function RevenueByService() {
   const { data, loading, error, refetch } = useApi<ServiceRevenue[]>(() =>
-    api.admin.getRevenueByService()
+    api.admin.getRevenueByService(),
   );
 
   const rows = data ?? [];
   const total = rows.reduce((sum, r) => sum + toNumber(r.revenue), 0);
 
   const top = rows.slice(0, 6);
-  const restTotal = rows.slice(6).reduce((sum, r) => sum + toNumber(r.revenue), 0);
+  const restTotal = rows
+    .slice(6)
+    .reduce((sum, r) => sum + toNumber(r.revenue), 0);
   const services = [
     ...top.map((r, i) => ({
       key: String(r.id),
@@ -36,21 +50,35 @@ export default function RevenueByService() {
       color: COLORS[i % COLORS.length],
     })),
     ...(restTotal > 0
-      ? [{ key: "others", label: "Others", amount: restTotal, color: COLORS[5] }]
+      ? [
+          {
+            key: "others",
+            label: "Others",
+            amount: restTotal,
+            color: COLORS[5],
+          },
+        ]
       : []),
   ].map((s) => ({ ...s, pct: total === 0 ? 0 : (s.amount / total) * 100 }));
 
   const segments = services.map((s, i) => {
     const len = (s.pct / 100) * C;
-    const offset = services.slice(0, i).reduce((sum, p) => sum + (p.pct / 100) * C, 0);
+    const offset = services
+      .slice(0, i)
+      .reduce((sum, p) => sum + (p.pct / 100) * C, 0);
     return { ...s, dash: `${Math.max(0, len - 2)} ${C - len + 2}`, offset };
   });
 
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
       <div className="flex items-center justify-between">
-        <h2 className="text-[14px] font-semibold text-[#1B1630]">Revenue by Service</h2>
-        <Link href="/admin/reports-analytics" className="text-[11px] font-medium text-[#7C3AED]">
+        <h2 className="text-[14px] font-semibold text-[#1B1630]">
+          Revenue by Service
+        </h2>
+        <Link
+          href="/admin/reports-analytics"
+          className="text-[11px] font-medium text-[#7C3AED]"
+        >
           View Report
         </Link>
       </div>
@@ -102,7 +130,9 @@ export default function RevenueByService() {
                     className="h-[7px] w-[7px] shrink-0 rounded-full"
                     style={{ backgroundColor: s.color }}
                   />
-                  <span className="truncate text-[10px] text-[#4A3B63]">{s.label}</span>
+                  <span className="truncate text-[10px] text-[#4A3B63]">
+                    {s.label}
+                  </span>
                   <span className="ml-auto shrink-0 text-[10px] font-medium text-[#1B1630]">
                     {formatCurrency(s.amount)} ({s.pct.toFixed(1)}%)
                   </span>
@@ -111,7 +141,9 @@ export default function RevenueByService() {
             </ul>
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-[#F1EFF6] pt-3">
-            <span className="text-[11.5px] font-medium text-[#8B879C]">Total</span>
+            <span className="text-[11.5px] font-medium text-[#8B879C]">
+              Total
+            </span>
             <span className="text-[12.5px] font-semibold text-[#1B1630]">
               {formatCurrency(total)}
             </span>

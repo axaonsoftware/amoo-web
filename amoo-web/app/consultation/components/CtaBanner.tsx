@@ -34,8 +34,8 @@ export default function CtaBanner() {
                 Ready to Get Your Answers?
               </h2>
               <p className="mt-[8px] max-w-[330px] text-[13px] leading-[1.6] text-white/75">
-                Book your personalized consultation today and step into a life of clarity, peace and
-                abundance.
+                Book your personalized consultation today and step into a life
+                of clarity, peace and abundance.
               </p>
             </div>
 

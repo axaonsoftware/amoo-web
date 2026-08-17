@@ -4,9 +4,21 @@ import { useState, useEffect } from "react";
 import { ArrowRight } from "lucide-react";
 import { api } from "../../../../lib/api";
 import {
-  UserRound, Type, Baby, Briefcase, Tag, Smartphone, Car,
-  HeartHandshake, TrendingUp, DollarSign, CalendarDays, Palette,
-  LucideIcon, Loader2, AlertCircle,
+  UserRound,
+  Type,
+  Baby,
+  Briefcase,
+  Tag,
+  Smartphone,
+  Car,
+  HeartHandshake,
+  TrendingUp,
+  DollarSign,
+  CalendarDays,
+  Palette,
+  LucideIcon,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 
 function HorseshoeGlyph() {
@@ -61,9 +73,10 @@ export default function ServicesGrid() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getServices()
+    api
+      .getServices()
       .then((res: any) => {
-        const items = (res?.data as any[]) ?? Array.isArray(res) ? res : [];
+        const items = ((res?.data as any[]) ?? Array.isArray(res)) ? res : [];
         setServices(items.filter((s: any) => s.category === "Numerology"));
       })
       .catch(() => setError("Failed to load services. Please try again."))
@@ -131,9 +144,16 @@ export default function ServicesGrid() {
                     <span className="text-sm font-bold">{glyph || "★"}</span>
                   )}
                 </div>
-                <h3 className="font-semibold text-purple-950 mb-2">{svc.name}</h3>
-                <p className="text-xs text-gray-500 leading-relaxed mb-4">{desc}</p>
-                <a href="/consultation/select-service" className="text-amber-600 text-xs font-semibold flex items-center justify-center gap-1 hover:text-amber-700 transition-colors">
+                <h3 className="font-semibold text-purple-950 mb-2">
+                  {svc.name}
+                </h3>
+                <p className="text-xs text-gray-500 leading-relaxed mb-4">
+                  {desc}
+                </p>
+                <a
+                  href="/consultation/select-service"
+                  className="text-amber-600 text-xs font-semibold flex items-center justify-center gap-1 hover:text-amber-700 transition-colors"
+                >
                   Learn More <ArrowRight className="w-3 h-3" />
                 </a>
               </div>

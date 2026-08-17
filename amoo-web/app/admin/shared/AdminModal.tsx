@@ -57,7 +57,12 @@ export default function AdminModal({
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative z-10 w-full max-w-[520px] max-h-[85vh] overflow-y-auto rounded-[14px] border border-[#EEEDF4] bg-white shadow-[0_20px_60px_rgba(20,16,40,.18)]">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#EEEDF4] bg-white px-6 py-4">
-          <h3 id="admin-modal-title" className="text-[16px] font-bold text-[#1F1836]">{title}</h3>
+          <h3
+            id="admin-modal-title"
+            className="text-[16px] font-bold text-[#1F1836]"
+          >
+            {title}
+          </h3>
           <button
             type="button"
             onClick={onClose}
@@ -87,14 +92,19 @@ export default function AdminModal({
               };
 
               return (
-                <div key={f.name} className={f.full ? "sm:col-span-2" : undefined}>
+                <div
+                  key={f.name}
+                  className={f.full ? "sm:col-span-2" : undefined}
+                >
                   <label
                     htmlFor={fieldId}
                     className="mb-[5px] block text-[11.5px] font-medium text-[#3D3752]"
                   >
                     {f.label}{" "}
                     {f.required && (
-                      <span className="text-red-400" aria-hidden="true">*</span>
+                      <span className="text-red-400" aria-hidden="true">
+                        *
+                      </span>
                     )}
                   </label>
                   {f.type === "textarea" ? (
@@ -139,7 +149,11 @@ export default function AdminModal({
                     />
                   )}
                   {hasError && (
-                    <p id={errorId} role="alert" className="mt-1 text-[11px] text-red-500">
+                    <p
+                      id={errorId}
+                      role="alert"
+                      className="mt-1 text-[11px] text-red-500"
+                    >
                       {errors?.[f.name]}
                     </p>
                   )}

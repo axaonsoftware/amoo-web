@@ -21,8 +21,8 @@ export default function CtaBanner() {
             Ready to Get Your Answers &amp; Transform Your Life?
           </h2>
           <p className="text-white/70 text-sm mt-2">
-            Book your personalized consultation with Reiki Grand Master
-            Surinder Kaur Sehgal today.
+            Book your personalized consultation with Reiki Grand Master Surinder
+            Kaur Sehgal today.
           </p>
         </div>
 

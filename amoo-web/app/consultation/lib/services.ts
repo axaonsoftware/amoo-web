@@ -13,7 +13,11 @@ export type ConsultationService = {
 // rather than at every call site that does arithmetic on it.
 function unwrapServices(res: any): ConsultationService[] {
   const rows = Array.isArray(res) ? res : (res?.data ?? []);
-  return rows.map((s: any) => ({ ...s, id: Number(s.id), price: Number(s.price) }));
+  return rows.map((s: any) => ({
+    ...s,
+    id: Number(s.id),
+    price: Number(s.price),
+  }));
 }
 
 /**
@@ -25,12 +29,15 @@ function unwrapServices(res: any): ConsultationService[] {
  * Throws when nothing matches. A fallback id would silently book, and charge
  * for, a service the user never chose.
  */
-export async function resolveService(name: string): Promise<ConsultationService> {
+export async function resolveService(
+  name: string,
+): Promise<ConsultationService> {
   const wanted = (name || "").trim();
-  if (!wanted) throw new Error("No service selected. Please go back and pick a service.");
+  if (!wanted)
+    throw new Error("No service selected. Please go back and pick a service.");
 
   const rows = unwrapServices(
-    await api.getServices(`?search=${encodeURIComponent(wanted)}&limit=100`)
+    await api.getServices(`?search=${encodeURIComponent(wanted)}&limit=100`),
   );
   const lower = wanted.toLowerCase();
   const match =
@@ -40,7 +47,7 @@ export async function resolveService(name: string): Promise<ConsultationService>
 
   if (!match) {
     throw new Error(
-      `We couldn't find "${wanted}" in our service list. Please go back and select your service again.`
+      `We couldn't find "${wanted}" in our service list. Please go back and select your service again.`,
     );
   }
   return match;
@@ -69,9 +76,18 @@ export function modeNote(display?: string): string {
 }
 
 const MONTHS: Record<string, string> = {
-  January: "01", February: "02", March: "03", April: "04",
-  May: "05", June: "06", July: "07", August: "08",
-  September: "09", October: "10", November: "11", December: "12",
+  January: "01",
+  February: "02",
+  March: "03",
+  April: "04",
+  May: "05",
+  June: "06",
+  July: "07",
+  August: "08",
+  September: "09",
+  October: "10",
+  November: "11",
+  December: "12",
 };
 
 // "Tuesday, 10 June 2026" -> "2026-06-10" (the API validates date as ISO).

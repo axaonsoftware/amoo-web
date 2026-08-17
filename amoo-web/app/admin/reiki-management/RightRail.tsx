@@ -44,7 +44,7 @@ export default function RightRail() {
               role: m.expertise || "Practitioner",
               rating: m.rating || "—",
               count: `(${m.sessions || m.bookings || 0})`,
-            }))
+            })),
           );
         }
       })
@@ -71,7 +71,9 @@ export default function RightRail() {
           Healing Overview (This Month)
         </h2>
         <div className="mt-3 flex items-center justify-between border-t border-[#EFEDF4] pt-3">
-          <span className="text-[11px] font-medium text-[#4A4557]">Total Sessions</span>
+          <span className="text-[11px] font-medium text-[#4A4557]">
+            Total Sessions
+          </span>
           <span className="text-[12.5px] font-semibold text-[#1B1630]">—</span>
         </div>
       </section>
@@ -82,7 +84,10 @@ export default function RightRail() {
           <h2 className="text-[12.5px] font-semibold text-[#1B1630]">
             Top Reiki Masters
           </h2>
-          <Link href="/admin/reiki-management" className="text-[10.5px] font-medium text-[#7C3AED]">
+          <Link
+            href="/admin/reiki-management"
+            className="text-[10.5px] font-medium text-[#7C3AED]"
+          >
             View All
           </Link>
         </div>
@@ -139,7 +144,10 @@ export default function RightRail() {
           <h2 className="text-[12.5px] font-semibold text-[#1B1630]">
             Recent Activity
           </h2>
-          <Link href="/admin/reiki-management" className="text-[10.5px] font-medium text-[#7C3AED]">
+          <Link
+            href="/admin/reiki-management"
+            className="text-[10.5px] font-medium text-[#7C3AED]"
+          >
             View All
           </Link>
         </div>
@@ -148,10 +156,16 @@ export default function RightRail() {
           <li className="flex items-start gap-[8px]">
             <span className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#7C3AED]" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[10.5px] font-medium text-[#1B1630]">Sessions synced</p>
-              <p className="mt-[1px] truncate text-[9.5px] text-[#8B879C]">From API</p>
+              <p className="truncate text-[10.5px] font-medium text-[#1B1630]">
+                Sessions synced
+              </p>
+              <p className="mt-[1px] truncate text-[9.5px] text-[#8B879C]">
+                From API
+              </p>
             </div>
-            <span className="shrink-0 whitespace-nowrap text-[9.5px] text-[#8B879C]">now</span>
+            <span className="shrink-0 whitespace-nowrap text-[9.5px] text-[#8B879C]">
+              now
+            </span>
           </li>
         </ul>
       </section>

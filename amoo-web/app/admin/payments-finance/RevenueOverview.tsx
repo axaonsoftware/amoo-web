@@ -17,7 +17,8 @@ export default function RevenueOverview() {
 
   useEffect(() => {
     let cancelled = false;
-    api.admin.getRevenue("daily")
+    api.admin
+      .getRevenue("daily")
       .then((res) => {
         if (cancelled) return;
         const data = res?.data || res;
@@ -29,7 +30,14 @@ export default function RevenueOverview() {
             if (v > 0) {
               rev.push(v / 100000);
               const date = d.date || d.label || "";
-              lbls.push(date ? new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "");
+              lbls.push(
+                date
+                  ? new Date(date).toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : "",
+              );
             }
           });
           if (rev.length >= 7) {
@@ -40,9 +48,15 @@ export default function RevenueOverview() {
           }
         }
       })
-      .catch((err) => { if (!cancelled) setError(err?.message || "Failed to load revenue"); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .catch((err) => {
+        if (!cancelled) setError(err?.message || "Failed to load revenue");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const maxVal = Math.max(...revenue, ...netEarnings, 1);
@@ -51,7 +65,9 @@ export default function RevenueOverview() {
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
       <div className="flex items-center justify-between">
-        <h2 className="text-[14px] font-semibold text-[#1B1630]">Revenue Overview</h2>
+        <h2 className="text-[14px] font-semibold text-[#1B1630]">
+          Revenue Overview
+        </h2>
         <button
           type="button"
           className="inline-flex h-[32px] items-center gap-[10px] rounded-[8px] border border-[#E7E5EF] bg-white pl-3 pr-2 text-[11.5px] font-medium text-[#2E2A3B]"
@@ -70,51 +86,114 @@ export default function RevenueOverview() {
         <div className="flex justify-center py-10">
           <Loader2 className="h-6 w-6 animate-spin text-[#6D28D9]" />
         </div>
-        ) : revenue.length === 0 ? (
-          <div className="flex justify-center py-10 text-[12px] text-[#A5A2B5]">
-            No revenue data available yet
+      ) : revenue.length === 0 ? (
+        <div className="flex justify-center py-10 text-[12px] text-[#A5A2B5]">
+          No revenue data available yet
+        </div>
+      ) : (
+        <>
+          <div className="mt-3 flex items-center justify-center gap-6">
+            <span className="flex items-center gap-[6px] text-[10.5px] font-medium text-[#6C6B78]">
+              <span className="h-[8px] w-[8px] rounded-full bg-[#6D28D9]" />{" "}
+              Revenue
+            </span>
+            <span className="flex items-center gap-[6px] text-[10.5px] font-medium text-[#6C6B78]">
+              <span className="h-[8px] w-[8px] rounded-full bg-[#F59E0B]" /> Net
+              Earnings
+            </span>
           </div>
-        ) : (
-          <>
-            <div className="mt-3 flex items-center justify-center gap-6">
-              <span className="flex items-center gap-[6px] text-[10.5px] font-medium text-[#6C6B78]">
-                <span className="h-[8px] w-[8px] rounded-full bg-[#6D28D9]" /> Revenue
-              </span>
-              <span className="flex items-center gap-[6px] text-[10.5px] font-medium text-[#6C6B78]">
-                <span className="h-[8px] w-[8px] rounded-full bg-[#F59E0B]" /> Net Earnings
-              </span>
-            </div>
 
-            <div className="mt-3 flex gap-2">
-              <div className="flex w-[34px] shrink-0 flex-col justify-between py-[2px] text-right text-[9px] text-[#A5A2B5]">
-                {[maxVal, maxVal * 0.75, maxVal * 0.5, maxVal * 0.25, 0].map((v, i) => (
+          <div className="mt-3 flex gap-2">
+            <div className="flex w-[34px] shrink-0 flex-col justify-between py-[2px] text-right text-[9px] text-[#A5A2B5]">
+              {[maxVal, maxVal * 0.75, maxVal * 0.5, maxVal * 0.25, 0].map(
+                (v, i) => (
                   <span key={i}>₹{(v * 100000).toLocaleString("en-IN")}</span>
+                ),
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <svg
+                viewBox={`0 0 ${W} ${H}`}
+                preserveAspectRatio="none"
+                className="h-[168px] w-full overflow-visible"
+              >
+                <defs>
+                  <linearGradient id="pfRevFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.22" />
+                    <stop
+                      offset="100%"
+                      stopColor="#7C3AED"
+                      stopOpacity="0.01"
+                    />
+                  </linearGradient>
+                </defs>
+                {[0, 0.25, 0.5, 0.75, 1].map((p) => (
+                  <line
+                    key={p}
+                    x1="0"
+                    x2={W}
+                    y1={p * H}
+                    y2={p * H}
+                    stroke="#F1EFF6"
+                    strokeWidth="1"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+                <path d={areaPath} fill="url(#pfRevFill)" />
+                <polyline
+                  points={revenue
+                    .map((v, i) => `${x(i, revenue.length)},${y(v, maxVal)}`)
+                    .join(" ")}
+                  fill="none"
+                  stroke="#6D28D9"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+                <polyline
+                  points={netEarnings
+                    .map(
+                      (v, i) => `${x(i, netEarnings.length)},${y(v, maxVal)}`,
+                    )
+                    .join(" ")}
+                  fill="none"
+                  stroke="#F59E0B"
+                  strokeWidth="2"
+                  strokeLinejoin="round"
+                  strokeLinecap="round"
+                  vectorEffect="non-scaling-stroke"
+                />
+                {revenue.map((v, i) => (
+                  <circle
+                    key={`r${i}`}
+                    cx={x(i, revenue.length)}
+                    cy={y(v, maxVal)}
+                    r="3"
+                    fill="#6D28D9"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+                {netEarnings.map((v, i) => (
+                  <circle
+                    key={`n${i}`}
+                    cx={x(i, netEarnings.length)}
+                    cy={y(v, maxVal)}
+                    r="3"
+                    fill="#F59E0B"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                ))}
+              </svg>
+              <div className="mt-[10px] flex justify-between text-[9px] text-[#A5A2B5]">
+                {labels.map((l, i) => (
+                  <span key={i}>{l}</span>
                 ))}
               </div>
-              <div className="min-w-0 flex-1">
-                <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-[168px] w-full overflow-visible">
-                  <defs>
-                    <linearGradient id="pfRevFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#7C3AED" stopOpacity="0.22" />
-                      <stop offset="100%" stopColor="#7C3AED" stopOpacity="0.01" />
-                    </linearGradient>
-                  </defs>
-                  {[0, 0.25, 0.5, 0.75, 1].map((p) => (
-                    <line key={p} x1="0" x2={W} y1={p * H} y2={p * H} stroke="#F1EFF6" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-                  ))}
-                  <path d={areaPath} fill="url(#pfRevFill)" />
-                  <polyline points={revenue.map((v, i) => `${x(i, revenue.length)},${y(v, maxVal)}`).join(" ")} fill="none" stroke="#6D28D9" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  <polyline points={netEarnings.map((v, i) => `${x(i, netEarnings.length)},${y(v, maxVal)}`).join(" ")} fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-                  {revenue.map((v, i) => <circle key={`r${i}`} cx={x(i, revenue.length)} cy={y(v, maxVal)} r="3" fill="#6D28D9" vectorEffect="non-scaling-stroke" />)}
-                  {netEarnings.map((v, i) => <circle key={`n${i}`} cx={x(i, netEarnings.length)} cy={y(v, maxVal)} r="3" fill="#F59E0B" vectorEffect="non-scaling-stroke" />)}
-                </svg>
-                <div className="mt-[10px] flex justify-between text-[9px] text-[#A5A2B5]">
-                  {labels.map((l, i) => <span key={i}>{l}</span>)}
-                </div>
-              </div>
             </div>
-          </>
-        )}
+          </div>
+        </>
+      )}
     </section>
   );
 }

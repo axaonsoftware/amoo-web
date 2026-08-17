@@ -63,7 +63,9 @@ const actions = [
 export default function QuickActions() {
   return (
     <section className="rounded-[14px] border border-[#f0e7d8] bg-white px-5 py-[18px] shadow-[0_1px_3px_rgba(43,15,71,.04)]">
-      <h2 className="font-display text-[19px] font-bold text-[#2b0f47]">Quick Actions</h2>
+      <h2 className="font-display text-[19px] font-bold text-[#2b0f47]">
+        Quick Actions
+      </h2>
 
       <div className="mt-3.5 flex flex-col gap-2.5">
         {actions.map(({ title, subtitle, Icon, iconBg, iconColor }) => (
@@ -78,10 +80,17 @@ export default function QuickActions() {
               <Icon className="h-[18px] w-[18px]" strokeWidth={1.7} />
             </span>
             <span className="min-w-0 flex-1">
-              <span className="block text-[12.5px] font-semibold text-[#2b0f47]">{title}</span>
-              <span className="mt-[1px] block text-[11px] text-[#8b8697]">{subtitle}</span>
+              <span className="block text-[12.5px] font-semibold text-[#2b0f47]">
+                {title}
+              </span>
+              <span className="mt-[1px] block text-[11px] text-[#8b8697]">
+                {subtitle}
+              </span>
             </span>
-            <ArrowRight className="h-[15px] w-[15px] shrink-0 text-[#a8a2b4]" strokeWidth={2} />
+            <ArrowRight
+              className="h-[15px] w-[15px] shrink-0 text-[#a8a2b4]"
+              strokeWidth={2}
+            />
           </button>
         ))}
       </div>

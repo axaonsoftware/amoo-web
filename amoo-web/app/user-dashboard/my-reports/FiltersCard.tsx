@@ -11,7 +11,11 @@ const fieldBase =
 
 export default function FiltersCard() {
   // /api/services is paginated -> `{ data, meta }`, never a bare array.
-  const { items: services, loading, error } = useApiList<any>(() => api.getServices());
+  const {
+    items: services,
+    loading,
+    error,
+  } = useApiList<any>(() => api.getServices());
   const typeSet = new Set<string>();
   services.forEach((s: any) => {
     const cat = s.category || s.type;
@@ -21,8 +25,13 @@ export default function FiltersCard() {
   return (
     <section className="rounded-[16px] border border-[#f0e7d8] bg-white px-[20px] pb-[20px] pt-[18px] shadow-[0_1px_2px_rgba(38,17,66,.04)]">
       <div className="flex items-center justify-between gap-4">
-        <h2 className="font-display text-[18px] font-bold leading-none text-[#4c1d95]">Filters</h2>
-        <button type="button" className="text-[12px] font-medium text-[#7c3aed]">
+        <h2 className="font-display text-[18px] font-bold leading-none text-[#4c1d95]">
+          Filters
+        </h2>
+        <button
+          type="button"
+          className="text-[12px] font-medium text-[#7c3aed]"
+        >
           Clear All
         </button>
       </div>
@@ -37,9 +46,15 @@ export default function FiltersCard() {
       ) : (
         <>
           {/* Report Type */}
-          <p className="mt-[18px] text-[12.5px] font-medium leading-none text-[#4a4458]">Report Type</p>
+          <p className="mt-[18px] text-[12.5px] font-medium leading-none text-[#4a4458]">
+            Report Type
+          </p>
           <div className="relative mt-[8px]">
-            <select aria-label="Report Type" className={fieldBase} defaultValue="All Types">
+            <select
+              aria-label="Report Type"
+              className={fieldBase}
+              defaultValue="All Types"
+            >
               {reportTypes.map((t) => (
                 <option key={t}>{t}</option>
               ))}
@@ -53,7 +68,9 @@ export default function FiltersCard() {
           {/* Dates */}
           <div className="mt-[16px] grid grid-cols-1 sm:grid-cols-2 gap-[12px]">
             <div>
-              <p className="text-[12.5px] font-medium leading-none text-[#4a4458]">Date From</p>
+              <p className="text-[12.5px] font-medium leading-none text-[#4a4458]">
+                Date From
+              </p>
               <div className="relative mt-[8px]">
                 <input
                   type="text"
@@ -69,7 +86,9 @@ export default function FiltersCard() {
             </div>
 
             <div>
-              <p className="text-[12.5px] font-medium leading-none text-[#4a4458]">Date To</p>
+              <p className="text-[12.5px] font-medium leading-none text-[#4a4458]">
+                Date To
+              </p>
               <div className="relative mt-[8px]">
                 <input
                   type="text"
@@ -86,9 +105,15 @@ export default function FiltersCard() {
           </div>
 
           {/* Sort By */}
-          <p className="mt-[16px] text-[12.5px] font-medium leading-none text-[#4a4458]">Sort By</p>
+          <p className="mt-[16px] text-[12.5px] font-medium leading-none text-[#4a4458]">
+            Sort By
+          </p>
           <div className="relative mt-[8px]">
-            <select aria-label="Sort By" className={fieldBase} defaultValue="Newest First">
+            <select
+              aria-label="Sort By"
+              className={fieldBase}
+              defaultValue="Newest First"
+            >
               {sortOptions.map((t) => (
                 <option key={t}>{t}</option>
               ))}

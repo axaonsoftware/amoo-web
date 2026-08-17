@@ -13,7 +13,13 @@ const line = {
 
 /* ---------- Heading ornament ---------- */
 
-export function SparkOrnament({ flip = false, className = "" }: { flip?: boolean; className?: string }) {
+export function SparkOrnament({
+  flip = false,
+  className = "",
+}: {
+  flip?: boolean;
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 46 12"
@@ -35,7 +41,14 @@ export function SparkOrnament({ flip = false, className = "" }: { flip?: boolean
 export function AboutBadgeIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" {...props}>
-      <circle cx="12" cy="12" r="3.1" fill="none" stroke="currentColor" strokeWidth="1.4" />
+      <circle
+        cx="12"
+        cy="12"
+        r="3.1"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.4"
+      />
       <g stroke="currentColor" strokeWidth="1.2" strokeLinecap="round">
         <path d="M12 2.6v3M12 18.4v3M2.6 12h3M18.4 12h3" />
         <path d="m5.4 5.4 2.1 2.1M16.5 16.5l2.1 2.1M18.6 5.4l-2.1 2.1M7.5 16.5l-2.1 2.1" />
@@ -46,10 +59,25 @@ export function AboutBadgeIcon(props: IconProps) {
 
 export function HeroDividerDiamond({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 380 10" fill="none" aria-hidden="true" className={className}>
-      <path d="M0 5h172" stroke="currentColor" strokeWidth="1" strokeOpacity="0.55" />
+    <svg
+      viewBox="0 0 380 10"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M0 5h172"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.55"
+      />
       <path d="M190 0.6 194.6 5 190 9.4 185.4 5Z" fill="currentColor" />
-      <path d="M208 5h172" stroke="currentColor" strokeWidth="1" strokeOpacity="0.55" />
+      <path
+        d="M208 5h172"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.55"
+      />
     </svg>
   );
 }
@@ -187,7 +215,12 @@ export function JourneyStarIcon(props: IconProps) {
 
 export function DashedConnector({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 8" fill="none" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 120 8"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
       <path
         d="M2 4h108"
         stroke="currentColor"
@@ -252,7 +285,14 @@ export function StatStarIcon(props: IconProps) {
 export function CheckCircleIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" {...props}>
-      <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.3" />
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
       <path
         d="m8 12.2 2.7 2.7L16.2 9.4"
         fill="none"
@@ -282,7 +322,10 @@ export function VisionEyeIcon(props: IconProps) {
     <svg {...line} strokeWidth={1.5} {...props}>
       <path d="M2.8 14.4c2.4-3.2 5.5-4.8 9.2-4.8s6.8 1.6 9.2 4.8c-2.4 3.2-5.5 4.8-9.2 4.8s-6.8-1.6-9.2-4.8Z" />
       <circle cx="12" cy="14.4" r="2.6" />
-      <path d="M12 3.2v1.6M6.6 4.4l.6 1.5M17.4 4.4l-.6 1.5M3 6.6l1.2 1M21 6.6l-1.2 1" strokeWidth={1.2} />
+      <path
+        d="M12 3.2v1.6M6.6 4.4l.6 1.5M17.4 4.4l-.6 1.5M3 6.6l1.2 1M21 6.6l-1.2 1"
+        strokeWidth={1.2}
+      />
     </svg>
   );
 }

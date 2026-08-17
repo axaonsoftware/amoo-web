@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SpiritualAwakeningLayout({ children }: { children: React.ReactNode }) {
+export default function SpiritualAwakeningLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

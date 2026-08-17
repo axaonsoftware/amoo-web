@@ -75,11 +75,7 @@ export default function StatsBand() {
                 {rating && (
                   <div className="mt-[5px] flex items-center gap-[2px]">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star
-                        key={i}
-                        size={11}
-                        className="fill-gold text-gold"
-                      />
+                      <Star key={i} size={11} className="fill-gold text-gold" />
                     ))}
                   </div>
                 )}

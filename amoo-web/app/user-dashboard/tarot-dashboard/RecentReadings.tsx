@@ -5,24 +5,46 @@ import { ArrowRight, Download, Heart, Globe, Loader2 } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
-const CHIP_MAP: Record<string, { label: string; bg: string; color: string; Icon?: typeof Heart }> = {
-  love: { label: "Love", bg: "bg-[#fde8f0]", color: "text-[#e0567f]", Icon: Heart },
-  career: { label: "Career", bg: "bg-[#e7effb]", color: "text-[#3b78cc]", Icon: Heart },
+const CHIP_MAP: Record<
+  string,
+  { label: string; bg: string; color: string; Icon?: typeof Heart }
+> = {
+  love: {
+    label: "Love",
+    bg: "bg-[#fde8f0]",
+    color: "text-[#e0567f]",
+    Icon: Heart,
+  },
+  career: {
+    label: "Career",
+    bg: "bg-[#e7effb]",
+    color: "text-[#3b78cc]",
+    Icon: Heart,
+  },
   daily: { label: "Daily", bg: "bg-[#e6f6ea]", color: "text-[#2f9e56]" },
-  general: { label: "General", bg: "bg-[#f0eef4]", color: "text-[#6c6b78]", Icon: Globe },
+  general: {
+    label: "General",
+    bg: "bg-[#f0eef4]",
+    color: "text-[#6c6b78]",
+    Icon: Globe,
+  },
 };
 
 type Report = { id: number; title: string; type: string; created_at: string };
 
 export default function RecentReadings() {
-  const { data, loading, error } = useApi<{ data: Report[] }>(() => api.getReports());
+  const { data, loading, error } = useApi<{ data: Report[] }>(() =>
+    api.getReports(),
+  );
   const reports: Report[] = (data?.data ?? []).filter(
-    (r) => r.type && r.type.toLowerCase().includes("tarot")
+    (r) => r.type && r.type.toLowerCase().includes("tarot"),
   );
   return (
     <section className="rounded-[14px] border border-[#ece9f3] bg-white px-5 py-[16px] shadow-[0_1px_3px_rgba(43,15,71,.04)]">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-[19px] font-bold text-[#2b0f47]">Recent Readings</h2>
+        <h2 className="font-display text-[19px] font-bold text-[#2b0f47]">
+          Recent Readings
+        </h2>
         <button
           type="button"
           className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#7a3fc0]"
@@ -40,16 +62,27 @@ export default function RecentReadings() {
       ) : error ? (
         <p className="mt-4 text-[12.5px] text-red-500">{error}</p>
       ) : reports.length === 0 ? (
-        <p className="mt-4 text-[12.5px] text-[#8b8697]">No tarot readings found.</p>
+        <p className="mt-4 text-[12.5px] text-[#8b8697]">
+          No tarot readings found.
+        </p>
       ) : (
         <ul className="mt-2">
           {reports.map((r, i) => {
-            const typeKey = (r.type || "").toLowerCase().replace("tarot", "").trim() || "general";
+            const typeKey =
+              (r.type || "").toLowerCase().replace("tarot", "").trim() ||
+              "general";
             const chip = CHIP_MAP[typeKey] || CHIP_MAP.general;
             const ChipIcon = chip.Icon;
             const created = new Date(r.created_at);
-            const dateStr = created.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-            const timeStr = created.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+            const dateStr = created.toLocaleDateString("en-IN", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            });
+            const timeStr = created.toLocaleTimeString("en-IN", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
             return (
               <li
                 key={r.id}
@@ -68,8 +101,12 @@ export default function RecentReadings() {
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-semibold text-[#2b0f47]">{r.title}</p>
-                  <p className="mt-[3px] text-[11.5px] text-[#8b8697]">{r.type}</p>
+                  <p className="truncate text-[13.5px] font-semibold text-[#2b0f47]">
+                    {r.title}
+                  </p>
+                  <p className="mt-[3px] text-[11.5px] text-[#8b8697]">
+                    {r.type}
+                  </p>
                   <p className="mt-[3px] text-[11px] text-[#a09aab]">
                     {dateStr}
                     <span className="ml-3">{timeStr}</span>
@@ -79,7 +116,9 @@ export default function RecentReadings() {
                 <span
                   className={`hidden items-center gap-1 rounded-full px-2.5 py-[4px] text-[11px] font-medium sm:inline-flex ${chip.bg} ${chip.color}`}
                 >
-                  {ChipIcon ? <ChipIcon className="h-[12px] w-[12px]" strokeWidth={2} /> : null}
+                  {ChipIcon ? (
+                    <ChipIcon className="h-[12px] w-[12px]" strokeWidth={2} />
+                  ) : null}
                   {chip.label}
                 </span>
 

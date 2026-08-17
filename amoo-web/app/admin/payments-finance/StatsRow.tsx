@@ -22,10 +22,18 @@ type PaymentStats = {
   refunded: number | string;
   refunds: number | string;
   refunded_amount: number | string;
-  by_method: { method: string; count: number | string; amount: number | string }[];
+  by_method: {
+    method: string;
+    count: number | string;
+    amount: number | string;
+  }[];
 };
 
-type RevenueBucket = { label: string; payments: number; revenue: number | string };
+type RevenueBucket = {
+  label: string;
+  payments: number;
+  revenue: number | string;
+};
 
 type StatDef = {
   label: string;
@@ -42,7 +50,8 @@ type StatDef = {
 const money = (v: unknown) => "₹ " + formatCompact(v);
 
 function pctChange(current?: number, previous?: number): number | null {
-  if (current === undefined || previous === undefined || previous === 0) return null;
+  if (current === undefined || previous === undefined || previous === 0)
+    return null;
   return ((current - previous) / previous) * 100;
 }
 
@@ -99,10 +108,16 @@ export default function StatsRow() {
   const buckets = revenue.data ?? [];
   const now = buckets[buckets.length - 1];
   const prev = buckets[buckets.length - 2];
-  const revenueDelta = pctChange(toNumber(now?.revenue), toNumber(prev?.revenue));
+  const revenueDelta = pctChange(
+    toNumber(now?.revenue),
+    toNumber(prev?.revenue),
+  );
   const countDelta = pctChange(now?.payments, prev?.payments);
 
-  const successCount = (s?.by_method ?? []).reduce((acc, m) => acc + toNumber(m.count), 0);
+  const successCount = (s?.by_method ?? []).reduce(
+    (acc, m) => acc + toNumber(m.count),
+    0,
+  );
 
   const items: StatDef[] = [
     {
@@ -181,7 +196,9 @@ export default function StatsRow() {
                 <st.Icon size={19} className={st.iconColor} />
               </div>
               <div className="min-w-0 pt-[1px]">
-                <p className="truncate text-[11px] font-medium text-[#8B879C]">{st.label}</p>
+                <p className="truncate text-[11px] font-medium text-[#8B879C]">
+                  {st.label}
+                </p>
                 <p className="mt-[2px] text-[19px] font-semibold leading-[26px] text-[#1B1630]">
                   {st.value}
                 </p>

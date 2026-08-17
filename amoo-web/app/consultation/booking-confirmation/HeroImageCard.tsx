@@ -21,8 +21,12 @@ export default function HeroImageCard() {
           }}
         />
         <span className="relative z-10 text-7xl select-none">🪷</span>
-        <span className="absolute left-8 bottom-8 text-3xl select-none">🕯️</span>
-        <span className="absolute right-8 bottom-8 text-3xl select-none">🕯️</span>
+        <span className="absolute left-8 bottom-8 text-3xl select-none">
+          🕯️
+        </span>
+        <span className="absolute right-8 bottom-8 text-3xl select-none">
+          🕯️
+        </span>
         <span className="absolute left-6 top-10 text-2xl select-none opacity-80">
           🔮
         </span>

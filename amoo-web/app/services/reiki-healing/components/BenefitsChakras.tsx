@@ -60,7 +60,11 @@ const CHAKRAS = [
   },
 ];
 
-const AVATARS = ["https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png", "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-2.png", "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-3.png"];
+const AVATARS = [
+  "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
+  "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-2.png",
+  "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-3.png",
+];
 
 export default function BenefitsChakras() {
   return (
@@ -212,7 +216,10 @@ export default function BenefitsChakras() {
                 <div>
                   <div className="flex items-center gap-[2px] text-gold">
                     {Array.from({ length: 5 }).map((_, index) => (
-                      <StarSolidIcon key={index} className="h-[10px] w-[10px]" />
+                      <StarSolidIcon
+                        key={index}
+                        className="h-[10px] w-[10px]"
+                      />
                     ))}
                     <span className="ml-1 text-[11px] font-semibold text-white">
                       4.9

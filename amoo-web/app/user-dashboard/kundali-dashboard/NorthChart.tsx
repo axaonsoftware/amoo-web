@@ -31,8 +31,24 @@ export default function NorthChart() {
         className="absolute inset-0 h-full w-full text-[#d9cfe6]"
         aria-hidden="true"
       >
-        <line x1="0" y1="0" x2="100" y2="100" stroke="currentColor" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
-        <line x1="100" y1="0" x2="0" y2="100" stroke="currentColor" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+        <line
+          x1="0"
+          y1="0"
+          x2="100"
+          y2="100"
+          stroke="currentColor"
+          strokeWidth="0.5"
+          vectorEffect="non-scaling-stroke"
+        />
+        <line
+          x1="100"
+          y1="0"
+          x2="0"
+          y2="100"
+          stroke="currentColor"
+          strokeWidth="0.5"
+          vectorEffect="non-scaling-stroke"
+        />
         <polygon
           points="50,0 100,50 50,100 0,50"
           fill="none"
@@ -49,12 +65,17 @@ export default function NorthChart() {
           style={{ left: `${l.x}%`, top: `${l.y}%` }}
         >
           {l.lines.map((line) => (
-            <span key={line} className="block text-[11px] font-semibold text-[#2b0f47]">
+            <span
+              key={line}
+              className="block text-[11px] font-semibold text-[#2b0f47]"
+            >
               {line}
             </span>
           ))}
           {l.number ? (
-            <span className="block text-[11px] font-medium text-[#8b8697]">{l.number}</span>
+            <span className="block text-[11px] font-medium text-[#8b8697]">
+              {l.number}
+            </span>
           ) : null}
         </div>
       ))}

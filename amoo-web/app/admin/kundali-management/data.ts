@@ -1,10 +1,5 @@
 export type KundaliTypeKey =
-  | "janam"
-  | "match-making"
-  | "dasha"
-  | "varshphal"
-  | "child-birth"
-  | "prashna";
+  "janam" | "match-making" | "dasha" | "varshphal" | "child-birth" | "prashna";
 
 export type StatusKey = "completed" | "in-progress" | "pending" | "cancelled";
 

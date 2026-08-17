@@ -1,13 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Lock, ArrowRight, Loader2, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Lock,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { formatCurrency } from "@/lib/format";
 import { loadRazorpayScript, openRazorpayCheckout } from "@/lib/razorpay";
 import { clearConsultationData } from "../lib/consultation-storage";
-import { toApiMode, modeNote, parseDisplayDate, parseDisplayTime, type ConsultationService } from "../lib/services";
+import {
+  toApiMode,
+  modeNote,
+  parseDisplayDate,
+  parseDisplayTime,
+  type ConsultationService,
+} from "../lib/services";
 import type { AppliedCoupon } from "./CouponCard";
 
 export default function BottomActionBar({
@@ -32,7 +44,12 @@ export default function BottomActionBar({
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const backQuery = new URLSearchParams({ service, mode, date, time }).toString();
+  const backQuery = new URLSearchParams({
+    service,
+    mode,
+    date,
+    time,
+  }).toString();
 
   const handlePay = async () => {
     if (!svc) return;
@@ -70,7 +87,7 @@ export default function BottomActionBar({
           // a saving.
           throw new Error(
             `${(couponErr as Error)?.message || "Coupon could not be applied"}. ` +
-              "Remove the coupon to continue at the full price."
+              "Remove the coupon to continue at the full price.",
           );
         }
       }
@@ -105,7 +122,8 @@ export default function BottomActionBar({
       clearConsultationData();
       router.push(`/consultation/booking-confirmation?bookingId=${booking.id}`);
     } catch (err) {
-      const message = (err as Error)?.message || "Payment failed. Please try again.";
+      const message =
+        (err as Error)?.message || "Payment failed. Please try again.";
       // Closing the Razorpay modal is a normal action, not an error state.
       if (message !== "Payment cancelled by user") {
         // Rendered inline rather than through alert(), which is blocking,
@@ -133,7 +151,9 @@ export default function BottomActionBar({
       <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-0 justify-between bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <button
           type="button"
-          onClick={() => router.push(`/consultation/booking-summary?${backQuery}`)}
+          onClick={() =>
+            router.push(`/consultation/booking-summary?${backQuery}`)
+          }
           disabled={busy}
           className="flex items-center gap-2 border border-gray-200 rounded-lg px-5 py-2.5 text-sm font-medium text-gray-700 disabled:opacity-50"
         >
@@ -141,7 +161,10 @@ export default function BottomActionBar({
           Back
         </button>
 
-        <p className="flex items-center gap-2 text-xs text-gray-500 order-3 sm:order-2" aria-live="polite">
+        <p
+          className="flex items-center gap-2 text-xs text-gray-500 order-3 sm:order-2"
+          aria-live="polite"
+        >
           <Lock size={14} aria-hidden="true" />
           {status || (busy ? "Processing..." : "Secured by Razorpay")}
         </p>
@@ -151,7 +174,9 @@ export default function BottomActionBar({
           onClick={handlePay}
           disabled={busy || !svc}
           className="order-2 sm:order-3 flex items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold text-[#3E1E7A] w-full sm:w-auto disabled:opacity-60"
-          style={{ background: "linear-gradient(90deg,#F3D07A 0%,#C9932F 100%)" }}
+          style={{
+            background: "linear-gradient(90deg,#F3D07A 0%,#C9932F 100%)",
+          }}
         >
           {busy ? (
             <>

@@ -9,14 +9,25 @@ import { api } from "@/lib/api";
 type Report = { id: number; title: string; type: string; created_at: string };
 
 export default function HealingPlan() {
-  const { data, loading, error } = useApi<{ data: Report[] }>(() => api.getReports());
+  const { data, loading, error } = useApi<{ data: Report[] }>(() =>
+    api.getReports(),
+  );
   const reports: Report[] = (data?.data ?? []).filter(
-    (r) => r.type && r.type.toLowerCase().includes("reiki")
+    (r) => r.type && r.type.toLowerCase().includes("reiki"),
   );
   const plan = reports[0];
   const planMeta = [
     { label: "Duration", value: plan ? "Ongoing" : "—" },
-    { label: "Start Date", value: plan ? new Date(plan.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—" },
+    {
+      label: "Start Date",
+      value: plan
+        ? new Date(plan.created_at).toLocaleDateString("en-IN", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+          })
+        : "—",
+    },
     { label: "End Date", value: plan ? "TBD" : "—" },
   ];
   return (
@@ -38,32 +49,32 @@ export default function HealingPlan() {
       ) : error ? (
         <p className="mt-4 text-[12.5px] text-red-500">{error}</p>
       ) : (
-      <div className="mt-4 rounded-[12px] border border-[#ece9f3] bg-white">
-        <div className="flex items-center gap-2.5 px-3.5 py-[11px]">
-          <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#f1e9fc] text-[#7a3fc0]">
-            <MeditationGlyph className="h-[16px] w-[16px]" />
-          </span>
-          <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-[#2b0f47]">
-            {plan ? plan.title : "Reiki Healing Plan"}
-          </span>
-          <span className="shrink-0 rounded-full bg-[#e6f6ea] px-2.5 py-[3px] text-[10.5px] font-semibold text-[#2f9e56]">
-            {plan ? "Active" : "No Plan"}
-          </span>
-        </div>
+        <div className="mt-4 rounded-[12px] border border-[#ece9f3] bg-white">
+          <div className="flex items-center gap-2.5 px-3.5 py-[11px]">
+            <span className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full bg-[#f1e9fc] text-[#7a3fc0]">
+              <MeditationGlyph className="h-[16px] w-[16px]" />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold text-[#2b0f47]">
+              {plan ? plan.title : "Reiki Healing Plan"}
+            </span>
+            <span className="shrink-0 rounded-full bg-[#e6f6ea] px-2.5 py-[3px] text-[10.5px] font-semibold text-[#2f9e56]">
+              {plan ? "Active" : "No Plan"}
+            </span>
+          </div>
 
-        <span className="block h-px w-full bg-[#ece9f3]" />
+          <span className="block h-px w-full bg-[#ece9f3]" />
 
-        <div className="grid grid-cols-3 divide-x divide-[#ece9f3]">
-          {planMeta.map(({ label, value }) => (
-            <div key={label} className="px-2 py-[10px] text-center">
-              <p className="text-[10.5px] text-[#8b8697]">{label}</p>
-              <p className="mt-1 text-[12px] font-semibold text-[#2b0f47]">
-                {value}
-              </p>
-            </div>
-          ))}
+          <div className="grid grid-cols-3 divide-x divide-[#ece9f3]">
+            {planMeta.map(({ label, value }) => (
+              <div key={label} className="px-2 py-[10px] text-center">
+                <p className="text-[10.5px] text-[#8b8697]">{label}</p>
+                <p className="mt-1 text-[12px] font-semibold text-[#2b0f47]">
+                  {value}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
       )}
 
       {/* Today's Focus */}

@@ -23,7 +23,7 @@ export function useToast() {
     () => () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     },
-    []
+    [],
   );
 
   const Toast = useCallback(
@@ -39,7 +39,7 @@ export function useToast() {
           {toast.msg}
         </div>
       ) : null,
-    [toast]
+    [toast],
   );
 
   return { toast, showToast, Toast };

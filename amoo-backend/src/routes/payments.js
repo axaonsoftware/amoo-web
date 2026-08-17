@@ -308,6 +308,29 @@ router.post(
       return fail(res, 400, "Only successful payments can be refunded");
     }
 
+    // Eligibility: booking must not be completed, and the session must be at
+    // least 24h away. Only applies to booking payments — subscription payments
+    // (no booking) are not constrained by a session window.
+    if (p.booking_id) {
+      const { rows: b } = await pool.query(
+        "SELECT id, status, date, time FROM bookings WHERE id = $1",
+        [p.booking_id]
+      );
+      const booking = b[0];
+      if (booking) {
+        if (booking.status === "completed") {
+          return fail(res, 400, "Cannot refund completed consultation");
+        }
+        const { rows: soon } = await pool.query(
+          "SELECT 1 FROM bookings WHERE id = $1 AND (date + time) < NOW() + INTERVAL '24 hours'",
+          [p.booking_id]
+        );
+        if (soon.length) {
+          return fail(res, 400, "Cannot refund within 24 hours of session");
+        }
+      }
+    }
+
     const client = await pool.connect();
     try {
       await client.query("BEGIN");

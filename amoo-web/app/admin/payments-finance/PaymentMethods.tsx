@@ -5,7 +5,11 @@ import { EmptyState, ErrorState, Skeleton } from "../../components/states";
 import { formatCurrency, titleCase, toNumber } from "../../../lib/format";
 
 type PaymentStats = {
-  by_method: { method: string | null; count: number | string; amount: number | string }[];
+  by_method: {
+    method: string | null;
+    count: number | string;
+    amount: number | string;
+  }[];
 };
 
 const COLORS = ["#4C1D95", "#22C55E", "#F59E0B", "#3B82F6", "#EC4899"];
@@ -44,11 +48,15 @@ function label(method: string | null): string {
  */
 export default function PaymentMethods() {
   const { data, loading, error, refetch } = useApi<PaymentStats>(() =>
-    api.admin.getPaymentStats()
+    api.admin.getPaymentStats(),
   );
 
   const rows = (data?.by_method ?? [])
-    .map((m) => ({ label: label(m.method), amount: toNumber(m.amount), count: toNumber(m.count) }))
+    .map((m) => ({
+      label: label(m.method),
+      amount: toNumber(m.amount),
+      count: toNumber(m.count),
+    }))
     .sort((a, b) => b.amount - a.amount);
 
   const total = rows.reduce((s, m) => s + m.amount, 0);
@@ -57,7 +65,9 @@ export default function PaymentMethods() {
   const restTotal = rows.slice(5).reduce((s, m) => s + m.amount, 0);
   const methods = [
     ...top,
-    ...(restTotal > 0 ? [{ label: "Others", amount: restTotal, count: 0 }] : []),
+    ...(restTotal > 0
+      ? [{ label: "Others", amount: restTotal, count: 0 }]
+      : []),
   ].map((m, i) => ({
     ...m,
     color: COLORS[i % COLORS.length],
@@ -66,13 +76,17 @@ export default function PaymentMethods() {
 
   const segments = methods.map((m, i) => {
     const len = (m.pct / 100) * C;
-    const offset = methods.slice(0, i).reduce((sum, p) => sum + (p.pct / 100) * C, 0);
+    const offset = methods
+      .slice(0, i)
+      .reduce((sum, p) => sum + (p.pct / 100) * C, 0);
     return { ...m, dash: `${Math.max(0, len - 2)} ${C - len + 2}`, offset };
   });
 
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
-      <h2 className="text-[14px] font-semibold text-[#1B1630]">Payment Methods</h2>
+      <h2 className="text-[14px] font-semibold text-[#1B1630]">
+        Payment Methods
+      </h2>
 
       {loading ? (
         <div className="mt-4 flex items-center gap-4">
@@ -121,7 +135,9 @@ export default function PaymentMethods() {
                     className="h-[7px] w-[7px] shrink-0 rounded-full"
                     style={{ backgroundColor: m.color }}
                   />
-                  <span className="truncate text-[10.5px] text-[#4A3B63]">{m.label}</span>
+                  <span className="truncate text-[10.5px] text-[#4A3B63]">
+                    {m.label}
+                  </span>
                   <span className="ml-auto shrink-0 text-[10.5px] font-medium text-[#1B1630]">
                     {formatCurrency(m.amount)} ({m.pct.toFixed(1)}%)
                   </span>
@@ -130,7 +146,9 @@ export default function PaymentMethods() {
             </ul>
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-[#F1EFF6] pt-3">
-            <span className="text-[11.5px] font-medium text-[#8B879C]">Total</span>
+            <span className="text-[11.5px] font-medium text-[#8B879C]">
+              Total
+            </span>
             <span className="text-[12.5px] font-semibold text-[#1B1630]">
               {formatCurrency(total)}
             </span>

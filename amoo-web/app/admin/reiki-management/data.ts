@@ -1,10 +1,5 @@
 export type SessionType =
-  | "distance"
-  | "chakra"
-  | "aura"
-  | "fullBody"
-  | "stress"
-  | "energy";
+  "distance" | "chakra" | "aura" | "fullBody" | "stress" | "energy";
 
 export type SessionStatus = "Upcoming" | "Ongoing" | "Completed" | "Cancelled";
 

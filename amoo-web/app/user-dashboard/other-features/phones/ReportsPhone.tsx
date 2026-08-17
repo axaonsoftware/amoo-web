@@ -8,22 +8,26 @@ const REPORTS = [
   {
     title: "Kundali Report",
     date: "18 May 2025",
-    thumb: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
+    thumb:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
   },
   {
     title: "Numerology Report",
     date: "15 May 2025",
-    thumb: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
+    thumb:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
   },
   {
     title: "Tarot Reading",
     date: "14 May 2025",
-    thumb: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
+    thumb:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
   },
   {
     title: "Aura Report",
     date: "12 May 2025",
-    thumb: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
+    thumb:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
   },
 ];
 

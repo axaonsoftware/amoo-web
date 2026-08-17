@@ -45,8 +45,8 @@ export default function PageHeader() {
             Unlock Deeper Healing
           </p>
           <p className="mt-2 text-[11.5px] leading-[1.55] text-white/75">
-            Get personalized healing plans, chakra balance insights &amp; unlimited
-            sessions.
+            Get personalized healing plans, chakra balance insights &amp;
+            unlimited sessions.
           </p>
         </div>
 
@@ -60,7 +60,11 @@ export default function PageHeader() {
 
         {/* Right-edge mandala */}
         <span className="pointer-events-none absolute -right-4 top-1/2 h-[110px] w-[110px] -translate-y-1/2 text-[#e9b85c] opacity-25">
-          <Mandala rings={[54, 40, 26, 12]} spokes={16} className="h-full w-full" />
+          <Mandala
+            rings={[54, 40, 26, 12]}
+            spokes={16}
+            className="h-full w-full"
+          />
         </span>
       </section>
     </div>

@@ -1,6 +1,13 @@
 "use client";
 
-import { UserRound, Pencil, ChevronDown, Loader2, CheckCircle2, X } from "lucide-react";
+import {
+  UserRound,
+  Pencil,
+  ChevronDown,
+  Loader2,
+  CheckCircle2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
@@ -104,8 +111,16 @@ function EditableField({
 }) {
   return (
     <div className={full ? "lg:col-span-3" : undefined}>
-      <label htmlFor={`profile-${name}`} className="block text-[12.5px] text-[#6c6b78]">
-        {label} {required && <span className="text-red-400" aria-hidden="true">*</span>}
+      <label
+        htmlFor={`profile-${name}`}
+        className="block text-[12.5px] text-[#6c6b78]"
+      >
+        {label}{" "}
+        {required && (
+          <span className="text-red-400" aria-hidden="true">
+            *
+          </span>
+        )}
       </label>
       <div className="relative mt-[7px]">
         {dropdown ? (
@@ -136,7 +151,10 @@ function EditableField({
                 </>
               )}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8b8697]" strokeWidth={2} />
+            <ChevronDown
+              className="pointer-events-none absolute right-3 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8b8697]"
+              strokeWidth={2}
+            />
           </div>
         ) : (
           <input
@@ -149,9 +167,7 @@ function EditableField({
           />
         )}
       </div>
-      {error && (
-        <p className="mt-1 text-[12px] text-red-500">{error}</p>
-      )}
+      {error && <p className="mt-1 text-[12px] text-red-500">{error}</p>}
     </div>
   );
 }
@@ -179,7 +195,10 @@ function ReadonlyField({
       >
         <span className="text-[14px] text-[#2b0f47]">{value}</span>
         {dropdown ? (
-          <ChevronDown className="ml-auto h-[18px] w-[18px] text-[#8b8697]" strokeWidth={2} />
+          <ChevronDown
+            className="ml-auto h-[18px] w-[18px] text-[#8b8697]"
+            strokeWidth={2}
+          />
         ) : null}
       </div>
       {hint && <p className="mt-1 text-[12px] text-[#8b8697]">{hint}</p>}
@@ -188,7 +207,12 @@ function ReadonlyField({
 }
 
 export default function PersonalInformation() {
-  const { data: profile, loading, error, refetch } = useApi<any>(() => api.getProfile());
+  const {
+    data: profile,
+    loading,
+    error,
+    refetch,
+  } = useApi<any>(() => api.getProfile());
   const user: Profile = profile?.user || profile || {};
 
   const [editing, setEditing] = useState(false);
@@ -205,7 +229,10 @@ export default function PersonalInformation() {
   const handleChange = (name: keyof Profile, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: undefined }));
-    if (saveMsg) { setSaveMsg(null); setSaveErr(null); }
+    if (saveMsg) {
+      setSaveMsg(null);
+      setSaveErr(null);
+    }
   };
 
   const handleEdit = () => {
@@ -296,7 +323,10 @@ export default function PersonalInformation() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-[10px]">
-          <UserRound className="h-[22px] w-[22px] text-[#6b3fa0]" strokeWidth={1.8} />
+          <UserRound
+            className="h-[22px] w-[22px] text-[#6b3fa0]"
+            strokeWidth={1.8}
+          />
           <h2 className="font-display text-[20px] font-bold text-[#2b0f47]">
             Personal Information
           </h2>
@@ -322,7 +352,10 @@ export default function PersonalInformation() {
                 {saving ? (
                   <Loader2 className="h-[15px] w-[15px] animate-spin" />
                 ) : (
-                  <CheckCircle2 className="h-[15px] w-[15px]" strokeWidth={1.9} />
+                  <CheckCircle2
+                    className="h-[15px] w-[15px]"
+                    strokeWidth={1.9}
+                  />
                 )}
                 {saving ? "Saving..." : "Save Changes"}
               </button>
@@ -383,7 +416,9 @@ export default function PersonalInformation() {
                 label={f.label}
                 value={
                   f.name === "address"
-                    ? [user.address, user.city, user.state, user.country].filter(Boolean).join(", ") || "—"
+                    ? [user.address, user.city, user.state, user.country]
+                        .filter(Boolean)
+                        .join(", ") || "—"
                     : f.name === "dob"
                       ? toDateInput(user.dob) || "—"
                       : f.name === "tob"
@@ -392,9 +427,11 @@ export default function PersonalInformation() {
                 }
                 dropdown={f.dropdown && !f.readOnly}
                 full={f.full}
-                hint={editing && f.readOnly ? "Cannot be changed here" : undefined}
+                hint={
+                  editing && f.readOnly ? "Cannot be changed here" : undefined
+                }
               />
-            )
+            ),
           )}
         </div>
       )}

@@ -3,7 +3,16 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { trackEvent } from "../../lib/tracking";
@@ -14,7 +23,9 @@ export default function AstrologerRightPanel() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -24,7 +35,8 @@ export default function AstrologerRightPanel() {
   // of the default dashboard.
   const callbackUrl =
     typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("callbackUrl") || "/user-dashboard"
+      ? new URLSearchParams(window.location.search).get("callbackUrl") ||
+        "/user-dashboard"
       : "/user-dashboard";
 
   function validate(): boolean {
@@ -56,7 +68,9 @@ export default function AstrologerRightPanel() {
       trackEvent("login", { method: "email", role: "expert" });
       setTimeout(() => router.push(callbackUrl), 1200);
     } catch (err: unknown) {
-      setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      setApiError(
+        err instanceof Error ? err.message : "Login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -97,15 +111,28 @@ export default function AstrologerRightPanel() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="astrologerrightsection-email-address" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="astrologerrightsection-email-address"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               Email Address
             </label>
-            <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input id="astrologerrightsection-email-address"
+            <div
+              className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <User
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]"
+              />
+              <input
+                id="astrologerrightsection-email-address"
                 type="text"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email)
+                    setErrors((p) => ({ ...p, email: undefined }));
+                }}
                 placeholder="Enter your email address"
                 className="w-full pl-10 pr-3 py-3 rounded-lg border border-purple-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
@@ -118,15 +145,28 @@ export default function AstrologerRightPanel() {
           </div>
 
           <div>
-            <label htmlFor="astrologerrightsection-password" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="astrologerrightsection-password"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               Password
             </label>
-            <div className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input id="astrologerrightsection-password"
+            <div
+              className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <Lock
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                id="astrologerrightsection-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password)
+                    setErrors((p) => ({ ...p, password: undefined }));
+                }}
                 placeholder="Enter your password"
                 className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
@@ -150,7 +190,10 @@ export default function AstrologerRightPanel() {
                 via POST /api/experts/:id/set-password. /contact is the correct
                 destination here, made explicit so it does not look like the bug
                 that was fixed on the user login page. */}
-            <Link href="/contact" className="text-xs font-medium text-[#5B2A9D] hover:underline">
+            <Link
+              href="/contact"
+              className="text-xs font-medium text-[#5B2A9D] hover:underline"
+            >
               Forgot Password? Contact support
             </Link>
           </div>
@@ -182,7 +225,10 @@ export default function AstrologerRightPanel() {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Not an astrologer?{" "}
-          <Link href="/user-login" className="text-[#5B2A9D] font-semibold hover:underline">
+          <Link
+            href="/user-login"
+            className="text-[#5B2A9D] font-semibold hover:underline"
+          >
             User Login
           </Link>
         </p>

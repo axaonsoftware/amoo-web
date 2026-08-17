@@ -28,8 +28,8 @@ export default function Stepper() {
                   step.state === "done"
                     ? "bg-[#3E1E7A] text-white"
                     : step.state === "active"
-                    ? "bg-amber-500 text-white"
-                    : "bg-white/10 text-white/60 border border-white/20"
+                      ? "bg-amber-500 text-white"
+                      : "bg-white/10 text-white/60 border border-white/20"
                 }`}
               >
                 {step.state === "done" ? (
@@ -37,15 +37,17 @@ export default function Stepper() {
                 ) : (
                   step.number
                 )}
-                {step.state === "done" && <Check size={16} className="hidden sm:block" />}
+                {step.state === "done" && (
+                  <Check size={16} className="hidden sm:block" />
+                )}
               </div>
               <span
                 className={`text-[9px] sm:text-[11px] text-center whitespace-nowrap hidden sm:block ${
                   step.state === "active"
                     ? "text-amber-500 font-medium"
                     : step.state === "done"
-                    ? "text-white/70"
-                    : "text-white/40"
+                      ? "text-white/70"
+                      : "text-white/40"
                 }`}
               >
                 {step.label}

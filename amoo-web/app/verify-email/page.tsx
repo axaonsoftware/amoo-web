@@ -13,13 +13,16 @@ export default function VerifyEmailPage() {
   // Token is passed via URL hash fragment (#email=...&token=...) rather than
   // query parameters, so it is never sent to the server in the HTTP request.
   // This prevents leakage through email logs, proxies, and referrer headers.
-  const hash = typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
+  const hash =
+    typeof window !== "undefined" ? window.location.hash.replace(/^#/, "") : "";
   const hashParams = new URLSearchParams(hash);
   const email = hashParams.get("email") || "";
   const token = hashParams.get("token") || "";
 
   const [status, setStatus] = useState<Status>("verifying");
-  const [message, setMessage] = useState("Invalid verification link. Please check the link and try again.");
+  const [message, setMessage] = useState(
+    "Invalid verification link. Please check the link and try again.",
+  );
 
   useEffect(() => {
     if (!email || !token) {
@@ -33,7 +36,9 @@ export default function VerifyEmailPage() {
       })
       .catch((err) => {
         setStatus("error");
-        setMessage(err?.message || "Verification failed. The link may have expired.");
+        setMessage(
+          err?.message || "Verification failed. The link may have expired.",
+        );
       });
   }, [email, token]);
 
@@ -51,7 +56,11 @@ export default function VerifyEmailPage() {
         </div>
 
         <h1 className="text-2xl font-bold text-[#3E1E7A]">
-          {status === "verifying" ? "Verifying..." : status === "success" ? "Email Verified!" : "Verification Failed"}
+          {status === "verifying"
+            ? "Verifying..."
+            : status === "success"
+              ? "Email Verified!"
+              : "Verification Failed"}
         </h1>
 
         <p className="mt-3 text-sm text-gray-600">{message}</p>

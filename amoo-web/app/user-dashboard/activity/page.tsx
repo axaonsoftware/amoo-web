@@ -27,9 +27,14 @@ export default function MyActivityPage() {
         const d = res?.data || [];
         setItems(Array.isArray(d) ? d : []);
         const total = res?.meta?.total || 0;
-        setTotalPages(res?.meta?.totalPages || Math.ceil(total / pageSize) || 1);
+        setTotalPages(
+          res?.meta?.totalPages || Math.ceil(total / pageSize) || 1,
+        );
       })
-      .catch((e) => { setItems([]); setError(e?.message || "Failed to load") })
+      .catch((e) => {
+        setItems([]);
+        setError(e?.message || "Failed to load");
+      })
       .finally(() => setLoading(false));
   }, [page]);
 
@@ -46,7 +51,9 @@ export default function MyActivityPage() {
     };
     const color = colors[action] || "bg-slate-100 text-slate-700";
     return (
-      <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium ${color}`}>
+      <span
+        className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium ${color}`}
+      >
         {action.replace(/_/g, " ")}
       </span>
     );
@@ -55,8 +62,12 @@ export default function MyActivityPage() {
   return (
     <main id="main-content" className="flex-1 px-5 pb-10 pt-6 lg:px-6">
       <div className="mb-6">
-        <h1 className="text-[22px] font-bold text-[#2b0f47] font-serif">My Activity</h1>
-        <p className="mt-1 text-[14px] text-[#8b8697]">Your recent actions and events</p>
+        <h1 className="text-[22px] font-bold text-[#2b0f47] font-serif">
+          My Activity
+        </h1>
+        <p className="mt-1 text-[14px] text-[#8b8697]">
+          Your recent actions and events
+        </p>
       </div>
 
       {loading ? (
@@ -65,13 +76,17 @@ export default function MyActivityPage() {
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-10">
-          <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-4 text-center text-[14px] text-red-700">{error}</div>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-4 text-center text-[14px] text-red-700">
+            {error}
+          </div>
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-[#8b8697]">
           <Clock className="mb-3 h-12 w-12" strokeWidth={1.5} />
           <p className="text-[15px] font-medium">No activity recorded yet</p>
-          <p className="mt-1 text-[13px]">Actions you perform will appear here</p>
+          <p className="mt-1 text-[13px]">
+            Actions you perform will appear here
+          </p>
         </div>
       ) : (
         <>
@@ -87,7 +102,10 @@ export default function MyActivityPage() {
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item.id} className="border-b border-[#f0e8dc] last:border-0 hover:bg-[#faf7f2]">
+                  <tr
+                    key={item.id}
+                    className="border-b border-[#f0e8dc] last:border-0 hover:bg-[#faf7f2]"
+                  >
                     <td className="px-4 py-3">{actionBadge(item.action)}</td>
                     <td className="px-4 py-3 hidden sm:table-cell text-[#6b5f7a] max-w-[240px] truncate">
                       {item.action_details

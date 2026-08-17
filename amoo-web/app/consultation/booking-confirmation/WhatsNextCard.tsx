@@ -1,4 +1,10 @@
-import { Mail, MessageCircle, Calendar, Headphones, CalendarPlus } from "lucide-react";
+import {
+  Mail,
+  MessageCircle,
+  Calendar,
+  Headphones,
+  CalendarPlus,
+} from "lucide-react";
 
 const nextSteps = [
   {

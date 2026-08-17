@@ -10,7 +10,9 @@ export default function ConfirmationHeader({
     <div className="text-center max-w-2xl mx-auto pt-10 px-4">
       <div className="relative w-16 h-16 mx-auto mb-4 flex items-center justify-center">
         <span className="absolute -left-4 top-0 text-amber-400 text-lg">✦</span>
-        <span className="absolute -right-4 top-0 text-amber-400 text-lg">✦</span>
+        <span className="absolute -right-4 top-0 text-amber-400 text-lg">
+          ✦
+        </span>
         <div className="w-14 h-14 rounded-full bg-green-500 flex items-center justify-center">
           <Check size={28} className="text-white" strokeWidth={3} />
         </div>

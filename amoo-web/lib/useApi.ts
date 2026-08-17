@@ -23,7 +23,7 @@ export interface UseApiResult<T> {
 export function useApi<T>(
   fn: () => Promise<T>,
   deps: unknown[] = [],
-  pollInterval = 0
+  pollInterval = 0,
 ): UseApiResult<T> {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,16 +99,16 @@ export function useApi<T>(
 export function useApiList<T>(
   fn: () => Promise<unknown>,
   deps: unknown[] = [],
-  pollInterval = 0
+  pollInterval = 0,
 ): Omit<UseApiResult<T[]>, "setData"> & {
   items: T[];
   meta: PageMeta | null;
-  setData: React.Dispatch<React.SetStateAction<unknown>>;
+  setData: React.Dispatch<React.SetStateAction<T[] | null>>;
 } {
   const { data, loading, error, refetch, setData } = useApi<unknown>(
     fn,
     deps,
-    pollInterval
+    pollInterval,
   );
   return {
     data: unwrapList<T>(data),

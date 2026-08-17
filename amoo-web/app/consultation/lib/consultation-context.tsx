@@ -1,7 +1,17 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
-import { saveConsultationData, loadConsultationData, type ConsultationData } from "./consultation-storage";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
+import {
+  saveConsultationData,
+  loadConsultationData,
+  type ConsultationData,
+} from "./consultation-storage";
 
 type ConsultationContextType = {
   data: ConsultationData;
@@ -39,6 +49,7 @@ export function ConsultationProvider({ children }: { children: ReactNode }) {
 
 export function useConsultation() {
   const ctx = useContext(ConsultationContext);
-  if (!ctx) throw new Error("useConsultation must be used within ConsultationProvider");
+  if (!ctx)
+    throw new Error("useConsultation must be used within ConsultationProvider");
   return ctx;
 }

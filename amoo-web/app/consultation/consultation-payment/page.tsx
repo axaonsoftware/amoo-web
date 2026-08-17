@@ -18,7 +18,12 @@ import BottomActionBar from "./BottomActionBar";
 import { SiteFooter } from "../../components/site-footer";
 import WhatsAppFloatButton from "./WhatsAppFloatButton";
 
-type BookingParams = { service: string; mode: string; date: string; time: string };
+type BookingParams = {
+  service: string;
+  mode: string;
+  date: string;
+  time: string;
+};
 
 /**
  * Read the selection carried over from the earlier booking steps.
@@ -65,10 +70,21 @@ export default function ConsultationPaymentPage() {
     // had its own hardcoded MODE_PRICES map and invented a 10% discount, so the
     // total on screen bore no relation to what the API actually billed.
     resolveService(p.service)
-      .then((row) => { if (live) { setSvc(row); setError(null); } })
-      .catch((e: Error) => { if (live) setError(e.message); })
-      .finally(() => { if (live) setLoading(false); });
-    return () => { live = false; };
+      .then((row) => {
+        if (live) {
+          setSvc(row);
+          setError(null);
+        }
+      })
+      .catch((e: Error) => {
+        if (live) setError(e.message);
+      })
+      .finally(() => {
+        if (live) setLoading(false);
+      });
+    return () => {
+      live = false;
+    };
   }, []);
 
   if (loading) {
@@ -77,7 +93,10 @@ export default function ConsultationPaymentPage() {
         <OfferBar />
         <HomeHeader absolute={false} />
         <div className="flex min-h-[50vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[#5B2A9D]" aria-label="Loading your booking" />
+          <Loader2
+            className="h-8 w-8 animate-spin text-[#5B2A9D]"
+            aria-label="Loading your booking"
+          />
         </div>
       </main>
     );
@@ -93,7 +112,9 @@ export default function ConsultationPaymentPage() {
             <AlertCircle className="h-7 w-7 text-amber-600" />
           </span>
           <h1 className="font-serif text-xl font-bold text-[#3E1E7A]">
-            {params ? "We couldn't price this consultation" : "No booking in progress"}
+            {params
+              ? "We couldn't price this consultation"
+              : "No booking in progress"}
           </h1>
           <p className="mt-2 text-sm text-gray-600">
             {error ||

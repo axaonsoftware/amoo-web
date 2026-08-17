@@ -34,8 +34,7 @@ const playfair = Playfair_Display({
 // Absolute base for every relative URL in metadata. Without it, Open Graph and
 // Twitter image/URL fields resolve against localhost in a production build, so
 // social previews and canonical URLs point at a machine nobody can reach.
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://amooguru.com";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://amooguru.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

@@ -53,10 +53,17 @@ export default function Topbar() {
             )}
           </span>
           <div className="hidden leading-tight md:block">
-            <p className="text-[14px] font-semibold text-[#2b0f47]">{user?.name || "User"}</p>
-            <p className="text-[11.5px] text-[#8b8697] capitalize">{user?.kind || "User"}</p>
+            <p className="text-[14px] font-semibold text-[#2b0f47]">
+              {user?.name || "User"}
+            </p>
+            <p className="text-[11.5px] text-[#8b8697] capitalize">
+              {user?.kind || "User"}
+            </p>
           </div>
-          <ChevronDown className="h-[18px] w-[18px] text-[#4a1c7d]" strokeWidth={2} />
+          <ChevronDown
+            className="h-[18px] w-[18px] text-[#4a1c7d]"
+            strokeWidth={2}
+          />
         </div>
       </div>
     </header>

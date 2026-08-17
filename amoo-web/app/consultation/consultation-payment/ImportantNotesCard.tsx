@@ -19,8 +19,14 @@ export default function ImportantNotesCard() {
 
       <ul className="space-y-2.5">
         {notes.map((note) => (
-          <li key={note} className="flex items-start gap-2 text-sm text-gray-600">
-            <CheckCircle2 size={16} className="text-green-600 mt-0.5 shrink-0" />
+          <li
+            key={note}
+            className="flex items-start gap-2 text-sm text-gray-600"
+          >
+            <CheckCircle2
+              size={16}
+              className="text-green-600 mt-0.5 shrink-0"
+            />
             {note}
           </li>
         ))}

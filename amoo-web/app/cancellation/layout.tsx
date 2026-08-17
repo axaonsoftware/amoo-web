@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CancellationLayout({ children }: { children: React.ReactNode }) {
+export default function CancellationLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

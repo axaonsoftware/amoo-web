@@ -108,7 +108,13 @@ export function WhatsAppIcon(props: IconProps) {
 
 export function InstagramIcon(props: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      {...props}
+    >
       <rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none" />

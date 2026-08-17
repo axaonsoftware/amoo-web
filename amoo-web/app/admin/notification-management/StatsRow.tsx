@@ -1,13 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  Bell,
-  Send,
-  Clock,
-  CircleCheck,
-  CircleX,
-  Loader2,
-} from "lucide-react";
+import { Bell, Send, Clock, CircleCheck, CircleX, Loader2 } from "lucide-react";
 import { api } from "../../../lib/api";
 
 const statDefs: {
@@ -17,11 +10,41 @@ const statDefs: {
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Sent", field: "total", Icon: Bell, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
-  { label: "Sent Today", field: "sentToday", Icon: Send, iconBg: "bg-[#E7F0FE]", iconColor: "text-[#3B82F6]" },
-  { label: "Pending / Unread", field: "unread", Icon: Clock, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
-  { label: "Broadcast", field: "broadcast", Icon: CircleCheck, iconBg: "bg-[#E3F7EC]", iconColor: "text-[#22C55E]" },
-  { label: "Personal", field: "personal", Icon: CircleX, iconBg: "bg-[#FDEAEA]", iconColor: "text-[#EF4444]" },
+  {
+    label: "Total Sent",
+    field: "total",
+    Icon: Bell,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Sent Today",
+    field: "sentToday",
+    Icon: Send,
+    iconBg: "bg-[#E7F0FE]",
+    iconColor: "text-[#3B82F6]",
+  },
+  {
+    label: "Pending / Unread",
+    field: "unread",
+    Icon: Clock,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Broadcast",
+    field: "broadcast",
+    Icon: CircleCheck,
+    iconBg: "bg-[#E3F7EC]",
+    iconColor: "text-[#22C55E]",
+  },
+  {
+    label: "Personal",
+    field: "personal",
+    Icon: CircleX,
+    iconBg: "bg-[#FDEAEA]",
+    iconColor: "text-[#EF4444]",
+  },
 ];
 
 export default function StatsRow() {
@@ -71,8 +94,12 @@ export default function StatsRow() {
               <Icon size={20} />
             </span>
             <div className="min-w-0">
-              <p className="whitespace-nowrap text-[11px] text-[#8B879C]">{label}</p>
-              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">{value}</p>
+              <p className="whitespace-nowrap text-[11px] text-[#8B879C]">
+                {label}
+              </p>
+              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">
+                {value}
+              </p>
             </div>
           </div>
         );

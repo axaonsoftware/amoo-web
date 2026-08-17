@@ -7,11 +7,7 @@ export type ServiceKey =
   | "career-guidance"
   | "name-correction";
 
-type StatusKey =
-  | "upcoming"
-  | "completed"
-  | "cancelled"
-  | "pending-payment";
+type StatusKey = "upcoming" | "completed" | "cancelled" | "pending-payment";
 
 export const serviceStyles: Record<
   ServiceKey,

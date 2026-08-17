@@ -7,7 +7,10 @@ import SessionsPanel from "./SessionsPanel";
 import RightRail from "./RightRail";
 
 export default function ReikiManagementPage() {
-  const panelFns = useRef<{ openCreate: () => void; exportData: () => void } | null>(null);
+  const panelFns = useRef<{
+    openCreate: () => void;
+    exportData: () => void;
+  } | null>(null);
 
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">

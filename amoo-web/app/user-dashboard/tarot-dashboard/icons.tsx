@@ -139,8 +139,22 @@ export function TarotFanGlyph(props: IconProps) {
   return (
     <svg viewBox="0 0 40 40" fill="none" aria-hidden="true" {...props}>
       <g stroke="currentColor" strokeWidth={1.4} strokeLinejoin="round">
-        <rect x="7" y="12" width="12" height="19" rx="2" transform="rotate(-16 13 21)" />
-        <rect x="21" y="12" width="12" height="19" rx="2" transform="rotate(16 27 21)" />
+        <rect
+          x="7"
+          y="12"
+          width="12"
+          height="19"
+          rx="2"
+          transform="rotate(-16 13 21)"
+        />
+        <rect
+          x="21"
+          y="12"
+          width="12"
+          height="19"
+          rx="2"
+          transform="rotate(16 27 21)"
+        />
         <rect x="14" y="9" width="12" height="20" rx="2" fill="none" />
       </g>
       <path
@@ -230,7 +244,13 @@ export function DailyDrawIcon(props: IconProps) {
         strokeWidth={1.5}
         strokeLinejoin="round"
       />
-      <circle cx="16.4" cy="8" r="2.4" stroke="currentColor" strokeWidth={1.5} />
+      <circle
+        cx="16.4"
+        cy="8"
+        r="2.4"
+        stroke="currentColor"
+        strokeWidth={1.5}
+      />
       <path
         d="M16.4 3.6v1.3M16.4 11.1v1.3M20.8 8h-1.3M13.3 8H12M19.5 4.9l-.9.9M14.3 11.1l-.9.9M19.5 11.1l-.9-.9M14.3 4.9l-.9-.9"
         stroke="currentColor"
@@ -245,7 +265,12 @@ export function DailyDrawIcon(props: IconProps) {
 
 export function StarBurstGlow({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 120 120" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <defs>
         <radialGradient id="tb-core" cx="50%" cy="50%" r="50%">
           <stop offset="0%" stopColor="#fff3d6" />
@@ -277,7 +302,12 @@ export function StarBurstGlow({ className = "" }: { className?: string }) {
 
 export function InfinityMark({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 52 28" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 52 28"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <path
         d="M26 14C21 5.5 8 5.5 8 14s13 8.5 18 0c5-8.5 18-8.5 18 0s-13 8.5-18 0Z"
         stroke="url(#amoo-inf)"
@@ -286,7 +316,14 @@ export function InfinityMark({ className = "" }: { className?: string }) {
         fill="none"
       />
       <defs>
-        <linearGradient id="amoo-inf" x1="0" y1="0" x2="0" y2="28" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="amoo-inf"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="28"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop stopColor="#f8e2a8" />
           <stop offset="0.55" stopColor="#e9b85c" />
           <stop offset="1" stopColor="#c08c2c" />
@@ -299,8 +336,16 @@ export function InfinityMark({ className = "" }: { className?: string }) {
 /* small 4-point sparkle used around the "Tarot Software" label */
 export function MiniSparkle({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
-      <path d="M8 1.5 9 6.5 14 8 9 9.5 8 14.5 7 9.5 2 8 7 6.5Z" fill="currentColor" />
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <path
+        d="M8 1.5 9 6.5 14 8 9 9.5 8 14.5 7 9.5 2 8 7 6.5Z"
+        fill="currentColor"
+      />
     </svg>
   );
 }

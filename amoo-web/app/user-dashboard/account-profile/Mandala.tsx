@@ -33,10 +33,24 @@ export default function Mandala({ className }: { className?: string }) {
       <circle cx="50" cy="50" r="30" strokeWidth="0.5" />
       <circle cx="50" cy="50" r="14" strokeWidth="0.7" />
       {SPOKES.map((s, i) => (
-        <line key={`s${i}`} x1={s.x1} y1={s.y1} x2={s.x2} y2={s.y2} strokeWidth="0.4" />
+        <line
+          key={`s${i}`}
+          x1={s.x1}
+          y1={s.y1}
+          x2={s.x2}
+          y2={s.y2}
+          strokeWidth="0.4"
+        />
       ))}
       {TICKS.map((t, i) => (
-        <line key={`t${i}`} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} strokeWidth="0.35" />
+        <line
+          key={`t${i}`}
+          x1={t.x1}
+          y1={t.y1}
+          x2={t.x2}
+          y2={t.y2}
+          strokeWidth="0.35"
+        />
       ))}
       <circle cx="50" cy="50" r="4.5" fill="currentColor" stroke="none" />
     </svg>

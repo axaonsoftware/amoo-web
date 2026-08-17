@@ -7,7 +7,13 @@ import { trackEvent } from "../../lib/tracking";
  * Embed in any page (server or client) to silently record a page_view event.
  * Usage: <PageViewTracker page="/my-page" />
  */
-export function PageViewTracker({ page, meta }: { page?: string; meta?: Record<string, unknown> }) {
+export function PageViewTracker({
+  page,
+  meta,
+}: {
+  page?: string;
+  meta?: Record<string, unknown>;
+}) {
   useEffect(() => {
     trackEvent("page_view", meta, page);
   }, [page]);

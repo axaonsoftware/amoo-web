@@ -48,10 +48,37 @@ type Row = {
 };
 
 const modalFields: ModalField[] = [
-  { name: "name", label: "Package Name", type: "text", required: true, full: true, placeholder: "e.g. Premium Beauty Bundle" },
-  { name: "description", label: "Description", type: "textarea", full: true, placeholder: "Short description of the package..." },
-  { name: "price", label: "Price (₹)", type: "number", required: true, min: 0, placeholder: "0" },
-  { name: "duration_days", label: "Duration (days)", type: "number", required: true, min: 1, placeholder: "30" },
+  {
+    name: "name",
+    label: "Package Name",
+    type: "text",
+    required: true,
+    full: true,
+    placeholder: "e.g. Premium Beauty Bundle",
+  },
+  {
+    name: "description",
+    label: "Description",
+    type: "textarea",
+    full: true,
+    placeholder: "Short description of the package...",
+  },
+  {
+    name: "price",
+    label: "Price (₹)",
+    type: "number",
+    required: true,
+    min: 0,
+    placeholder: "0",
+  },
+  {
+    name: "duration_days",
+    label: "Duration (days)",
+    type: "number",
+    required: true,
+    min: 1,
+    placeholder: "30",
+  },
   {
     name: "status",
     label: "Status",
@@ -66,7 +93,11 @@ const modalFields: ModalField[] = [
 
 const selects = ["All Types", "All Services", "All Status"];
 
-export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreate: () => void; exportData: () => void }) => void } = {}) {
+export default function PackagesPanel({
+  onReady,
+}: {
+  onReady?: (fns: { openCreate: () => void; exportData: () => void }) => void;
+} = {}) {
   const [list, setList] = useState<Row[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -74,7 +105,9 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Package | null>(null);
-  const [formValues, setFormValues] = useState<Record<string, string | number>>({});
+  const [formValues, setFormValues] = useState<Record<string, string | number>>(
+    {},
+  );
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -82,12 +115,18 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  const showToast = useCallback((message: string, type: "success" | "error" = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: "success" | "error" = "success") => {
+      setToast({ message, type });
+      setTimeout(() => setToast(null), 3000);
+    },
+    [],
+  );
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -119,7 +158,7 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
               status: p.status,
               created_at: p.created_at ?? "",
             } as Package,
-          }))
+          })),
         );
       } else {
         setList([]);
@@ -140,7 +179,13 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
     onReady({
       openCreate: () => {
         setEditing(null);
-        setFormValues({ name: "", description: "", price: "", duration_days: "", status: "Active" });
+        setFormValues({
+          name: "",
+          description: "",
+          price: "",
+          duration_days: "",
+          status: "Active",
+        });
         setFormErrors({});
         setModalOpen(true);
       },
@@ -153,7 +198,7 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
             duration_days: r._raw.duration_days,
             status: r._raw.status,
           })),
-          "packages.csv"
+          "packages.csv",
         );
       },
     });
@@ -171,10 +216,16 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
   const validate = (): boolean => {
     const errs: Record<string, string> = {};
     if (!String(formValues.name ?? "").trim()) errs.name = "Name is required";
-    if (formValues.price === "" || formValues.price === undefined) errs.price = "Price is required";
+    if (formValues.price === "" || formValues.price === undefined)
+      errs.price = "Price is required";
     else if (Number(formValues.price) < 0) errs.price = "Price must be ≥ 0";
-    if (formValues.duration_days === "" || formValues.duration_days === undefined) errs.duration_days = "Duration is required";
-    else if (Number(formValues.duration_days) < 1) errs.duration_days = "Duration must be ≥ 1";
+    if (
+      formValues.duration_days === "" ||
+      formValues.duration_days === undefined
+    )
+      errs.duration_days = "Duration is required";
+    else if (Number(formValues.duration_days) < 1)
+      errs.duration_days = "Duration must be ≥ 1";
     if (!formValues.status) errs.status = "Status is required";
     setFormErrors(errs);
     return Object.keys(errs).length === 0;
@@ -226,8 +277,32 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
 
   const rows = list;
 
-  if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center py-10">
+        <svg
+          className="h-6 w-6 animate-spin text-[#7C3AED]"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeDasharray="32"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">
+        {error}
+      </div>
+    );
 
   return (
     <section className="rounded-[14px] border border-[#EEEDF4] bg-white shadow-[0_1px_2px_rgba(20,16,40,.04)]">
@@ -304,7 +379,7 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
                   duration_days: r._raw.duration_days,
                   status: r._raw.status,
                 })),
-                "packages.csv"
+                "packages.csv",
               );
             }}
             className="flex h-[34px] items-center gap-[6px] rounded-[8px] border border-[#7C3AED] bg-white px-3 text-[11px] font-medium text-[#6D28D9] hover:bg-[#FAF7FF]"
@@ -316,7 +391,13 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
             type="button"
             onClick={() => {
               setEditing(null);
-              setFormValues({ name: "", description: "", price: "", duration_days: "", status: "Active" });
+              setFormValues({
+                name: "",
+                description: "",
+                price: "",
+                duration_days: "",
+                status: "Active",
+              });
               setFormErrors({});
               setModalOpen(true);
             }}
@@ -473,7 +554,10 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-10 text-center text-[12px] text-[#8B879C]">
+                <td
+                  colSpan={8}
+                  className="py-10 text-center text-[12px] text-[#8B879C]"
+                >
                   No packages found.
                 </td>
               </tr>
@@ -485,7 +569,8 @@ export default function PackagesPanel({ onReady }: { onReady?: (fns: { openCreat
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-[16px] pt-[14px]">
         <p className="text-[10.5px] text-[#8B879C]">
-          Showing {rows.length > 0 ? 1 : 0} to {rows.length} of {(total || rows.length).toLocaleString("en-IN")} packages/offers
+          Showing {rows.length > 0 ? 1 : 0} to {rows.length} of{" "}
+          {(total || rows.length).toLocaleString("en-IN")} packages/offers
         </p>
 
         <div className="flex items-center gap-4">

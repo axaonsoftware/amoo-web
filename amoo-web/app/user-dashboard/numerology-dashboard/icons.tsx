@@ -47,9 +47,21 @@ export function Mandala({
   className?: string;
 }) {
   return (
-    <svg viewBox="0 0 120 120" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       {rings.map((r) => (
-        <circle key={r} cx="60" cy="60" r={r} stroke="currentColor" strokeWidth="1" />
+        <circle
+          key={r}
+          cx="60"
+          cy="60"
+          r={r}
+          stroke="currentColor"
+          strokeWidth="1"
+        />
       ))}
       {Array.from({ length: spokes }).map((_, i) => (
         <line
@@ -69,11 +81,44 @@ export function Mandala({
 
 export function SunBurst({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 200 200" fill="none" className={className} aria-hidden="true">
-      <circle cx="100" cy="100" r="94" stroke="currentColor" strokeWidth="1" strokeOpacity=".5" />
-      <circle cx="100" cy="100" r="74" stroke="currentColor" strokeWidth="1" strokeOpacity=".6" />
-      <circle cx="100" cy="100" r="52" stroke="currentColor" strokeWidth="1" strokeOpacity=".7" />
-      <circle cx="100" cy="100" r="30" stroke="currentColor" strokeWidth="1" strokeOpacity=".8" />
+    <svg
+      viewBox="0 0 200 200"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle
+        cx="100"
+        cy="100"
+        r="94"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".5"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="74"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".6"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="52"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".7"
+      />
+      <circle
+        cx="100"
+        cy="100"
+        r="30"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".8"
+      />
       {Array.from({ length: 36 }).map((_, i) => (
         <line
           key={i}
@@ -107,8 +152,20 @@ export function SunBurst({ className = "" }: { className?: string }) {
 
 export function LifePathWheel({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 220 220" fill="none" className={className} aria-hidden="true">
-      <circle cx="110" cy="110" r="106" stroke="currentColor" strokeWidth="1" strokeOpacity=".45" />
+    <svg
+      viewBox="0 0 220 220"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle
+        cx="110"
+        cy="110"
+        r="106"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".45"
+      />
       <circle
         cx="110"
         cy="110"
@@ -118,8 +175,22 @@ export function LifePathWheel({ className = "" }: { className?: string }) {
         strokeOpacity=".6"
         strokeDasharray="2 5"
       />
-      <circle cx="110" cy="110" r="74" stroke="currentColor" strokeWidth="1" strokeOpacity=".55" />
-      <circle cx="110" cy="110" r="58" stroke="currentColor" strokeWidth="1" strokeOpacity=".7" />
+      <circle
+        cx="110"
+        cy="110"
+        r="74"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".55"
+      />
+      <circle
+        cx="110"
+        cy="110"
+        r="58"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".7"
+      />
 
       {Array.from({ length: 24 }).map((_, i) => (
         <line
@@ -163,7 +234,14 @@ export function LifePathWheel({ className = "" }: { className?: string }) {
         />
       ))}
 
-      <circle cx="110" cy="110" r="40" stroke="currentColor" strokeWidth="1" strokeOpacity=".55" />
+      <circle
+        cx="110"
+        cy="110"
+        r="40"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity=".55"
+      />
     </svg>
   );
 }

@@ -8,7 +8,10 @@ export default function PageHeader() {
       <div className="flex items-center gap-4">
         <span className="relative flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-full border border-[#7c4bb5]/40 bg-gradient-to-b from-[#3a1263] via-[#2a0e4a] to-[#1d0834] shadow-[0_6px_18px_rgba(42,17,72,.28)]">
           <span className="stars pointer-events-none absolute inset-0 rounded-full opacity-40" />
-          <LotusGlyph className="relative h-[30px] w-[30px] text-[#e9b85c]" strokeWidth={1.4} />
+          <LotusGlyph
+            className="relative h-[30px] w-[30px] text-[#e9b85c]"
+            strokeWidth={1.4}
+          />
         </span>
         <div>
           <h1 className="font-display text-[29px] font-bold leading-[1.15] text-[#2b0f47]">
@@ -26,10 +29,32 @@ export default function PageHeader() {
 
         {/* Left mandala */}
         <span className="pointer-events-none absolute -left-6 -top-6 h-[92px] w-[92px] opacity-[.18]">
-          <svg viewBox="0 0 100 100" fill="none" className="h-full w-full text-[#e9b85c]">
-            <circle cx="50" cy="50" r="46" stroke="currentColor" strokeWidth="1" />
-            <circle cx="50" cy="50" r="34" stroke="currentColor" strokeWidth="1" />
-            <circle cx="50" cy="50" r="22" stroke="currentColor" strokeWidth="1" />
+          <svg
+            viewBox="0 0 100 100"
+            fill="none"
+            className="h-full w-full text-[#e9b85c]"
+          >
+            <circle
+              cx="50"
+              cy="50"
+              r="46"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="34"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="22"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
             {Array.from({ length: 12 }).map((_, i) => (
               <line
                 key={i}
@@ -47,11 +72,39 @@ export default function PageHeader() {
 
         {/* Right mandala */}
         <span className="pointer-events-none absolute -right-8 -top-8 h-[120px] w-[120px] opacity-[.22]">
-          <svg viewBox="0 0 120 120" fill="none" className="h-full w-full text-[#e9b85c]">
-            <circle cx="60" cy="60" r="56" stroke="currentColor" strokeWidth="1" />
-            <circle cx="60" cy="60" r="42" stroke="currentColor" strokeWidth="1" />
-            <circle cx="60" cy="60" r="28" stroke="currentColor" strokeWidth="1" />
-            <circle cx="60" cy="60" r="14" stroke="currentColor" strokeWidth="1" />
+          <svg
+            viewBox="0 0 120 120"
+            fill="none"
+            className="h-full w-full text-[#e9b85c]"
+          >
+            <circle
+              cx="60"
+              cy="60"
+              r="56"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r="42"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r="28"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
+            <circle
+              cx="60"
+              cy="60"
+              r="14"
+              stroke="currentColor"
+              strokeWidth="1"
+            />
             {Array.from({ length: 16 }).map((_, i) => (
               <line
                 key={i}
@@ -67,7 +120,10 @@ export default function PageHeader() {
           </svg>
         </span>
 
-        <Crown className="relative h-[30px] w-[30px] shrink-0 text-[#e9b85c]" strokeWidth={1.6} />
+        <Crown
+          className="relative h-[30px] w-[30px] shrink-0 text-[#e9b85c]"
+          strokeWidth={1.6}
+        />
 
         <div className="relative min-w-0 flex-1">
           <p className="font-display text-[15px] font-bold leading-none text-[#f3c76e]">

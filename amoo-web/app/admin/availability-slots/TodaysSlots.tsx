@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ArrowRight, Plus, Coffee, Utensils, Loader2, AlertCircle } from "lucide-react";
+import {
+  ArrowRight,
+  Plus,
+  Coffee,
+  Utensils,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { api } from "../../../lib/api";
 
 type State = "available" | "booked" | "break";
@@ -43,7 +50,9 @@ const legend = [
 ];
 
 export default function TodaysSlots() {
-  const [list, setList] = useState<{ time: string; state: State; label: string }[] | null>(null);
+  const [list, setList] = useState<
+    { time: string; state: State; label: string }[] | null
+  >(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,14 +69,14 @@ export default function TodaysSlots() {
                 s.status === "booked"
                   ? "booked"
                   : s.status === "break"
-                  ? "break"
-                  : "available";
+                    ? "break"
+                    : "available";
               return {
                 time: to12h(s.start_time),
                 state,
                 label: state.charAt(0).toUpperCase() + state.slice(1),
               };
-            })
+            }),
           );
         }
       })
@@ -109,7 +118,9 @@ export default function TodaysSlots() {
           {legend.map(({ label, dot }) => (
             <span key={label} className="flex items-center gap-1.5">
               <span className={`h-[7px] w-[7px] rounded-full ${dot}`} />
-              <span className="text-[10.5px] font-light text-[#6f6b85]">{label}</span>
+              <span className="text-[10.5px] font-light text-[#6f6b85]">
+                {label}
+              </span>
             </span>
           ))}
         </div>
@@ -124,35 +135,39 @@ export default function TodaysSlots() {
       </div>
 
       {slotRows.length === 0 ? (
-        <div className="mt-4 py-8 text-center text-[12px] text-[#8a86a0]">No slots available today</div>
+        <div className="mt-4 py-8 text-center text-[12px] text-[#8a86a0]">
+          No slots available today
+        </div>
       ) : (
-      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
-        {slotRows.map(({ time, state, label }, i) => (
-          <div
-            key={`${time}-${i}`}
-            className={`relative rounded-[8px] border py-2.5 text-center ${stateStyles[state]}`}
-          >
-            {state === "booked" && i === 1 ? (
-              <span className="absolute right-2 top-1.5 h-[5px] w-[5px] rounded-full bg-[#4c159f]" />
-            ) : null}
-            <p className={`text-[11.5px] font-semibold leading-none ${timeColor[state]}`}>
-              {time}
-            </p>
-            <p
-              className={`mt-1.5 flex items-center justify-center gap-1 text-[10px] font-light leading-none ${labelColor[state]}`}
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {slotRows.map(({ time, state, label }, i) => (
+            <div
+              key={`${time}-${i}`}
+              className={`relative rounded-[8px] border py-2.5 text-center ${stateStyles[state]}`}
             >
-              {state === "break" ? (
-                i === 5 ? (
-                  <Coffee className="h-[10px] w-[10px]" strokeWidth={1.8} />
-                ) : (
-                  <Utensils className="h-[10px] w-[10px]" strokeWidth={1.8} />
-                )
+              {state === "booked" && i === 1 ? (
+                <span className="absolute right-2 top-1.5 h-[5px] w-[5px] rounded-full bg-[#4c159f]" />
               ) : null}
-              {label}
-            </p>
-          </div>
-        ))}
-      </div>
+              <p
+                className={`text-[11.5px] font-semibold leading-none ${timeColor[state]}`}
+              >
+                {time}
+              </p>
+              <p
+                className={`mt-1.5 flex items-center justify-center gap-1 text-[10px] font-light leading-none ${labelColor[state]}`}
+              >
+                {state === "break" ? (
+                  i === 5 ? (
+                    <Coffee className="h-[10px] w-[10px]" strokeWidth={1.8} />
+                  ) : (
+                    <Utensils className="h-[10px] w-[10px]" strokeWidth={1.8} />
+                  )
+                ) : null}
+                {label}
+              </p>
+            </div>
+          ))}
+        </div>
       )}
 
       <div className="mt-5 flex justify-center">

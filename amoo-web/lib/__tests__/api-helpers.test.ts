@@ -17,7 +17,10 @@ describe("unwrapList", () => {
   });
 
   test("unwraps the paginated envelope", () => {
-    assert.deepEqual(unwrapList({ data: ["a", "b"], meta: { total: 2 } }), ["a", "b"]);
+    assert.deepEqual(unwrapList({ data: ["a", "b"], meta: { total: 2 } }), [
+      "a",
+      "b",
+    ]);
   });
 
   test("returns [] rather than throwing for non-list shapes", () => {
@@ -53,7 +56,10 @@ describe("qs", () => {
   });
 
   test("drops empty / null / undefined values", () => {
-    assert.equal(qs({ page: 1, search: "", status: null, role: undefined }), "?page=1");
+    assert.equal(
+      qs({ page: 1, search: "", status: null, role: undefined }),
+      "?page=1",
+    );
   });
 
   test("returns '' when everything is empty, so the path is left untouched", () => {

@@ -14,7 +14,12 @@ import { api } from "../../../lib/api";
 
 const donut = [
   { label: "One-time Plans", value: "24 (57.1%)", pct: 57.1, color: "#4C1D95" },
-  { label: "Subscription Plans", value: "10 (23.8%)", pct: 23.8, color: "#EC4899" },
+  {
+    label: "Subscription Plans",
+    value: "10 (23.8%)",
+    pct: 23.8,
+    color: "#EC4899",
+  },
   { label: "Packages", value: "5 (11.9%)", pct: 11.9, color: "#22C55E" },
   { label: "Offers", value: "3 (7.1%)", pct: 7.1, color: "#F59E0B" },
 ];
@@ -49,7 +54,8 @@ export default function RightRail() {
       .getOverview()
       .then((data: any) => {
         const s = data?.stats ?? data;
-        if (s?.plans != null) setTotalPlans(Number(s.plans).toLocaleString("en-IN"));
+        if (s?.plans != null)
+          setTotalPlans(Number(s.plans).toLocaleString("en-IN"));
       })
       .catch((err) => setError(err?.message || "Failed to load plans"))
       .finally(() => setLoading(false));
@@ -109,7 +115,9 @@ export default function RightRail() {
 
         <div className="mt-[14px] flex items-center justify-between border-t border-[#EEEDF4] pt-[11px]">
           <p className="text-[10.5px] text-[#8B879C]">Total Plans</p>
-          <p className="text-[12.5px] font-semibold text-[#1F1836]">{totalPlans}</p>
+          <p className="text-[12.5px] font-semibold text-[#1F1836]">
+            {totalPlans}
+          </p>
         </div>
       </section>
 
@@ -126,7 +134,10 @@ export default function RightRail() {
               <span className="text-[9.5px] text-[#8B879C]">—</span>
             </div>
             <div className="mt-[6px] h-[5px] w-full overflow-hidden rounded-full bg-[#EFEBF8]">
-              <span className="block h-full rounded-full bg-gradient-to-r from-[#5B21B6] to-[#8B5CF6]" style={{ width: "0%" }} />
+              <span
+                className="block h-full rounded-full bg-gradient-to-r from-[#5B21B6] to-[#8B5CF6]"
+                style={{ width: "0%" }}
+              />
             </div>
           </li>
         </ul>
@@ -145,7 +156,11 @@ export default function RightRail() {
               type="button"
               className="flex h-[32px] items-center gap-[5px] rounded-[8px] border border-[#EEEDF4] px-[7px] text-left text-[9.5px] font-medium text-[#3D3752] hover:bg-[#FAF9FD]"
             >
-              <Icon size={12} strokeWidth={1.9} className={`shrink-0 ${color}`} />
+              <Icon
+                size={12}
+                strokeWidth={1.9}
+                className={`shrink-0 ${color}`}
+              />
               <span className="truncate">{label}</span>
             </button>
           ))}
@@ -170,8 +185,12 @@ export default function RightRail() {
           <li className="flex items-start gap-[8px]">
             <span className="mt-[4px] h-[6px] w-[6px] shrink-0 rounded-full bg-[#7C3AED]" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[10.5px] font-medium text-[#1F1836]">Plans synced</p>
-              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">From API</p>
+              <p className="truncate text-[10.5px] font-medium text-[#1F1836]">
+                Plans synced
+              </p>
+              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">
+                From API
+              </p>
             </div>
             <p className="shrink-0 text-[9.5px] text-[#A5A2B5]">now</p>
           </li>

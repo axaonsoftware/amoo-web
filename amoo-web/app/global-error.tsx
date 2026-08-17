@@ -44,30 +44,55 @@ export default function GlobalError({
           textAlign: "center",
           background: "#0d0616",
           color: "#fff",
-          fontFamily: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
+          fontFamily:
+            "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
         }}
       >
         <div role="alert">
-          <div aria-hidden="true" style={{ fontSize: 64, color: "#e9b85c", opacity: 0.6 }}>
+          <div
+            aria-hidden="true"
+            style={{ fontSize: 64, color: "#e9b85c", opacity: 0.6 }}
+          >
             !
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 700, margin: "0.5rem 0" }}>
             Something went wrong
           </h1>
-          <p style={{ maxWidth: 440, color: "rgba(255,255,255,.6)", fontSize: 14, lineHeight: 1.6 }}>
-            We hit an unexpected problem. Please try again — if it keeps happening, contact
-            support and quote the reference below.
+          <p
+            style={{
+              maxWidth: 440,
+              color: "rgba(255,255,255,.6)",
+              fontSize: 14,
+              lineHeight: 1.6,
+            }}
+          >
+            We hit an unexpected problem. Please try again — if it keeps
+            happening, contact support and quote the reference below.
           </p>
 
           {/* Shown to the user on purpose: it is an opaque hash, not internal
               detail, and it is what support needs to find the server log. */}
           {error.digest && (
-            <p style={{ marginTop: 12, fontSize: 12, color: "rgba(255,255,255,.4)" }}>
+            <p
+              style={{
+                marginTop: 12,
+                fontSize: 12,
+                color: "rgba(255,255,255,.4)",
+              }}
+            >
               Reference: <code>{error.digest}</code>
             </p>
           )}
 
-          <div style={{ marginTop: 24, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+          <div
+            style={{
+              marginTop: 24,
+              display: "flex",
+              gap: 12,
+              justifyContent: "center",
+              flexWrap: "wrap",
+            }}
+          >
             <button
               type="button"
               onClick={reset}

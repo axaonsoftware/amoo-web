@@ -82,7 +82,11 @@ export default function MoreFeatures() {
               className="flex h-[45px] w-[45px] items-center justify-center rounded-[14px]"
               style={{ backgroundColor: bg }}
             >
-              <Icon className="h-[23px] w-[23px]" strokeWidth={1.8} style={{ color }} />
+              <Icon
+                className="h-[23px] w-[23px]"
+                strokeWidth={1.8}
+                style={{ color }}
+              />
             </span>
             <p className="mt-[15px] text-[13px] font-semibold leading-none text-[#241268]">
               {label}

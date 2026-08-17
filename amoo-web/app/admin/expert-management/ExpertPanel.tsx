@@ -20,8 +20,19 @@ import { specializationTone, statusTone } from "./data";
 import { errorMessage } from "../../../lib/errors";
 
 const expertFields: ModalField[] = [
-  { name: "name", label: "Full Name", required: true, placeholder: "Full name" },
-  { name: "email", label: "Email", type: "email", required: true, placeholder: "Email address" },
+  {
+    name: "name",
+    label: "Full Name",
+    required: true,
+    placeholder: "Full name",
+  },
+  {
+    name: "email",
+    label: "Email",
+    type: "email",
+    required: true,
+    placeholder: "Email address",
+  },
   { name: "phone", label: "Phone", placeholder: "+91 phone number" },
   {
     name: "specialization",
@@ -38,9 +49,25 @@ const expertFields: ModalField[] = [
       { label: "Spiritual", value: "Spiritual" },
     ],
   },
-  { name: "experience", label: "Experience (years)", type: "number", placeholder: "e.g. 5" },
-  { name: "hourly_rate", label: "Hourly Rate", type: "number", placeholder: "e.g. 999" },
-  { name: "bio", label: "Bio", type: "textarea", full: true, placeholder: "Short bio or description" },
+  {
+    name: "experience",
+    label: "Experience (years)",
+    type: "number",
+    placeholder: "e.g. 5",
+  },
+  {
+    name: "hourly_rate",
+    label: "Hourly Rate",
+    type: "number",
+    placeholder: "e.g. 999",
+  },
+  {
+    name: "bio",
+    label: "Bio",
+    type: "textarea",
+    full: true,
+    placeholder: "Short bio or description",
+  },
   {
     name: "status",
     label: "Status",
@@ -96,7 +123,10 @@ const ExpertRow = memo(function ExpertRow({
   onDelete: (e: any) => void;
 }) {
   return (
-    <tr key={expert.id ?? idx} className="border-b border-[#FAF9FC] hover:bg-[#FAF9FC]/60">
+    <tr
+      key={expert.id ?? idx}
+      className="border-b border-[#FAF9FC] hover:bg-[#FAF9FC]/60"
+    >
       <td className="px-[14px] py-[11px]">
         <div className="flex items-center gap-[10px]">
           <span
@@ -105,13 +135,19 @@ const ExpertRow = memo(function ExpertRow({
             {getInitials(expert.name || "E")}
           </span>
           <div>
-            <p className="font-medium text-[#1F1836]">{sanitize(expert.name)}</p>
-            <p className="text-[10px] text-[#A5A2B5]">{sanitize(expert.email)}</p>
+            <p className="font-medium text-[#1F1836]">
+              {sanitize(expert.name)}
+            </p>
+            <p className="text-[10px] text-[#A5A2B5]">
+              {sanitize(expert.email)}
+            </p>
           </div>
         </div>
       </td>
       <td className="px-[14px] py-[11px]">
-        <span className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialization] || "bg-[#F5F4F9] text-[#6B6480]"}`}>
+        <span
+          className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialization] || "bg-[#F5F4F9] text-[#6B6480]"}`}
+        >
           {expert.specialization || "—"}
         </span>
       </td>
@@ -128,7 +164,9 @@ const ExpertRow = memo(function ExpertRow({
         {expert.sessions ?? "—"}
       </td>
       <td className="px-[14px] py-[11px]">
-        <span className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${statusTone[expert.status] || "bg-[#F5F4F9] text-[#6B6480]"}`}>
+        <span
+          className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${statusTone[expert.status] || "bg-[#F5F4F9] text-[#6B6480]"}`}
+        >
           {expert.status || "—"}
         </span>
       </td>
@@ -163,7 +201,11 @@ const ExpertRow = memo(function ExpertRow({
   );
 });
 
-export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => void }) {
+export default function ExpertPanel({
+  onReady,
+}: {
+  onReady?: (fns: PanelFns) => void;
+}) {
   const [experts, setExperts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -197,7 +239,9 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
     }
   }, []);
 
-  useEffect(() => { loadExperts(); }, [loadExperts]);
+  useEffect(() => {
+    loadExperts();
+  }, [loadExperts]);
 
   const openAdd = () => {
     setEditing(null);
@@ -273,10 +317,14 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
   const filtered = experts.filter((e) => {
     const q = search.toLowerCase();
     const matchSearch =
-      !q || e.name?.toLowerCase().includes(q) || e.email?.toLowerCase().includes(q);
+      !q ||
+      e.name?.toLowerCase().includes(q) ||
+      e.email?.toLowerCase().includes(q);
     const matchSpec =
       !specializationFilter ||
-      (e.specialties || "").toLowerCase().includes(specializationFilter.toLowerCase());
+      (e.specialties || "")
+        .toLowerCase()
+        .includes(specializationFilter.toLowerCase());
     const matchStatus = !statusFilter || e.status === statusFilter;
     return matchSearch && matchSpec && matchStatus;
   });
@@ -297,7 +345,7 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
         Status: e.status || "",
         Joined: e.created_at || "",
       })),
-      "experts"
+      "experts",
     );
   }, [filtered]);
 
@@ -309,14 +357,20 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
 
   const handleEditExpert = useCallback((e: any) => openEdit(e), []);
   const handleSetPassword = useCallback((e: any) => setPasswordTarget(e), []);
-  const handleDeleteExpert = useCallback((e: any) => { setDeleting(e); setConfirmOpen(true); }, []);
+  const handleDeleteExpert = useCallback((e: any) => {
+    setDeleting(e);
+    setConfirmOpen(true);
+  }, []);
 
   return (
     <>
       {/* Search and filter bar */}
       <div className="mt-5 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[220px] flex-1">
-          <Search size={15} className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[#A5A2B5]" />
+          <Search
+            size={15}
+            className="absolute left-[11px] top-1/2 -translate-y-1/2 text-[#A5A2B5]"
+          />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -333,7 +387,9 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
           >
             <option value="">All Specializations</option>
             {Object.keys(specializationTone).map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s} value={s}>
+                {s}
+              </option>
             ))}
           </select>
           <select
@@ -353,27 +409,49 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
         <table className="w-full text-left text-[11.5px] text-[#1F1836]">
           <thead>
             <tr className="border-b border-[#EEEDF4] bg-[#FAF9FC]">
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Expert</th>
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Specialization</th>
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Experience</th>
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Rate</th>
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Rating</th>
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Sessions</th>
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Status</th>
-              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">Actions</th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Expert
+              </th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Specialization
+              </th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Experience
+              </th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Rate
+              </th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Rating
+              </th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Sessions
+              </th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Status
+              </th>
+              <th className="px-[14px] py-[10px] font-medium text-[#6B6480]">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-[#A5A2B5]">
+                <td
+                  colSpan={8}
+                  className="px-4 py-12 text-center text-[#A5A2B5]"
+                >
                   <Loader2 className="mx-auto mb-2 h-6 w-6 animate-spin text-[#7C3AED]" />
                   Loading experts…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-[12px] text-[#A5A2B5]">
+                <td
+                  colSpan={8}
+                  className="px-4 py-12 text-center text-[12px] text-[#A5A2B5]"
+                >
                   No experts found.
                 </td>
               </tr>
@@ -401,7 +479,10 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
         onChange={(n, v) => setValues((prev) => ({ ...prev, [n]: v }))}
         onSave={handleSave}
         saving={saving}
-        onClose={() => { setModalOpen(false); setEditing(null); }}
+        onClose={() => {
+          setModalOpen(false);
+          setEditing(null);
+        }}
       />
 
       <ConfirmDialog
@@ -409,14 +490,20 @@ export default function ExpertPanel({ onReady }: { onReady?: (fns: PanelFns) => 
         title="Delete Expert"
         message={`Are you sure you want to delete ${sanitize(deleting?.name) || "this expert"}? This action cannot be undone.`}
         onConfirm={handleDelete}
-        onCancel={() => { setConfirmOpen(false); setDeleting(null); }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setDeleting(null);
+        }}
         saving={deleting2}
       />
 
       <SetPasswordDialog
         expert={passwordTarget}
         onClose={() => setPasswordTarget(null)}
-        onDone={(msg) => { showToast(msg); loadExperts(); }}
+        onDone={(msg) => {
+          showToast(msg);
+          loadExperts();
+        }}
       />
 
       <Toast />

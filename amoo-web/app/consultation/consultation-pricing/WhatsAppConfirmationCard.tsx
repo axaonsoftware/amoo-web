@@ -36,7 +36,10 @@ export default function WhatsAppConfirmationCard() {
 
       <ul className="space-y-2">
         {items.map((item) => (
-          <li key={item} className="flex items-center gap-2 text-xs text-white/80">
+          <li
+            key={item}
+            className="flex items-center gap-2 text-xs text-white/80"
+          >
             <CheckCircle2 size={13} className="text-amber-400 shrink-0" />
             {item}
           </li>

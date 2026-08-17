@@ -181,7 +181,8 @@ function ModeCard({
         isSelected
           ? "border-[2px] border-gold shadow-[0_0_0_3px_rgba(224,163,62,0.25)]"
           : "border border-[#c9963f]/55 hover:border-gold/70"
-      } bg-[radial-gradient(120%_110%_at_88%_58%,rgba(168,84,196,0.28)_0%,rgba(45,17,73,0)_58%),linear-gradient(165deg,#3f1d69_0%,#2d1149_52%,#230d3d_100%)]`}>
+      } bg-[radial-gradient(120%_110%_at_88%_58%,rgba(168,84,196,0.28)_0%,rgba(45,17,73,0)_58%),linear-gradient(165deg,#3f1d69_0%,#2d1149_52%,#230d3d_100%)]`}
+    >
       {popular && (
         <div className="pointer-events-none absolute -right-[40px] top-[18px] z-20 w-[150px] rotate-45 bg-gradient-to-r from-[#f5d68d] to-[#d09b38] py-[4px] text-center text-[9px] font-bold tracking-[0.06em] text-[#3a1a12] uppercase">
           Most Popular
@@ -278,7 +279,10 @@ function ModeCard({
       {/* cta */}
       <button
         type="button"
-        onClick={(e) => { e.stopPropagation(); onSelect(); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onSelect();
+        }}
         className="relative z-10 mt-[14px] h-[46px] w-full rounded-[8px] bg-gradient-to-b from-[#f2cd76] to-[#dfa63f] text-[15px] font-semibold text-[#2b0a3d]"
       >
         {cta}

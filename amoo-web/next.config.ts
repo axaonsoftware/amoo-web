@@ -18,7 +18,8 @@ const securityHeaders = [
   // No page uses these APIs; denying them stops an injected script from asking.
   {
     key: "Permissions-Policy",
-    value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+    value:
+      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
   },
   // Only meaningful over HTTPS; harmless on plain-http localhost because
   // browsers ignore HSTS from non-secure origins.

@@ -14,16 +14,56 @@ import { api } from "../../../lib/api";
 const statDefs: {
   label: string;
   field: string;
-  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  Icon: React.ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>;
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Astrologers", field: "astrologers", Icon: Users, iconBg: "bg-[#efe9fb]", iconColor: "text-[#7c4dcf]" },
-  { label: "Available Today", field: "availableToday", Icon: UserCheck, iconBg: "bg-[#e6f6ed]", iconColor: "text-[#3aa76d]" },
-  { label: "Total Slots (Today)", field: "totalSlots", Icon: CalendarDays, iconBg: "bg-[#e7f0fd]", iconColor: "text-[#3d7bd9]" },
-  { label: "Booked Slots (Today)", field: "bookedSlots", Icon: CalendarCheck, iconBg: "bg-[#fdefe1]", iconColor: "text-[#e08a37]" },
-  { label: "Next 7 Days Booked", field: "next7DaysBooked", Icon: BarChart4, iconBg: "bg-[#e9e8fb]", iconColor: "text-[#5b56d6]" },
-  { label: "Utilization Rate", field: "utilizationRate", Icon: Gauge, iconBg: "bg-[#fde9ef]", iconColor: "text-[#d94f7c]" },
+  {
+    label: "Total Astrologers",
+    field: "astrologers",
+    Icon: Users,
+    iconBg: "bg-[#efe9fb]",
+    iconColor: "text-[#7c4dcf]",
+  },
+  {
+    label: "Available Today",
+    field: "availableToday",
+    Icon: UserCheck,
+    iconBg: "bg-[#e6f6ed]",
+    iconColor: "text-[#3aa76d]",
+  },
+  {
+    label: "Total Slots (Today)",
+    field: "totalSlots",
+    Icon: CalendarDays,
+    iconBg: "bg-[#e7f0fd]",
+    iconColor: "text-[#3d7bd9]",
+  },
+  {
+    label: "Booked Slots (Today)",
+    field: "bookedSlots",
+    Icon: CalendarCheck,
+    iconBg: "bg-[#fdefe1]",
+    iconColor: "text-[#e08a37]",
+  },
+  {
+    label: "Next 7 Days Booked",
+    field: "next7DaysBooked",
+    Icon: BarChart4,
+    iconBg: "bg-[#e9e8fb]",
+    iconColor: "text-[#5b56d6]",
+  },
+  {
+    label: "Utilization Rate",
+    field: "utilizationRate",
+    Icon: Gauge,
+    iconBg: "bg-[#fde9ef]",
+    iconColor: "text-[#d94f7c]",
+  },
 ];
 
 export default function StatsRow() {
@@ -41,8 +81,10 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const rate = (n: number | undefined) => (n != null ? `${n.toFixed(1)}%` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const rate = (n: number | undefined) =>
+    n != null ? `${n.toFixed(1)}%` : "—";
 
   if (loading) {
     return (
@@ -71,12 +113,21 @@ export default function StatsRow() {
             className="rounded-[12px] border border-[#ecebf1] bg-white px-3 py-3.5 shadow-[0_1px_2px_rgba(23,16,45,.03)]"
           >
             <div className="flex items-start gap-2">
-              <span className={`flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full ${iconBg}`}>
-                <Icon className={`h-[17px] w-[17px] ${iconColor}`} strokeWidth={1.8} />
+              <span
+                className={`flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full ${iconBg}`}
+              >
+                <Icon
+                  className={`h-[17px] w-[17px] ${iconColor}`}
+                  strokeWidth={1.8}
+                />
               </span>
               <div className="min-w-0">
-                <p className="whitespace-nowrap text-[10px] font-normal leading-none text-[#8a86a0]">{label}</p>
-                <p className="mt-2 text-[20px] font-semibold leading-none text-[#241f3d]">{value}</p>
+                <p className="whitespace-nowrap text-[10px] font-normal leading-none text-[#8a86a0]">
+                  {label}
+                </p>
+                <p className="mt-2 text-[20px] font-semibold leading-none text-[#241f3d]">
+                  {value}
+                </p>
               </div>
             </div>
           </div>

@@ -1,4 +1,10 @@
-import { ShieldCheck, UserCheck, CalendarClock, Award, Flower2 } from "lucide-react";
+import {
+  ShieldCheck,
+  UserCheck,
+  CalendarClock,
+  Award,
+  Flower2,
+} from "lucide-react";
 
 const badges = [
   {
@@ -32,7 +38,10 @@ export default function TrustBadges() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
       {badges.map(({ icon: Icon, title, desc }) => (
-        <div key={title} className="flex flex-col items-center text-center gap-3">
+        <div
+          key={title}
+          className="flex flex-col items-center text-center gap-3"
+        >
           <span className="w-14 h-14 rounded-full border border-amber-300 flex items-center justify-center">
             <Icon size={22} className="text-amber-600" />
           </span>

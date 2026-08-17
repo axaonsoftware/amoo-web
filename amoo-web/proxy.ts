@@ -7,7 +7,9 @@ const JWT_SECRET = process.env.JWT_SECRET;
 // protected routes with a 503. Set JWT_SECRET in .env.local
 // (same value as the backend's JWT_SECRET).
 if (!JWT_SECRET && process.env.NODE_ENV === "production") {
-  console.error("CRITICAL: JWT_SECRET is not set. Route protection is DISABLED.");
+  console.error(
+    "CRITICAL: JWT_SECRET is not set. Route protection is DISABLED.",
+  );
 }
 const key = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
 
@@ -26,7 +28,8 @@ const PROTECTED_PREFIXES = [
 /* ── CSP helpers ──────────────────────────────────────────────────────── */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-const RAZORPAY = "https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com";
+const RAZORPAY =
+  "https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com";
 function cspWithNonce(nonce: string) {
   return [
     "default-src 'self'",
@@ -41,7 +44,9 @@ function cspWithNonce(nonce: string) {
     "form-action 'self'",
     "frame-ancestors 'none'",
     "upgrade-insecure-requests",
-  ].filter(Boolean).join("; ");
+  ]
+    .filter(Boolean)
+    .join("; ");
 }
 
 /* ── Route classification utils ───────────────────────────────────────── */
@@ -60,7 +65,10 @@ function redirectToLogin(requestUrl: string, pathname: string): NextResponse {
   let loginPath: string;
   if (pathname.startsWith("/admin")) {
     loginPath = "/admin-login";
-  } else if (pathname.startsWith("/user-dashboard") || pathname.startsWith("/consultation")) {
+  } else if (
+    pathname.startsWith("/user-dashboard") ||
+    pathname.startsWith("/consultation")
+  ) {
     loginPath = "/user-login";
   } else {
     loginPath = "/user-login";
@@ -93,7 +101,10 @@ export async function proxy(req: NextRequest) {
   // Protected routes: require authentication.
   if (isProtectedRoute(pathname)) {
     if (!key) {
-      return new Response("JWT_SECRET is not configured. Route protection is disabled.", { status: 503 });
+      return new Response(
+        "JWT_SECRET is not configured. Route protection is disabled.",
+        { status: 503 },
+      );
     }
 
     const token = req.cookies.get("access_token")?.value;
@@ -101,9 +112,12 @@ export async function proxy(req: NextRequest) {
 
     try {
       const { payload } = await jwtVerify(token, key);
-      if (pathname.startsWith("/admin") && payload.kind !== "admin") return redirectToLogin(req.url, pathname);
-      if (pathname.startsWith("/user-dashboard") && !payload.kind) return redirectToLogin(req.url, pathname);
-      if (pathname.startsWith("/consultation") && payload.kind !== "user") return redirectToLogin(req.url, pathname);
+      if (pathname.startsWith("/admin") && payload.kind !== "admin")
+        return redirectToLogin(req.url, pathname);
+      if (pathname.startsWith("/user-dashboard") && !payload.kind)
+        return redirectToLogin(req.url, pathname);
+      if (pathname.startsWith("/consultation") && payload.kind !== "user")
+        return redirectToLogin(req.url, pathname);
     } catch {
       return redirectToLogin(req.url, pathname);
     }

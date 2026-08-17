@@ -37,12 +37,24 @@ function fmtDateTime(iso: string) {
   if (!iso) return { date: "", time: "" };
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
+    date: d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }),
   };
 }
 
-export default function NotificationsPanel({ onReady }: { onReady?: (fns: { openCompose: () => void }) => void }) {
+export default function NotificationsPanel({
+  onReady,
+}: {
+  onReady?: (fns: { openCompose: () => void }) => void;
+}) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [typeFilter, setTypeFilter] = useState("");
@@ -63,7 +75,10 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
   const [composeType, setComposeType] = useState("info");
   const [composeSending, setComposeSending] = useState(false);
 
-  const [toast, setToast] = useState<{ msg: string; kind: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    msg: string;
+    kind: "success" | "error";
+  } | null>(null);
 
   const [userList, setUserList] = useState<any[]>([]);
   const [userSearch, setUserSearch] = useState("");
@@ -84,22 +99,34 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
     api.admin
       .getNotifications(`?${q.toString()}`)
       .then((res: any) => {
-        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const items = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res)
+            ? res
+            : [];
         const m = res?.meta ?? {};
-        setMeta({ total: m.total ?? items.length, totalPages: m.totalPages ?? 1 });
+        setMeta({
+          total: m.total ?? items.length,
+          totalPages: m.totalPages ?? 1,
+        });
         setList(items);
       })
       .catch((e: any) => setError(e.message || "Failed to load"))
       .finally(() => setLoading(false));
   }, [page, limit, typeFilter]);
 
-  useEffect(() => { loadNotifications(); }, [loadNotifications]);
+  useEffect(() => {
+    loadNotifications();
+  }, [loadNotifications]);
 
   const loadUsers = useCallback(() => {
-    api.admin.getUsers("page=1&pageSize=50").then((res: any) => {
-      const items = res?.data ?? res ?? [];
-      if (Array.isArray(items)) setUserList(items);
-    }).catch(() => {});
+    api.admin
+      .getUsers("page=1&pageSize=50")
+      .then((res: any) => {
+        const items = res?.data ?? res ?? [];
+        if (Array.isArray(items)) setUserList(items);
+      })
+      .catch(() => {});
   }, []);
 
   const openCompose = () => {
@@ -161,7 +188,8 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
   const to = Math.min(page * limit, meta.total);
 
   const getPageNumbers = (): (number | "...")[] => {
-    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (totalPages <= 7)
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
     const pages: (number | "...")[] = [1];
     if (page > 3) pages.push("...");
     const start = Math.max(2, page - 1);
@@ -173,7 +201,10 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
   };
 
   const filteredUsers = userList.filter(
-    (u) => !userSearch || u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase())
+    (u) =>
+      !userSearch ||
+      u.name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+      u.email?.toLowerCase().includes(userSearch.toLowerCase()),
   );
 
   return (
@@ -193,14 +224,22 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
           <div className="relative">
             <select
               value={typeFilter}
-              onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+              onChange={(e) => {
+                setTypeFilter(e.target.value);
+                setPage(1);
+              }}
               className="h-[36px] appearance-none rounded-[8px] border border-[#E7E5EF] bg-white pl-3 pr-8 text-[11px] text-[#2E2A3B] outline-none"
             >
               {statusOptions.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
               ))}
             </select>
-            <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8B879C]" />
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8B879C]"
+            />
           </div>
         </div>
 
@@ -214,23 +253,38 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label htmlFor="notificationspanel-target" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Target</label>
-                <select id="notificationspanel-target"
+                <label
+                  htmlFor="notificationspanel-target"
+                  className="mb-1 block text-[10.5px] font-medium text-[#3D3752]"
+                >
+                  Target
+                </label>
+                <select
+                  id="notificationspanel-target"
                   value={composeTarget}
                   onChange={(e) => setComposeTarget(e.target.value)}
                   className="h-[36px] w-full rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#2E2A3B] outline-none"
                 >
                   {targetOptions.map((o) => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
                   ))}
                 </select>
               </div>
 
               {composeTarget === "specific" && (
                 <div>
-                  <label htmlFor="notif-user" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Select User</label>
+                  <label
+                    htmlFor="notif-user"
+                    className="mb-1 block text-[10.5px] font-medium text-[#3D3752]"
+                  >
+                    Select User
+                  </label>
                   <div className="relative">
-                    <label htmlFor="notif-user-search" className="sr-only">Search users</label>
+                    <label htmlFor="notif-user-search" className="sr-only">
+                      Search users
+                    </label>
                     <input
                       id="notif-user-search"
                       type="search"
@@ -247,7 +301,9 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
                     >
                       <option value="">Select a user…</option>
                       {filteredUsers.map((u: any) => (
-                        <option key={u.id} value={u.id}>{sanitize(u.name)} ({sanitize(u.email)})</option>
+                        <option key={u.id} value={u.id}>
+                          {sanitize(u.name)} ({sanitize(u.email)})
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -255,8 +311,14 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
               )}
 
               <div>
-                <label htmlFor="notificationspanel-type" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Type</label>
-                <select id="notificationspanel-type"
+                <label
+                  htmlFor="notificationspanel-type"
+                  className="mb-1 block text-[10.5px] font-medium text-[#3D3752]"
+                >
+                  Type
+                </label>
+                <select
+                  id="notificationspanel-type"
                   value={composeType}
                   onChange={(e) => setComposeType(e.target.value)}
                   className="h-[36px] w-full rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#2E2A3B] outline-none"
@@ -270,8 +332,14 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="notificationspanel-title" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Title *</label>
-                <input id="notificationspanel-title"
+                <label
+                  htmlFor="notificationspanel-title"
+                  className="mb-1 block text-[10.5px] font-medium text-[#3D3752]"
+                >
+                  Title *
+                </label>
+                <input
+                  id="notificationspanel-title"
                   value={composeTitle}
                   onChange={(e) => setComposeTitle(e.target.value)}
                   placeholder="Notification title"
@@ -280,7 +348,12 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
               </div>
 
               <div className="sm:col-span-2">
-                <label htmlFor="notif-message" className="mb-1 block text-[10.5px] font-medium text-[#3D3752]">Message *</label>
+                <label
+                  htmlFor="notif-message"
+                  className="mb-1 block text-[10.5px] font-medium text-[#3D3752]"
+                >
+                  Message *
+                </label>
                 <textarea
                   id="notif-message"
                   value={composeMessage}
@@ -304,7 +377,9 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
                 disabled={composeSending}
                 className="inline-flex items-center gap-2 rounded-[8px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-5 py-2 text-[11px] font-medium text-white shadow-[0_4px_12px_rgba(109,40,217,.25)] disabled:opacity-60"
               >
-                {composeSending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                {composeSending && (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                )}
                 {composeSending ? "Sending..." : "Send Notification"}
               </button>
             </div>
@@ -316,13 +391,27 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
           <table className="w-full min-w-[820px] border-collapse">
             <thead>
               <tr className="border-y border-[#EFEEF4] bg-[#FAF9FC] text-left">
-                <th className="py-[11px] pl-5 pr-3 text-[11.5px] font-medium text-[#6E6A80]">Title</th>
-                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">Message</th>
-                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">Target</th>
-                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">Type</th>
-                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">Read</th>
-                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">Sent At</th>
-                <th className="py-[11px] pr-5 text-[11.5px] font-medium text-[#6E6A80]">Actions</th>
+                <th className="py-[11px] pl-5 pr-3 text-[11.5px] font-medium text-[#6E6A80]">
+                  Title
+                </th>
+                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">
+                  Message
+                </th>
+                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">
+                  Target
+                </th>
+                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">
+                  Type
+                </th>
+                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">
+                  Read
+                </th>
+                <th className="py-[11px] pr-3 text-[11.5px] font-medium text-[#6E6A80]">
+                  Sent At
+                </th>
+                <th className="py-[11px] pr-5 text-[11.5px] font-medium text-[#6E6A80]">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -334,11 +423,21 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
                 </tr>
               ) : error ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-[13px] text-[#EF4444]">{error}</td>
+                  <td
+                    colSpan={7}
+                    className="py-10 text-center text-[13px] text-[#EF4444]"
+                  >
+                    {error}
+                  </td>
                 </tr>
               ) : list.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-10 text-center text-[12px] text-[#8B879C]">No notifications sent yet.</td>
+                  <td
+                    colSpan={7}
+                    className="py-10 text-center text-[12px] text-[#8B879C]"
+                  >
+                    No notifications sent yet.
+                  </td>
                 </tr>
               ) : (
                 list.map((n) => {
@@ -348,41 +447,68 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
                     <tr key={n.id} className="border-b border-[#F3F2F7]">
                       <td className="py-[13px] pl-5 pr-3">
                         <div className="flex items-center gap-[8px]">
-                          <span className={`grid h-[26px] w-[26px] shrink-0 place-items-center rounded-[7px] ${isBroadcast ? "bg-[#F0EAFB]" : "bg-[#E7F0FE]"}`}>
+                          <span
+                            className={`grid h-[26px] w-[26px] shrink-0 place-items-center rounded-[7px] ${isBroadcast ? "bg-[#F0EAFB]" : "bg-[#E7F0FE]"}`}
+                          >
                             {isBroadcast ? (
-                              <Bell size={13} strokeWidth={2} className="text-[#7C3AED]" />
+                              <Bell
+                                size={13}
+                                strokeWidth={2}
+                                className="text-[#7C3AED]"
+                              />
                             ) : (
-                              <Users size={13} strokeWidth={2} className="text-[#2563EB]" />
+                              <Users
+                                size={13}
+                                strokeWidth={2}
+                                className="text-[#2563EB]"
+                              />
                             )}
                           </span>
-                          <p className="text-[11.5px] font-semibold text-[#221C33]">{sanitize(n.title)}</p>
+                          <p className="text-[11.5px] font-semibold text-[#221C33]">
+                            {sanitize(n.title)}
+                          </p>
                         </div>
                       </td>
                       <td className="py-[13px] pr-3">
-                        <p className="max-w-[260px] truncate text-[11px] text-[#6B6480]">{sanitize(n.message)}</p>
+                        <p className="max-w-[260px] truncate text-[11px] text-[#6B6480]">
+                          {sanitize(n.message)}
+                        </p>
                       </td>
                       <td className="py-[13px] pr-3">
-                        <span className={`inline-flex items-center rounded-[6px] px-[8px] py-[3px] text-[9.5px] font-medium ${isBroadcast ? "bg-[#F0EAFB] text-[#7C3AED]" : "bg-[#E7F0FE] text-[#2563EB]"}`}>
+                        <span
+                          className={`inline-flex items-center rounded-[6px] px-[8px] py-[3px] text-[9.5px] font-medium ${isBroadcast ? "bg-[#F0EAFB] text-[#7C3AED]" : "bg-[#E7F0FE] text-[#2563EB]"}`}
+                        >
                           {isBroadcast ? "Broadcast" : `User #${n.user_id}`}
                         </span>
                       </td>
                       <td className="py-[13px] pr-3">
-                        <span className={`inline-flex items-center rounded-[6px] px-[8px] py-[3px] text-[9.5px] font-medium ${typeTone[n.type] || "bg-[#F5F4F9] text-[#6B6480]"}`}>
+                        <span
+                          className={`inline-flex items-center rounded-[6px] px-[8px] py-[3px] text-[9.5px] font-medium ${typeTone[n.type] || "bg-[#F5F4F9] text-[#6B6480]"}`}
+                        >
                           {n.type || "info"}
                         </span>
                       </td>
                       <td className="py-[13px] pr-3">
-                        <span className={`inline-flex items-center rounded-[6px] px-[8px] py-[3px] text-[9.5px] font-medium ${n.is_read ? "bg-[#E6F7EE] text-[#16A34A]" : "bg-[#FEF1E1] text-[#F59E0B]"}`}>
+                        <span
+                          className={`inline-flex items-center rounded-[6px] px-[8px] py-[3px] text-[9.5px] font-medium ${n.is_read ? "bg-[#E6F7EE] text-[#16A34A]" : "bg-[#FEF1E1] text-[#F59E0B]"}`}
+                        >
                           {n.is_read ? "Read" : "Unread"}
                         </span>
                       </td>
                       <td className="py-[13px] pr-3 leading-tight">
-                        <p className="whitespace-nowrap text-[11px] text-[#2E2A3B]">{date}</p>
-                        <p className="mt-[1px] whitespace-nowrap text-[9.5px] text-[#8B879C]">{time}</p>
+                        <p className="whitespace-nowrap text-[11px] text-[#2E2A3B]">
+                          {date}
+                        </p>
+                        <p className="mt-[1px] whitespace-nowrap text-[9.5px] text-[#8B879C]">
+                          {time}
+                        </p>
                       </td>
                       <td className="py-[13px] pr-5">
                         <button
-                          onClick={() => { setDeleting(n); setConfirmOpen(true); }}
+                          onClick={() => {
+                            setDeleting(n);
+                            setConfirmOpen(true);
+                          }}
                           className="grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[#EF4444] hover:bg-[#FEE2E2]"
                           title="Delete"
                         >
@@ -418,7 +544,12 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
 
             {getPageNumbers().map((p, i) =>
               p === "..." ? (
-                <span key={`ellipsis-${i}`} className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[11.5px] text-[#8B879C]">...</span>
+                <span
+                  key={`ellipsis-${i}`}
+                  className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[11.5px] text-[#8B879C]"
+                >
+                  ...
+                </span>
               ) : (
                 <button
                   key={p}
@@ -428,7 +559,7 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
                 >
                   {p}
                 </button>
-              )
+              ),
             )}
 
             <button
@@ -444,14 +575,22 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
             <div className="relative ml-2">
               <select
                 value={limit}
-                onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
+                }}
                 className="flex h-[32px] w-[104px] appearance-none items-center rounded-[8px] border border-[#E7E5EF] bg-white pl-3 pr-8 text-[11.5px] text-[#4A4658] outline-none"
               >
                 {PAGE_SIZE_OPTIONS.map((n) => (
-                  <option key={n} value={n}>{n} / page</option>
+                  <option key={n} value={n}>
+                    {n} / page
+                  </option>
                 ))}
               </select>
-              <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8B879C]" />
+              <ChevronDown
+                size={15}
+                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#8B879C]"
+              />
             </div>
           </div>
         </div>
@@ -462,12 +601,17 @@ export default function NotificationsPanel({ onReady }: { onReady?: (fns: { open
         title="Delete Notification"
         message={`Are you sure you want to delete "${deleting?.title || "this notification"}"?`}
         onConfirm={handleDelete}
-        onCancel={() => { setConfirmOpen(false); setDeleting(null); }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setDeleting(null);
+        }}
         saving={deleteSaving}
       />
 
       {toast && (
-        <div className={`fixed right-4 top-4 z-[999] rounded-[8px] px-4 py-3 text-[12px] font-medium text-white shadow-lg ${toast.kind === "success" ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}>
+        <div
+          className={`fixed right-4 top-4 z-[999] rounded-[8px] px-4 py-3 text-[12px] font-medium text-white shadow-lg ${toast.kind === "success" ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
+        >
           {toast.msg}
         </div>
       )}

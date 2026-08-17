@@ -15,11 +15,7 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
-import {
-  kundaliTypeStyles,
-  statusStyles,
-  doshaStyles,
-} from "./data";
+import { kundaliTypeStyles, statusStyles, doshaStyles } from "./data";
 import { api } from "../../../lib/api";
 import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
@@ -43,8 +39,16 @@ function fmtKD(iso: string) {
   if (!iso) return { date: "", time: "" };
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+    date: d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }),
   };
 }
 
@@ -81,13 +85,7 @@ function Checkbox() {
   );
 }
 
-function Toast({
-  message,
-  onClose,
-}: {
-  message: string;
-  onClose: () => void;
-}) {
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3000);
     return () => clearTimeout(t);
@@ -140,7 +138,11 @@ function toRow(r: RawReport): DisplayRow {
   return {
     id: `KNDL-${r.id}`,
     rawId: r.id,
-    client: { name: r.title || "Client", email: r.user?.email || "", phone: "" },
+    client: {
+      name: r.title || "Client",
+      email: r.user?.email || "",
+      phone: "",
+    },
     type: typeKey,
     astrologer: { name: "System", role: "Auto-generated", avatar: "" },
     date,
@@ -161,7 +163,9 @@ export default function KundaliPanel() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RawReport | null>(null);
-  const [formValues, setFormValues] = useState<Record<string, string | number>>({});
+  const [formValues, setFormValues] = useState<Record<string, string | number>>(
+    {},
+  );
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -177,9 +181,10 @@ export default function KundaliPanel() {
       .then((data: any) => {
         const items = (data?.data ?? data ?? []) as RawReport[];
         if (data?.meta?.total) setTotal(data.meta.total);
-        const filtered = items.filter((r) =>
-          (r.type || "").toLowerCase().includes("kundli") ||
-          (r.type || "").toLowerCase().includes("kundali")
+        const filtered = items.filter(
+          (r) =>
+            (r.type || "").toLowerCase().includes("kundli") ||
+            (r.type || "").toLowerCase().includes("kundali"),
         );
         const src = filtered.length ? filtered : items;
         setRawReports(src);
@@ -226,7 +231,7 @@ export default function KundaliPanel() {
         options: statusOptions,
       },
     ],
-    []
+    [],
   );
 
   const editFields: ModalField[] = useMemo(
@@ -259,7 +264,7 @@ export default function KundaliPanel() {
         full: true,
       },
     ],
-    []
+    [],
   );
 
   const handleAdd = () => {
@@ -297,7 +302,7 @@ export default function KundaliPanel() {
         user_name: r.user?.name ?? "",
         created_at: r.created_at ?? "",
       })),
-      "kundali-reports.csv"
+      "kundali-reports.csv",
     );
   };
 
@@ -356,7 +361,9 @@ export default function KundaliPanel() {
                   load();
                   setToast("Kundali generated successfully");
                 }
-              } catch { /* continue polling */ }
+              } catch {
+                /* continue polling */
+              }
             }, 2000);
             setTimeout(() => {
               clearInterval(poll);
@@ -471,9 +478,7 @@ export default function KundaliPanel() {
               type="button"
               className="flex h-[33px] w-[162px] shrink-0 items-center justify-between whitespace-nowrap rounded-[8px] border border-[#ECEEF3] bg-white pl-[11px] pr-[9px] text-[10px] font-semibold text-[#14134A]"
             >
-              <span>
-                01 May 2025&nbsp;&nbsp;·&nbsp;&nbsp;18 May 2025
-              </span>
+              <span>01 May 2025&nbsp;&nbsp;·&nbsp;&nbsp;18 May 2025</span>
               <Calendar size={14} className="shrink-0 text-[#6D28D9]" />
             </button>
 
@@ -543,8 +548,9 @@ export default function KundaliPanel() {
               <tbody>
                 {kundaliRows.map((k) => {
                   const type =
-                    kundaliTypeStyles[k.type as keyof typeof kundaliTypeStyles] ||
-                    kundaliTypeStyles.janam;
+                    kundaliTypeStyles[
+                      k.type as keyof typeof kundaliTypeStyles
+                    ] || kundaliTypeStyles.janam;
                   const statusKey = displayStatusKey(k.status);
                   const st =
                     statusStyles[statusKey as keyof typeof statusStyles] ||
@@ -598,7 +604,8 @@ export default function KundaliPanel() {
                             />
                           ) : (
                             <span className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9] text-[9px] font-bold text-white">
-                              {k.astrologer.name?.slice(0, 2)?.toUpperCase() || "S"}
+                              {k.astrologer.name?.slice(0, 2)?.toUpperCase() ||
+                                "S"}
                             </span>
                           )}
                           <div>

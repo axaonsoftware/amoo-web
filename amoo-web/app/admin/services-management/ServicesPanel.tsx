@@ -39,11 +39,19 @@ export default function ServicesPanel() {
   const [total, setTotal] = useState(0);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<any>(null);
-  const [editValues, setEditValues] = useState<Record<string, string | number>>({});
+  const [editValues, setEditValues] = useState<Record<string, string | number>>(
+    {},
+  );
   const [editSaving, setEditSaving] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; service: any }>({ open: false, service: null });
+  const [confirmDelete, setConfirmDelete] = useState<{
+    open: boolean;
+    service: any;
+  }>({ open: false, service: null });
   const [deleteSaving, setDeleteSaving] = useState(false);
-  const [toast, setToast] = useState<{ msg: string; kind: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    msg: string;
+    kind: "success" | "error";
+  } | null>(null);
 
   useEffect(() => {
     api.admin
@@ -65,7 +73,7 @@ export default function ServicesPanel() {
               duration: s.duration,
               status: s.status,
               bookings: s.bookings,
-            }))
+            })),
           );
         }
       })
@@ -80,23 +88,47 @@ export default function ServicesPanel() {
 
   const reload = () => {
     setLoading(true);
-    api.admin.getServices().then((data: any) => {
-      const items = data?.data ?? data;
-      if (data?.meta?.total) setTotal(data.meta.total);
-      if (Array.isArray(items) && items.length) {
-        setRows(items.map((s: any) => ({
-          id: s.id, name: s.name, sub: s.sub, img: s.img, category: s.category,
-          type: s.type, price: `₹ ${Number(s.price).toLocaleString("en-IN")}`,
-          priceRaw: s.price, duration: s.duration, status: s.status, bookings: s.bookings,
-        })));
-      }
-    }).catch(() => {}).finally(() => setLoading(false));
+    api.admin
+      .getServices()
+      .then((data: any) => {
+        const items = data?.data ?? data;
+        if (data?.meta?.total) setTotal(data.meta.total);
+        if (Array.isArray(items) && items.length) {
+          setRows(
+            items.map((s: any) => ({
+              id: s.id,
+              name: s.name,
+              sub: s.sub,
+              img: s.img,
+              category: s.category,
+              type: s.type,
+              price: `₹ ${Number(s.price).toLocaleString("en-IN")}`,
+              priceRaw: s.price,
+              duration: s.duration,
+              status: s.status,
+              bookings: s.bookings,
+            })),
+          );
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   const list = rows || [];
 
-  if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-[#6D28D9]" /></div>;
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center py-10">
+        <Loader2 className="h-6 w-6 animate-spin text-[#6D28D9]" />
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">
+        {error}
+      </div>
+    );
 
   return (
     <section className="rounded-[14px] border border-[#EEEDF4] bg-white shadow-[0_1px_2px_rgba(20,16,40,.04)]">
@@ -175,7 +207,10 @@ export default function ServicesPanel() {
 
           <tbody>
             {list.map((r) => (
-              <tr key={(r as any).id ?? r.name} className="border-b border-[#F2F1F7]">
+              <tr
+                key={(r as any).id ?? r.name}
+                className="border-b border-[#F2F1F7]"
+              >
                 <td className="py-[13px] pl-6 pr-2">
                   <div className="flex items-center gap-[10px]">
                     <Image
@@ -238,10 +273,34 @@ export default function ServicesPanel() {
 
                 <td className="py-[13px] pl-2 pr-6">
                   <div className="flex items-center gap-[8px]">
-                    <button type="button" aria-label="Edit" onClick={() => { setEditingService(r); setEditValues({ name: r.name, sub: r.sub || "", category: r.category, type: r.type, price: r.priceRaw ?? r.price, duration: r.duration, status: r.status === "Active" ? "active" : "inactive" }); setEditModalOpen(true); }} className="grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[#8B879C] hover:bg-[#F7F6FB]">
+                    <button
+                      type="button"
+                      aria-label="Edit"
+                      onClick={() => {
+                        setEditingService(r);
+                        setEditValues({
+                          name: r.name,
+                          sub: r.sub || "",
+                          category: r.category,
+                          type: r.type,
+                          price: r.priceRaw ?? r.price,
+                          duration: r.duration,
+                          status: r.status === "Active" ? "active" : "inactive",
+                        });
+                        setEditModalOpen(true);
+                      }}
+                      className="grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[#8B879C] hover:bg-[#F7F6FB]"
+                    >
                       <Pencil size={14} />
                     </button>
-                    <button type="button" aria-label="Delete" onClick={() => setConfirmDelete({ open: true, service: r })} className="grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[#EF4444] hover:bg-[#FEE2E2]">
+                    <button
+                      type="button"
+                      aria-label="Delete"
+                      onClick={() =>
+                        setConfirmDelete({ open: true, service: r })
+                      }
+                      className="grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[#EF4444] hover:bg-[#FEE2E2]"
+                    >
                       <Trash2 size={14} />
                     </button>
                   </div>
@@ -255,7 +314,8 @@ export default function ServicesPanel() {
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-[16px] pt-[16px]">
         <p className="text-[10.5px] text-[#8B879C]">
-          Showing 1 to 8 of {(total || list.length).toLocaleString("en-IN")} services
+          Showing 1 to 8 of {(total || list.length).toLocaleString("en-IN")}{" "}
+          services
         </p>
 
         <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
@@ -317,23 +377,74 @@ export default function ServicesPanel() {
         open={editModalOpen}
         title="Edit Service"
         fields={[
-          { name: "name", label: "Service Name", type: "text", required: true, full: true },
+          {
+            name: "name",
+            label: "Service Name",
+            type: "text",
+            required: true,
+            full: true,
+          },
           { name: "sub", label: "Subtitle", type: "text", full: true },
-          { name: "category", label: "Category", type: "select", options: [{ label: "Astrology", value: "Astrology" }, { label: "Numerology", value: "Numerology" }, { label: "Vastu", value: "Vastu" }, { label: "Puja", value: "Puja" }, { label: "Rudraksha", value: "Rudraksha" }, { label: "Crystals", value: "Crystals" }, { label: "Gemstone", value: "Gemstone" }] },
-          { name: "type", label: "Type", type: "select", options: [{ label: "Individual", value: "individual" }, { label: "Package", value: "package" }] },
-          { name: "price", label: "Price (₹)", type: "number", required: true, min: 0 },
+          {
+            name: "category",
+            label: "Category",
+            type: "select",
+            options: [
+              { label: "Astrology", value: "Astrology" },
+              { label: "Numerology", value: "Numerology" },
+              { label: "Vastu", value: "Vastu" },
+              { label: "Puja", value: "Puja" },
+              { label: "Rudraksha", value: "Rudraksha" },
+              { label: "Crystals", value: "Crystals" },
+              { label: "Gemstone", value: "Gemstone" },
+            ],
+          },
+          {
+            name: "type",
+            label: "Type",
+            type: "select",
+            options: [
+              { label: "Individual", value: "individual" },
+              { label: "Package", value: "package" },
+            ],
+          },
+          {
+            name: "price",
+            label: "Price (₹)",
+            type: "number",
+            required: true,
+            min: 0,
+          },
           { name: "duration", label: "Duration", type: "text" },
-          { name: "status", label: "Status", type: "select", options: [{ label: "Active", value: "active" }, { label: "Inactive", value: "inactive" }] },
+          {
+            name: "status",
+            label: "Status",
+            type: "select",
+            options: [
+              { label: "Active", value: "active" },
+              { label: "Inactive", value: "inactive" },
+            ],
+          },
         ]}
         values={editValues}
-        onChange={(name, value) => setEditValues((prev) => ({ ...prev, [name]: value }))}
+        onChange={(name, value) =>
+          setEditValues((prev) => ({ ...prev, [name]: value }))
+        }
         saving={editSaving}
         onClose={() => setEditModalOpen(false)}
         onSave={async () => {
           if (!editingService) return;
           setEditSaving(true);
           try {
-            await api.admin.updateService(editingService.id, { name: editValues.name, sub: editValues.sub, category: editValues.category, type: editValues.type, price: Number(editValues.price), duration: editValues.duration, status: editValues.status });
+            await api.admin.updateService(editingService.id, {
+              name: editValues.name,
+              sub: editValues.sub,
+              category: editValues.category,
+              type: editValues.type,
+              price: Number(editValues.price),
+              duration: editValues.duration,
+              status: editValues.status,
+            });
             setEditModalOpen(false);
             showToast("Service updated successfully");
             reload();
@@ -367,7 +478,9 @@ export default function ServicesPanel() {
       />
 
       {toast && (
-        <div className={`fixed right-4 top-4 z-[999] rounded-[8px] px-4 py-3 text-[12px] font-medium text-white shadow-lg ${toast.kind === "success" ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}>
+        <div
+          className={`fixed right-4 top-4 z-[999] rounded-[8px] px-4 py-3 text-[12px] font-medium text-white shadow-lg ${toast.kind === "success" ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
+        >
           {toast.msg}
         </div>
       )}

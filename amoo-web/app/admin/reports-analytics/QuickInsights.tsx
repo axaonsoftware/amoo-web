@@ -22,10 +22,23 @@ type Overview = {
   stats: Record<string, number>;
   topServices: { id: number; name: string; bookings: number | string }[];
 };
-type TrendBucket = { label: string; count: number | string; cancelled: number | string };
+type TrendBucket = {
+  label: string;
+  count: number | string;
+  cancelled: number | string;
+};
 
 // MySQL DAYOFWEEK(): 1 = Sunday .. 7 = Saturday
-const DAY_NAMES = ["", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_NAMES = [
+  "",
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 
 /**
  * Every tile is now backed by a real aggregation.
@@ -46,7 +59,9 @@ const DAY_NAMES = ["", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "
 export default function QuickInsights() {
   const patterns = useApi<Patterns>(() => api.admin.getBookingPatterns());
   const overview = useApi<Overview>(() => api.admin.getOverview());
-  const trends = useApi<TrendBucket[]>(() => api.admin.getBookingsTrends("month"));
+  const trends = useApi<TrendBucket[]>(() =>
+    api.admin.getBookingsTrends("month"),
+  );
 
   const loading = patterns.loading || overview.loading || trends.loading;
   const error = patterns.error || overview.error || trends.error;
@@ -59,7 +74,9 @@ export default function QuickInsights() {
   const p = patterns.data;
   const totalBookings = toNumber(p?.total);
   const share = (count: unknown) =>
-    totalBookings === 0 ? "—" : `${((toNumber(count) / totalBookings) * 100).toFixed(1)}% of bookings`;
+    totalBookings === 0
+      ? "—"
+      : `${((toNumber(count) / totalBookings) * 100).toFixed(1)}% of bookings`;
 
   const topService = overview.data?.topServices?.[0];
   const buckets = trends.data ?? [];
@@ -92,7 +109,7 @@ export default function QuickInsights() {
         peakHour === undefined || peakHour === null
           ? "—"
           : `${formatTime(`${String(peakHour).padStart(2, "0")}:00`)} – ${formatTime(
-              `${String((peakHour + 1) % 24).padStart(2, "0")}:00`
+              `${String((peakHour + 1) % 24).padStart(2, "0")}:00`,
             )}`,
       note: p?.peakHour ? share(p.peakHour.count) : "No bookings yet",
       Icon: Clock,
@@ -102,7 +119,9 @@ export default function QuickInsights() {
     {
       label: "Most Popular Service",
       value: topService?.name ?? "—",
-      note: topService ? `${formatNumber(topService.bookings)} bookings` : "No bookings yet",
+      note: topService
+        ? `${formatNumber(topService.bookings)} bookings`
+        : "No bookings yet",
       Icon: Headset,
       iconWrap: "bg-[#E3F7EA]",
       iconColor: "text-[#16A34A]",
@@ -118,7 +137,10 @@ export default function QuickInsights() {
     {
       label: "Cancellation Rate",
       value: rateNow === undefined ? "—" : `${rateNow.toFixed(2)}%`,
-      note: rateDelta === null ? "no prior month" : `${Math.abs(rateDelta).toFixed(1)} pp vs last month`,
+      note:
+        rateDelta === null
+          ? "no prior month"
+          : `${Math.abs(rateDelta).toFixed(1)} pp vs last month`,
       delta: rateDelta,
       Icon: CircleX,
       iconWrap: "bg-[#FDE8E8]",
@@ -128,7 +150,9 @@ export default function QuickInsights() {
 
   return (
     <div>
-      <h2 className="text-[14px] font-semibold text-[#1B1630]">Quick Insights</h2>
+      <h2 className="text-[14px] font-semibold text-[#1B1630]">
+        Quick Insights
+      </h2>
 
       <div className="mt-3 rounded-[14px] border border-[#EFEDF4] bg-white px-[18px] py-[16px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
         {loading ? (
@@ -156,7 +180,9 @@ export default function QuickInsights() {
                   <s.Icon size={19} className={s.iconColor} />
                 </div>
                 <div className="min-w-0">
-                  <p className="truncate text-[10px] text-[#A5A2B5]">{s.label}</p>
+                  <p className="truncate text-[10px] text-[#A5A2B5]">
+                    {s.label}
+                  </p>
                   <p className="truncate text-[13px] font-semibold leading-[19px] text-[#1B1630]">
                     {s.value}
                   </p>
@@ -167,12 +193,18 @@ export default function QuickInsights() {
                           s.delta > 0 ? "text-[#EF4444]" : "text-[#16A34A]"
                         }`}
                       >
-                        {s.delta > 0 ? <ArrowUp size={9} /> : <ArrowDown size={9} />}
+                        {s.delta > 0 ? (
+                          <ArrowUp size={9} />
+                        ) : (
+                          <ArrowDown size={9} />
+                        )}
                         {s.note}
                       </span>
                     </p>
                   ) : (
-                    <p className="truncate text-[9.5px] text-[#A5A2B5]">{s.note}</p>
+                    <p className="truncate text-[9.5px] text-[#A5A2B5]">
+                      {s.note}
+                    </p>
                   )}
                 </div>
               </div>

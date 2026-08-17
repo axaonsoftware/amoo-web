@@ -44,8 +44,12 @@ export default function BookingSummary({
         className="flex items-center gap-2 px-5 py-4"
         style={{ background: "linear-gradient(90deg,#3E1E7A 0%,#5B2A9D 100%)" }}
       >
-        <span className="text-amber-400" aria-hidden="true">✦</span>
-        <h3 className="text-white font-serif font-semibold text-base">Booking Summary</h3>
+        <span className="text-amber-400" aria-hidden="true">
+          ✦
+        </span>
+        <h3 className="text-white font-serif font-semibold text-base">
+          Booking Summary
+        </h3>
       </div>
 
       <div className="p-5">
@@ -65,19 +69,25 @@ export default function BookingSummary({
         <dl className="space-y-4 pt-5 pb-5 border-b border-gray-100">
           <div className="flex items-center justify-between text-sm">
             <dt className="flex items-center gap-2 text-gray-600">
-              <Video className="w-4 h-4 text-amber-500" aria-hidden="true" />Mode
+              <Video className="w-4 h-4 text-amber-500" aria-hidden="true" />
+              Mode
             </dt>
             <dd className="font-semibold text-[#3E1E7A]">{mode}</dd>
           </div>
           <div className="flex items-center justify-between text-sm">
             <dt className="flex items-center gap-2 text-gray-600">
-              <CalendarDays className="w-4 h-4 text-amber-500" aria-hidden="true" />Date
+              <CalendarDays
+                className="w-4 h-4 text-amber-500"
+                aria-hidden="true"
+              />
+              Date
             </dt>
             <dd className="font-semibold text-[#3E1E7A] text-right">{date}</dd>
           </div>
           <div className="flex items-center justify-between text-sm">
             <dt className="flex items-center gap-2 text-gray-600">
-              <Clock className="w-4 h-4 text-amber-500" aria-hidden="true" />Time
+              <Clock className="w-4 h-4 text-amber-500" aria-hidden="true" />
+              Time
             </dt>
             <dd className="font-semibold text-[#3E1E7A]">{time} (IST)</dd>
           </div>
@@ -86,7 +96,8 @@ export default function BookingSummary({
           {duration && (
             <div className="flex items-center justify-between text-sm">
               <dt className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-4 h-4 text-amber-500" aria-hidden="true" />Duration
+                <Clock className="w-4 h-4 text-amber-500" aria-hidden="true" />
+                Duration
               </dt>
               <dd className="font-semibold text-[#3E1E7A]">{duration}</dd>
             </div>
@@ -96,7 +107,9 @@ export default function BookingSummary({
         <dl className="space-y-2 pt-5">
           <div className="flex items-center justify-between text-sm">
             <dt className="text-gray-600">Consultation Fee</dt>
-            <dd className="font-medium text-[#3E1E7A]">{formatCurrency(price)}</dd>
+            <dd className="font-medium text-[#3E1E7A]">
+              {formatCurrency(price)}
+            </dd>
           </div>
           {coupon && (
             <div className="flex items-center justify-between text-sm">
@@ -104,12 +117,16 @@ export default function BookingSummary({
                 <Tag className="w-3.5 h-3.5" aria-hidden="true" />
                 Discount ({coupon.code})
               </dt>
-              <dd className="text-green-600 font-medium">- {formatCurrency(coupon.discount)}</dd>
+              <dd className="text-green-600 font-medium">
+                - {formatCurrency(coupon.discount)}
+              </dd>
             </div>
           )}
           <div className="border-t border-dashed border-gray-200 pt-2 flex items-center justify-between">
             <dt className="font-bold text-[#3E1E7A]">Total Amount</dt>
-            <dd className="font-bold text-xl text-[#3E1E7A]">{formatCurrency(total)}</dd>
+            <dd className="font-bold text-xl text-[#3E1E7A]">
+              {formatCurrency(total)}
+            </dd>
           </div>
         </dl>
       </div>

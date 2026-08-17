@@ -17,11 +17,41 @@ const statDefs: {
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Consultations", field: "consultations", Icon: CalendarDays, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
-  { label: "Upcoming", field: "upcomingConsultations", Icon: CalendarClock, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
-  { label: "Completed", field: "completedConsultations", Icon: CircleCheckBig, iconBg: "bg-[#E3F7EC]", iconColor: "text-[#22C55E]" },
-  { label: "Cancelled", field: "cancelledConsultations", Icon: CircleX, iconBg: "bg-[#FDEAEA]", iconColor: "text-[#EF4444]" },
-  { label: "Total Revenue", field: "revenue", Icon: IndianRupee, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
+  {
+    label: "Total Consultations",
+    field: "consultations",
+    Icon: CalendarDays,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Upcoming",
+    field: "upcomingConsultations",
+    Icon: CalendarClock,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Completed",
+    field: "completedConsultations",
+    Icon: CircleCheckBig,
+    iconBg: "bg-[#E3F7EC]",
+    iconColor: "text-[#22C55E]",
+  },
+  {
+    label: "Cancelled",
+    field: "cancelledConsultations",
+    Icon: CircleX,
+    iconBg: "bg-[#FDEAEA]",
+    iconColor: "text-[#EF4444]",
+  },
+  {
+    label: "Total Revenue",
+    field: "revenue",
+    Icon: IndianRupee,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
 ];
 
 export default function StatsRow() {
@@ -39,8 +69,10 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const fmtCurrency = (n: number | undefined) => (n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const fmtCurrency = (n: number | undefined) =>
+    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
   if (loading) {
     return (
@@ -75,7 +107,9 @@ export default function StatsRow() {
             </span>
             <div className="min-w-0">
               <p className="truncate text-[11.5px] text-[#8B879C]">{label}</p>
-              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">{value}</p>
+              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">
+                {value}
+              </p>
             </div>
           </div>
         );

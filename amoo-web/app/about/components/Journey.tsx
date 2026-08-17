@@ -39,7 +39,11 @@ const STEPS = [
   {
     Icon: JourneyStarIcon,
     title: "Today",
-    body: ["Thousands of lives", "transformed with love,", "wisdom & guidance."],
+    body: [
+      "Thousands of lives",
+      "transformed with love,",
+      "wisdom & guidance.",
+    ],
   },
 ];
 

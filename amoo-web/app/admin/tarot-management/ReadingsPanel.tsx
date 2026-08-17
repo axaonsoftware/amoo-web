@@ -21,8 +21,16 @@ function fmtDate(iso: string) {
   if (!iso) return { date: "", time: "" };
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+    date: d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }),
   };
 }
 
@@ -71,8 +79,8 @@ export default function ReadingsPanel() {
       .then((data: any) => {
         const items = data?.data ?? data ?? [];
         if (data?.meta?.total) setTotal(data.meta.total);
-        const rows = items.filter(
-          (r: any) => (r.type || "").toLowerCase().includes("tarot")
+        const rows = items.filter((r: any) =>
+          (r.type || "").toLowerCase().includes("tarot"),
         );
         const src = rows.length ? rows : items;
         if (src.length) {
@@ -96,7 +104,7 @@ export default function ReadingsPanel() {
                 amount: "-",
                 payment: "Paid",
               };
-            })
+            }),
           );
         }
       })
@@ -106,8 +114,32 @@ export default function ReadingsPanel() {
 
   const readingRows = list || [];
 
-  if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center py-10">
+        <svg
+          className="h-6 w-6 animate-spin text-[#7C3AED]"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeDasharray="32"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">
+        {error}
+      </div>
+    );
 
   return (
     <section>
@@ -335,7 +367,8 @@ export default function ReadingsPanel() {
         {/* Pagination */}
         <div className="flex flex-wrap items-center gap-4 px-[20px] py-[13px]">
           <p className="text-[12px] font-semibold text-[#14133F]">
-            Showing 1 to 8 of {(total || readingRows.length).toLocaleString("en-IN")} readings
+            Showing 1 to 8 of{" "}
+            {(total || readingRows.length).toLocaleString("en-IN")} readings
           </p>
 
           <div className="mx-auto flex items-center gap-[6px]">

@@ -1,7 +1,16 @@
 "use client";
 
 import { memo, useCallback, useEffect, useState } from "react";
-import { Inbox, Search, Trash2, Mail, Phone, Loader2, X, CheckCircle2 } from "lucide-react";
+import {
+  Inbox,
+  Search,
+  Trash2,
+  Mail,
+  Phone,
+  Loader2,
+  X,
+  CheckCircle2,
+} from "lucide-react";
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
 import { formatDateTime, formatRelative } from "@/lib/format";
 import { sanitize } from "@/lib/sanitize";
@@ -64,16 +73,24 @@ const ContactItem = memo(function ContactItem({
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <p className="text-[12.5px] font-semibold text-[#231640]">{sanitize(c.name)}</p>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${STATUS_STYLES[c.status]}`}>
+            <p className="text-[12.5px] font-semibold text-[#231640]">
+              {sanitize(c.name)}
+            </p>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${STATUS_STYLES[c.status]}`}
+            >
               {c.status}
             </span>
-            <span className="ml-auto text-[10.5px] text-[#8B879C]">{formatRelative(c.created_at)}</span>
+            <span className="ml-auto text-[10.5px] text-[#8B879C]">
+              {formatRelative(c.created_at)}
+            </span>
           </div>
           <p className="mt-0.5 truncate text-[11.5px] font-medium text-[#3D3752]">
             {sanitize(c.subject) || "(no subject)"}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-[#8B879C]">{sanitize(c.message)}</p>
+          <p className="mt-0.5 truncate text-[11px] text-[#8B879C]">
+            {sanitize(c.message)}
+          </p>
         </div>
       </button>
     </li>
@@ -173,8 +190,14 @@ export default function ContactInboxPage() {
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] max-w-[360px] flex-1">
-          <label htmlFor="contact-search" className="sr-only">Search enquiries</label>
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]" aria-hidden="true" />
+          <label htmlFor="contact-search" className="sr-only">
+            Search enquiries
+          </label>
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]"
+            aria-hidden="true"
+          />
           <input
             id="contact-search"
             type="search"
@@ -184,7 +207,9 @@ export default function ContactInboxPage() {
             className="h-[36px] w-full rounded-[8px] border border-[#E5E1F0] bg-white pl-9 pr-3 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
           />
         </div>
-        <label htmlFor="contact-status" className="sr-only">Filter by status</label>
+        <label htmlFor="contact-status" className="sr-only">
+          Filter by status
+        </label>
         <select
           id="contact-status"
           value={status}
@@ -202,7 +227,10 @@ export default function ContactInboxPage() {
         stats={[
           { label: "Total (this page)", value: items.length },
           { label: "Awaiting Reply", value: newCount },
-          { label: "Replied", value: items.filter((c) => c.status === "replied").length },
+          {
+            label: "Replied",
+            value: items.filter((c) => c.status === "replied").length,
+          },
           { label: "All Enquiries", value: meta?.total ?? "—" },
         ]}
       />
@@ -261,11 +289,15 @@ export default function ContactInboxPage() {
           <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[16px] bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 id="enquiry-title" className="font-display text-lg font-bold text-[#231640]">
+                <h2
+                  id="enquiry-title"
+                  className="font-display text-lg font-bold text-[#231640]"
+                >
                   {sanitize(selected.subject) || "Enquiry"}
                 </h2>
                 <p className="mt-1 text-[11px] text-[#8B879C]">
-                  From {sanitize(selected.name)} · {formatDateTime(selected.created_at)}
+                  From {sanitize(selected.name)} ·{" "}
+                  {formatDateTime(selected.created_at)}
                 </p>
               </div>
               <button
@@ -304,7 +336,10 @@ export default function ContactInboxPage() {
             </div>
 
             <div className="mt-5">
-              <label htmlFor="enquiry-reply" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+              <label
+                htmlFor="enquiry-reply"
+                className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+              >
                 Internal reply note
               </label>
               <textarea
@@ -319,8 +354,9 @@ export default function ContactInboxPage() {
                   sends nothing. Implying otherwise would leave customers
                   waiting for an email that never arrives. */}
               <p className="mt-1.5 text-[10.5px] text-[#8B879C]">
-                This is stored against the enquiry for your records — it does <strong>not</strong> email
-                the customer. Use the email link above to reply directly.
+                This is stored against the enquiry for your records — it does{" "}
+                <strong>not</strong> email the customer. Use the email link
+                above to reply directly.
               </p>
             </div>
 
@@ -348,7 +384,11 @@ export default function ContactInboxPage() {
                 className="flex items-center gap-2 rounded-[8px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-5 py-2 text-[12px] font-medium text-white shadow-[0_4px_12px_rgba(109,40,217,.25)] disabled:opacity-50"
               >
                 {saving ? (
-                  <Loader2 size={13} className="animate-spin" aria-hidden="true" />
+                  <Loader2
+                    size={13}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
                 ) : (
                   <CheckCircle2 size={13} aria-hidden="true" />
                 )}

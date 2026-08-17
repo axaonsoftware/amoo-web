@@ -3,7 +3,11 @@
 import { ChevronRight, Wallet, CalendarDays, Download } from "lucide-react";
 
 function fmt(d: Date): string {
-  return d.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 export default function PageHeader() {
@@ -15,7 +19,9 @@ export default function PageHeader() {
       <nav className="flex items-center gap-[6px] text-[11.5px] text-[#8B879C]">
         <span>Dashboard</span>
         <ChevronRight size={12} className="text-[#B9B6C6]" />
-        <span className="font-medium text-[#4A3B63]">Payments &amp; Finance</span>
+        <span className="font-medium text-[#4A3B63]">
+          Payments &amp; Finance
+        </span>
       </nav>
 
       <div className="mt-4 flex flex-wrap items-center gap-4">

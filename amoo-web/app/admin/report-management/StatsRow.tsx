@@ -1,12 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import {
-  FileText,
-  Clock,
-  CircleCheck,
-  Ban,
-  Loader2,
-} from "lucide-react";
+import { FileText, Clock, CircleCheck, Ban, Loader2 } from "lucide-react";
 import { api } from "../../../lib/api";
 
 const statDefs: {
@@ -16,10 +10,34 @@ const statDefs: {
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Reports", field: "total", Icon: FileText, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
-  { label: "Pending", field: "pending", Icon: Clock, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
-  { label: "Ready", field: "ready", Icon: CircleCheck, iconBg: "bg-[#E3F7EC]", iconColor: "text-[#22C55E]" },
-  { label: "Rejected", field: "rejected", Icon: Ban, iconBg: "bg-[#FDEAEA]", iconColor: "text-[#EF4444]" },
+  {
+    label: "Total Reports",
+    field: "total",
+    Icon: FileText,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Pending",
+    field: "pending",
+    Icon: Clock,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Ready",
+    field: "ready",
+    Icon: CircleCheck,
+    iconBg: "bg-[#E3F7EC]",
+    iconColor: "text-[#22C55E]",
+  },
+  {
+    label: "Rejected",
+    field: "rejected",
+    Icon: Ban,
+    iconBg: "bg-[#FDEAEA]",
+    iconColor: "text-[#EF4444]",
+  },
 ];
 
 export default function StatsRow() {
@@ -37,7 +55,9 @@ export default function StatsRow() {
         const total = res?.meta?.total ?? data.length;
         const pending = data.filter((r: any) => r?.status === "pending").length;
         const ready = data.filter((r: any) => r?.status === "ready").length;
-        const rejected = data.filter((r: any) => r?.status === "rejected").length;
+        const rejected = data.filter(
+          (r: any) => r?.status === "rejected",
+        ).length;
         setStats({ total, pending, ready, rejected });
       })
       .catch((e: any) => setError(e?.message || "Failed to load stats"))
@@ -76,8 +96,12 @@ export default function StatsRow() {
               <Icon size={20} />
             </span>
             <div className="min-w-0">
-              <p className="whitespace-nowrap text-[11px] text-[#8B879C]">{label}</p>
-              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">{value}</p>
+              <p className="whitespace-nowrap text-[11px] text-[#8B879C]">
+                {label}
+              </p>
+              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">
+                {value}
+              </p>
             </div>
           </div>
         );

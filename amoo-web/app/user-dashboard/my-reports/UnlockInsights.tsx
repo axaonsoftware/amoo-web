@@ -17,8 +17,8 @@ export default function UnlockInsights() {
             Unlock Deeper Insights
           </h2>
           <p className="mt-[9px] text-[13px] leading-[1.5] text-[#6c6b78]">
-            Upgrade your plan to access advanced AI insights, detailed predictions and expert
-            recommendations.
+            Upgrade your plan to access advanced AI insights, detailed
+            predictions and expert recommendations.
           </p>
         </div>
 

@@ -1,16 +1,40 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MessageSquare, Phone, Video, Loader2, AlertCircle } from "lucide-react";
+import {
+  MessageSquare,
+  Phone,
+  Video,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import { api } from "../../../lib/api";
 
 const STATIC_ROWS = [
-  { icon: MessageSquare, mode: "Chat Consultation", prices: ["₹349", "₹549", "₹749", "₹999"], bestFor: "Quick questions, written guidance" },
-  { icon: Phone, mode: "Audio Call Consultation", prices: ["₹499", "₹799", "₹1,099", "₹1,499"], bestFor: "Clear answers, instant clarity" },
-  { icon: Video, mode: "Video Call Consultation", prices: ["₹799", "₹1,199", "₹1,699", "₹2,299"], bestFor: "In-depth discussion, better connection" },
+  {
+    icon: MessageSquare,
+    mode: "Chat Consultation",
+    prices: ["₹349", "₹549", "₹749", "₹999"],
+    bestFor: "Quick questions, written guidance",
+  },
+  {
+    icon: Phone,
+    mode: "Audio Call Consultation",
+    prices: ["₹499", "₹799", "₹1,099", "₹1,499"],
+    bestFor: "Clear answers, instant clarity",
+  },
+  {
+    icon: Video,
+    mode: "Video Call Consultation",
+    prices: ["₹799", "₹1,199", "₹1,699", "₹2,299"],
+    bestFor: "In-depth discussion, better connection",
+  },
 ];
 
-const MODE_ICONS: Record<string, React.FC<{ size?: number; className?: string }>> = {
+const MODE_ICONS: Record<
+  string,
+  React.FC<{ size?: number; className?: string }>
+> = {
   Chat: MessageSquare,
   Audio: Phone,
   Video,
@@ -22,22 +46,38 @@ export default function PricingTable() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getServices()
+    api
+      .getServices()
       .then((res: any) => {
-        const items = (res?.data ?? Array.isArray(res) ? res : []) as any[];
+        const items = ((res?.data ?? Array.isArray(res)) ? res : []) as any[];
         if (items.length) setServices(items);
       })
       .catch(() => setError("Failed to load pricing. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 
-  const rows = services && services.length
-    ? services.map((svc: any) => {
-        const Icon = MODE_ICONS[svc.type as string] || MODE_ICONS[Object.keys(MODE_ICONS).find(k => (svc.name as string)?.includes(k)) || ""] || MessageSquare;
-        const price = svc.price ? `₹${Number(svc.price as string).toLocaleString("en-IN")}` : "—";
-        return { icon: Icon, mode: (svc.name as string) || "Service", prices: [price, price, price, price], bestFor: (svc.sub as string) || (svc.description as string) || "" };
-      })
-    : STATIC_ROWS;
+  const rows =
+    services && services.length
+      ? services.map((svc: any) => {
+          const Icon =
+            MODE_ICONS[svc.type as string] ||
+            MODE_ICONS[
+              Object.keys(MODE_ICONS).find((k) =>
+                (svc.name as string)?.includes(k),
+              ) || ""
+            ] ||
+            MessageSquare;
+          const price = svc.price
+            ? `₹${Number(svc.price as string).toLocaleString("en-IN")}`
+            : "—";
+          return {
+            icon: Icon,
+            mode: (svc.name as string) || "Service",
+            prices: [price, price, price, price],
+            bestFor: (svc.sub as string) || (svc.description as string) || "",
+          };
+        })
+      : STATIC_ROWS;
 
   if (loading) {
     return (
@@ -72,7 +112,10 @@ export default function PricingTable() {
           </thead>
           <tbody>
             {rows.map((row: any, i: number) => {
-              const Icon = row.icon as React.FC<{ size?: number; className?: string }>;
+              const Icon = row.icon as React.FC<{
+                size?: number;
+                className?: string;
+              }>;
               return (
                 <tr
                   key={row.mode as string}
@@ -83,9 +126,16 @@ export default function PricingTable() {
                     {row.mode}
                   </td>
                   {row.prices.map((p: string, idx: number) => (
-                    <td key={idx} className="text-center px-3 py-3.5 text-[#3E1E7A] font-semibold">{p}</td>
+                    <td
+                      key={idx}
+                      className="text-center px-3 py-3.5 text-[#3E1E7A] font-semibold"
+                    >
+                      {p}
+                    </td>
                   ))}
-                  <td className="px-5 py-3.5 text-gray-500 text-xs">{row.bestFor}</td>
+                  <td className="px-5 py-3.5 text-gray-500 text-xs">
+                    {row.bestFor}
+                  </td>
                 </tr>
               );
             })}

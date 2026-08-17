@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useRouter } from "next/navigation";
 import api from "./api";
 
@@ -38,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .then((res) => {
         const u = res?.user || res?.data?.data || res?.data;
         if (u) {
-          const kind = res?.kind || (res?.data?.kind) || "user";
+          const kind = res?.kind || res?.data?.kind || "user";
           setUser({ ...u, kind });
         } else {
           setUser(null);
@@ -63,7 +69,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, isAdmin: user?.kind === "admin", isExpert: user?.kind === "expert", isAuthenticated: !!user, loginUser, logout }}
+      value={{
+        user,
+        loading,
+        isAdmin: user?.kind === "admin",
+        isExpert: user?.kind === "expert",
+        isAuthenticated: !!user,
+        loginUser,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>
@@ -79,7 +93,8 @@ export function useAuth() {
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+  const pathname =
+    typeof window !== "undefined" ? window.location.pathname : "";
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -96,7 +111,8 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 export function RequireAdmin({ children }: { children: React.ReactNode }) {
   const { isAdmin, loading } = useAuth();
   const router = useRouter();
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+  const pathname =
+    typeof window !== "undefined" ? window.location.pathname : "";
 
   useEffect(() => {
     if (!loading && !isAdmin) {
@@ -110,10 +126,17 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export function RequireExpert({ children, fallbackPath = "/" }: { children: React.ReactNode; fallbackPath?: string }) {
+export function RequireExpert({
+  children,
+  fallbackPath = "/",
+}: {
+  children: React.ReactNode;
+  fallbackPath?: string;
+}) {
   const { isExpert, isAdmin, loading, isAuthenticated } = useAuth();
   const router = useRouter();
-  const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+  const pathname =
+    typeof window !== "undefined" ? window.location.pathname : "";
 
   useEffect(() => {
     if (loading) return;
@@ -123,7 +146,15 @@ export function RequireExpert({ children, fallbackPath = "/" }: { children: Reac
     } else if (!isExpert && !isAdmin) {
       router.replace(fallbackPath);
     }
-  }, [loading, isAuthenticated, isExpert, isAdmin, router, pathname, fallbackPath]);
+  }, [
+    loading,
+    isAuthenticated,
+    isExpert,
+    isAdmin,
+    router,
+    pathname,
+    fallbackPath,
+  ]);
 
   if (loading) return null;
   if (!isAuthenticated) return null;

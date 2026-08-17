@@ -17,15 +17,24 @@ export default function AdminPageHeader({
 }: {
   title: string;
   description: string;
-  Icon: ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  Icon: ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>;
   action?: ReactNode;
 }) {
   return (
     <>
-      <nav aria-label="Breadcrumb" className="flex items-center gap-[6px] text-[10.5px]">
+      <nav
+        aria-label="Breadcrumb"
+        className="flex items-center gap-[6px] text-[10.5px]"
+      >
         <span className="text-[#8B879C]">Dashboard</span>
         <ChevronRight size={12} className="text-[#B7B3C4]" aria-hidden="true" />
-        <span className="font-medium text-[#3D3752]" aria-current="page">{title}</span>
+        <span className="font-medium text-[#3D3752]" aria-current="page">
+          {title}
+        </span>
       </nav>
 
       <div className="mt-[14px] flex flex-wrap items-center justify-between gap-4">
@@ -37,7 +46,9 @@ export default function AdminPageHeader({
             <Icon size={24} strokeWidth={1.8} className="text-white" />
           </span>
           <div>
-            <h1 className="font-display text-[26px] font-bold leading-none text-[#231640]">{title}</h1>
+            <h1 className="font-display text-[26px] font-bold leading-none text-[#231640]">
+              {title}
+            </h1>
             <p className="mt-[7px] text-[11px] text-[#8B879C]">{description}</p>
           </div>
         </div>
@@ -48,13 +59,22 @@ export default function AdminPageHeader({
 }
 
 /** The four-up counter strip every admin list page carries. */
-export function AdminStats({ stats }: { stats: { label: string; value: ReactNode }[] }) {
+export function AdminStats({
+  stats,
+}: {
+  stats: { label: string; value: ReactNode }[];
+}) {
   return (
     <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
       {stats.map((s) => (
-        <div key={s.label} className="rounded-[12px] border border-[#E5E1F0] bg-white p-4">
+        <div
+          key={s.label}
+          className="rounded-[12px] border border-[#E5E1F0] bg-white p-4"
+        >
           <p className="text-[11px] text-[#8B879C]">{s.label}</p>
-          <p className="mt-1 font-display text-[22px] font-bold text-[#231640]">{s.value}</p>
+          <p className="mt-1 font-display text-[22px] font-bold text-[#231640]">
+            {s.value}
+          </p>
         </div>
       ))}
     </div>

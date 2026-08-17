@@ -35,7 +35,10 @@ export default function WhyBook() {
         {features.map(({ Icon, title, desc }) => (
           <div key={title} className="flex items-start gap-3 px-1">
             <span className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#f3ecfb]">
-              <Icon className="h-[20px] w-[20px] text-[#7c4ec4]" strokeWidth={1.7} />
+              <Icon
+                className="h-[20px] w-[20px] text-[#7c4ec4]"
+                strokeWidth={1.7}
+              />
             </span>
             <div className="min-w-0">
               <p className="whitespace-nowrap text-[13px] font-semibold text-[#4c1d95]">

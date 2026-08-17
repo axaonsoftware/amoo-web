@@ -76,9 +76,14 @@ const CouponRow = memo(function CouponRow({
   const exhausted = isExhausted(c);
   const usable = !!c.active && !expired && !exhausted;
   return (
-    <tr key={c.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
+    <tr
+      key={c.id}
+      className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]"
+    >
       <td className="px-4 py-3">
-        <span className="font-mono font-semibold text-[#3D3752]">{sanitize(c.code)}</span>
+        <span className="font-mono font-semibold text-[#3D3752]">
+          {sanitize(c.code)}
+        </span>
         {c.description && (
           <p className="mt-0.5 max-w-[220px] truncate text-[10.5px] text-[#8B879C]">
             {sanitize(c.description)}
@@ -95,7 +100,9 @@ const CouponRow = memo(function CouponRow({
       </td>
       <td className="px-4 py-3 text-[#3D3752]">
         {c.used_count}
-        {c.max_uses != null && <span className="text-[#8B879C]"> / {c.max_uses}</span>}
+        {c.max_uses != null && (
+          <span className="text-[#8B879C]"> / {c.max_uses}</span>
+        )}
       </td>
       <td className="px-4 py-3 text-[#3D3752]">
         {c.expires_at ? formatDate(c.expires_at) : "Never"}
@@ -112,7 +119,13 @@ const CouponRow = memo(function CouponRow({
                   : "bg-[#FFEBEE] text-[#C62828]"
           }`}
         >
-          {usable ? "Active" : expired ? "Expired" : exhausted ? "Exhausted" : "Inactive"}
+          {usable
+            ? "Active"
+            : expired
+              ? "Expired"
+              : exhausted
+                ? "Exhausted"
+                : "Inactive"}
         </span>
       </td>
       <td className="px-4 py-3">
@@ -260,8 +273,13 @@ export default function CouponManagementPage() {
   };
 
   const COLS = 7;
-  const activeCount = coupons.filter((c) => c.active && !isExpired(c) && !isExhausted(c)).length;
-  const redemptions = coupons.reduce((sum, c) => sum + (Number(c.used_count) || 0), 0);
+  const activeCount = coupons.filter(
+    (c) => c.active && !isExpired(c) && !isExhausted(c),
+  ).length;
+  const redemptions = coupons.reduce(
+    (sum, c) => sum + (Number(c.used_count) || 0),
+    0,
+  );
 
   const handleEditCoupon = useCallback((c: Coupon) => openEdit(c), []);
   const handleDeleteCoupon = useCallback((c: Coupon) => setDeleteTarget(c), []);
@@ -286,8 +304,14 @@ export default function CouponManagementPage() {
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] max-w-[360px] flex-1">
-          <label htmlFor="coupon-search" className="sr-only">Search coupon codes</label>
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]" aria-hidden="true" />
+          <label htmlFor="coupon-search" className="sr-only">
+            Search coupon codes
+          </label>
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]"
+            aria-hidden="true"
+          />
           <input
             id="coupon-search"
             type="search"
@@ -297,7 +321,9 @@ export default function CouponManagementPage() {
             className="h-[36px] w-full rounded-[8px] border border-[#E5E1F0] bg-white pl-9 pr-3 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
           />
         </div>
-        <label htmlFor="coupon-status" className="sr-only">Filter by status</label>
+        <label htmlFor="coupon-status" className="sr-only">
+          Filter by status
+        </label>
         <select
           id="coupon-status"
           value={status}
@@ -324,13 +350,27 @@ export default function CouponManagementPage() {
           <caption className="sr-only">Discount coupons</caption>
           <thead>
             <tr className="border-b border-[#E5E1F0] bg-[#FAF9FE]">
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Code</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Discount</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Min Order</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Used</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Expires</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Status</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Actions</th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Code
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Discount
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Min Order
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Used
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Expires
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Status
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -367,7 +407,10 @@ export default function CouponManagementPage() {
         >
           <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[16px] bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 id="coupon-form-title" className="font-display text-lg font-bold text-[#231640]">
+              <h2
+                id="coupon-form-title"
+                className="font-display text-lg font-bold text-[#231640]"
+              >
                 {editing ? "Edit Coupon" : "Add Coupon"}
               </h2>
               <button
@@ -381,35 +424,48 @@ export default function CouponManagementPage() {
             </div>
 
             {formError && (
-              <div role="alert" className="mt-4 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700">
+              <div
+                role="alert"
+                className="mt-4 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700"
+              >
                 {formError}
               </div>
             )}
 
             <div className="mt-5 space-y-4">
               <div>
-                <label htmlFor="c-code" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                <label
+                  htmlFor="c-code"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
                   Code
                 </label>
                 <input
                   id="c-code"
                   type="text"
                   value={form.code}
-                  onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })}
+                  onChange={(e) =>
+                    setForm({ ...form, code: e.target.value.toUpperCase() })
+                  }
                   placeholder="SUMMER20"
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 font-mono text-[12px] uppercase text-[#3D3752] outline-none focus:border-[#7C3AED]"
                 />
               </div>
 
               <div>
-                <label htmlFor="c-desc" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                <label
+                  htmlFor="c-desc"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
                   Description <span className="text-[#8B879C]">(internal)</span>
                 </label>
                 <input
                   id="c-desc"
                   type="text"
                   value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
                   placeholder="Summer campaign, 20% off"
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                 />
@@ -417,14 +473,20 @@ export default function CouponManagementPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="c-type" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                  <label
+                    htmlFor="c-type"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
                     Discount Type
                   </label>
                   <select
                     id="c-type"
                     value={form.discount_type}
                     onChange={(e) =>
-                      setForm({ ...form, discount_type: e.target.value as "percent" | "flat" })
+                      setForm({
+                        ...form,
+                        discount_type: e.target.value as "percent" | "flat",
+                      })
                     }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   >
@@ -433,8 +495,13 @@ export default function CouponManagementPage() {
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="c-value" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
-                    {form.discount_type === "percent" ? "Percent off" : "Amount off (₹)"}
+                  <label
+                    htmlFor="c-value"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    {form.discount_type === "percent"
+                      ? "Percent off"
+                      : "Amount off (₹)"}
                   </label>
                   <input
                     id="c-value"
@@ -442,7 +509,9 @@ export default function CouponManagementPage() {
                     min={0}
                     max={form.discount_type === "percent" ? 100 : undefined}
                     value={form.discount_value}
-                    onChange={(e) => setForm({ ...form, discount_value: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, discount_value: e.target.value })
+                    }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
@@ -450,7 +519,10 @@ export default function CouponManagementPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="c-min" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                  <label
+                    htmlFor="c-min"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
                     Minimum order (₹)
                   </label>
                   <input
@@ -458,34 +530,48 @@ export default function CouponManagementPage() {
                     type="number"
                     min={0}
                     value={form.min_amount}
-                    onChange={(e) => setForm({ ...form, min_amount: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, min_amount: e.target.value })
+                    }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
                 <div>
-                  <label htmlFor="c-max" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
-                    Max uses <span className="text-[#8B879C]">(blank = unlimited)</span>
+                  <label
+                    htmlFor="c-max"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Max uses{" "}
+                    <span className="text-[#8B879C]">(blank = unlimited)</span>
                   </label>
                   <input
                     id="c-max"
                     type="number"
                     min={1}
                     value={form.max_uses}
-                    onChange={(e) => setForm({ ...form, max_uses: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, max_uses: e.target.value })
+                    }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="c-expires" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
-                  Expires on <span className="text-[#8B879C]">(blank = never)</span>
+                <label
+                  htmlFor="c-expires"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
+                  Expires on{" "}
+                  <span className="text-[#8B879C]">(blank = never)</span>
                 </label>
                 <input
                   id="c-expires"
                   type="date"
                   value={form.expires_at}
-                  onChange={(e) => setForm({ ...form, expires_at: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, expires_at: e.target.value })
+                  }
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                 />
               </div>
@@ -495,10 +581,15 @@ export default function CouponManagementPage() {
                   id="c-active"
                   type="checkbox"
                   checked={form.active}
-                  onChange={(e) => setForm({ ...form, active: e.target.checked })}
+                  onChange={(e) =>
+                    setForm({ ...form, active: e.target.checked })
+                  }
                   className="rounded"
                 />
-                <label htmlFor="c-active" className="text-[12px] text-[#3D3752]">
+                <label
+                  htmlFor="c-active"
+                  className="text-[12px] text-[#3D3752]"
+                >
                   Active — customers can redeem this code
                 </label>
               </div>
@@ -518,7 +609,13 @@ export default function CouponManagementPage() {
                 disabled={saving}
                 className="flex items-center gap-2 rounded-[8px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-5 py-2 text-[12px] font-medium text-white shadow-[0_4px_12px_rgba(109,40,217,.25)] disabled:opacity-50"
               >
-                {saving && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
+                {saving && (
+                  <Loader2
+                    size={13}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
+                )}
                 {editing ? "Save Changes" : "Create Coupon"}
               </button>
             </div>

@@ -87,7 +87,9 @@ export default function Navbar() {
               >
                 {Icon && <Icon className="h-[17px] w-[17px]" />}
                 {item.label}
-                {item.caret && <ChevronDownIcon className="mt-px h-[12px] w-[12px]" />}
+                {item.caret && (
+                  <ChevronDownIcon className="mt-px h-[12px] w-[12px]" />
+                )}
               </Link>
             );
           })}
@@ -119,7 +121,11 @@ export default function Navbar() {
             onClick={() => setMobileOpen(!mobileOpen)}
             className="flex h-[42px] w-[42px] items-center justify-center rounded-[8px] border border-white/20 text-white xl:hidden"
           >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>

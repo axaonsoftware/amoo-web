@@ -71,7 +71,10 @@ export default function HowItWorks() {
           {steps.flatMap((step, i) => {
             const Icon = step.icon;
             const items = [
-              <div key={`step-${i}`} className="flex w-full flex-col items-center px-2 text-center md:w-[172px]">
+              <div
+                key={`step-${i}`}
+                className="flex w-full flex-col items-center px-2 text-center md:w-[172px]"
+              >
                 <div className="relative">
                   <span className="flex h-[66px] w-[66px] items-center justify-center rounded-full bg-lilac text-grape-2">
                     <Icon size={28} />
@@ -90,9 +93,15 @@ export default function HowItWorks() {
             ];
             if (i < steps.length - 1) {
               items.push(
-                <div key={`conn-${i}`} className="mt-[30px] hidden items-center md:flex">
+                <div
+                  key={`conn-${i}`}
+                  className="mt-[30px] hidden items-center md:flex"
+                >
                   <span className="block h-px w-[28px] border-t-2 border-dotted border-[#c9a45f]" />
-                  <ChevronRight size={14} className="-ml-[3px] text-[#c9a45f]" />
+                  <ChevronRight
+                    size={14}
+                    className="-ml-[3px] text-[#c9a45f]"
+                  />
                 </div>,
               );
             }

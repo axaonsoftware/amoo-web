@@ -19,13 +19,19 @@ export default function UnlockBenefits() {
       <div className="relative flex flex-wrap items-center gap-5">
         <span className="relative flex h-[64px] w-[64px] shrink-0 items-center justify-center rounded-full border border-[#e6c98f] bg-white shadow-[0_2px_10px_rgba(201,146,47,.18)]">
           <span className="absolute inset-[6px] rounded-full border border-dashed border-[#e6c98f]/70" />
-          <Crown className="relative h-[26px] w-[26px] text-[#e9b85c]" strokeWidth={1.7} />
+          <Crown
+            className="relative h-[26px] w-[26px] text-[#e9b85c]"
+            strokeWidth={1.7}
+          />
         </span>
 
         <div className="min-w-0 flex-1">
-          <h3 className="font-display text-[18px] font-bold text-[#2b0f47]">Unlock More Benefits</h3>
+          <h3 className="font-display text-[18px] font-bold text-[#2b0f47]">
+            Unlock More Benefits
+          </h3>
           <p className="mt-[6px] max-w-[520px] text-[12.5px] leading-[1.6] text-[#6c6b78]">
-            Upgrade to Premium and enjoy unlimited consultations, advanced AI reports,
+            Upgrade to Premium and enjoy unlimited consultations, advanced AI
+            reports,
             <br />
             priority support and exclusive member benefits.
           </p>

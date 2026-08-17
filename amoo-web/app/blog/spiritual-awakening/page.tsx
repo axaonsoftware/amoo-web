@@ -40,11 +40,13 @@ const ARTICLE = {
   excerpt:
     "Spiritual awakening is the first step towards understanding your true self and the universe. Learn the signs, stages and ways to embrace this beautiful journey.",
   author: "Surinder Kaur Sehgal",
-  authorAvatar: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
+  authorAvatar:
+    "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
   date: "May 15, 2025",
   readTime: "8 min read",
   views: "1.2K views",
-  heroImage: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80",
+  heroImage:
+    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=80",
 };
 
 const TABLE_OF_CONTENTS = [
@@ -118,28 +120,32 @@ const TAGS = [
 
 const RELATED_POSTS = [
   {
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80",
+    image:
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400&q=80",
     title: "Life Path Numbers 1 to 9: Meaning and Characteristics",
     date: "May 12, 2025",
     readTime: "6 min read",
     slug: "#",
   },
   {
-    image: "https://images.unsplash.com/photo-1598919021353-e3f39f3ecbab?w=400&q=80",
+    image:
+      "https://images.unsplash.com/photo-1598919021353-e3f39f3ecbab?w=400&q=80",
     title: "How Tarot Cards Can Guide You in Daily Life",
     date: "May 10, 2025",
     readTime: "7 min read",
     slug: "#",
   },
   {
-    image: "https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4d5?w=400&q=80",
+    image:
+      "https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4d5?w=400&q=80",
     title: "Understanding Your Kundali: Planets & Their Impact",
     date: "May 8, 2025",
     readTime: "9 min read",
     slug: "#",
   },
   {
-    image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80",
+    image:
+      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&q=80",
     title: "Reiki Healing Benefits for Mind, Body and Soul",
     date: "May 5, 2025",
     readTime: "6 min read",
@@ -157,16 +163,36 @@ const SIDEBAR_CATEGORIES = [
 ];
 
 const SOCIAL_LINKS = [
-  { label: "Facebook", Icon: FacebookIcon, bg: "bg-[#3b5998]", href: "https://facebook.com/amoooguru" },
+  {
+    label: "Facebook",
+    Icon: FacebookIcon,
+    bg: "bg-[#3b5998]",
+    href: "https://facebook.com/amoooguru",
+  },
   {
     label: "Instagram",
     Icon: InstagramIcon,
     bg: "bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
     href: "https://instagram.com/amooguru_official",
   },
-  { label: "YouTube", Icon: YoutubeIcon, bg: "bg-[#ff0000]", href: "https://youtube.com/@amoooguru" },
-  { label: "WhatsApp", Icon: WhatsAppIcon, bg: "bg-[#25D366]", href: WHATSAPP_URL },
-  { label: "Telegram", Icon: SendIcon, bg: "bg-[#0088cc]", href: "https://t.me/amoooguru" },
+  {
+    label: "YouTube",
+    Icon: YoutubeIcon,
+    bg: "bg-[#ff0000]",
+    href: "https://youtube.com/@amoooguru",
+  },
+  {
+    label: "WhatsApp",
+    Icon: WhatsAppIcon,
+    bg: "bg-[#25D366]",
+    href: WHATSAPP_URL,
+  },
+  {
+    label: "Telegram",
+    Icon: SendIcon,
+    bg: "bg-[#0088cc]",
+    href: "https://t.me/amoooguru",
+  },
 ];
 
 /* ---------------- Page ---------------- */
@@ -180,21 +206,34 @@ export default function BlogArticlePage() {
 
   const scrollToSection = useCallback((index: number) => {
     setActiveTocIndex(index);
-    sectionRefs.current[index]?.scrollIntoView({ behavior: "smooth", block: "start" });
+    sectionRefs.current[index]?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }, []);
 
   function handleShare(platform: string) {
     const url = typeof window !== "undefined" ? window.location.href : "";
-    const title = "What is Spiritual Awakening? Signs, Stages & How to Embrace It";
+    const title =
+      "What is Spiritual Awakening? Signs, Stages & How to Embrace It";
     switch (platform) {
       case "WhatsApp":
-        window.open(`https://wa.me/?text=${encodeURIComponent(title + " " + url)}`, "_blank");
+        window.open(
+          `https://wa.me/?text=${encodeURIComponent(title + " " + url)}`,
+          "_blank",
+        );
         break;
       case "Facebook":
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank");
+        window.open(
+          `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+          "_blank",
+        );
         break;
       case "Twitter":
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`, "_blank");
+        window.open(
+          `https://twitter.com/intent/tweet?text=${encodeURIComponent(title)}&url=${encodeURIComponent(url)}`,
+          "_blank",
+        );
         break;
       case "Copy Link":
         navigator.clipboard.writeText(url).then(() => {
@@ -206,7 +245,11 @@ export default function BlogArticlePage() {
   }
 
   function handleNewsletter() {
-    if (!newsletterEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newsletterEmail)) return;
+    if (
+      !newsletterEmail.trim() ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newsletterEmail)
+    )
+      return;
     setNewsletterSubmitted(true);
     setNewsletterEmail("");
     setTimeout(() => setNewsletterSubmitted(false), 4000);
@@ -291,7 +334,14 @@ export default function BlogArticlePage() {
                       fill="currentColor"
                     >
                       <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      />
                     </svg>
                   </div>
                 </div>
@@ -315,10 +365,26 @@ export default function BlogArticlePage() {
               <div className="flex items-center gap-2 ml-auto">
                 <span className="text-[12.5px] text-white/65">Share:</span>
                 {[
-                  { platform: "WhatsApp", Icon: WhatsAppIcon, bg: "bg-[#25D366]" },
-                  { platform: "Facebook", Icon: FacebookIcon, bg: "bg-[#3b5998]" },
-                  { platform: "Twitter", Icon: TwitterIcon, bg: "bg-[#1DA1F2]" },
-                  { platform: "Copy Link", Icon: linkCopied ? CheckCircleFilledIcon : LinkIcon, bg: "bg-white/20" },
+                  {
+                    platform: "WhatsApp",
+                    Icon: WhatsAppIcon,
+                    bg: "bg-[#25D366]",
+                  },
+                  {
+                    platform: "Facebook",
+                    Icon: FacebookIcon,
+                    bg: "bg-[#3b5998]",
+                  },
+                  {
+                    platform: "Twitter",
+                    Icon: TwitterIcon,
+                    bg: "bg-[#1DA1F2]",
+                  },
+                  {
+                    platform: "Copy Link",
+                    Icon: linkCopied ? CheckCircleFilledIcon : LinkIcon,
+                    bg: "bg-white/20",
+                  },
                 ].map(({ platform, Icon, bg }) => (
                   <button
                     key={platform}
@@ -354,10 +420,10 @@ export default function BlogArticlePage() {
 
                 {/* Intro Paragraph */}
                 <p className="mt-[24px] text-[15px] leading-[1.85] text-[#3d3c4a]">
-                  Spiritual awakening is a profound shift in consciousness. It is the
-                  moment when you start seeing beyond the material world and connect
-                  with your inner self. It is not about adopting a religion, but about
-                  discovering the truth within you.
+                  Spiritual awakening is a profound shift in consciousness. It
+                  is the moment when you start seeing beyond the material world
+                  and connect with your inner self. It is not about adopting a
+                  religion, but about discovering the truth within you.
                 </p>
 
                 {/* Lotus Divider */}
@@ -368,7 +434,9 @@ export default function BlogArticlePage() {
                 {/* Section 1 */}
                 <section
                   id="section-0"
-                  ref={(el) => { sectionRefs.current[0] = el; }}
+                  ref={(el) => {
+                    sectionRefs.current[0] = el;
+                  }}
                   className="flex items-start gap-4 scroll-mt-24"
                 >
                   <span className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#6b3fa0]/10 text-[#6b3fa0]">
@@ -379,10 +447,10 @@ export default function BlogArticlePage() {
                       1. What is Spiritual Awakening?
                     </h2>
                     <p className="mt-[12px] text-[14.5px] leading-[1.8] text-[#4a4956]">
-                      Spiritual awakening is the process of becoming aware of your
-                      higher self and realizing that there is more to life than what
-                      meets the eye. It brings clarity, purpose, and a deep sense of
-                      connection with the universe.
+                      Spiritual awakening is the process of becoming aware of
+                      your higher self and realizing that there is more to life
+                      than what meets the eye. It brings clarity, purpose, and a
+                      deep sense of connection with the universe.
                     </p>
                   </div>
                 </section>
@@ -390,7 +458,9 @@ export default function BlogArticlePage() {
                 {/* Section 2 */}
                 <section
                   id="section-1"
-                  ref={(el) => { sectionRefs.current[1] = el; }}
+                  ref={(el) => {
+                    sectionRefs.current[1] = el;
+                  }}
                   className="mt-[32px] flex items-start gap-4 scroll-mt-24"
                 >
                   <span className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#e9b85c]/15 text-[#b5711a]">
@@ -401,7 +471,8 @@ export default function BlogArticlePage() {
                       2. Signs of Spiritual Awakening
                     </h2>
                     <p className="mt-[12px] text-[14.5px] leading-[1.8] text-[#4a4956]">
-                      Everyone&apos;s journey is unique, but here are some common signs:
+                      Everyone&apos;s journey is unique, but here are some
+                      common signs:
                     </p>
                     <div className="mt-[16px] grid grid-cols-1 gap-[10px] sm:grid-cols-2">
                       {SIGNS.map((sign) => (
@@ -419,7 +490,9 @@ export default function BlogArticlePage() {
                 {/* Section 3 - Stages */}
                 <section
                   id="section-2"
-                  ref={(el) => { sectionRefs.current[2] = el; }}
+                  ref={(el) => {
+                    sectionRefs.current[2] = el;
+                  }}
                   className="mt-[32px] flex items-start gap-4 scroll-mt-24"
                 >
                   <span className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#4a90d9]/10 text-[#4a90d9]">
@@ -436,25 +509,27 @@ export default function BlogArticlePage() {
 
                     {/* Stages Cards */}
                     <div className="mt-[20px] grid grid-cols-2 gap-[14px] sm:grid-cols-3 lg:grid-cols-5">
-                      {STAGES.map(({ number, title, description, icon: Icon }) => (
-                        <div
-                          key={number}
-                          className="flex flex-col items-center rounded-[12px] border border-[#e8e2d8] bg-white p-[16px] text-center"
-                        >
-                          <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#6b3fa0]/10 text-[#6b3fa0]">
-                            <Icon className="h-[20px] w-[20px]" />
-                          </span>
-                          <p className="mt-[8px] text-[11px] font-medium text-[#9a98a5]">
-                            {number}
-                          </p>
-                          <p className="mt-[2px] text-[13px] font-bold text-[#2c0c47]">
-                            {title}
-                          </p>
-                          <p className="mt-[4px] text-[11px] leading-[1.5] text-[#6c6b78]">
-                            {description}
-                          </p>
-                        </div>
-                      ))}
+                      {STAGES.map(
+                        ({ number, title, description, icon: Icon }) => (
+                          <div
+                            key={number}
+                            className="flex flex-col items-center rounded-[12px] border border-[#e8e2d8] bg-white p-[16px] text-center"
+                          >
+                            <span className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#6b3fa0]/10 text-[#6b3fa0]">
+                              <Icon className="h-[20px] w-[20px]" />
+                            </span>
+                            <p className="mt-[8px] text-[11px] font-medium text-[#9a98a5]">
+                              {number}
+                            </p>
+                            <p className="mt-[2px] text-[13px] font-bold text-[#2c0c47]">
+                              {title}
+                            </p>
+                            <p className="mt-[4px] text-[11px] leading-[1.5] text-[#6c6b78]">
+                              {description}
+                            </p>
+                          </div>
+                        ),
+                      )}
                     </div>
                   </div>
                 </section>
@@ -462,7 +537,9 @@ export default function BlogArticlePage() {
                 {/* Section 4 - How to Embrace */}
                 <section
                   id="section-3"
-                  ref={(el) => { sectionRefs.current[3] = el; }}
+                  ref={(el) => {
+                    sectionRefs.current[3] = el;
+                  }}
                   className="mt-[32px] flex items-start gap-4 scroll-mt-24"
                 >
                   <span className="flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-full bg-[#25D366]/10 text-[#1a8a4a]">
@@ -499,38 +576,42 @@ export default function BlogArticlePage() {
                 {/* Conclusion / Section 5 */}
                 <section
                   id="section-4"
-                  ref={(el) => { sectionRefs.current[4] = el; }}
+                  ref={(el) => {
+                    sectionRefs.current[4] = el;
+                  }}
                   className="mt-[32px] scroll-mt-24"
                 >
                   <p className="text-[14.5px] leading-[1.85] text-[#3d3c4a]">
-                    Spiritual awakening is not the end of the journey, but the beginning
-                    of a beautiful transformation. Embrace it with an open heart and let
-                    the universe guide you towards your highest good.
+                    Spiritual awakening is not the end of the journey, but the
+                    beginning of a beautiful transformation. Embrace it with an
+                    open heart and let the universe guide you towards your
+                    highest good.
                   </p>
                 </section>
 
                 {/* Section 6 - Final Thoughts (using section-5 ref) */}
                 <div
                   id="section-5"
-                  ref={(el) => { sectionRefs.current[5] = el; }}
+                  ref={(el) => {
+                    sectionRefs.current[5] = el;
+                  }}
                   className="mt-[28px] scroll-mt-24"
                 >
-
-                {/* Tags */}
-                <div className="mt-[28px] flex flex-wrap items-center gap-2">
-                  <span className="text-[13px] font-medium text-[#2c0c47]">
-                    Tags:
-                  </span>
-                  {TAGS.map((tag) => (
-                    <Link
-                      key={tag}
-                      href={`/blog?category=${encodeURIComponent(tag)}`}
-                      className="rounded-full border border-[#e8e2d8] bg-white px-3 py-1 text-[11.5px] text-[#6c6b78] transition-colors hover:border-[#6b3fa0] hover:text-[#6b3fa0]"
-                    >
-                      {tag}
-                    </Link>
-                  ))}
-                </div>
+                  {/* Tags */}
+                  <div className="mt-[28px] flex flex-wrap items-center gap-2">
+                    <span className="text-[13px] font-medium text-[#2c0c47]">
+                      Tags:
+                    </span>
+                    {TAGS.map((tag) => (
+                      <Link
+                        key={tag}
+                        href={`/blog?category=${encodeURIComponent(tag)}`}
+                        className="rounded-full border border-[#e8e2d8] bg-white px-3 py-1 text-[11.5px] text-[#6c6b78] transition-colors hover:border-[#6b3fa0] hover:text-[#6b3fa0]"
+                      >
+                        {tag}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
               </article>
 
@@ -588,7 +669,14 @@ export default function BlogArticlePage() {
                         fill="currentColor"
                       >
                         <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
-                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        />
                       </svg>
                     </h3>
                     <p className="mt-[4px] text-[12.5px] text-gold">
@@ -689,11 +777,14 @@ export default function BlogArticlePage() {
                     with Spiritual Insights
                   </h3>
                   <p className="mt-[8px] text-[12.5px] leading-[1.6] text-white/70">
-                    Subscribe to our newsletter and get the latest articles, offers
-                    and updates.
+                    Subscribe to our newsletter and get the latest articles,
+                    offers and updates.
                   </p>
                   {newsletterSubmitted && (
-                    <p role="alert" className="mt-2 text-[12px] text-green-400 font-medium">
+                    <p
+                      role="alert"
+                      className="mt-2 text-[12px] text-green-400 font-medium"
+                    >
                       Subscribed successfully!
                     </p>
                   )}
@@ -791,7 +882,10 @@ export default function BlogArticlePage() {
                 </h3>
                 <ul className="space-y-[8px]">
                   {[
-                    { label: "Numerology", href: "/services/numerology-services" },
+                    {
+                      label: "Numerology",
+                      href: "/services/numerology-services",
+                    },
                     { label: "Tarot Reading", href: "/services/tarot-reading" },
                     { label: "Reiki Healing", href: "/services/reiki-healing" },
                     { label: "Kundali Analysis", href: "/services" },

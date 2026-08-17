@@ -6,14 +6,42 @@ import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 export default function StatsRow() {
-  const { data: stats, loading, error } = useApi<any>(() => api.getReportStats());
+  const {
+    data: stats,
+    loading,
+    error,
+  } = useApi<any>(() => api.getReportStats());
   const s = stats || {};
 
   const statItems = [
-    { label: "Total Readings", value: String(s.tarot_total ?? 0), Icon: TarotStackIcon, iconBg: "bg-[#f1e9fc]", iconColor: "text-[#7a3fc0]" },
-    { label: "Favorite Readings", value: String(s.tarot_favorites ?? 0), Icon: Heart, iconBg: "bg-[#fdefdd]", iconColor: "text-[#e79b3a]" },
-    { label: "Reports Downloaded", value: String(s.tarot_downloaded ?? 0), Icon: Download, iconBg: "bg-[#fdeaf1]", iconColor: "text-[#e0567f]" },
-    { label: "This Month Readings", value: String(s.tarot_this_month ?? 0), Icon: CalendarDays, iconBg: "bg-[#e6f6ea]", iconColor: "text-[#2f9e56]" },
+    {
+      label: "Total Readings",
+      value: String(s.tarot_total ?? 0),
+      Icon: TarotStackIcon,
+      iconBg: "bg-[#f1e9fc]",
+      iconColor: "text-[#7a3fc0]",
+    },
+    {
+      label: "Favorite Readings",
+      value: String(s.tarot_favorites ?? 0),
+      Icon: Heart,
+      iconBg: "bg-[#fdefdd]",
+      iconColor: "text-[#e79b3a]",
+    },
+    {
+      label: "Reports Downloaded",
+      value: String(s.tarot_downloaded ?? 0),
+      Icon: Download,
+      iconBg: "bg-[#fdeaf1]",
+      iconColor: "text-[#e0567f]",
+    },
+    {
+      label: "This Month Readings",
+      value: String(s.tarot_this_month ?? 0),
+      Icon: CalendarDays,
+      iconBg: "bg-[#e6f6ea]",
+      iconColor: "text-[#2f9e56]",
+    },
   ];
 
   if (loading) {
@@ -27,7 +55,9 @@ export default function StatsRow() {
 
   if (error) {
     return (
-      <div className="mt-4 rounded-[10px] bg-red-50 p-3 text-[12px] text-red-700">{error}</div>
+      <div className="mt-4 rounded-[10px] bg-red-50 p-3 text-[12px] text-red-700">
+        {error}
+      </div>
     );
   }
 

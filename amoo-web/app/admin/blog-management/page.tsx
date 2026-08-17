@@ -2,7 +2,16 @@
 
 import { memo, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { FileText, Plus, Pencil, Trash2, Search, X, Loader2, Eye } from "lucide-react";
+import {
+  FileText,
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  X,
+  Loader2,
+  Eye,
+} from "lucide-react";
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
 import { formatDate, formatNumber } from "@/lib/format";
 import { sanitize } from "@/lib/sanitize";
@@ -87,10 +96,17 @@ const BlogRow = memo(function BlogRow({
   onDelete: (p: Blog) => void;
 }) {
   return (
-    <tr key={p.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
+    <tr
+      key={p.id}
+      className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]"
+    >
       <td className="px-4 py-3">
-        <p className="max-w-[320px] truncate font-medium text-[#3D3752]">{sanitize(p.title)}</p>
-        <p className="mt-0.5 truncate font-mono text-[10.5px] text-[#8B879C]">/{sanitize(p.slug)}</p>
+        <p className="max-w-[320px] truncate font-medium text-[#3D3752]">
+          {sanitize(p.title)}
+        </p>
+        <p className="mt-0.5 truncate font-mono text-[10.5px] text-[#8B879C]">
+          /{sanitize(p.slug)}
+        </p>
       </td>
       <td className="px-4 py-3">
         {p.category ? (
@@ -217,7 +233,11 @@ export default function BlogManagementPage() {
   };
 
   const onTitleChange = (title: string) => {
-    setForm((f) => ({ ...f, title, slug: slugTouched ? f.slug : slugify(title) }));
+    setForm((f) => ({
+      ...f,
+      title,
+      slug: slugTouched ? f.slug : slugify(title),
+    }));
   };
 
   const handleSave = async () => {
@@ -225,7 +245,9 @@ export default function BlogManagementPage() {
     if (!form.title.trim()) return setFormError("Title is required.");
     if (!form.slug.trim()) return setFormError("Slug is required.");
     if (!/^[a-z0-9-]+$/.test(form.slug)) {
-      return setFormError("Slug may contain only lowercase letters, numbers and hyphens.");
+      return setFormError(
+        "Slug may contain only lowercase letters, numbers and hyphens.",
+      );
     }
 
     const payload = {
@@ -298,8 +320,14 @@ export default function BlogManagementPage() {
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <div className="relative min-w-[200px] max-w-[360px] flex-1">
-          <label htmlFor="blog-search" className="sr-only">Search posts</label>
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]" aria-hidden="true" />
+          <label htmlFor="blog-search" className="sr-only">
+            Search posts
+          </label>
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]"
+            aria-hidden="true"
+          />
           <input
             id="blog-search"
             type="search"
@@ -309,7 +337,9 @@ export default function BlogManagementPage() {
             className="h-[36px] w-full rounded-[8px] border border-[#E5E1F0] bg-white pl-9 pr-3 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
           />
         </div>
-        <label htmlFor="blog-status" className="sr-only">Filter by status</label>
+        <label htmlFor="blog-status" className="sr-only">
+          Filter by status
+        </label>
         <select
           id="blog-status"
           value={status}
@@ -325,9 +355,18 @@ export default function BlogManagementPage() {
       <AdminStats
         stats={[
           { label: "All Posts", value: meta?.total ?? posts.length },
-          { label: "Published", value: posts.filter((p) => p.status === "published").length },
-          { label: "Drafts", value: posts.filter((p) => p.status === "draft").length },
-          { label: "Views (this page)", value: formatNumber(posts.reduce((s, p) => s + (p.views || 0), 0)) },
+          {
+            label: "Published",
+            value: posts.filter((p) => p.status === "published").length,
+          },
+          {
+            label: "Drafts",
+            value: posts.filter((p) => p.status === "draft").length,
+          },
+          {
+            label: "Views (this page)",
+            value: formatNumber(posts.reduce((s, p) => s + (p.views || 0), 0)),
+          },
         ]}
       />
 
@@ -336,12 +375,24 @@ export default function BlogManagementPage() {
           <caption className="sr-only">Blog posts</caption>
           <thead>
             <tr className="border-b border-[#E5E1F0] bg-[#FAF9FE]">
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Title</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Category</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Views</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Created</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Status</th>
-              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">Actions</th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Title
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Category
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Views
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Created
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Status
+              </th>
+              <th scope="col" className="px-4 py-3 font-medium text-[#8B879C]">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -379,7 +430,9 @@ export default function BlogManagementPage() {
           >
             Previous
           </button>
-          <span className="text-[11.5px] text-[#8B879C]">Page {meta.page} of {meta.totalPages}</span>
+          <span className="text-[11.5px] text-[#8B879C]">
+            Page {meta.page} of {meta.totalPages}
+          </span>
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}
@@ -400,7 +453,10 @@ export default function BlogManagementPage() {
         >
           <div className="max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-[16px] bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
-              <h2 id="blog-form-title" className="font-display text-lg font-bold text-[#231640]">
+              <h2
+                id="blog-form-title"
+                className="font-display text-lg font-bold text-[#231640]"
+              >
                 {editing ? "Edit Post" : "New Post"}
               </h2>
               <button
@@ -414,14 +470,22 @@ export default function BlogManagementPage() {
             </div>
 
             {formError && (
-              <div role="alert" className="mt-4 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700">
+              <div
+                role="alert"
+                className="mt-4 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700"
+              >
                 {formError}
               </div>
             )}
 
             <div className="mt-5 space-y-4">
               <div>
-                <label htmlFor="b-title" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Title</label>
+                <label
+                  htmlFor="b-title"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
+                  Title
+                </label>
                 <input
                   id="b-title"
                   type="text"
@@ -432,14 +496,23 @@ export default function BlogManagementPage() {
               </div>
 
               <div>
-                <label htmlFor="b-slug" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
-                  Slug <span className="text-[#8B879C]">— the permalink, /blog/&lt;slug&gt;</span>
+                <label
+                  htmlFor="b-slug"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
+                  Slug{" "}
+                  <span className="text-[#8B879C]">
+                    — the permalink, /blog/&lt;slug&gt;
+                  </span>
                 </label>
                 <input
                   id="b-slug"
                   type="text"
                   value={form.slug}
-                  onChange={(e) => { setSlugTouched(true); setForm({ ...form, slug: slugify(e.target.value) }); }}
+                  onChange={(e) => {
+                    setSlugTouched(true);
+                    setForm({ ...form, slug: slugify(e.target.value) });
+                  }}
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 font-mono text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                 />
                 {editing && (
@@ -451,30 +524,47 @@ export default function BlogManagementPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="b-category" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Category</label>
+                  <label
+                    htmlFor="b-category"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Category
+                  </label>
                   <input
                     id="b-category"
                     type="text"
                     value={form.category}
-                    onChange={(e) => setForm({ ...form, category: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, category: e.target.value })
+                    }
                     placeholder="Numerology"
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
                 <div>
-                  <label htmlFor="b-author" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Author</label>
+                  <label
+                    htmlFor="b-author"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Author
+                  </label>
                   <input
                     id="b-author"
                     type="text"
                     value={form.author}
-                    onChange={(e) => setForm({ ...form, author: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, author: e.target.value })
+                    }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="b-image" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                <label
+                  htmlFor="b-image"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
                   Cover image URL
                 </label>
                 <input
@@ -488,62 +578,93 @@ export default function BlogManagementPage() {
                 {/* next.config.ts restricts next/image to specific hosts, so an
                     arbitrary URL will fail to render rather than 404 quietly. */}
                 <p className="mt-1 text-[10.5px] text-[#8B879C]">
-                  Must be an allowed image host (see <code>images.remotePatterns</code> in next.config.ts).
+                  Must be an allowed image host (see{" "}
+                  <code>images.remotePatterns</code> in next.config.ts).
                 </p>
               </div>
 
               <div>
-                <label htmlFor="b-excerpt" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
-                  Excerpt <span className="text-[#8B879C]">— shown on the blog index and in link previews</span>
+                <label
+                  htmlFor="b-excerpt"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
+                  Excerpt{" "}
+                  <span className="text-[#8B879C]">
+                    — shown on the blog index and in link previews
+                  </span>
                 </label>
                 <textarea
                   id="b-excerpt"
                   rows={2}
                   value={form.excerpt}
-                  onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, excerpt: e.target.value })
+                  }
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                 />
               </div>
 
               <div>
-                <label htmlFor="b-content" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                <label
+                  htmlFor="b-content"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
                   Content <span className="text-[#8B879C]">— HTML</span>
                 </label>
                 <textarea
                   id="b-content"
                   rows={12}
                   value={form.content}
-                  onChange={(e) => setForm({ ...form, content: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, content: e.target.value })
+                  }
                   placeholder="<p>Your article...</p>"
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 font-mono text-[11.5px] leading-relaxed text-[#3D3752] outline-none focus:border-[#7C3AED]"
                 />
                 <p className="mt-1 text-[10.5px] text-[#8B879C]">
-                  Rendered as HTML on the public page and sanitised with DOMPurify — scripts,
-                  event handlers and unknown tags are stripped. Allowed: headings, p, ul/ol, a,
-                  img, blockquote, code, strong/em.
+                  Rendered as HTML on the public page and sanitised with
+                  DOMPurify — scripts, event handlers and unknown tags are
+                  stripped. Allowed: headings, p, ul/ol, a, img, blockquote,
+                  code, strong/em.
                 </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="b-readtime" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
-                    Read time <span className="text-[#8B879C]">(auto if blank)</span>
+                  <label
+                    htmlFor="b-readtime"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Read time{" "}
+                    <span className="text-[#8B879C]">(auto if blank)</span>
                   </label>
                   <input
                     id="b-readtime"
                     type="text"
                     value={form.read_time}
-                    onChange={(e) => setForm({ ...form, read_time: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, read_time: e.target.value })
+                    }
                     placeholder={estimateReadTime(form.content)}
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
                 <div>
-                  <label htmlFor="b-status" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Status</label>
+                  <label
+                    htmlFor="b-status"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Status
+                  </label>
                   <select
                     id="b-status"
                     value={form.status}
-                    onChange={(e) => setForm({ ...form, status: e.target.value as "draft" | "published" })}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        status: e.target.value as "draft" | "published",
+                      })
+                    }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   >
                     <option value="draft">Draft — not visible publicly</option>
@@ -567,7 +688,13 @@ export default function BlogManagementPage() {
                 disabled={saving}
                 className="flex items-center gap-2 rounded-[8px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-5 py-2 text-[12px] font-medium text-white shadow-[0_4px_12px_rgba(109,40,217,.25)] disabled:opacity-50"
               >
-                {saving && <Loader2 size={13} className="animate-spin" aria-hidden="true" />}
+                {saving && (
+                  <Loader2
+                    size={13}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
+                )}
                 {editing ? "Save Changes" : "Create Post"}
               </button>
             </div>

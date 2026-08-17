@@ -25,11 +25,16 @@ export default function ConfirmDialog({
       <div className="relative z-10 w-full max-w-[400px] rounded-[14px] border border-[#EEEDF4] bg-white p-6 shadow-[0_20px_60px_rgba(20,16,40,.18)]">
         <div className="flex items-start gap-3">
           <span className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#FDE8E8]">
-            <AlertTriangle className="h-[18px] w-[18px] text-[#EF4444]" strokeWidth={2} />
+            <AlertTriangle
+              className="h-[18px] w-[18px] text-[#EF4444]"
+              strokeWidth={2}
+            />
           </span>
           <div>
             <h3 className="text-[15px] font-bold text-[#1F1836]">{title}</h3>
-            <p className="mt-1 text-[12.5px] leading-[1.5] text-[#6B6480]">{message}</p>
+            <p className="mt-1 text-[12.5px] leading-[1.5] text-[#6B6480]">
+              {message}
+            </p>
           </div>
         </div>
 

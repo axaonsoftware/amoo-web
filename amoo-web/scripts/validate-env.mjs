@@ -37,7 +37,9 @@ const REQUIRED_PROD = [
 const missing = REQUIRED_PROD.filter((name) => !process.env[name]);
 
 if (missing.length) {
-  console.error(`ERROR: Missing required environment variables:\n  ${missing.join("\n  ")}`);
+  console.error(
+    `ERROR: Missing required environment variables:\n  ${missing.join("\n  ")}`,
+  );
   process.exit(1);
 }
 

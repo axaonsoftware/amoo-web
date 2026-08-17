@@ -24,11 +24,34 @@ type ReportTypeRow = {
  */
 
 // report-generators/: kundali.js, numerology.js, tarot.js, reiki.js
-const STYLE: Record<string, { Icon: typeof BarChart3; iconWrap: string; iconColor: string; desc: string }> = {
-  kundali: { Icon: Sparkles, iconWrap: "bg-[#F1EAFE]", iconColor: "text-[#7C3AED]", desc: "Birth chart and planetary analysis" },
-  numerology: { Icon: Hash, iconWrap: "bg-[#FEF1E3]", iconColor: "text-[#F59E0B]", desc: "Life path and destiny numbers" },
-  tarot: { Icon: BarChart3, iconWrap: "bg-[#E3F7EA]", iconColor: "text-[#16A34A]", desc: "Card spreads and interpretations" },
-  reiki: { Icon: HandHeart, iconWrap: "bg-[#E7F0FE]", iconColor: "text-[#3B82F6]", desc: "Chakra balance and healing plans" },
+const STYLE: Record<
+  string,
+  { Icon: typeof BarChart3; iconWrap: string; iconColor: string; desc: string }
+> = {
+  kundali: {
+    Icon: Sparkles,
+    iconWrap: "bg-[#F1EAFE]",
+    iconColor: "text-[#7C3AED]",
+    desc: "Birth chart and planetary analysis",
+  },
+  numerology: {
+    Icon: Hash,
+    iconWrap: "bg-[#FEF1E3]",
+    iconColor: "text-[#F59E0B]",
+    desc: "Life path and destiny numbers",
+  },
+  tarot: {
+    Icon: BarChart3,
+    iconWrap: "bg-[#E3F7EA]",
+    iconColor: "text-[#16A34A]",
+    desc: "Card spreads and interpretations",
+  },
+  reiki: {
+    Icon: HandHeart,
+    iconWrap: "bg-[#E7F0FE]",
+    iconColor: "text-[#3B82F6]",
+    desc: "Chakra balance and healing plans",
+  },
 };
 
 const DEFAULT_STYLE = {
@@ -45,14 +68,16 @@ function styleFor(type: string) {
 
 export default function ReportsSummary() {
   const { data, loading, error, refetch } = useApi<ReportTypeRow[]>(() =>
-    api.admin.getReportsByType()
+    api.admin.getReportsByType(),
   );
 
   const rows = data ?? [];
 
   return (
     <section className="flex h-full flex-col rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
-      <h2 className="text-[14px] font-semibold text-[#1B1630]">Reports Summary</h2>
+      <h2 className="text-[14px] font-semibold text-[#1B1630]">
+        Reports Summary
+      </h2>
 
       {loading ? (
         <ul className="mt-4 flex flex-1 flex-col justify-between gap-[14px]">
@@ -91,7 +116,9 @@ export default function ReportsSummary() {
                     {titleCase(r.type)}
                   </p>
                   <p className="truncate text-[9.5px] text-[#A5A2B5]">
-                    {pending > 0 ? `${formatNumber(pending)} pending generation` : st.desc}
+                    {pending > 0
+                      ? `${formatNumber(pending)} pending generation`
+                      : st.desc}
                   </p>
                 </div>
                 <span className="shrink-0 whitespace-nowrap text-[10px] text-[#8B879C]">

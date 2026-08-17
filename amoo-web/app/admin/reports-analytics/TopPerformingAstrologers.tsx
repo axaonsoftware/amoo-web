@@ -4,8 +4,17 @@ import Link from "next/link";
 import { Star } from "lucide-react";
 import api from "../../../lib/api";
 import { useApi } from "../../../lib/useApi";
-import { EmptyState, ErrorState, TableSkeletonRows } from "../../components/states";
-import { formatCurrency, formatNumber, initials, toNumber } from "../../../lib/format";
+import {
+  EmptyState,
+  ErrorState,
+  TableSkeletonRows,
+} from "../../components/states";
+import {
+  formatCurrency,
+  formatNumber,
+  initials,
+  toNumber,
+} from "../../../lib/format";
 
 type TopExpert = {
   id: number;
@@ -18,7 +27,15 @@ type TopExpert = {
   clients: number | string;
 };
 
-const HEADERS = ["#", "Astrologer", "Bookings", "Completed", "Revenue", "Rating", "Clients"];
+const HEADERS = [
+  "#",
+  "Astrologer",
+  "Bookings",
+  "Completed",
+  "Revenue",
+  "Rating",
+  "Clients",
+];
 
 /**
  * Backed by `GET /api/dashboard/experts/top`, extended in this phase to also
@@ -36,14 +53,16 @@ const HEADERS = ["#", "Astrologer", "Bookings", "Completed", "Revenue", "Rating"
  */
 export default function TopPerformingAstrologers() {
   const { data, loading, error, refetch } = useApi<TopExpert[]>(() =>
-    api.admin.getTopExperts(5)
+    api.admin.getTopExperts(5),
   );
 
   const rows = data ?? [];
 
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
-      <h2 className="text-[14px] font-semibold text-[#1B1630]">Top Performing Astrologers</h2>
+      <h2 className="text-[14px] font-semibold text-[#1B1630]">
+        Top Performing Astrologers
+      </h2>
 
       {error ? (
         <ErrorState className="mt-[14px]" message={error} onRetry={refetch} />
@@ -73,7 +92,9 @@ export default function TopPerformingAstrologers() {
               ) : (
                 rows.map((r, i) => (
                   <tr key={r.id} className="border-b border-[#F5F3F9]">
-                    <td className="py-[10px] pl-2 pr-2 text-[11px] text-[#8B879C]">{i + 1}</td>
+                    <td className="py-[10px] pl-2 pr-2 text-[11px] text-[#8B879C]">
+                      {i + 1}
+                    </td>
                     <td className="py-[10px] pr-2">
                       <div className="flex items-center gap-[8px]">
                         {r.avatar ? (
@@ -106,7 +127,10 @@ export default function TopPerformingAstrologers() {
                     <td className="py-[10px] pr-2">
                       <span className="flex items-center justify-center gap-[3px] text-[11px] font-medium text-[#1B1630]">
                         {toNumber(r.rating).toFixed(1)}
-                        <Star size={11} className="fill-[#F59E0B] text-[#F59E0B]" />
+                        <Star
+                          size={11}
+                          className="fill-[#F59E0B] text-[#F59E0B]"
+                        />
                       </span>
                     </td>
                     <td className="py-[10px] pr-2 text-center text-[11px] text-[#4A3B63]">

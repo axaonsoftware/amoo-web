@@ -51,8 +51,18 @@ export function LotusFlourish({ className = "" }: { className?: string }) {
       aria-hidden="true"
       className={className}
     >
-      <path d="M2 7h26" stroke="currentColor" strokeWidth="1" strokeOpacity="0.55" />
-      <path d="M68 7h26" stroke="currentColor" strokeWidth="1" strokeOpacity="0.55" />
+      <path
+        d="M2 7h26"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.55"
+      />
+      <path
+        d="M68 7h26"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.55"
+      />
       <path
         d="M33.6 4.6 36.4 7l-2.8 2.4L30.8 7Z"
         fill="currentColor"
@@ -89,8 +99,18 @@ export function HeroLotusDivider({ className = "" }: { className?: string }) {
       aria-hidden="true"
       className={className}
     >
-      <path d="M0 10h108" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
-      <path d="M222 10h108" stroke="currentColor" strokeWidth="1" strokeOpacity="0.5" />
+      <path
+        d="M0 10h108"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.5"
+      />
+      <path
+        d="M222 10h108"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.5"
+      />
       <path
         d="M112 10h9.6l-2.6-2.8.8-.8 4.4 3.6-4.4 3.6-.8-.8 2.6-2.8H112Z"
         fill="currentColor"
@@ -140,10 +160,38 @@ export function MandalaRing({ className = "" }: { className?: string }) {
       aria-hidden="true"
       className={className}
     >
-      <circle cx="200" cy="200" r="196" stroke="currentColor" strokeWidth="1" strokeOpacity="0.45" />
-      <circle cx="200" cy="200" r="176" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.3" />
-      <circle cx="200" cy="200" r="140" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.35" />
-      <circle cx="200" cy="200" r="104" stroke="currentColor" strokeWidth="0.8" strokeOpacity="0.25" />
+      <circle
+        cx="200"
+        cy="200"
+        r="196"
+        stroke="currentColor"
+        strokeWidth="1"
+        strokeOpacity="0.45"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="176"
+        stroke="currentColor"
+        strokeWidth="0.8"
+        strokeOpacity="0.3"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="140"
+        stroke="currentColor"
+        strokeWidth="0.8"
+        strokeOpacity="0.35"
+      />
+      <circle
+        cx="200"
+        cy="200"
+        r="104"
+        stroke="currentColor"
+        strokeWidth="0.8"
+        strokeOpacity="0.25"
+      />
       <circle
         cx="200"
         cy="200"
@@ -184,8 +232,18 @@ export function MandalaRing({ className = "" }: { className?: string }) {
 
 export function BreadcrumbSlash({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 8 16" fill="none" aria-hidden="true" className={className}>
-      <path d="M6.6 1 1.4 15" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    <svg
+      viewBox="0 0 8 16"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M6.6 1 1.4 15"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -195,7 +253,14 @@ export function BreadcrumbSlash({ className = "" }: { className?: string }) {
 export function CheckCircleIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" {...props}>
-      <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+      />
       <path
         d="m7.6 12.3 2.9 2.9 5.9-6"
         fill="none"
@@ -232,7 +297,10 @@ export function StatAwardIcon(props: IconProps) {
   return (
     <svg {...line} strokeWidth={1.3} {...props}>
       <circle cx="12" cy="8.6" r="5.4" />
-      <path d="M12 5.9l.9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2L9.1 8l2-.3Z" strokeWidth={1} />
+      <path
+        d="M12 5.9l.9 1.8 2 .3-1.4 1.4.3 2-1.8-.9-1.8.9.3-2L9.1 8l2-.3Z"
+        strokeWidth={1}
+      />
       <path d="M8.4 13.2 6.6 21.4l5.4-2.8 5.4 2.8-1.8-8.2" />
     </svg>
   );

@@ -12,20 +12,23 @@ export default function SummaryCard({
   service,
   mode,
   date,
+  month,
+  year,
   time,
   price,
 }: {
   service: string;
   mode: string;
   date: number;
+  month: number;
+  year: number;
   time: string;
   price?: number;
 }) {
-  const now = new Date();
-  const month = now.toLocaleString("en-US", { month: "long" });
-  const year = now.getFullYear();
-  const dayName = new Date(year, now.getMonth(), date).toLocaleDateString("en-US", { weekday: "long" });
-  const dateStr = `${dayName}, ${date} ${month} ${year}`;
+  const dateObj = new Date(year, month, date);
+  const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
+  const monthName = dateObj.toLocaleDateString("en-US", { month: "long" });
+  const dateStr = `${dayName}, ${date} ${monthName} ${year}`;
 
   const ROWS = [
     { Icon: VideoLineIcon, label: "Mode", value: `${mode} Consultation` },
@@ -77,7 +80,9 @@ export default function SummaryCard({
           <div className="flex items-center gap-2.5">
             <PinIcon className="h-[16px] w-[16px] shrink-0 text-grape-2" />
             <span className="flex-1 text-[13px] text-body">Price</span>
-            <span className="text-[14.5px] font-bold text-[#1f8a4c]">₹{price ?? 799}</span>
+            <span className="text-[14.5px] font-bold text-[#1f8a4c]">
+              ₹{price ?? 799}
+            </span>
           </div>
         </div>
 

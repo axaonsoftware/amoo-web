@@ -11,12 +11,42 @@ import {
 import { useRouter } from "next/navigation";
 
 const actions = [
-  { label: "Create Invoice", Icon: FilePlus2, color: "text-[#3B82F6]", path: "/admin/payments-finance" },
-  { label: "Add Refund", Icon: CircleSlash2, color: "text-[#EF4444]", path: "/admin/payments-finance" },
-  { label: "Record Payout", Icon: Banknote, color: "text-[#16A34A]", path: "/admin/payments-finance" },
-  { label: "Manage Taxes", Icon: Percent, color: "text-[#7C3AED]", path: "/admin/payments-finance" },
-  { label: "Download Statement", Icon: Download, color: "text-[#4A3B63]", path: "" },
-  { label: "Financial Reports", Icon: BarChart3, color: "text-[#7C3AED]", path: "" },
+  {
+    label: "Create Invoice",
+    Icon: FilePlus2,
+    color: "text-[#3B82F6]",
+    path: "/admin/payments-finance",
+  },
+  {
+    label: "Add Refund",
+    Icon: CircleSlash2,
+    color: "text-[#EF4444]",
+    path: "/admin/payments-finance",
+  },
+  {
+    label: "Record Payout",
+    Icon: Banknote,
+    color: "text-[#16A34A]",
+    path: "/admin/payments-finance",
+  },
+  {
+    label: "Manage Taxes",
+    Icon: Percent,
+    color: "text-[#7C3AED]",
+    path: "/admin/payments-finance",
+  },
+  {
+    label: "Download Statement",
+    Icon: Download,
+    color: "text-[#4A3B63]",
+    path: "",
+  },
+  {
+    label: "Financial Reports",
+    Icon: BarChart3,
+    color: "text-[#7C3AED]",
+    path: "",
+  },
 ];
 
 export default function QuickActions() {

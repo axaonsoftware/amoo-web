@@ -14,30 +14,81 @@ import { api } from "../../../lib/api";
 const statDefs: {
   label: string;
   field: string;
-  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  Icon: React.ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>;
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Experts", field: "total", Icon: Users, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
-  { label: "Active Experts", field: "active", Icon: CircleCheck, iconBg: "bg-[#E6F7EE]", iconColor: "text-[#16A34A]" },
-  { label: "Inactive Experts", field: "inactive", Icon: CirclePause, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
-  { label: "Avg. Rating", field: "avgRating", Icon: Star, iconBg: "bg-[#FEF0DC]", iconColor: "text-[#D97706]" },
-  { label: "Total Sessions", field: "sessions", Icon: CalendarDays, iconBg: "bg-[#E7F0FE]", iconColor: "text-[#3B82F6]" },
-  { label: "Total Revenue", field: "revenue", Icon: IndianRupee, iconBg: "bg-[#EAE9FB]", iconColor: "text-[#4F46E5]" },
+  {
+    label: "Total Experts",
+    field: "total",
+    Icon: Users,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Active Experts",
+    field: "active",
+    Icon: CircleCheck,
+    iconBg: "bg-[#E6F7EE]",
+    iconColor: "text-[#16A34A]",
+  },
+  {
+    label: "Inactive Experts",
+    field: "inactive",
+    Icon: CirclePause,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Avg. Rating",
+    field: "avgRating",
+    Icon: Star,
+    iconBg: "bg-[#FEF0DC]",
+    iconColor: "text-[#D97706]",
+  },
+  {
+    label: "Total Sessions",
+    field: "sessions",
+    Icon: CalendarDays,
+    iconBg: "bg-[#E7F0FE]",
+    iconColor: "text-[#3B82F6]",
+  },
+  {
+    label: "Total Revenue",
+    field: "revenue",
+    Icon: IndianRupee,
+    iconBg: "bg-[#EAE9FB]",
+    iconColor: "text-[#4F46E5]",
+  },
 ];
 
 export default function StatsRow({ experts }: { experts: any[] }) {
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const fmtCurrency = (n: number | undefined) => (n != null ? `₹ ${Number(n).toLocaleString("en-IN")}` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const fmtCurrency = (n: number | undefined) =>
+    n != null ? `₹ ${Number(n).toLocaleString("en-IN")}` : "—";
 
   const total = experts.length;
   const active = experts.filter((e) => e.status === "active").length;
   const inactive = experts.filter((e) => e.status === "inactive").length;
   const avgRating = experts.length
-    ? (experts.reduce((sum, e) => sum + (Number(e.rating) || 0), 0) / experts.length).toFixed(1)
+    ? (
+        experts.reduce((sum, e) => sum + (Number(e.rating) || 0), 0) /
+        experts.length
+      ).toFixed(1)
     : "0";
-  const totalSessions = experts.reduce((sum, e) => sum + (Number(e.sessions) || 0), 0);
-  const totalRevenue = experts.reduce((sum, e) => sum + (Number(e.revenue) || 0), 0);
+  const totalSessions = experts.reduce(
+    (sum, e) => sum + (Number(e.sessions) || 0),
+    0,
+  );
+  const totalRevenue = experts.reduce(
+    (sum, e) => sum + (Number(e.revenue) || 0),
+    0,
+  );
 
   const values: Record<string, string | number> = {
     total,
@@ -52,7 +103,12 @@ export default function StatsRow({ experts }: { experts: any[] }) {
     <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3 xl:grid-cols-6">
       {statDefs.map(({ label, field, Icon, iconBg, iconColor }) => {
         const raw = values[field];
-        const display = field === "revenue" ? fmtCurrency(raw as number) : field === "avgRating" ? raw : fmt(raw as number);
+        const display =
+          field === "revenue"
+            ? fmtCurrency(raw as number)
+            : field === "avgRating"
+              ? raw
+              : fmt(raw as number);
         return (
           <div
             key={label}

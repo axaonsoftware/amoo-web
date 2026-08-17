@@ -52,8 +52,16 @@ function fmtRK(iso: string) {
   if (!iso) return { date: "", time: "" };
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
+    date: d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }),
   };
 }
 
@@ -143,12 +151,8 @@ const SessionRow = memo(function SessionRow({
       </td>
 
       <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
-        <p className="text-[11px] font-medium text-[#1B1630]">
-          {s.date}
-        </p>
-        <p className="mt-[1px] text-[10px] text-[#8B879C]">
-          {s.time}
-        </p>
+        <p className="text-[11px] font-medium text-[#1B1630]">{s.date}</p>
+        <p className="mt-[1px] text-[10px] text-[#8B879C]">{s.time}</p>
       </td>
 
       <td className="whitespace-nowrap py-[13px] pr-4 align-middle text-[11px] font-medium text-[#4A4557]">
@@ -158,7 +162,8 @@ const SessionRow = memo(function SessionRow({
       <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
         <span
           className={`inline-flex items-center justify-center rounded-[6px] px-[10px] py-[5px] text-[10.5px] font-semibold ${
-            statusStyles[s.status as SessionStatus] || "bg-[#F3F0FA] text-[#6D28D9]"
+            statusStyles[s.status as SessionStatus] ||
+            "bg-[#F3F0FA] text-[#6D28D9]"
           }`}
         >
           {s.status}
@@ -166,9 +171,7 @@ const SessionRow = memo(function SessionRow({
       </td>
 
       <td className="whitespace-nowrap py-[13px] pr-4 align-middle">
-        <p className="text-[11.5px] font-semibold text-[#1B1630]">
-          {s.amount}
-        </p>
+        <p className="text-[11.5px] font-semibold text-[#1B1630]">{s.amount}</p>
         <p
           className={`mt-[1px] text-[10px] font-medium ${
             paymentStyles[s.payment as PaymentStatus] || "text-[#8B879C]"
@@ -209,7 +212,11 @@ const SessionRow = memo(function SessionRow({
   );
 });
 
-export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreate: () => void; exportData: () => void }) => void } = {}) {
+export default function SessionsPanel({
+  onReady,
+}: {
+  onReady?: (fns: { openCreate: () => void; exportData: () => void }) => void;
+} = {}) {
   const [rawList, setRawList] = useState<RawReport[]>([]);
   const [list, setList] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -218,7 +225,9 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RawReport | null>(null);
-  const [formValues, setFormValues] = useState<Record<string, string | number>>({});
+  const [formValues, setFormValues] = useState<Record<string, string | number>>(
+    {},
+  );
   const [saving, setSaving] = useState(false);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -227,11 +236,17 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
 
-  const addToast = useCallback((message: string, kind: Toast["kind"] = "success") => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { id, message, kind }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
-  }, []);
+  const addToast = useCallback(
+    (message: string, kind: Toast["kind"] = "success") => {
+      const id = ++toastIdRef.current;
+      setToasts((prev) => [...prev, { id, message, kind }]);
+      setTimeout(
+        () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+        3000,
+      );
+    },
+    [],
+  );
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -242,7 +257,7 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
         const items = data?.data ?? data ?? [];
         if (data?.meta?.total) setTotal(data.meta.total);
         const rows: RawReport[] = items.filter((r: any) =>
-          (r.type || "").toLowerCase().includes("reiki")
+          (r.type || "").toLowerCase().includes("reiki"),
         );
         const src = rows.length ? rows : items;
         setRawList(src);
@@ -253,7 +268,11 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
               return {
                 id: `REIKI-${r.id}`,
                 rawId: r.id,
-                client: { name: r.user?.name || r.title || "Client", email: r.user?.email || "", phone: "" },
+                client: {
+                  name: r.user?.name || r.title || "Client",
+                  email: r.user?.email || "",
+                  phone: "",
+                },
                 master: { name: "Reiki Master", role: "Healer" },
                 type: "distance" as const,
                 date,
@@ -264,7 +283,7 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
                 payment: "Paid" as const,
                 raw: r,
               };
-            })
+            }),
           );
         } else {
           setList([]);
@@ -281,17 +300,68 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
   const sessionRows = list || [];
 
   const addFields: ModalField[] = [
-    { name: "user_id", label: "User ID", type: "number", required: true, placeholder: "Enter user ID", min: 1 },
-    { name: "title", label: "Title", type: "text", required: true, placeholder: "Session title", full: true },
-    { name: "content", label: "Content", type: "textarea", placeholder: "Session details...", full: true },
-    { name: "status", label: "Status", type: "select", options: statusOptions, placeholder: "Select status" },
+    {
+      name: "user_id",
+      label: "User ID",
+      type: "number",
+      required: true,
+      placeholder: "Enter user ID",
+      min: 1,
+    },
+    {
+      name: "title",
+      label: "Title",
+      type: "text",
+      required: true,
+      placeholder: "Session title",
+      full: true,
+    },
+    {
+      name: "content",
+      label: "Content",
+      type: "textarea",
+      placeholder: "Session details...",
+      full: true,
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      options: statusOptions,
+      placeholder: "Select status",
+    },
   ];
 
   const editFields: ModalField[] = [
-    { name: "title", label: "Title", type: "text", required: true, placeholder: "Session title", full: true },
-    { name: "content", label: "Content", type: "textarea", placeholder: "Session details...", full: true },
-    { name: "status", label: "Status", type: "select", options: statusOptions, placeholder: "Select status" },
-    { name: "file_url", label: "File URL", type: "text", placeholder: "https://...", full: true },
+    {
+      name: "title",
+      label: "Title",
+      type: "text",
+      required: true,
+      placeholder: "Session title",
+      full: true,
+    },
+    {
+      name: "content",
+      label: "Content",
+      type: "textarea",
+      placeholder: "Session details...",
+      full: true,
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      options: statusOptions,
+      placeholder: "Select status",
+    },
+    {
+      name: "file_url",
+      label: "File URL",
+      type: "text",
+      placeholder: "https://...",
+      full: true,
+    },
   ];
 
   const handleOpenAdd = () => {
@@ -358,7 +428,9 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
                   loadData();
                   addToast("Session generated successfully");
                 }
-              } catch { /* continue polling */ }
+              } catch {
+                /* continue polling */
+              }
             }, 2000);
             setTimeout(() => {
               clearInterval(poll);
@@ -428,17 +500,49 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
     // the every-render loop. They read state only when invoked.
   }, [onReady]);
 
-  const handleEditSession = useCallback((raw: RawReport) => handleOpenEdit(raw), []);
-  const handleDeleteSession = useCallback((rawId: number) => handleDeleteClick(rawId), []);
+  const handleEditSession = useCallback(
+    (raw: RawReport) => handleOpenEdit(raw),
+    [],
+  );
+  const handleDeleteSession = useCallback(
+    (rawId: number) => handleDeleteClick(rawId),
+    [],
+  );
 
-  if (loading) return <div className="flex justify-center py-10"><svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" /></svg></div>;
-  if (error) return <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">{error}</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center py-10">
+        <svg
+          className="h-6 w-6 animate-spin text-[#7C3AED]"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeDasharray="32"
+            strokeLinecap="round"
+          />
+        </svg>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="flex justify-center py-10 text-[#EF4444] text-[13px]">
+        {error}
+      </div>
+    );
 
   return (
     <section className="overflow-hidden rounded-[12px] border border-[#EFEDF4] bg-white shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
       {/* Panel header */}
       <div className="flex items-center justify-between border-b border-[#EFEDF4] px-4 py-[12px]">
-        <p className="text-[13px] font-semibold text-[#1F1836]">Reiki Sessions</p>
+        <p className="text-[13px] font-semibold text-[#1F1836]">
+          Reiki Sessions
+        </p>
         <div className="flex items-center gap-[8px]">
           <button
             type="button"
@@ -556,7 +660,8 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
       {/* Pagination */}
       <div className="flex flex-wrap items-center gap-3 border-t border-[#EFEDF4] px-4 py-[14px]">
         <p className="text-[11.5px] text-[#8B879C]">
-          Showing 1 to 8 of {(total || sessionRows.length).toLocaleString("en-IN")} sessions
+          Showing 1 to 8 of{" "}
+          {(total || sessionRows.length).toLocaleString("en-IN")} sessions
         </p>
 
         <div className="ml-auto flex items-center gap-[6px]">
@@ -564,7 +669,18 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
             type="button"
             className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#8B879C]"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
 
           {["1", "2", "3", "4"].map((p) => (
@@ -594,7 +710,18 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
             type="button"
             className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#4A4557]"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
           </button>
         </div>
 
@@ -625,7 +752,10 @@ export default function SessionsPanel({ onReady }: { onReady?: (fns: { openCreat
         title="Delete Session"
         message="Are you sure you want to delete this session? This action cannot be undone."
         onConfirm={handleConfirmDelete}
-        onCancel={() => { setConfirmOpen(false); setDeletingId(null); }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setDeletingId(null);
+        }}
         saving={saving}
       />
 

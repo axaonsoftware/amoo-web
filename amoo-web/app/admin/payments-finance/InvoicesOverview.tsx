@@ -27,7 +27,7 @@ type PaymentStats = {
  */
 export default function InvoicesOverview() {
   const { data, loading, error, refetch } = useApi<PaymentStats>(() =>
-    api.admin.getPaymentStats()
+    api.admin.getPaymentStats(),
   );
 
   const rows = [
@@ -57,7 +57,8 @@ export default function InvoicesOverview() {
     },
     {
       label: "Failed / Refunded",
-      value: Number(data?.failed_count ?? 0) + Number(data?.refunded_count ?? 0),
+      value:
+        Number(data?.failed_count ?? 0) + Number(data?.refunded_count ?? 0),
       Icon: FileX2,
       iconWrap: "bg-[#FDE8E8]",
       iconColor: "text-[#EF4444]",
@@ -68,8 +69,13 @@ export default function InvoicesOverview() {
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
       <div className="flex items-center justify-between">
-        <h2 className="text-[14px] font-semibold text-[#1B1630]">Transactions Overview</h2>
-        <Link href="/admin/payments-finance" className="text-[11px] font-medium text-[#7C3AED]">
+        <h2 className="text-[14px] font-semibold text-[#1B1630]">
+          Transactions Overview
+        </h2>
+        <Link
+          href="/admin/payments-finance"
+          className="text-[11px] font-medium text-[#7C3AED]"
+        >
           View All
         </Link>
       </div>
@@ -85,11 +91,15 @@ export default function InvoicesOverview() {
               >
                 <r.Icon size={16} className={r.iconColor} />
               </span>
-              <span className="truncate text-[11.5px] text-[#4A3B63]">{r.label}</span>
+              <span className="truncate text-[11.5px] text-[#4A3B63]">
+                {r.label}
+              </span>
               {loading ? (
                 <Skeleton className="ml-auto h-[12px] w-[54px] shrink-0" />
               ) : (
-                <span className={`ml-auto shrink-0 text-[12px] font-semibold ${r.valueColor}`}>
+                <span
+                  className={`ml-auto shrink-0 text-[12px] font-semibold ${r.valueColor}`}
+                >
                   {formatNumber(r.value)}
                 </span>
               )}

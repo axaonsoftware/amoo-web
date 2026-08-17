@@ -14,7 +14,7 @@ import {
   RotateCcw,
   X,
 } from "lucide-react";
-import api from "../../../lib/api";
+import api, { unwrapList, unwrapMeta } from "../../../lib/api";
 import { errorMessage } from "../../../lib/errors";
 
 type Payment = {
@@ -54,7 +54,11 @@ function fmtDate(ts?: string): { date: string; time: string } {
   if (!ts) return { date: "\u2014", time: "\u2014" };
   const d = new Date(ts);
   return {
-    date: d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+    date: d.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
     time: d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
   };
 }
@@ -64,30 +68,41 @@ export default function RecentTransactions() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 8;
 
   // Refund modal state
   const [refundTarget, setRefundTarget] = useState<Payment | null>(null);
   const [refundReason, setRefundReason] = useState("");
   const [refunding, setRefunding] = useState(false);
-  const [refundResult, setRefundResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [refundResult, setRefundResult] = useState<{
+    ok: boolean;
+    msg: string;
+  } | null>(null);
 
   const load = () => {
     setLoading(true);
-    api.admin.getPayments()
+    api.admin
+      .getPayments(`?page=${page}&pageSize=${itemsPerPage}`)
       .then((res) => {
-        const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const data = unwrapList<Payment>(res);
+        const meta = unwrapMeta(res);
         setRows(data);
+        if (meta) {
+          setTotalPages(meta.totalPages);
+        }
       })
-      .catch((e) => { setRows([]); setError(errorMessage(e, "Failed to load")); })
+      .catch((e) => {
+        setRows([]);
+        setError(errorMessage(e, "Failed to load"));
+      })
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { load(); }, []);
-
-  const totalPages = Math.max(1, Math.ceil(rows.length / itemsPerPage));
-  const start = (page - 1) * itemsPerPage;
-  const pageRows = rows.slice(start, start + itemsPerPage);
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const openRefund = (p: Payment) => {
     setRefundTarget(p);
@@ -100,8 +115,13 @@ export default function RecentTransactions() {
     setRefunding(true);
     setRefundResult(null);
     try {
-      const res = await api.admin.refundPayment(refundTarget.id, { reason: refundReason || undefined });
-      setRefundResult({ ok: true, msg: `Refunded ${fmtAmount(refundTarget.amount)} — ${res?.gateway_refund_id ? `Gateway ID: ${res.gateway_refund_id}` : "DB only"}` });
+      const res = await api.admin.refundPayment(refundTarget.id, {
+        reason: refundReason || undefined,
+      });
+      setRefundResult({
+        ok: true,
+        msg: `Refunded ${fmtAmount(refundTarget.amount)} — ${res?.gateway_refund_id ? `Gateway ID: ${res.gateway_refund_id}` : "DB only"}`,
+      });
       load(); // refresh the list
     } catch (e: unknown) {
       setRefundResult({ ok: false, msg: errorMessage(e, "Refund failed") });
@@ -149,21 +169,45 @@ export default function RecentTransactions() {
           <table className="w-full min-w-[820px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#EFEDF4]">
-                {["Transaction ID", "Date & Time", "Client", "Service", "Amount", "Payment Method", "Status", ""].map((h) => (
-                  <th key={h} className="pb-[10px] text-[10.5px] font-medium text-[#8B879C]">{h}</th>
+                {[
+                  "Transaction ID",
+                  "Date & Time",
+                  "Client",
+                  "Service",
+                  "Amount",
+                  "Payment Method",
+                  "Status",
+                  "",
+                ].map((h) => (
+                  <th
+                    key={h}
+                    className="pb-[10px] text-[10.5px] font-medium text-[#8B879C]"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {pageRows.length === 0 ? (
+              {rows.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-[13px] text-[#8B879C]">No transactions found</td>
+                  <td
+                    colSpan={8}
+                    className="py-10 text-center text-[13px] text-[#8B879C]"
+                  >
+                    No transactions found
+                  </td>
                 </tr>
               ) : (
-                pageRows.map((r) => {
+                rows.map((r) => {
                   const { date, time } = fmtDate(r.created_at);
-                  const method = methodMeta[r.payment_method || ""] || { Icon: Wallet, color: "text-[#8B879C]" };
-                  const statusClass = statusColors[r.status || ""] || "bg-[#F1EFF6] text-[#8B879C]";
+                  const method = methodMeta[r.payment_method || ""] || {
+                    Icon: Wallet,
+                    color: "text-[#8B879C]",
+                  };
+                  const statusClass =
+                    statusColors[r.status || ""] ||
+                    "bg-[#F1EFF6] text-[#8B879C]";
                   const canRefund = r.status === "success";
                   return (
                     <tr key={r.id} className="border-b border-[#F5F3F9]">
@@ -206,7 +250,9 @@ export default function RecentTransactions() {
                         </span>
                       </td>
                       <td className="py-[11px]">
-                        <span className={`inline-flex h-[20px] items-center rounded-full px-[9px] text-[9.5px] font-medium capitalize ${statusClass}`}>
+                        <span
+                          className={`inline-flex h-[20px] items-center rounded-full px-[9px] text-[9.5px] font-medium capitalize ${statusClass}`}
+                        >
                           {r.status || "unknown"}
                         </span>
                       </td>
@@ -230,10 +276,10 @@ export default function RecentTransactions() {
           </table>
         </div>
 
-        {rows.length > itemsPerPage && (
+        {totalPages > 1 && (
           <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
             <p className="text-[11px] text-[#8B879C]">
-              Showing 1 to {pageRows.length} of {rows.length} transactions
+              Page {page} of {totalPages}
             </p>
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-[6px]">
@@ -276,22 +322,44 @@ export default function RecentTransactions() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
           <div className="w-full max-w-md rounded-[16px] bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-[15px] font-semibold text-[#1B1630]">Confirm Refund</h3>
-              <button type="button" onClick={() => { if (!refunding) setRefundTarget(null); }} className="text-[#8B879C] hover:text-[#1B1630]">
+              <h3 className="text-[15px] font-semibold text-[#1B1630]">
+                Confirm Refund
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!refunding) setRefundTarget(null);
+                }}
+                className="text-[#8B879C] hover:text-[#1B1630]"
+              >
                 <X size={18} />
               </button>
             </div>
 
             <div className="mt-4 space-y-3 text-[12.5px] text-[#4A3B63]">
               <div className="rounded-[10px] border border-[#EFEDF4] bg-[#FAF9FC] p-3">
-                <p><span className="font-medium">Transaction:</span> {refundTarget.txn_id || `#${refundTarget.id}`}</p>
-                <p><span className="font-medium">Client:</span> {refundTarget.user_name || "Unknown"}</p>
-                <p><span className="font-medium">Amount:</span> {fmtAmount(refundTarget.amount)}</p>
-                <p><span className="font-medium">Method:</span> {refundTarget.payment_method || "\u2014"}</p>
+                <p>
+                  <span className="font-medium">Transaction:</span>{" "}
+                  {refundTarget.txn_id || `#${refundTarget.id}`}
+                </p>
+                <p>
+                  <span className="font-medium">Client:</span>{" "}
+                  {refundTarget.user_name || "Unknown"}
+                </p>
+                <p>
+                  <span className="font-medium">Amount:</span>{" "}
+                  {fmtAmount(refundTarget.amount)}
+                </p>
+                <p>
+                  <span className="font-medium">Method:</span>{" "}
+                  {refundTarget.payment_method || "\u2014"}
+                </p>
               </div>
 
               <label className="block">
-                <span className="text-[11px] font-medium text-[#8B879C]">Reason (optional)</span>
+                <span className="text-[11px] font-medium text-[#8B879C]">
+                  Reason (optional)
+                </span>
                 <textarea
                   value={refundReason}
                   onChange={(e) => setRefundReason(e.target.value)}
@@ -302,7 +370,9 @@ export default function RecentTransactions() {
               </label>
 
               {refundResult && (
-                <div className={`rounded-[8px] p-2.5 text-[12px] ${refundResult.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}>
+                <div
+                  className={`rounded-[8px] p-2.5 text-[12px] ${refundResult.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-600"}`}
+                >
                   {refundResult.msg}
                 </div>
               )}
@@ -322,7 +392,9 @@ export default function RecentTransactions() {
                   disabled={refunding || refundResult?.ok}
                   className="flex flex-1 items-center justify-center gap-2 rounded-[9px] bg-gradient-to-r from-red-600 to-red-500 py-2.5 text-[12px] font-medium text-white shadow-[0_4px_12px_rgba(220,38,38,.25)] disabled:opacity-60"
                 >
-                  {refunding && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  {refunding && (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  )}
                   {refunding ? "Refunding..." : "Confirm Refund"}
                 </button>
               </div>

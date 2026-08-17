@@ -7,7 +7,10 @@ import PackagesPanel from "./PackagesPanel";
 import RightRail from "./RightRail";
 
 export default function PackagesOffersPage() {
-  const panelFns = useRef<{ openCreate: () => void; exportData: () => void } | null>(null);
+  const panelFns = useRef<{
+    openCreate: () => void;
+    exportData: () => void;
+  } | null>(null);
 
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
@@ -15,7 +18,9 @@ export default function PackagesOffersPage() {
       <nav className="flex items-center gap-[6px] text-[10.5px]">
         <span className="text-[#8B879C]">Dashboard</span>
         <ChevronRight size={12} className="text-[#B7B3C4]" />
-        <span className="font-medium text-[#3D3752]">Packages &amp; Offers</span>
+        <span className="font-medium text-[#3D3752]">
+          Packages &amp; Offers
+        </span>
       </nav>
 
       {/* Page header */}

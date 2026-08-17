@@ -99,7 +99,8 @@ const schemas = {
     phone: optionalString.max(20),
     avatar: optionalString.max(512),
     dob: Joi.date().iso(),
-    tob: Joi.string().regex(/^\d{2}:\d{2}(:\d{2})?$/),
+    tob: Joi.string().pattern(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
+      .messages({ "string.pattern.base": "Time of birth must be HH:MM or HH:MM:SS (24-hour format)" }),
     birthplace: optionalString.max(255),
     gender: optionalString.max(20),
     language: optionalString.max(40),
@@ -116,7 +117,8 @@ const schemas = {
     service_id: Joi.number().integer().positive().required(),
     expert_id: optionalNumber.integer().positive(),
     slot_id: optionalNumber.integer().positive(),
-    date: Joi.date().iso().required(),
+    date: Joi.date().iso().min("now").required()
+      .messages({ "date.min": "Booking date must be in the future" }),
     time: Joi.string().required(),
     mode: Joi.string().valid("chat", "video", "in-person", "").allow(null),
     amount: Joi.number().min(0).required(),
@@ -449,9 +451,10 @@ function validate(schemaOrName, _unused, inlineSchema) {
   };
 }
 
-// Validate query string (does not strip, just checks).
+// Validate query string (checks known params; allows unknown ones like
+// ?all=1 used by admin features — routes decide what to ignore).
 function validateQuery(req, res, next) {
-  const { error, value } = schemas.query.validate(req.query, { abortEarly: false, stripUnknown: true });
+  const { error, value } = schemas.query.validate(req.query, { abortEarly: false, allowUnknown: true });
   if (error) {
     return res.status(400).json({
       success: false,

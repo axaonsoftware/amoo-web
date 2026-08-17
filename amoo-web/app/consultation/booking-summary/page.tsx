@@ -3,7 +3,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { loadConsultationData } from "../lib/consultation-storage";
 import Link from "next/link";
-import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../../lib/constants";
+import {
+  WHATSAPP_URL,
+  CONTACT_PHONE,
+  CONTACT_EMAIL,
+  SITE_NAME,
+} from "../../../lib/constants";
 import { HomeHeader, OfferBar } from "../../components/home-header";
 import { sanitize } from "../../../lib/sanitize";
 import { resolveService } from "../lib/services";
@@ -181,9 +186,15 @@ function OverviewRow({
         <Icon className="w-4 h-4 text-amber-600" />
         {label}
       </span>
-      <span className={`font-semibold text-right ${error ? "text-red-500" : "text-purple-950"}`}>
-{sanitize(value)}
-        {error && <span className="block text-red-500 text-xs font-normal">{error}</span>}
+      <span
+        className={`font-semibold text-right ${error ? "text-red-500" : "text-purple-950"}`}
+      >
+        {sanitize(value)}
+        {error && (
+          <span className="block text-red-500 text-xs font-normal">
+            {error}
+          </span>
+        )}
       </span>
     </div>
   );
@@ -203,7 +214,8 @@ function BookingSummaryContent() {
       const stored = loadConsultationData();
       const params = new URLSearchParams(window.location.search);
       return {
-        service: stored.service || params.get("service") || "Reiki Healing Session",
+        service:
+          stored.service || params.get("service") || "Reiki Healing Session",
         mode: stored.mode || params.get("mode") || "Video Call",
         date: stored.date || params.get("date") || "Tuesday, 10 June 2026",
         time: stored.time || params.get("time") || "08:00 AM",
@@ -250,7 +262,9 @@ function BookingSummaryContent() {
   useEffect(() => {
     const errs = Object.values(validationErrors);
     if (errs.length > 0) {
-      setError("Some required details are missing. Please go back and complete the form.");
+      setError(
+        "Some required details are missing. Please go back and complete the form.",
+      );
     }
     setLoading(false);
   }, [validationErrors]);
@@ -273,7 +287,22 @@ function BookingSummaryContent() {
     );
   }
 
-  const { service, mode, date, time, fullName, email, phone, dob, gender, maritalStatus, language, foundUs, concern, specialRequests } = data;
+  const {
+    service,
+    mode,
+    date,
+    time,
+    fullName,
+    email,
+    phone,
+    dob,
+    gender,
+    maritalStatus,
+    language,
+    foundUs,
+    concern,
+    specialRequests,
+  } = data;
 
   const personalInfoLeft = [
     { label: "Full Name", value: fullName || "—" },
@@ -296,7 +325,12 @@ function BookingSummaryContent() {
   const dateShort = date ? date.replace(/,?\s*\d{4}/, "") : "";
 
   const CONSULTATION_DETAILS_RIGHT = [
-    { icon: Video, label: "Consultation Mode", value: mode || "—", error: validationErrors.mode },
+    {
+      icon: Video,
+      label: "Consultation Mode",
+      value: mode || "—",
+      error: validationErrors.mode,
+    },
     {
       icon: Calendar,
       label: "Date & Time",
@@ -307,10 +341,30 @@ function BookingSummaryContent() {
   ];
 
   const BOOKING_OVERVIEW = [
-    { icon: Sparkles, label: "Service", value: service || "—", error: validationErrors.service },
-    { icon: Video, label: "Mode", value: mode ? `${mode} Consultation` : "—", error: validationErrors.mode },
-    { icon: Calendar, label: "Date", value: dateShort || "—", error: validationErrors.date },
-    { icon: Users, label: "Time", value: time ? `${time} (IST)` : "—", error: validationErrors.time },
+    {
+      icon: Sparkles,
+      label: "Service",
+      value: service || "—",
+      error: validationErrors.service,
+    },
+    {
+      icon: Video,
+      label: "Mode",
+      value: mode ? `${mode} Consultation` : "—",
+      error: validationErrors.mode,
+    },
+    {
+      icon: Calendar,
+      label: "Date",
+      value: dateShort || "—",
+      error: validationErrors.date,
+    },
+    {
+      icon: Users,
+      label: "Time",
+      value: time ? `${time} (IST)` : "—",
+      error: validationErrors.time,
+    },
     { icon: Clock, label: "Duration", value: "60 Minutes" },
   ];
 
@@ -437,7 +491,9 @@ function BookingSummaryContent() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Service</p>
-                  <p className="font-bold text-purple-950">{sanitize(service)}</p>
+                  <p className="font-bold text-purple-950">
+                    {sanitize(service)}
+                  </p>
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed">
                     Selected consultation service
                   </p>
@@ -454,11 +510,15 @@ function BookingSummaryContent() {
                       {d.label}
                     </span>
                     <span className="text-gray-500">:</span>
-                    <span className={`font-medium whitespace-pre-line ml-1 ${d.error ? "text-red-500" : "text-purple-950"}`}>
+                    <span
+                      className={`font-medium whitespace-pre-line ml-1 ${d.error ? "text-red-500" : "text-purple-950"}`}
+                    >
                       {sanitize(d.value)}
                     </span>
                     {d.error && (
-                      <span className="text-red-500 text-xs ml-1">{d.error}</span>
+                      <span className="text-red-500 text-xs ml-1">
+                        {d.error}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -621,11 +681,15 @@ function BookingSummaryContent() {
               </div>
               <div className="flex items-center justify-between text-sm mb-3">
                 <span className="text-gray-600">Discount (FIRST10)</span>
-                <span className="text-green-600 font-medium">- ₹{discount}</span>
+                <span className="text-green-600 font-medium">
+                  - ₹{discount}
+                </span>
               </div>
               <div className="border-t border-dashed border-amber-200 pt-3 flex items-center justify-between">
                 <span className="font-bold text-purple-950">Total Amount</span>
-                <span className="font-bold text-xl text-purple-950">₹{total}</span>
+                <span className="font-bold text-xl text-purple-950">
+                  ₹{total}
+                </span>
               </div>
             </div>
 
@@ -716,33 +780,33 @@ function BookingSummaryContent() {
               </h4>
               <ul className="space-y-2 text-sm text-gray-400">
                 {col.links.map((link) => {
-const hrefMap: Record<string, string> = {
-  Home: "/",
-  "About Us": "/about",
-  Services: "/services",
-  Consultation: "/consultation",
-  Pricing: "/consultation/consultation-pricing",
-  Blog: "/blog",
-  "Contact Us": "/contact",
-  Numerology: "/services/numerology-services",
-  Tarot: "/services/tarot-reading",
-  Astrology: "/services",
-  Healing: "/services/reiki-healing",
-  Vastu: "/services",
-  "AI Services": "/services",
-  Spiritual: "/services",
-  "Audio Call": "/consultation/booking-summary",
-  "Video Call": "/consultation/booking-summary",
-  "Chat Consultation": "/consultation/booking-summary",
-  "Distance Healing": "/consultation/booking-summary",
-  "In-Person Meeting": "/consultation/booking-summary",
-  Packages: "/consultation/consultation-pricing",
-  FAQ: "/faq",
-  "Privacy Policy": "/privacy",
-  "Terms & Conditions": "/terms",
-  "Refund Policy": "/refund",
-  "Cancellation Policy": "/cancellation",
-};
+                  const hrefMap: Record<string, string> = {
+                    Home: "/",
+                    "About Us": "/about",
+                    Services: "/services",
+                    Consultation: "/consultation",
+                    Pricing: "/consultation/consultation-pricing",
+                    Blog: "/blog",
+                    "Contact Us": "/contact",
+                    Numerology: "/services/numerology-services",
+                    Tarot: "/services/tarot-reading",
+                    Astrology: "/services",
+                    Healing: "/services/reiki-healing",
+                    Vastu: "/services",
+                    "AI Services": "/services",
+                    Spiritual: "/services",
+                    "Audio Call": "/consultation/booking-summary",
+                    "Video Call": "/consultation/booking-summary",
+                    "Chat Consultation": "/consultation/booking-summary",
+                    "Distance Healing": "/consultation/booking-summary",
+                    "In-Person Meeting": "/consultation/booking-summary",
+                    Packages: "/consultation/consultation-pricing",
+                    FAQ: "/faq",
+                    "Privacy Policy": "/privacy",
+                    "Terms & Conditions": "/terms",
+                    "Refund Policy": "/refund",
+                    "Cancellation Policy": "/cancellation",
+                  };
                   return (
                     <li key={link} className="flex items-center gap-1.5">
                       <span className="text-amber-500 text-xs">›</span>
@@ -765,7 +829,8 @@ const hrefMap: Record<string, string> = {
             </h4>
             <ul className="space-y-3 text-sm text-gray-400">
               <li className="flex items-center gap-2">
-                <Phone className="w-4 h-4 text-amber-400 shrink-0" /> {CONTACT_PHONE}
+                <Phone className="w-4 h-4 text-amber-400 shrink-0" />{" "}
+                {CONTACT_PHONE}
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />{" "}
@@ -785,7 +850,9 @@ const hrefMap: Record<string, string> = {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-12 pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-gray-500 relative">
-          <p>© {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.</p>
+          <p>
+            © {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
+          </p>
           <p>Designed with ❤ for Spiritual Seekers</p>
         </div>
 

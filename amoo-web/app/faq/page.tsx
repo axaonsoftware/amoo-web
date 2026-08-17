@@ -18,12 +18,54 @@ interface Faq {
 }
 
 const FALLBACK_FAQS: Faq[] = [
-  { id: 1, question: "What services does Amoo Guru offer?", answer: "We offer Numerology, Tarot Reading, Reiki Healing, Kundali Analysis, Chakra Healing, and Spiritual Guidance consultations via Audio Call, Video Call, Chat, Distance Healing, and In-Person meetings.", category: "General", sort_order: 1 },
-  { id: 2, question: "How do I book a consultation?", answer: "Visit our Consultation page, select your preferred service and expert, choose a time slot, and complete the booking. You'll receive confirmation via WhatsApp and email.", category: "Booking", sort_order: 1 },
-  { id: 3, question: "What payment methods are accepted?", answer: "We accept UPI, credit/debit cards, net banking, and popular wallets through our secure payment gateway. All transactions are encrypted and safe.", category: "Payment", sort_order: 1 },
-  { id: 4, question: "Can I reschedule or cancel my booking?", answer: "Yes, you can reschedule or cancel up to 24 hours before your scheduled consultation. Please check our Cancellation Policy for details.", category: "Booking", sort_order: 2 },
-  { id: 5, question: "How does distance healing work?", answer: "Distance healing uses quantum energy transmission techniques. Our certified healers channel healing energy remotely, and you can experience the session from the comfort of your home.", category: "Services", sort_order: 1 },
-  { id: 6, question: "Are the consultations confidential?", answer: "Absolutely. All consultations are 100% confidential. We never share your personal information or session details with anyone without your explicit consent.", category: "General", sort_order: 2 },
+  {
+    id: 1,
+    question: "What services does Amoo Guru offer?",
+    answer:
+      "We offer Numerology, Tarot Reading, Reiki Healing, Kundali Analysis, Chakra Healing, and Spiritual Guidance consultations via Audio Call, Video Call, Chat, Distance Healing, and In-Person meetings.",
+    category: "General",
+    sort_order: 1,
+  },
+  {
+    id: 2,
+    question: "How do I book a consultation?",
+    answer:
+      "Visit our Consultation page, select your preferred service and expert, choose a time slot, and complete the booking. You'll receive confirmation via WhatsApp and email.",
+    category: "Booking",
+    sort_order: 1,
+  },
+  {
+    id: 3,
+    question: "What payment methods are accepted?",
+    answer:
+      "We accept UPI, credit/debit cards, net banking, and popular wallets through our secure payment gateway. All transactions are encrypted and safe.",
+    category: "Payment",
+    sort_order: 1,
+  },
+  {
+    id: 4,
+    question: "Can I reschedule or cancel my booking?",
+    answer:
+      "Yes, you can reschedule or cancel up to 24 hours before your scheduled consultation. Please check our Cancellation Policy for details.",
+    category: "Booking",
+    sort_order: 2,
+  },
+  {
+    id: 5,
+    question: "How does distance healing work?",
+    answer:
+      "Distance healing uses quantum energy transmission techniques. Our certified healers channel healing energy remotely, and you can experience the session from the comfort of your home.",
+    category: "Services",
+    sort_order: 1,
+  },
+  {
+    id: 6,
+    question: "Are the consultations confidential?",
+    answer:
+      "Absolutely. All consultations are 100% confidential. We never share your personal information or session details with anyone without your explicit consent.",
+    category: "General",
+    sort_order: 2,
+  },
 ];
 
 const FaqPage = () => {
@@ -53,7 +95,11 @@ const FaqPage = () => {
   }, {});
 
   return (
-    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
+    <main
+      id="main-content"
+      className="min-h-screen"
+      style={{ backgroundColor: "#fdf8f0" }}
+    >
       <OfferBar />
       <HomeHeader />
 
@@ -65,7 +111,8 @@ const FaqPage = () => {
           Frequently Asked Questions
         </h1>
         <p className="mt-3 font-sans text-base" style={{ color: "#6c6b78" }}>
-          Find answers to common questions about our spiritual consultation services
+          Find answers to common questions about our spiritual consultation
+          services
         </p>
       </section>
 
@@ -85,9 +132,14 @@ const FaqPage = () => {
               </h2>
               <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 {items.map((faq) => (
-                  <div key={faq.id} className="border-b border-gray-100 last:border-b-0">
+                  <div
+                    key={faq.id}
+                    className="border-b border-gray-100 last:border-b-0"
+                  >
                     <button
-                      onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
+                      onClick={() =>
+                        setOpenId(openId === faq.id ? null : faq.id)
+                      }
                       className="flex w-full items-center justify-between px-4 sm:px-6 py-4 text-left transition-colors hover:bg-gray-50"
                     >
                       <span

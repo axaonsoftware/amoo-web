@@ -124,12 +124,17 @@ export default function RightRail() {
         const items = data?.data ?? data;
         if (Array.isArray(items)) {
           setTodaySchedule(
-            items.filter((b: any) => isToday(b.date || b.date_time || b.created_at)).slice(0, 5).map((b: any) => ({
-              time: b.time || "",
-              name: b.user_name || "Guest",
-              service: b.service_name || "",
-              avatar: b.user_avatar || "",
-            }))
+            items
+              .filter((b: any) =>
+                isToday(b.date || b.date_time || b.created_at),
+              )
+              .slice(0, 5)
+              .map((b: any) => ({
+                time: b.time || "",
+                name: b.user_name || "Guest",
+                service: b.service_name || "",
+                avatar: b.user_avatar || "",
+              })),
           );
         }
       })
@@ -219,12 +224,19 @@ export default function RightRail() {
           <h2 className="text-[12px] font-semibold text-[#221C33]">
             Today&apos;s Schedule
           </h2>
-          <Link href="/admin/booking-management" className="text-[10px] font-medium text-[#6D28D9]">
+          <Link
+            href="/admin/booking-management"
+            className="text-[10px] font-medium text-[#6D28D9]"
+          >
             View All
           </Link>
         </div>
         <p className="mt-[3px] text-[10px] text-[#8B879C]">
-          {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+          {new Date().toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
         </p>
 
         <ul className="mt-[10px] space-y-[10px]">
@@ -292,7 +304,10 @@ export default function RightRail() {
           <h2 className="text-[12px] font-semibold text-[#221C33]">
             Recent Activity
           </h2>
-          <Link href="/admin/booking-management" className="text-[10px] font-medium text-[#6D28D9]">
+          <Link
+            href="/admin/booking-management"
+            className="text-[10px] font-medium text-[#6D28D9]"
+          >
             View All
           </Link>
         </div>

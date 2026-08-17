@@ -61,13 +61,18 @@ export default class ErrorBoundary extends Component<Props, State> {
         role="alert"
         className="flex min-h-screen flex-col items-center justify-center bg-[#0d0616] px-4 text-center"
       >
-        <div aria-hidden="true" className="mb-4 font-serif text-[80px] font-bold text-[#e9b85c] opacity-60">
+        <div
+          aria-hidden="true"
+          className="mb-4 font-serif text-[80px] font-bold text-[#e9b85c] opacity-60"
+        >
           !
         </div>
-        <h1 className="font-display text-[24px] font-bold text-white">Something went wrong</h1>
+        <h1 className="font-display text-[24px] font-bold text-white">
+          Something went wrong
+        </h1>
         <p className="mx-auto mt-3 max-w-md text-[14px] text-white/60">
-          We hit an unexpected problem loading this page. Please try again — if it keeps
-          happening, contact support and we will look into it.
+          We hit an unexpected problem loading this page. Please try again — if
+          it keeps happening, contact support and we will look into it.
         </p>
 
         {/* Development only: the actual message, for the person fixing it. */}

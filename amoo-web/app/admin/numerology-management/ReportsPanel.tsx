@@ -107,13 +107,7 @@ function toRow(r: RawReport): DisplayRow {
   };
 }
 
-function Toast({
-  message,
-  onClose,
-}: {
-  message: string;
-  onClose: () => void;
-}) {
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
   useEffect(() => {
     const t = setTimeout(onClose, 3000);
     return () => clearTimeout(t);
@@ -136,7 +130,7 @@ export default function ReportsPanel() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RawReport | null>(null);
   const [formValues, setFormValues] = useState<Record<string, string | number>>(
-    {}
+    {},
   );
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
@@ -199,7 +193,7 @@ export default function ReportsPanel() {
         options: statusOptions,
       },
     ],
-    []
+    [],
   );
 
   const editFields: ModalField[] = useMemo(
@@ -232,7 +226,7 @@ export default function ReportsPanel() {
         full: true,
       },
     ],
-    []
+    [],
   );
 
   const handleAdd = () => {
@@ -270,7 +264,7 @@ export default function ReportsPanel() {
         user_name: r.user?.name ?? "",
         created_at: r.created_at ?? "",
       })),
-      "numerology-reports.csv"
+      "numerology-reports.csv",
     );
   };
 

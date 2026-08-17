@@ -38,6 +38,28 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ github.repository }}/backend:${{ env.IMAGE_TAG }},${{ env.REGISTRY }}/${{ github.repository }}/backend:latest
 
+      - name: Validate frontend build args
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || secrets.NEXT_PUBLIC_API_URL || '' }}
+        run: |
+          case "$NEXT_PUBLIC_API_URL" in
+            '')
+              echo "::error::NEXT_PUBLIC_API_URL is not set. Set it (repo variable/secret) to https://your-domain (no /api)."
+              exit 1
+              ;;
+            http://localhost*|http://127.0.0.1*)
+              echo "::error::NEXT_PUBLIC_API_URL must be the public origin, not '$NEXT_PUBLIC_API_URL'."
+              exit 1
+              ;;
+            */api|*/api/)
+              echo "::error::NEXT_PUBLIC_API_URL must NOT end in /api — the app appends /api itself. Got '$NEXT_PUBLIC_API_URL'."
+              exit 1
+              ;;
+            *)
+              echo "NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL"
+              ;;
+          esac
+
       - name: Build & push frontend
         uses: docker/build-push-action@v5
         with:

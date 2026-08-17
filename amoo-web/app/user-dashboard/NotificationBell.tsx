@@ -46,7 +46,10 @@ function timeAgo(iso: string): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+  return new Date(iso).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+  });
 }
 
 export default function NotificationBell() {
@@ -61,23 +64,37 @@ export default function NotificationBell() {
   /* fetch unread count on mount + every 30 s */
   useEffect(() => {
     const fetchCount = () => {
-      api.getUnreadCount().then((res: unknown) => {
-        setUnread(Number((res as any)?.count ?? 0));
-      }).catch(() => {}).finally(() => setFetchingCount(false));
+      api
+        .getUnreadCount()
+        .then((res: unknown) => {
+          setUnread(Number((res as any)?.count ?? 0));
+        })
+        .catch(() => {})
+        .finally(() => setFetchingCount(false));
     };
     fetchCount();
     timerRef.current = setInterval(fetchCount, 30000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
   /* fetch list on open */
   useEffect(() => {
     if (!open) return;
-    api.getNotifications().then((res: unknown) => {
-      const d = res as any;
-      const list = Array.isArray(d?.data) ? d.data : Array.isArray(res) ? res : [];
-      setNotifications(list as Notification[]);
-    }).catch(() => {}).finally(() => setLoadingList(false));
+    api
+      .getNotifications()
+      .then((res: unknown) => {
+        const d = res as any;
+        const list = Array.isArray(d?.data)
+          ? d.data
+          : Array.isArray(res)
+            ? res
+            : [];
+        setNotifications(list as Notification[]);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingList(false));
   }, [open]);
 
   /* close on outside click */
@@ -94,16 +111,24 @@ export default function NotificationBell() {
 
   const markOne = async (id: number) => {
     setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n))
+      prev.map((n) => (n.id === id ? { ...n, is_read: true } : n)),
     );
     setUnread((prev) => Math.max(0, (prev ?? 1) - 1));
-    try { await api.markRead(id); } catch { /* best-effort */ }
+    try {
+      await api.markRead(id);
+    } catch {
+      /* best-effort */
+    }
   };
 
   const markAll = async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })));
     setUnread(0);
-    try { await api.markAllRead(); } catch { /* best-effort */ }
+    try {
+      await api.markAllRead();
+    } catch {
+      /* best-effort */
+    }
   };
 
   const displayCount = unread ?? 0;
@@ -119,7 +144,10 @@ export default function NotificationBell() {
       >
         <Bell className="h-[22px] w-[22px]" strokeWidth={1.7} />
         {fetchingCount ? null : displayCount > 0 ? (
-          <span aria-live="polite" className="absolute -top-[1px] right-0 flex min-w-[17px] items-center justify-center rounded-full bg-[#e9b85c] px-1 text-[9.5px] font-bold leading-[17px] text-[#2a1148]">
+          <span
+            aria-live="polite"
+            className="absolute -top-[1px] right-0 flex min-w-[17px] items-center justify-center rounded-full bg-[#e9b85c] px-1 text-[9.5px] font-bold leading-[17px] text-[#2a1148]"
+          >
             {displayCount > 99 ? "99+" : displayCount}
           </span>
         ) : null}
@@ -130,7 +158,9 @@ export default function NotificationBell() {
         <div className="absolute right-0 top-full z-50 mt-2 w-[360px] overflow-hidden rounded-[14px] border border-[#ece3d5] bg-white shadow-[0_12px_40px_rgba(43,15,71,0.12)]">
           {/* Panel header */}
           <div className="flex items-center justify-between border-b border-[#f1e8da] px-4 py-3">
-            <h3 className="text-[14px] font-bold text-[#2b0f47]">Notifications</h3>
+            <h3 className="text-[14px] font-bold text-[#2b0f47]">
+              Notifications
+            </h3>
             {displayCount > 0 && (
               <button
                 type="button"
@@ -152,8 +182,13 @@ export default function NotificationBell() {
               </div>
             ) : notifications.length === 0 ? (
               <div className="py-10 text-center">
-                <Bell className="mx-auto h-8 w-8 text-[#d4ccec]" strokeWidth={1.4} />
-                <p className="mt-2 text-[13px] font-medium text-[#2b0f47]">No notifications</p>
+                <Bell
+                  className="mx-auto h-8 w-8 text-[#d4ccec]"
+                  strokeWidth={1.4}
+                />
+                <p className="mt-2 text-[13px] font-medium text-[#2b0f47]">
+                  No notifications
+                </p>
                 <p className="mt-1 text-[11.5px] text-[#8b8697]">
                   You&apos;re all caught up!
                 </p>
@@ -167,7 +202,9 @@ export default function NotificationBell() {
                   <button
                     key={n.id}
                     type="button"
-                    onClick={() => { if (isUnread) markOne(n.id); }}
+                    onClick={() => {
+                      if (isUnread) markOne(n.id);
+                    }}
                     className={`flex w-full gap-3 border-b border-[#f4f1f8] px-4 py-3 text-left transition-colors hover:bg-[#faf7f2] ${
                       isUnread ? "bg-[#fdfbf7]" : ""
                     }`}
@@ -181,7 +218,9 @@ export default function NotificationBell() {
                       <div className="flex items-start justify-between gap-2">
                         <p
                           className={`text-[12.5px] leading-[1.35] ${
-                            isUnread ? "font-bold text-[#2b0f47]" : "font-semibold text-[#4b4458]"
+                            isUnread
+                              ? "font-bold text-[#2b0f47]"
+                              : "font-semibold text-[#4b4458]"
                           }`}
                         >
                           {sanitize(n.title)}

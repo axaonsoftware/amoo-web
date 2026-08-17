@@ -14,7 +14,11 @@ export default function ReportManagementPage() {
       <StatsRow />
       <div className="mt-5 flex flex-col gap-4 xl:flex-row">
         <div className="min-w-0 flex-1">
-          <ReportsPanel onReady={(fns: any) => { panelRef.current = fns; }} />
+          <ReportsPanel
+            onReady={(fns: any) => {
+              panelRef.current = fns;
+            }}
+          />
         </div>
         <RightRail />
       </div>

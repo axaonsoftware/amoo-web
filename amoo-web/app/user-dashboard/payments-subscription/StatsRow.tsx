@@ -1,14 +1,26 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Coins, Loader2, Star, Wallet } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Coins,
+  Loader2,
+  Star,
+  Wallet,
+} from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 type WalletData = {
   balance: number;
   currency: string;
-  transactions: { id: number; amount: number; type: string; created_at: string }[];
+  transactions: {
+    id: number;
+    amount: number;
+    type: string;
+    created_at: string;
+  }[];
   meta: { total: number };
 };
 
@@ -22,8 +34,14 @@ type Subscription = {
 };
 
 export default function StatsRow() {
-  const { data: wallet, loading: wLoading } = useApi<WalletData>(() => api.getWallet(), []);
-  const { data: subsData, loading: sLoading } = useApi<any>(() => api.getSubscriptions(), []);
+  const { data: wallet, loading: wLoading } = useApi<WalletData>(
+    () => api.getWallet(),
+    [],
+  );
+  const { data: subsData, loading: sLoading } = useApi<any>(
+    () => api.getSubscriptions(),
+    [],
+  );
 
   const loading = wLoading || sLoading;
 
@@ -32,10 +50,18 @@ export default function StatsRow() {
     .filter((t) => t.type === "debit")
     .reduce((sum, t) => sum + Number(t.amount || 0), 0);
 
-  const subs = Array.isArray(subsData?.data) ? subsData.data : Array.isArray(subsData) ? subsData : [];
+  const subs = Array.isArray(subsData?.data)
+    ? subsData.data
+    : Array.isArray(subsData)
+      ? subsData
+      : [];
   const activeSub = subs.find((s: Subscription) => s.status === "active");
   const nextRenewal = activeSub?.expires_at
-    ? new Date(activeSub.expires_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+    ? new Date(activeSub.expires_at).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      })
     : null;
 
   const stats = [
@@ -61,7 +87,11 @@ export default function StatsRow() {
     },
     {
       label: "Active Subscription",
-      value: loading ? "—" : activeSub ? (activeSub.plan_name || activeSub.package_name || "Active") : "None",
+      value: loading
+        ? "—"
+        : activeSub
+          ? activeSub.plan_name || activeSub.package_name || "Active"
+          : "None",
       action: "View Plan",
       href: "#subscription",
       icon: Star,
@@ -71,7 +101,7 @@ export default function StatsRow() {
     },
     {
       label: "Next Renewal",
-      value: loading ? "—" : nextRenewal ?? "N/A",
+      value: loading ? "—" : (nextRenewal ?? "N/A"),
       action: nextRenewal ? "Renew Now" : "Subscribe",
       href: "#subscription",
       icon: CalendarDays,
@@ -94,7 +124,10 @@ export default function StatsRow() {
               className={`flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[13px] ${stat.tint}`}
             >
               {loading ? (
-                <Loader2 className="h-[21px] w-[21px] text-[#8b8697] animate-spin" strokeWidth={1.8} />
+                <Loader2
+                  className="h-[21px] w-[21px] text-[#8b8697] animate-spin"
+                  strokeWidth={1.8}
+                />
               ) : (
                 <Icon
                   className={`h-[21px] w-[21px] ${stat.iconColor}`}
@@ -104,7 +137,9 @@ export default function StatsRow() {
               )}
             </span>
             <div className="min-w-0">
-              <p className="text-[12px] leading-none text-[#8b8697]">{stat.label}</p>
+              <p className="text-[12px] leading-none text-[#8b8697]">
+                {stat.label}
+              </p>
               <p className="mt-[7px] font-display text-[19px] font-bold leading-none text-[#2b0f47]">
                 {stat.value}
               </p>

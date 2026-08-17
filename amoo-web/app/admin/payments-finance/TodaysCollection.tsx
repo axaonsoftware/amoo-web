@@ -7,7 +7,11 @@ import api from "../../../lib/api";
 function isToday(ts: string): boolean {
   const d = new Date(ts);
   const now = new Date();
-  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+  return (
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  );
 }
 
 export default function TodaysCollection() {
@@ -19,13 +23,23 @@ export default function TodaysCollection() {
 
   useEffect(() => {
     let cancelled = false;
-    api.admin.getPayments()
+    api.admin
+      .getPayments()
       .then((res) => {
         if (cancelled) return;
-        const payments = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
-        const todayPayments = payments.filter((p: any) => p.created_at && isToday(p.created_at as string));
+        const payments = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res)
+            ? res
+            : [];
+        const todayPayments = payments.filter(
+          (p: any) => p.created_at && isToday(p.created_at as string),
+        );
         if (todayPayments.length > 0) {
-          const total = todayPayments.reduce((s: number, p: any) => s + ((p.amount as number) || 0), 0);
+          const total = todayPayments.reduce(
+            (s: number, p: any) => s + ((p.amount as number) || 0),
+            0,
+          );
           const count = todayPayments.length;
           const avg = count > 0 ? Math.round(total / count) : 0;
           setAmount(`₹ ${total.toLocaleString("en-IN")}`);
@@ -37,9 +51,16 @@ export default function TodaysCollection() {
           setAvgOrder(null);
         }
       })
-      .catch((err) => { if (!cancelled) setError(err?.message || "Failed to load today's collection"); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .catch((err) => {
+        if (!cancelled)
+          setError(err?.message || "Failed to load today's collection");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -48,7 +69,10 @@ export default function TodaysCollection() {
         <h2 className="text-[14px] font-semibold text-[#1B1630]">
           Today&apos;s Collection
         </h2>
-        <Link href="/admin/payments-finance" className="text-[11px] font-medium text-[#7C3AED]">
+        <Link
+          href="/admin/payments-finance"
+          className="text-[11px] font-medium text-[#7C3AED]"
+        >
           View Details
         </Link>
       </div>
@@ -86,7 +110,9 @@ export default function TodaysCollection() {
               </p>
             </div>
             <div>
-              <p className="text-[10.5px] text-[#8B879C]">Average Order Value</p>
+              <p className="text-[10.5px] text-[#8B879C]">
+                Average Order Value
+              </p>
               <p className="mt-[2px] text-[13px] font-semibold text-[#1B1630]">
                 {avgOrder}
               </p>

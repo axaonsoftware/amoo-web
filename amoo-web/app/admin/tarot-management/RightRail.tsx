@@ -25,14 +25,54 @@ const DONUT =
   " #45058A 311.96deg 360deg)";
 
 const quickActions = [
-  { label: "Add New Reading", Icon: Plus, bg: "bg-[#DCE9FE]", fg: "text-[#2563EB]" },
-  { label: "Add Tarot Master", Icon: UserRoundPlus, bg: "bg-[#F3EBFE]", fg: "text-[#7C3AED]" },
-  { label: "Manage Spreads", Icon: LayoutGrid, bg: "bg-[#E4EEFD]", fg: "text-[#2B7FD4]" },
-  { label: "Manage Decks", Icon: Layers, bg: "bg-[#E6F6EA]", fg: "text-[#22A34F]" },
-  { label: "Card Meanings", Icon: BookOpen, bg: "bg-[#DCE9FE]", fg: "text-[#2563EB]" },
-  { label: "Bulk Upload Readings", Icon: Upload, bg: "bg-[#FDE8EE]", fg: "text-[#EF3B5B]" },
-  { label: "Reading Reports", Icon: FileText, bg: "bg-[#F3EBFE]", fg: "text-[#7C3AED]" },
-  { label: "Revenue Analytics", Icon: ChartColumn, bg: "bg-[#FFECC6]", fg: "text-[#F59E0B]" },
+  {
+    label: "Add New Reading",
+    Icon: Plus,
+    bg: "bg-[#DCE9FE]",
+    fg: "text-[#2563EB]",
+  },
+  {
+    label: "Add Tarot Master",
+    Icon: UserRoundPlus,
+    bg: "bg-[#F3EBFE]",
+    fg: "text-[#7C3AED]",
+  },
+  {
+    label: "Manage Spreads",
+    Icon: LayoutGrid,
+    bg: "bg-[#E4EEFD]",
+    fg: "text-[#2B7FD4]",
+  },
+  {
+    label: "Manage Decks",
+    Icon: Layers,
+    bg: "bg-[#E6F6EA]",
+    fg: "text-[#22A34F]",
+  },
+  {
+    label: "Card Meanings",
+    Icon: BookOpen,
+    bg: "bg-[#DCE9FE]",
+    fg: "text-[#2563EB]",
+  },
+  {
+    label: "Bulk Upload Readings",
+    Icon: Upload,
+    bg: "bg-[#FDE8EE]",
+    fg: "text-[#EF3B5B]",
+  },
+  {
+    label: "Reading Reports",
+    Icon: FileText,
+    bg: "bg-[#F3EBFE]",
+    fg: "text-[#7C3AED]",
+  },
+  {
+    label: "Revenue Analytics",
+    Icon: ChartColumn,
+    bg: "bg-[#FFECC6]",
+    fg: "text-[#F59E0B]",
+  },
 ];
 
 function Card({ children }: { children: React.ReactNode }) {
@@ -45,7 +85,10 @@ function Card({ children }: { children: React.ReactNode }) {
 
 function ViewAll() {
   return (
-    <button type="button" className="text-[10.5px] font-semibold text-[#4F1FD6]">
+    <button
+      type="button"
+      className="text-[10.5px] font-semibold text-[#4F1FD6]"
+    >
       View All
     </button>
   );
@@ -63,7 +106,8 @@ export default function RightRail() {
     Promise.all([
       api.admin.getOverview().then((data: any) => {
         const s = data?.stats ?? data;
-        if (s?.readings != null) setTotalReadings(Number(s.readings).toLocaleString("en-IN"));
+        if (s?.readings != null)
+          setTotalReadings(Number(s.readings).toLocaleString("en-IN"));
       }),
       api.admin.getTopExperts().then((data: any) => {
         const items = data?.data ?? data;
@@ -74,7 +118,7 @@ export default function RightRail() {
               role: m.expertise || "Tarot Master",
               rating: m.rating || "—",
               count: m.sessions || m.bookings || 0,
-            }))
+            })),
           );
         }
       }),
@@ -135,7 +179,10 @@ export default function RightRail() {
 
           <div className="mt-[9px]">
             {masters.map((m) => (
-              <div key={m.name} className="flex h-[38px] items-center gap-[10px]">
+              <div
+                key={m.name}
+                className="flex h-[38px] items-center gap-[10px]"
+              >
                 <Image
                   src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=200&q=80"
                   alt={m.name}
@@ -206,14 +253,26 @@ export default function RightRail() {
 
           <div className="mt-[10px] space-y-[8px]">
             <div className="flex items-start gap-[9px]">
-              <span className="mt-[4px] grid h-[10px] w-[10px] shrink-0 place-items-center rounded-full" style={{ background: "#7C3AED33" }}>
-                <span className="h-[4px] w-[4px] rounded-full" style={{ background: "#7C3AED" }} />
+              <span
+                className="mt-[4px] grid h-[10px] w-[10px] shrink-0 place-items-center rounded-full"
+                style={{ background: "#7C3AED33" }}
+              >
+                <span
+                  className="h-[4px] w-[4px] rounded-full"
+                  style={{ background: "#7C3AED" }}
+                />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[10.5px] font-bold leading-[15px] text-[#14134A]">Readings synced</p>
-                <p className="truncate text-[10px] leading-[15px] text-[#8B879C]">From API</p>
+                <p className="truncate text-[10.5px] font-bold leading-[15px] text-[#14134A]">
+                  Readings synced
+                </p>
+                <p className="truncate text-[10px] leading-[15px] text-[#8B879C]">
+                  From API
+                </p>
               </div>
-              <span className="shrink-0 whitespace-nowrap pt-[1px] text-[10px] text-[#8B879C]">now</span>
+              <span className="shrink-0 whitespace-nowrap pt-[1px] text-[10px] text-[#8B879C]">
+                now
+              </span>
             </div>
           </div>
         </div>

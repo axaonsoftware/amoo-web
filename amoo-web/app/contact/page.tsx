@@ -29,7 +29,13 @@ import {
   ChatIcon,
 } from "./icons";
 import { api } from "../../lib/api";
-import { WHATSAPP_URL, TEL_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME } from "../../lib/constants";
+import {
+  WHATSAPP_URL,
+  TEL_URL,
+  CONTACT_PHONE,
+  CONTACT_EMAIL,
+  SITE_NAME,
+} from "../../lib/constants";
 
 const CONTACT_METHODS = [
   {
@@ -189,7 +195,10 @@ export default function ContactPage() {
     e.preventDefault();
     if (!validate()) return;
     // Honeypot: silently discard if a bot filled the hidden field.
-    if (formData.honeypot) { setIsSubmitting(false); return; }
+    if (formData.honeypot) {
+      setIsSubmitting(false);
+      return;
+    }
     setIsSubmitting(true);
     try {
       await api.sendContact({
@@ -200,10 +209,22 @@ export default function ContactPage() {
         message: formData.message,
       });
       setIsSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", subject: "", message: "", honeypot: "" });
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+        honeypot: "",
+      });
       setTimeout(() => setIsSubmitted(false), 5000);
     } catch (err: unknown) {
-      setErrors({ message: err instanceof Error ? err.message : "Failed to send. Please try again." });
+      setErrors({
+        message:
+          err instanceof Error
+            ? err.message
+            : "Failed to send. Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -283,7 +304,10 @@ export default function ContactPage() {
                 </p>
 
                 {isSubmitted && (
-                  <div role="alert" className="mt-4 flex items-center gap-2 rounded-[8px] bg-green-50 border border-green-200 p-3 text-green-700 text-[13px] font-medium">
+                  <div
+                    role="alert"
+                    className="mt-4 flex items-center gap-2 rounded-[8px] bg-green-50 border border-green-200 p-3 text-green-700 text-[13px] font-medium"
+                  >
                     <svg
                       className="h-5 w-5 shrink-0"
                       viewBox="0 0 24 24"
@@ -360,7 +384,9 @@ export default function ContactPage() {
                       </p>
                     )}
                     <div className="relative">
-                      <PenIcon className={`absolute left-[14px] top-1/2 h-[18px] w-[18px] -translate-y-1/2 ${errors.subject ? "text-red-400" : "text-[#9a98a5]"}`} />
+                      <PenIcon
+                        className={`absolute left-[14px] top-1/2 h-[18px] w-[18px] -translate-y-1/2 ${errors.subject ? "text-red-400" : "text-[#9a98a5]"}`}
+                      />
                       <select
                         name="subject"
                         value={formData.subject}
@@ -386,12 +412,18 @@ export default function ContactPage() {
                         <path d="m6 9.5 6 6 6-6" />
                       </svg>
                     </div>
-                    {errors.subject && <p className="mt-1 text-[12px] text-red-500">{errors.subject}</p>}
+                    {errors.subject && (
+                      <p className="mt-1 text-[12px] text-red-500">
+                        {errors.subject}
+                      </p>
+                    )}
                   </div>
 
                   {/* Row 3: Message */}
                   <div className="relative">
-                    <MessageIcon className={`absolute left-[14px] top-[16px] h-[18px] w-[18px] ${errors.message ? "text-red-400" : "text-[#9a98a5]"}`} />
+                    <MessageIcon
+                      className={`absolute left-[14px] top-[16px] h-[18px] w-[18px] ${errors.message ? "text-red-400" : "text-[#9a98a5]"}`}
+                    />
                     <textarea
                       name="message"
                       placeholder="Your Message"
@@ -401,11 +433,28 @@ export default function ContactPage() {
                       className={`w-full resize-none rounded-[8px] border bg-white pl-[42px] pr-4 pt-[14px] text-[14px] text-[#333] placeholder-[#9a98a5] outline-none transition-colors focus:border-[#6b3fa0] focus:ring-1 focus:ring-[#6b3fa0]/30 ${errors.message ? "border-red-400" : "border-[#e8e2d8]"}`}
                     />
                   </div>
-                  {errors.message && <p className="text-[12px] text-red-500">{errors.message}</p>}
+                  {errors.message && (
+                    <p className="text-[12px] text-red-500">{errors.message}</p>
+                  )}
 
                   {/* Honeypot — hidden from humans, bots fill it automatically */}
-                  <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', opacity: 0 }} tabIndex={-1}>
-                    <input type="text" name="honeypot" value={formData.honeypot} onChange={handleChange} tabIndex={-1} autoComplete="off" />
+                  <div
+                    aria-hidden="true"
+                    style={{
+                      position: "absolute",
+                      left: "-9999px",
+                      opacity: 0,
+                    }}
+                    tabIndex={-1}
+                  >
+                    <input
+                      type="text"
+                      name="honeypot"
+                      value={formData.honeypot}
+                      onChange={handleChange}
+                      tabIndex={-1}
+                      autoComplete="off"
+                    />
                   </div>
 
                   {/* Submit Button */}
@@ -415,14 +464,33 @@ export default function ContactPage() {
                     className="flex h-[48px] w-full items-center justify-center gap-2.5 rounded-[8px] bg-[radial-gradient(circle_at_35%_30%,#5e1c8f,#3f0f55)] text-[15px] font-semibold text-white shadow-[0_4px_14px_rgba(94,28,143,0.35)] transition-all hover:shadow-[0_6px_20px_rgba(94,28,143,0.5)] sm:w-[260px] disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isSubmitting ? (
-                      <svg className="h-[18px] w-[18px] animate-spin" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      <svg
+                        className="h-[18px] w-[18px] animate-spin"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
                       </svg>
                     ) : (
                       <>
                         Send Message
-                        <svg className="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="currentColor">
+                        <svg
+                          className="h-[18px] w-[18px]"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
                           <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                         </svg>
                       </>
@@ -627,14 +695,24 @@ export default function ContactPage() {
                       bg: "bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
                       href: "https://instagram.com/amooguru_official",
                     },
-                    { Icon: YoutubeIcon, label: "YouTube", bg: "bg-[#ff0000]", href: "https://youtube.com/@amoooguru" },
+                    {
+                      Icon: YoutubeIcon,
+                      label: "YouTube",
+                      bg: "bg-[#ff0000]",
+                      href: "https://youtube.com/@amoooguru",
+                    },
                     {
                       Icon: WhatsAppIcon,
                       label: "WhatsApp",
                       bg: "bg-[#25D366]",
                       href: WHATSAPP_URL,
                     },
-                    { Icon: SendIcon, label: "Telegram", bg: "bg-[#0088cc]", href: "https://t.me/amoooguru" },
+                    {
+                      Icon: SendIcon,
+                      label: "Telegram",
+                      bg: "bg-[#0088cc]",
+                      href: "https://t.me/amoooguru",
+                    },
                   ].map(({ Icon, label, bg, href }) => (
                     <Link
                       key={label}

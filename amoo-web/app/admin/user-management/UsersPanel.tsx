@@ -29,8 +29,18 @@ import { errorMessage } from "../../../lib/errors";
 // search, status, role, verified, date_from, date_to, page, limit|pageSize.
 // These were previously decorative — `active` was hardcoded on the first tab
 // and clicking any of them did nothing.
-type Filters = { status: string; role: string; verified: string; date_from: string };
-const NO_FILTERS: Filters = { status: "", role: "", verified: "", date_from: "" };
+type Filters = {
+  status: string;
+  role: string;
+  verified: string;
+  date_from: string;
+};
+const NO_FILTERS: Filters = {
+  status: "",
+  role: "",
+  verified: "",
+  date_from: "",
+};
 
 function daysAgo(n: number): string {
   const d = new Date();
@@ -40,10 +50,22 @@ function daysAgo(n: number): string {
 
 const tabs: { label: string; filters: () => Filters }[] = [
   { label: "All Users", filters: () => ({ ...NO_FILTERS }) },
-  { label: "Active Users", filters: () => ({ ...NO_FILTERS, status: "active" }) },
-  { label: "New Users", filters: () => ({ ...NO_FILTERS, date_from: daysAgo(30) }) },
-  { label: "Blocked Users", filters: () => ({ ...NO_FILTERS, status: "blocked" }) },
-  { label: "Verified Users", filters: () => ({ ...NO_FILTERS, verified: "1" }) },
+  {
+    label: "Active Users",
+    filters: () => ({ ...NO_FILTERS, status: "active" }),
+  },
+  {
+    label: "New Users",
+    filters: () => ({ ...NO_FILTERS, date_from: daysAgo(30) }),
+  },
+  {
+    label: "Blocked Users",
+    filters: () => ({ ...NO_FILTERS, status: "blocked" }),
+  },
+  {
+    label: "Verified Users",
+    filters: () => ({ ...NO_FILTERS, verified: "1" }),
+  },
 ];
 
 // users.role ENUM('free','premium','consultant'); users.status ENUM('active','blocked','pending')
@@ -69,8 +91,16 @@ function fmtDate(iso: string) {
   if (!iso) return { date: "", time: "" };
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
+    date: d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }),
   };
 }
 
@@ -106,11 +136,7 @@ const UserRow = memo(function UserRow({
       <td className="py-[11px] pl-5 align-middle">
         {u.selected ? (
           <span className="grid h-[14px] w-[14px] place-items-center rounded-[4px] bg-[#6D28D9]">
-            <Check
-              size={10}
-              strokeWidth={3}
-              className="text-white"
-            />
+            <Check size={10} strokeWidth={3} className="text-white" />
           </span>
         ) : (
           <span className="block h-[14px] w-[14px] rounded-[4px] border border-[#CFCBDB] bg-white" />
@@ -186,15 +212,30 @@ const UserRow = memo(function UserRow({
 
       <td className="py-[11px] pr-5">
         <div className="flex items-center gap-[6px]">
-          <button type="button" aria-label="Edit" onClick={() => onEdit(u)} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]">
+          <button
+            type="button"
+            aria-label="Edit"
+            onClick={() => onEdit(u)}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6E6A80] hover:bg-[#FAF9FC]"
+          >
             <Pencil size={14} />
           </button>
           {u.status !== "blocked" && (
-            <button type="button" aria-label="Block" onClick={() => onBlock(u)} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#F59E0B] hover:bg-[#FEF3C7]">
+            <button
+              type="button"
+              aria-label="Block"
+              onClick={() => onBlock(u)}
+              className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#F59E0B] hover:bg-[#FEF3C7]"
+            >
               <Ban size={14} />
             </button>
           )}
-          <button type="button" aria-label="Delete" onClick={() => onDelete(u)} className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEE2E2]">
+          <button
+            type="button"
+            aria-label="Delete"
+            onClick={() => onDelete(u)}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#EF4444] hover:bg-[#FEE2E2]"
+          >
             <Trash2 size={14} />
           </button>
         </div>
@@ -217,9 +258,15 @@ export default function UsersPanel() {
 
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [editValues, setEditValues] = useState<Record<string, string | number>>({});
+  const [editValues, setEditValues] = useState<Record<string, string | number>>(
+    {},
+  );
   const [editSaving, setEditSaving] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; type: "delete" | "block"; user: any }>({ open: false, type: "delete", user: null });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    type: "delete" | "block";
+    user: any;
+  }>({ open: false, type: "delete", user: null });
   const [confirmSaving, setConfirmSaving] = useState(false);
   const { showToast, Toast } = useToast();
 
@@ -246,7 +293,7 @@ export default function UsersPanel() {
         verified,
         date_from: dateFrom,
       }),
-    [page, limit, debouncedSearch, role, status, verified, dateFrom]
+    [page, limit, debouncedSearch, role, status, verified, dateFrom],
   );
 
   const load = useCallback(() => {
@@ -272,7 +319,7 @@ export default function UsersPanel() {
               date,
               time,
             };
-          })
+          }),
         );
       })
       .catch((e) => setError(errorMessage(e)))
@@ -300,7 +347,13 @@ export default function UsersPanel() {
   const reload = load;
   const handleEditUser = useCallback((u: any) => {
     setEditingUser(u);
-    setEditValues({ name: u.name, email: u.email, phone: u.phone || "", role: u.role, status: u.status });
+    setEditValues({
+      name: u.name,
+      email: u.email,
+      phone: u.phone || "",
+      role: u.role,
+      status: u.status,
+    });
     setEditModalOpen(true);
   }, []);
   const handleBlockUser = useCallback((u: any) => {
@@ -331,7 +384,9 @@ export default function UsersPanel() {
     return pages;
   };
 
-  const hasFilters = Boolean(debouncedSearch || status || role || verified || dateFrom);
+  const hasFilters = Boolean(
+    debouncedSearch || status || role || verified || dateFrom,
+  );
   const clearFilters = () => {
     setSearch("");
     setDebouncedSearch("");
@@ -372,15 +427,31 @@ export default function UsersPanel() {
           <Search size={15} className="shrink-0 text-[#8B879C]" />
         </div>
 
-        {(
-          [
-            { caption: "Role", key: "role" as const, value: role, options: ROLE_OPTIONS },
-            { caption: "Status", key: "status" as const, value: status, options: STATUS_OPTIONS },
-            { caption: "Verification", key: "verified" as const, value: verified, options: VERIFIED_OPTIONS },
-          ]
-        ).map((s) => (
+        {[
+          {
+            caption: "Role",
+            key: "role" as const,
+            value: role,
+            options: ROLE_OPTIONS,
+          },
+          {
+            caption: "Status",
+            key: "status" as const,
+            value: status,
+            options: STATUS_OPTIONS,
+          },
+          {
+            caption: "Verification",
+            key: "verified" as const,
+            value: verified,
+            options: VERIFIED_OPTIONS,
+          },
+        ].map((s) => (
           <div key={s.caption}>
-            <label htmlFor={`filter-${s.key}`} className="mb-[4px] block text-[10px] text-[#8B879C]">
+            <label
+              htmlFor={`filter-${s.key}`}
+              className="mb-[4px] block text-[10px] text-[#8B879C]"
+            >
               {s.caption}
             </label>
             <div className="relative">
@@ -449,7 +520,9 @@ export default function UsersPanel() {
             ) : userRows.length === 0 ? (
               <EmptyRow
                 colSpan={7}
-                title={hasFilters ? "No users match these filters" : "No users yet"}
+                title={
+                  hasFilters ? "No users match these filters" : "No users yet"
+                }
                 message={
                   hasFilters
                     ? "Try clearing the search or filters to widen the results."
@@ -479,7 +552,8 @@ export default function UsersPanel() {
       {/* Pagination */}
       <div className="flex flex-wrap items-center gap-4 px-5 py-[16px]">
         <p className="text-[11.5px] text-[#8B879C]">
-          Showing {showingFrom} to {showingTo} of {total.toLocaleString("en-IN")} users
+          Showing {showingFrom} to {showingTo} of{" "}
+          {total.toLocaleString("en-IN")} users
         </p>
 
         <div className="ml-auto flex items-center gap-[6px]">
@@ -516,7 +590,7 @@ export default function UsersPanel() {
               >
                 {p}
               </button>
-            )
+            ),
           )}
 
           <button
@@ -551,18 +625,43 @@ export default function UsersPanel() {
           { name: "name", label: "Name", type: "text", required: true },
           { name: "email", label: "Email", type: "text", required: true },
           { name: "phone", label: "Phone", type: "text" },
-          { name: "role", label: "Role", type: "select", options: [{ label: "User", value: "user" }, { label: "Premium", value: "premium" }, { label: "Admin", value: "admin" }] },
-          { name: "status", label: "Status", type: "select", options: [{ label: "Active", value: "active" }, { label: "Blocked", value: "blocked" }] },
+          {
+            name: "role",
+            label: "Role",
+            type: "select",
+            options: [
+              { label: "User", value: "user" },
+              { label: "Premium", value: "premium" },
+              { label: "Admin", value: "admin" },
+            ],
+          },
+          {
+            name: "status",
+            label: "Status",
+            type: "select",
+            options: [
+              { label: "Active", value: "active" },
+              { label: "Blocked", value: "blocked" },
+            ],
+          },
         ]}
         values={editValues}
-        onChange={(name, value) => setEditValues((prev) => ({ ...prev, [name]: value }))}
+        onChange={(name, value) =>
+          setEditValues((prev) => ({ ...prev, [name]: value }))
+        }
         saving={editSaving}
         onClose={() => setEditModalOpen(false)}
         onSave={async () => {
           if (!editingUser) return;
           setEditSaving(true);
           try {
-            await api.admin.updateUser(editingUser.id, { name: editValues.name, email: editValues.email, phone: editValues.phone, role: editValues.role, status: editValues.status });
+            await api.admin.updateUser(editingUser.id, {
+              name: editValues.name,
+              email: editValues.email,
+              phone: editValues.phone,
+              role: editValues.role,
+              status: editValues.status,
+            });
             setEditModalOpen(false);
             showToast("User updated successfully");
             reload();
@@ -577,7 +676,11 @@ export default function UsersPanel() {
       <ConfirmDialog
         open={confirmDialog.open}
         title={confirmDialog.type === "delete" ? "Delete User" : "Block User"}
-        message={confirmDialog.type === "delete" ? `Are you sure you want to delete ${sanitize(confirmDialog.user?.name)}? This action cannot be undone.` : `Are you sure you want to block ${sanitize(confirmDialog.user?.name)}? They will no longer be able to access the platform.`}
+        message={
+          confirmDialog.type === "delete"
+            ? `Are you sure you want to delete ${sanitize(confirmDialog.user?.name)}? This action cannot be undone.`
+            : `Are you sure you want to block ${sanitize(confirmDialog.user?.name)}? They will no longer be able to access the platform.`
+        }
         onConfirm={async () => {
           setConfirmSaving(true);
           try {
@@ -585,7 +688,9 @@ export default function UsersPanel() {
               await api.admin.deleteUser(confirmDialog.user.id);
               showToast("User deleted successfully");
             } else {
-              await api.admin.updateUser(confirmDialog.user.id, { status: "blocked" });
+              await api.admin.updateUser(confirmDialog.user.id, {
+                status: "blocked",
+              });
               showToast("User blocked successfully");
             }
             setConfirmDialog({ open: false, type: "delete", user: null });
@@ -596,7 +701,9 @@ export default function UsersPanel() {
             setConfirmSaving(false);
           }
         }}
-        onCancel={() => setConfirmDialog({ open: false, type: "delete", user: null })}
+        onCancel={() =>
+          setConfirmDialog({ open: false, type: "delete", user: null })
+        }
         saving={confirmSaving}
       />
 

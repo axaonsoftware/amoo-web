@@ -70,15 +70,23 @@ export default function CouponCard({
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
       <div className="flex items-center gap-2 mb-4">
         <Tag size={16} className="text-[#3E1E7A]" aria-hidden="true" />
-        <h3 className="text-[#3E1E7A] font-semibold text-base">2. Offers &amp; Coupons</h3>
+        <h3 className="text-[#3E1E7A] font-semibold text-base">
+          2. Offers &amp; Coupons
+        </h3>
       </div>
 
       {applied ? (
         <div className="flex items-center justify-between rounded-lg border border-green-200 bg-green-50 px-4 py-3">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={20} className="text-green-600" aria-hidden="true" />
+            <CheckCircle2
+              size={20}
+              className="text-green-600"
+              aria-hidden="true"
+            />
             <div>
-              <p className="text-sm font-medium text-green-800">{applied.code} applied</p>
+              <p className="text-sm font-medium text-green-800">
+                {applied.code} applied
+              </p>
               <p className="text-xs text-green-600">
                 You save {formatCurrency(applied.discount)} on this booking
               </p>
@@ -116,7 +124,9 @@ export default function CouponCard({
               className="flex items-center gap-2 px-6 py-2.5 rounded-lg text-white text-sm font-medium disabled:opacity-50"
               style={{ background: "#3E1E7A" }}
             >
-              {validating && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+              {validating && (
+                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+              )}
               Apply
             </button>
           </div>

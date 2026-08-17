@@ -5,7 +5,7 @@ type EventHandler = (data: unknown) => void;
 
 export function connectChatWebSocket(
   token: string,
-  handlers: Record<string, EventHandler>
+  handlers: Record<string, EventHandler>,
 ): { send: (data: unknown) => void; close: () => void } {
   const ws = new WebSocket(`${WS_URL}/chat?token=${token}`);
 

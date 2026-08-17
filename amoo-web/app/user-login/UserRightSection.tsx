@@ -3,7 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, User, Lock, Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Sparkles,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { trackEvent } from "../../lib/tracking";
@@ -14,7 +24,9 @@ export default function UserRightPanel() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -59,7 +71,9 @@ export default function UserRightPanel() {
       trackEvent("login", { method: "email", role: "user" });
       setTimeout(() => router.push(callbackUrl), 1200);
     } catch (err: unknown) {
-      setApiError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      setApiError(
+        err instanceof Error ? err.message : "Login failed. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -93,14 +107,20 @@ export default function UserRightPanel() {
         </div>
 
         {loginSuccess && (
-          <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-3 text-green-700 text-sm">
+          <div
+            role="alert"
+            className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-3 text-green-700 text-sm"
+          >
             <CheckCircle2 size={16} />
             Login successful! Redirecting...
           </div>
         )}
 
         {apiError && (
-          <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
+          <div
+            role="alert"
+            className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm"
+          >
             <AlertCircle size={16} />
             {apiError}
           </div>
@@ -108,11 +128,20 @@ export default function UserRightPanel() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="login-email" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="login-email"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               Email Address
             </label>
-            <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <User size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" aria-hidden="true" />
+            <div
+              className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <User
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]"
+                aria-hidden="true"
+              />
               <input
                 id="login-email"
                 // type="email" gets the right mobile keyboard and native
@@ -122,35 +151,60 @@ export default function UserRightPanel() {
                 type="email"
                 autoComplete="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email)
+                    setErrors((p) => ({ ...p, email: undefined }));
+                }}
                 placeholder="you@example.com"
                 aria-invalid={errors.email ? true : undefined}
-                aria-describedby={errors.email ? "login-email-error" : undefined}
+                aria-describedby={
+                  errors.email ? "login-email-error" : undefined
+                }
                 className="w-full pl-10 pr-3 py-3 rounded-lg border border-purple-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
             </div>
             {errors.email && (
-              <p id="login-email-error" role="alert" className="mt-1 flex items-center gap-1 text-xs text-red-500">
+              <p
+                id="login-email-error"
+                role="alert"
+                className="mt-1 flex items-center gap-1 text-xs text-red-500"
+              >
                 <AlertCircle size={12} aria-hidden="true" /> {errors.email}
               </p>
             )}
           </div>
 
           <div>
-            <label htmlFor="login-password" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="login-password"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               Password
             </label>
-            <div className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <div
+              className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <Lock
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                aria-hidden="true"
+              />
               <input
                 id="login-password"
                 type={showPassword ? "text" : "password"}
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password)
+                    setErrors((p) => ({ ...p, password: undefined }));
+                }}
                 placeholder="Enter your password"
                 aria-invalid={errors.password ? true : undefined}
-                aria-describedby={errors.password ? "login-password-error" : undefined}
+                aria-describedby={
+                  errors.password ? "login-password-error" : undefined
+                }
                 className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
               <button
@@ -160,11 +214,19 @@ export default function UserRightPanel() {
                 aria-pressed={showPassword}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
               >
-                {showPassword ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}
+                {showPassword ? (
+                  <EyeOff size={18} aria-hidden="true" />
+                ) : (
+                  <Eye size={18} aria-hidden="true" />
+                )}
               </button>
             </div>
             {errors.password && (
-              <p id="login-password-error" role="alert" className="mt-1 flex items-center gap-1 text-xs text-red-500">
+              <p
+                id="login-password-error"
+                role="alert"
+                className="mt-1 flex items-center gap-1 text-xs text-red-500"
+              >
                 <AlertCircle size={12} aria-hidden="true" /> {errors.password}
               </p>
             )}
@@ -174,7 +236,10 @@ export default function UserRightPanel() {
             {/* /forgot-password and POST /api/auth/forgot-password are both
                 fully implemented; this used to point at /contact, leaving a
                 working self-service reset flow completely unreachable. */}
-            <Link href="/forgot-password" className="text-xs font-medium text-[#5B2A9D] hover:underline">
+            <Link
+              href="/forgot-password"
+              className="text-xs font-medium text-[#5B2A9D] hover:underline"
+            >
               Forgot Password?
             </Link>
           </div>
@@ -213,7 +278,10 @@ export default function UserRightPanel() {
 
         <p className="text-center text-sm text-gray-600 mt-6">
           Don&apos;t have an account?{" "}
-          <Link href="/signup" className="text-[#5B2A9D] font-semibold hover:underline">
+          <Link
+            href="/signup"
+            className="text-[#5B2A9D] font-semibold hover:underline"
+          >
             Sign Up
           </Link>
         </p>

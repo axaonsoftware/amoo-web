@@ -98,7 +98,7 @@ export default function RightRail() {
               bookings: e.sessions || e.bookings || `${e.rating || "—"} rating`,
               revenue: `₹ ${Number(e.revenue || 0).toLocaleString("en-IN")}`,
               rank: i + 1,
-            }))
+            })),
           );
         }
       })
@@ -267,8 +267,12 @@ export default function RightRail() {
           <li className="flex items-start gap-[8px]">
             <span className="mt-[4px] h-[6px] w-[6px] shrink-0 rounded-full bg-[#7C3AED]" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[10.5px] font-medium text-[#1F1836]">Service updated</p>
-              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">Latest API data</p>
+              <p className="truncate text-[10.5px] font-medium text-[#1F1836]">
+                Service updated
+              </p>
+              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">
+                Latest API data
+              </p>
             </div>
             <p className="shrink-0 text-[9.5px] text-[#A5A2B5]">now</p>
           </li>

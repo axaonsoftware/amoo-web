@@ -18,12 +18,48 @@ const statDefs: {
   iconWrap: string;
   iconColor: string;
 }[] = [
-  { label: "Total Reports", field: "reports", Icon: CalendarDays, iconWrap: "bg-[#F1EAFE]", iconColor: "text-[#7C3AED]" },
-  { label: "Today's Reports", field: "todaysReports", Icon: CalendarCheck2, iconWrap: "bg-[#FEF1E3]", iconColor: "text-[#F59E0B]" },
-  { label: "Name Corrections", field: "nameCorrections", Icon: UserRoundCheck, iconWrap: "bg-[#E3F7EA]", iconColor: "text-[#16A34A]" },
-  { label: "Name Suggestions", field: "nameSuggestions", Icon: UsersRound, iconWrap: "bg-[#E7F0FE]", iconColor: "text-[#3B82F6]" },
-  { label: "Active Packages", field: "activePackages", Icon: Package, iconWrap: "bg-[#F1EAFE]", iconColor: "text-[#7C3AED]" },
-  { label: "Revenue (May)", field: "revenue", Icon: IndianRupee, iconWrap: "bg-[#FEF1E3]", iconColor: "text-[#F59E0B]" },
+  {
+    label: "Total Reports",
+    field: "reports",
+    Icon: CalendarDays,
+    iconWrap: "bg-[#F1EAFE]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Today's Reports",
+    field: "todaysReports",
+    Icon: CalendarCheck2,
+    iconWrap: "bg-[#FEF1E3]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Name Corrections",
+    field: "nameCorrections",
+    Icon: UserRoundCheck,
+    iconWrap: "bg-[#E3F7EA]",
+    iconColor: "text-[#16A34A]",
+  },
+  {
+    label: "Name Suggestions",
+    field: "nameSuggestions",
+    Icon: UsersRound,
+    iconWrap: "bg-[#E7F0FE]",
+    iconColor: "text-[#3B82F6]",
+  },
+  {
+    label: "Active Packages",
+    field: "activePackages",
+    Icon: Package,
+    iconWrap: "bg-[#F1EAFE]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Revenue (May)",
+    field: "revenue",
+    Icon: IndianRupee,
+    iconWrap: "bg-[#FEF1E3]",
+    iconColor: "text-[#F59E0B]",
+  },
 ];
 
 export default function StatsRow() {
@@ -41,8 +77,10 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const fmtCurrency = (n: number | undefined) => (n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const fmtCurrency = (n: number | undefined) =>
+    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
   if (loading) {
     return (
@@ -77,8 +115,12 @@ export default function StatsRow() {
                 <Icon size={19} className={iconColor} />
               </div>
               <div className="min-w-0 pt-[1px]">
-                <p className="truncate text-[11px] font-medium text-[#8B879C]">{label}</p>
-                <p className="mt-[2px] whitespace-nowrap text-[21px] font-semibold leading-[27px] text-[#1B1630]">{value}</p>
+                <p className="truncate text-[11px] font-medium text-[#8B879C]">
+                  {label}
+                </p>
+                <p className="mt-[2px] whitespace-nowrap text-[21px] font-semibold leading-[27px] text-[#1B1630]">
+                  {value}
+                </p>
               </div>
             </div>
           </div>

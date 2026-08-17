@@ -1,16 +1,8 @@
 export type ReportType =
-  | "full"
-  | "correction"
-  | "suggestion"
-  | "career"
-  | "compatibility"
-  | "health";
+  "full" | "correction" | "suggestion" | "career" | "compatibility" | "health";
 
 export type ReportStatus =
-  | "Completed"
-  | "In Progress"
-  | "Pending"
-  | "Cancelled";
+  "Completed" | "In Progress" | "Pending" | "Cancelled";
 
 export const reportTypeStyles: Record<
   ReportType,

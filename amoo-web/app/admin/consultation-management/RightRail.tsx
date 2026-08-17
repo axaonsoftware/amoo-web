@@ -82,11 +82,16 @@ export default function RightRail() {
         const items = data?.data ?? data;
         if (Array.isArray(items)) {
           setSchedule(
-            items.filter((b: any) => isToday(b.date || b.date_time || b.created_at)).slice(0, 5).map((b: any) => ({
-              time: b.time || "",
-              name: b.user_name || "Guest",
-              service: b.service_name || "",
-            }))
+            items
+              .filter((b: any) =>
+                isToday(b.date || b.date_time || b.created_at),
+              )
+              .slice(0, 5)
+              .map((b: any) => ({
+                time: b.time || "",
+                name: b.user_name || "Guest",
+                service: b.service_name || "",
+              })),
           );
         }
       })
@@ -165,7 +170,9 @@ export default function RightRail() {
         </div>
 
         <div className="mt-[14px] flex items-center justify-between border-t border-[#F1F0F6] pt-[12px]">
-          <span className="text-[11px] text-[#6E6A80]">Total Consultations</span>
+          <span className="text-[11px] text-[#6E6A80]">
+            Total Consultations
+          </span>
           <span className="text-[13px] font-bold text-[#1D1630]">1,286</span>
         </div>
       </section>
@@ -176,12 +183,19 @@ export default function RightRail() {
           <h2 className="text-[12.5px] font-semibold text-[#221C33]">
             Today&apos;s Schedule
           </h2>
-          <Link href="/admin/consultation-management" className="text-[10px] font-medium text-[#6D28D9]">
+          <Link
+            href="/admin/consultation-management"
+            className="text-[10px] font-medium text-[#6D28D9]"
+          >
             View All
           </Link>
         </div>
         <p className="mt-[3px] text-[10px] text-[#8B879C]">
-          {new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+          {new Date().toLocaleDateString("en-GB", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
         </p>
 
         <ul className="mt-[10px] space-y-[10px]">
@@ -245,7 +259,10 @@ export default function RightRail() {
           <h2 className="text-[12.5px] font-semibold text-[#221C33]">
             Recent Activity
           </h2>
-          <Link href="/admin/consultation-management" className="text-[10px] font-medium text-[#6D28D9]">
+          <Link
+            href="/admin/consultation-management"
+            className="text-[10px] font-medium text-[#6D28D9]"
+          >
             View All
           </Link>
         </div>
@@ -254,10 +271,16 @@ export default function RightRail() {
           <li className="flex items-start gap-[9px]">
             <span className="mt-[4px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#7C3AED]" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[10.5px] font-semibold text-[#221C33]">Consultations synced</p>
-              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">From API</p>
+              <p className="truncate text-[10.5px] font-semibold text-[#221C33]">
+                Consultations synced
+              </p>
+              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">
+                From API
+              </p>
             </div>
-            <span className="shrink-0 whitespace-nowrap text-[9px] text-[#A5A2B5]">now</span>
+            <span className="shrink-0 whitespace-nowrap text-[9px] text-[#A5A2B5]">
+              now
+            </span>
           </li>
         </ul>
       </section>

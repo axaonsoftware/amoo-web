@@ -45,16 +45,34 @@ function parseDateTime(iso: string) {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return { date: "—", time: "" };
   return {
-    date: d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
-    time: d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }),
+    date: d.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    }),
   };
 }
 
 function BrandMark({ type }: { type: "credit" | "debit" }) {
   if (type === "credit") {
-    return <ArrowDownLeft className="h-[15px] w-[15px] text-[#1f9254]" strokeWidth={2} />;
+    return (
+      <ArrowDownLeft
+        className="h-[15px] w-[15px] text-[#1f9254]"
+        strokeWidth={2}
+      />
+    );
   }
-  return <ArrowUpRight className="h-[15px] w-[15px] text-[#c0392b]" strokeWidth={2} />;
+  return (
+    <ArrowUpRight
+      className="h-[15px] w-[15px] text-[#c0392b]"
+      strokeWidth={2}
+    />
+  );
 }
 
 export default function TransactionHistory() {
@@ -62,7 +80,7 @@ export default function TransactionHistory() {
 
   const { data, loading, error } = useApi<WalletResponse>(
     () => api.getWallet(),
-    []
+    [],
   );
 
   const transactions = data?.transactions ?? [];
@@ -87,11 +105,17 @@ export default function TransactionHistory() {
       <div className="mt-[18px] flex flex-wrap items-center gap-3">
         <div className="flex h-[42px] w-[213px] items-center justify-between rounded-[10px] border border-[#e7ddcb] bg-white px-4 text-[13px] text-[#3f1268]">
           <span>All Transactions</span>
-          <ChevronDown className="h-[16px] w-[16px] text-[#8b8697]" strokeWidth={2} />
+          <ChevronDown
+            className="h-[16px] w-[16px] text-[#8b8697]"
+            strokeWidth={2}
+          />
         </div>
         <div className="flex h-[42px] items-center gap-3 rounded-[10px] border border-[#e7ddcb] bg-white px-4 text-[13px] text-[#3f1268]">
           <span>All Time</span>
-          <CalendarDays className="h-[16px] w-[16px] text-[#4a1c7d]" strokeWidth={1.8} />
+          <CalendarDays
+            className="h-[16px] w-[16px] text-[#4a1c7d]"
+            strokeWidth={1.8}
+          />
         </div>
         <button
           type="button"
@@ -129,17 +153,26 @@ export default function TransactionHistory() {
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={6} className="px-[13px] py-[20px] text-center text-[12.5px] text-red-500">
+                <td
+                  colSpan={6}
+                  className="px-[13px] py-[20px] text-center text-[12.5px] text-red-500"
+                >
                   {error}
                 </td>
               </tr>
             ) : transactions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-[13px] py-[24px] text-center">
-                  <Wallet className="mx-auto h-8 w-8 text-[#d4ccec]" strokeWidth={1.4} />
-                  <p className="mt-2 text-[13px] font-medium text-[#2b0f47]">No transactions yet</p>
+                  <Wallet
+                    className="mx-auto h-8 w-8 text-[#d4ccec]"
+                    strokeWidth={1.4}
+                  />
+                  <p className="mt-2 text-[13px] font-medium text-[#2b0f47]">
+                    No transactions yet
+                  </p>
                   <p className="mt-1 text-[11.5px] text-[#8b8697]">
-                    Your wallet transactions will appear here once funds are added.
+                    Your wallet transactions will appear here once funds are
+                    added.
                   </p>
                 </td>
               </tr>
@@ -148,19 +181,21 @@ export default function TransactionHistory() {
                 const { date, time } = parseDateTime(txn.created_at);
                 const isCredit = txn.type === "credit";
                 return (
-                  <tr
-                    key={txn.id}
-                    className="border-t border-[#f1e8da]"
-                  >
+                  <tr key={txn.id} className="border-t border-[#f1e8da]">
                     <td className="px-[13px] py-[13px] align-middle">
-                      <p className="text-[12.5px] font-medium text-[#2b0f47]">{date}</p>
+                      <p className="text-[12.5px] font-medium text-[#2b0f47]">
+                        {date}
+                      </p>
                       {time && (
-                        <p className="mt-[2px] text-[11.5px] text-[#8b8697]">{time}</p>
+                        <p className="mt-[2px] text-[11.5px] text-[#8b8697]">
+                          {time}
+                        </p>
                       )}
                     </td>
                     <td className="px-[13px] py-[13px] align-middle">
                       <p className="text-[13px] font-semibold text-[#2b0f47]">
-                        {txn.reason || (isCredit ? "Wallet Credit" : "Wallet Debit")}
+                        {txn.reason ||
+                          (isCredit ? "Wallet Credit" : "Wallet Debit")}
                       </p>
                       {txn.ref && (
                         <p className="mt-[2px] text-[11.5px] text-[#8b8697]">
@@ -191,13 +226,16 @@ export default function TransactionHistory() {
                           isCredit ? "text-[#1f9254]" : "text-[#2b0f47]"
                         }`}
                       >
-                        {isCredit ? "+" : "-"} ₹{Number(txn.amount || 0).toLocaleString("en-IN")}
+                        {isCredit ? "+" : "-"} ₹
+                        {Number(txn.amount || 0).toLocaleString("en-IN")}
                       </span>
                     </td>
                     <td className="px-[13px] py-[13px] align-middle">
                       <span
                         className={`inline-flex items-center rounded-[6px] px-2.5 py-[4px] text-[11px] font-medium ${
-                          isCredit ? "bg-[#e6f7ec] text-[#1f9254]" : "bg-[#fdf0d5] text-[#c2820b]"
+                          isCredit
+                            ? "bg-[#e6f7ec] text-[#1f9254]"
+                            : "bg-[#fdf0d5] text-[#c2820b]"
                         }`}
                       >
                         {isCredit ? "Completed" : "Debited"}
@@ -217,8 +255,8 @@ export default function TransactionHistory() {
           {meta
             ? `Showing ${Math.min((meta.page - 1) * meta.pageSize + 1, meta.total)} to ${Math.min(meta.page * meta.pageSize, meta.total)} of ${meta.total} transactions`
             : transactions.length > 0
-            ? `${transactions.length} transaction${transactions.length !== 1 ? "s" : ""}`
-            : ""}
+              ? `${transactions.length} transaction${transactions.length !== 1 ? "s" : ""}`
+              : ""}
         </p>
         {totalPages > 1 && (
           <div className="flex items-center gap-[6px]">

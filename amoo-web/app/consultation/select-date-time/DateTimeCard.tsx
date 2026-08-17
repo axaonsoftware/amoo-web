@@ -26,39 +26,129 @@ const PERIODS = [
 ];
 
 const DEFAULT_SLOTS: Record<string, string[]> = {
-  Morning: ["06:00 AM", "06:30 AM", "07:00 AM", "07:30 AM", "08:00 AM", "08:30 AM", "09:00 AM", "09:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM"],
-  Afternoon: ["12:00 PM", "12:30 PM", "01:00 PM", "01:30 PM", "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", "04:00 PM", "04:30 PM"],
-  Evening: ["05:00 PM", "05:30 PM", "06:00 PM", "06:30 PM", "07:00 PM", "07:30 PM", "08:00 PM", "08:30 PM", "09:00 PM", "09:30 PM"],
+  Morning: [
+    "06:00 AM",
+    "06:30 AM",
+    "07:00 AM",
+    "07:30 AM",
+    "08:00 AM",
+    "08:30 AM",
+    "09:00 AM",
+    "09:30 AM",
+    "10:00 AM",
+    "10:30 AM",
+    "11:00 AM",
+    "11:30 AM",
+  ],
+  Afternoon: [
+    "12:00 PM",
+    "12:30 PM",
+    "01:00 PM",
+    "01:30 PM",
+    "02:00 PM",
+    "02:30 PM",
+    "03:00 PM",
+    "03:30 PM",
+    "04:00 PM",
+    "04:30 PM",
+  ],
+  Evening: [
+    "05:00 PM",
+    "05:30 PM",
+    "06:00 PM",
+    "06:30 PM",
+    "07:00 PM",
+    "07:30 PM",
+    "08:00 PM",
+    "08:30 PM",
+    "09:00 PM",
+    "09:30 PM",
+  ],
   Night: ["10:00 PM", "10:30 PM", "11:00 PM", "11:30 PM"],
 };
 
-const MONTH_NAMES = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
 
 export default function DateTimeCard({
   selectedDate,
+  selectedMonth,
+  selectedYear,
+  onSelectDate,
+  onSelectMonth,
+  onSelectYear,
   selectedPeriod,
   selectedSlot,
-  onSelectDate,
   onSelectPeriod,
   onSelectSlot,
 }: {
   selectedDate: number;
+  selectedMonth: number;
+  selectedYear: number;
+  onSelectDate: (day: number) => void;
+  onSelectMonth: (month: number) => void;
+  onSelectYear: (year: number) => void;
   selectedPeriod: string;
   selectedSlot: string;
-  onSelectDate: (day: number) => void;
   onSelectPeriod: (period: string) => void;
   onSelectSlot: (slot: string) => void;
 }) {
-  const [slotsByPeriod, setSlotsByPeriod] = useState<Record<string, string[]>>(DEFAULT_SLOTS);
+  const [slotsByPeriod, setSlotsByPeriod] =
+    useState<Record<string, string[]>>(DEFAULT_SLOTS);
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [slotsError, setSlotsError] = useState("");
-  const [viewYear, setViewYear] = useState(() => new Date().getFullYear());
-  const [viewMonth, setViewMonth] = useState(() => new Date().getMonth());
+
+  const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
+  const firstDayOfWeek = new Date(selectedYear, selectedMonth, 1).getDay();
+  const month = MONTH_NAMES[selectedMonth];
+  const monthLabel = `${month} ${selectedYear}`;
+
+  const prevMonth = () => {
+    if (selectedMonth === 0) {
+      onSelectYear(selectedYear - 1);
+      onSelectMonth(11);
+    } else {
+      onSelectMonth(selectedMonth - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    if (selectedMonth === 11) {
+      onSelectYear(selectedYear + 1);
+      onSelectMonth(0);
+    } else {
+      onSelectMonth(selectedMonth + 1);
+    }
+  };
+
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    cells.push(null);
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    cells.push(day);
+  }
+  while (cells.length % 7 !== 0) {
+    cells.push(null);
+  }
 
   useEffect(() => {
-    api.getSlots()
+    api
+      .getSlots()
       .then((res: any) => {
-        const list = Array.isArray(res) ? res : res?.data ?? [];
+        const list = Array.isArray(res) ? res : (res?.data ?? []);
         if (list.length) {
           const grouped: Record<string, string[]> = {};
           for (const slot of list) {
@@ -73,31 +163,19 @@ export default function DateTimeCard({
       .finally(() => setLoadingSlots(false));
   }, []);
 
-  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-  const firstDayOfWeek = new Date(viewYear, viewMonth, 1).getDay();
-  const month = MONTH_NAMES[viewMonth];
-  const monthLabel = `${month} ${viewYear}`;
-
-  const cells: (number | null)[] = [
-    ...Array.from({ length: firstDayOfWeek }, () => null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-
-  const prevMonth = () => {
-    if (viewMonth === 0) { setViewYear((y) => y - 1); setViewMonth(11); }
-    else { setViewMonth((m) => m - 1); }
-  };
-
-  const nextMonth = () => {
-    if (viewMonth === 11) { setViewYear((y) => y + 1); setViewMonth(0); }
-    else { setViewMonth((m) => m + 1); }
-  };
-
-  const slots = slotsByPeriod[selectedPeriod] || slotsByPeriod["Morning"] || DEFAULT_SLOTS["Morning"];
+  const slots =
+    slotsByPeriod[selectedPeriod] ||
+    slotsByPeriod["Morning"] ||
+    DEFAULT_SLOTS["Morning"];
 
   const formatDate = (day: number) => {
-    const date = new Date(viewYear, viewMonth, day);
-    return date.toLocaleDateString("en-US", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    const date = new Date(selectedYear, selectedMonth, day);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   };
 
   return (
@@ -137,7 +215,12 @@ export default function DateTimeCard({
         {/* Weekday header */}
         <div className="mt-4 grid grid-cols-7">
           {WEEKDAYS.map((day) => (
-            <span key={day} className="text-center text-[12px] font-normal text-[#9a97a6]">{day}</span>
+            <span
+              key={day}
+              className="text-center text-[12px] font-normal text-[#9a97a6]"
+            >
+              {day}
+            </span>
           ))}
         </div>
 
@@ -151,7 +234,10 @@ export default function DateTimeCard({
             const isUnavailable = UNAVAILABLE.includes(day);
             const isWeekend = i % 7 === 0 || i % 7 === 6;
             return (
-              <span key={day} className="flex h-[38px] items-center justify-center">
+              <span
+                key={day}
+                className="flex h-[38px] items-center justify-center"
+              >
                 <button
                   type="button"
                   disabled={isUnavailable}
@@ -177,8 +263,12 @@ export default function DateTimeCard({
         <div className="mt-5 flex items-center gap-3 rounded-xl border border-[#e6dcf5] bg-[#f4eefc] px-4 py-3">
           <CalendarLineIcon className="h-[22px] w-[22px] shrink-0 text-grape-2" />
           <div>
-            <p className="text-[12px] font-semibold text-grape">Selected Date</p>
-            <p className="mt-[2px] text-[12.5px] text-[#5b4a7a]">{formatDate(selectedDate)}</p>
+            <p className="text-[12px] font-semibold text-grape">
+              Selected Date
+            </p>
+            <p className="mt-[2px] text-[12.5px] text-[#5b4a7a]">
+              {formatDate(selectedDate)}
+            </p>
           </div>
         </div>
       </div>
@@ -187,7 +277,9 @@ export default function DateTimeCard({
       <div className="border-t border-line p-5 lg:border-t-0 lg:border-l">
         <div className="flex items-center gap-2.5">
           <ClockLineIcon className="h-[19px] w-[19px] text-[#d09b38]" />
-          <h2 className="font-display text-[17px] font-bold text-grape">Select Time</h2>
+          <h2 className="font-display text-[17px] font-bold text-grape">
+            Select Time
+          </h2>
         </div>
 
         {/* Period tabs */}
@@ -198,7 +290,10 @@ export default function DateTimeCard({
               <button
                 key={label}
                 type="button"
-                onClick={() => { onSelectPeriod(label); onSelectSlot(""); }}
+                onClick={() => {
+                  onSelectPeriod(label);
+                  onSelectSlot("");
+                }}
                 className={`flex flex-col items-center justify-center rounded-xl px-2 py-[13px] transition-all ${
                   active
                     ? "border border-[#e0a33e] bg-[linear-gradient(180deg,#3d1a6d_0%,#2a1148_100%)] shadow-[0_4px_14px_rgba(61,26,109,0.28)]"
@@ -206,10 +301,20 @@ export default function DateTimeCard({
                 }`}
               >
                 <span className="flex items-center gap-1.5">
-                  <Icon className={`h-[16px] w-[16px] ${active ? "text-gold" : "text-[#e0a33e]"}`} />
-                  <span className={`text-[13.5px] font-semibold ${active ? "text-white" : "text-[#2f1a52]"}`}>{label}</span>
+                  <Icon
+                    className={`h-[16px] w-[16px] ${active ? "text-gold" : "text-[#e0a33e]"}`}
+                  />
+                  <span
+                    className={`text-[13.5px] font-semibold ${active ? "text-white" : "text-[#2f1a52]"}`}
+                  >
+                    {label}
+                  </span>
                 </span>
-                <span className={`mt-[3px] text-[11.5px] ${active ? "text-white/70" : "text-[#9a97a6]"}`}>{range}</span>
+                <span
+                  className={`mt-[3px] text-[11.5px] ${active ? "text-white/70" : "text-[#9a97a6]"}`}
+                >
+                  {range}
+                </span>
               </button>
             );
           })}
@@ -223,7 +328,13 @@ export default function DateTimeCard({
         ) : slotsError ? (
           <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-3 text-center text-[12px] text-red-700">
             {slotsError}
-            <button type="button" onClick={() => window.location.reload()} className="ml-2 underline">Retry</button>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="ml-2 underline"
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -250,7 +361,9 @@ export default function DateTimeCard({
         {/* IST note */}
         <div className="mt-4 flex items-center gap-2.5 rounded-lg border border-[#d5e9d9] bg-[#f0f8f2] px-4 py-3">
           <CheckCircleIcon className="h-[16px] w-[16px] shrink-0 text-[#4b9668]" />
-          <p className="text-[12.5px] text-[#3f7a55]">All available time slots are displayed in IST (Indian Standard Time)</p>
+          <p className="text-[12.5px] text-[#3f7a55]">
+            All available time slots are displayed in IST (Indian Standard Time)
+          </p>
         </div>
       </div>
     </section>

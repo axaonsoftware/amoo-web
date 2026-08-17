@@ -18,12 +18,48 @@ const statDefs: {
   iconWrap: string;
   iconColor: string;
 }[] = [
-  { label: "Total Readings", field: "readings", Icon: TarotIcon, iconWrap: "bg-[#F2EBFE]", iconColor: "text-[#4F46E5]" },
-  { label: "Today's Readings", field: "todaysReadings", Icon: CalendarDays, iconWrap: "bg-[#FEF4E9]", iconColor: "text-[#F97316]" },
-  { label: "Active Tarot Masters", field: "activeTarotMasters", Icon: UsersRound, iconWrap: "bg-[#E7F5E8]", iconColor: "text-[#16A34A]" },
-  { label: "Popular Spreads", field: "popularSpreads", Icon: Star, iconWrap: "bg-[#E9F0FD]", iconColor: "text-[#2563EB]" },
-  { label: "Total Bookings (May)", field: "bookings", Icon: CalendarCheck, iconWrap: "bg-[#F2EBFD]", iconColor: "text-[#4F46E5]" },
-  { label: "Revenue (May)", field: "revenue", Icon: IndianRupee, iconWrap: "bg-[#FEF4E9]", iconColor: "text-[#F97316]" },
+  {
+    label: "Total Readings",
+    field: "readings",
+    Icon: TarotIcon,
+    iconWrap: "bg-[#F2EBFE]",
+    iconColor: "text-[#4F46E5]",
+  },
+  {
+    label: "Today's Readings",
+    field: "todaysReadings",
+    Icon: CalendarDays,
+    iconWrap: "bg-[#FEF4E9]",
+    iconColor: "text-[#F97316]",
+  },
+  {
+    label: "Active Tarot Masters",
+    field: "activeTarotMasters",
+    Icon: UsersRound,
+    iconWrap: "bg-[#E7F5E8]",
+    iconColor: "text-[#16A34A]",
+  },
+  {
+    label: "Popular Spreads",
+    field: "popularSpreads",
+    Icon: Star,
+    iconWrap: "bg-[#E9F0FD]",
+    iconColor: "text-[#2563EB]",
+  },
+  {
+    label: "Total Bookings (May)",
+    field: "bookings",
+    Icon: CalendarCheck,
+    iconWrap: "bg-[#F2EBFD]",
+    iconColor: "text-[#4F46E5]",
+  },
+  {
+    label: "Revenue (May)",
+    field: "revenue",
+    Icon: IndianRupee,
+    iconWrap: "bg-[#FEF4E9]",
+    iconColor: "text-[#F97316]",
+  },
 ];
 
 export default function StatsRow() {
@@ -41,8 +77,10 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const fmtCurrency = (n: number | undefined) => (n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const fmtCurrency = (n: number | undefined) =>
+    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
   if (loading) {
     return (

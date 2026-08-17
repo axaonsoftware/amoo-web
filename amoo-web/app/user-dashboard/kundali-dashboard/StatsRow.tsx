@@ -1,19 +1,53 @@
 "use client";
 
-import { ArrowRight, FileText, CalendarRange, Heart, Download } from "lucide-react";
+import {
+  ArrowRight,
+  FileText,
+  CalendarRange,
+  Heart,
+  Download,
+} from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 
 export default function StatsRow() {
-  const { data: stats, loading, error } = useApi<any>(() => api.getReportStats());
+  const {
+    data: stats,
+    loading,
+    error,
+  } = useApi<any>(() => api.getReportStats());
   const s = stats || {};
 
   const statItems = [
-    { label: "Total Kundalis", value: String(s.kundali_total ?? 0), Icon: FileText, iconBg: "bg-[#f1e9fc]", iconColor: "text-[#7a3fc0]" },
-    { label: "This Year Charts", value: String(s.kundali_this_year ?? 0), Icon: CalendarRange, iconBg: "bg-[#fdf0dc]", iconColor: "text-[#e0952e]" },
-    { label: "Compatibility Charts", value: String(s.kundali_compatibility ?? 0), Icon: Heart, iconBg: "bg-[#fdeaf0]", iconColor: "text-[#e0567f]" },
-    { label: "Reports Downloaded", value: String(s.kundali_downloaded ?? 0), Icon: Download, iconBg: "bg-[#e6f6ea]", iconColor: "text-[#2f9e56]" },
+    {
+      label: "Total Kundalis",
+      value: String(s.kundali_total ?? 0),
+      Icon: FileText,
+      iconBg: "bg-[#f1e9fc]",
+      iconColor: "text-[#7a3fc0]",
+    },
+    {
+      label: "This Year Charts",
+      value: String(s.kundali_this_year ?? 0),
+      Icon: CalendarRange,
+      iconBg: "bg-[#fdf0dc]",
+      iconColor: "text-[#e0952e]",
+    },
+    {
+      label: "Compatibility Charts",
+      value: String(s.kundali_compatibility ?? 0),
+      Icon: Heart,
+      iconBg: "bg-[#fdeaf0]",
+      iconColor: "text-[#e0567f]",
+    },
+    {
+      label: "Reports Downloaded",
+      value: String(s.kundali_downloaded ?? 0),
+      Icon: Download,
+      iconBg: "bg-[#e6f6ea]",
+      iconColor: "text-[#2f9e56]",
+    },
   ];
 
   if (loading) {
@@ -27,7 +61,9 @@ export default function StatsRow() {
 
   if (error) {
     return (
-      <div className="mt-4 rounded-[10px] bg-red-50 p-3 text-[12px] text-red-700">{error}</div>
+      <div className="mt-4 rounded-[10px] bg-red-50 p-3 text-[12px] text-red-700">
+        {error}
+      </div>
     );
   }
 

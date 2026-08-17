@@ -49,25 +49,49 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const SOCIAL_LINKS = [
-  { label: "Facebook", Icon: FacebookIcon, bg: "bg-[#3b5998]", href: "https://facebook.com/amoooguru" },
+  {
+    label: "Facebook",
+    Icon: FacebookIcon,
+    bg: "bg-[#3b5998]",
+    href: "https://facebook.com/amoooguru",
+  },
   {
     label: "Instagram",
     Icon: InstagramIcon,
     bg: "bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
     href: "https://instagram.com/amooguru_official",
   },
-  { label: "YouTube", Icon: YoutubeIcon, bg: "bg-[#ff0000]", href: "https://youtube.com/@amoooguru" },
-  { label: "WhatsApp", Icon: WhatsAppIcon, bg: "bg-[#25D366]", href: WHATSAPP_URL },
-  { label: "Telegram", Icon: (props: React.SVGProps<SVGSVGElement>) => (
-    <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
-    </svg>
-  ), bg: "bg-[#0088cc]", href: "https://t.me/amoooguru" },
+  {
+    label: "YouTube",
+    Icon: YoutubeIcon,
+    bg: "bg-[#ff0000]",
+    href: "https://youtube.com/@amoooguru",
+  },
+  {
+    label: "WhatsApp",
+    Icon: WhatsAppIcon,
+    bg: "bg-[#25D366]",
+    href: WHATSAPP_URL,
+  },
+  {
+    label: "Telegram",
+    Icon: (props: React.SVGProps<SVGSVGElement>) => (
+      <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+      </svg>
+    ),
+    bg: "bg-[#0088cc]",
+    href: "https://t.me/amoooguru",
+  },
 ];
 
 /* ---------------- Page ---------------- */
 
-export default function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
+export default function BlogPostPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
   const { slug } = use(params);
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
@@ -102,7 +126,10 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
       <>
         <OfferBar />
         <HomeHeader absolute={false} />
-        <main id="main-content" className="flex flex-1 items-center justify-center bg-[#fdf8f0] py-[120px]">
+        <main
+          id="main-content"
+          className="flex flex-1 items-center justify-center bg-[#fdf8f0] py-[120px]"
+        >
           <Loader2 className="h-10 w-10 animate-spin text-[#6b3fa0]" />
         </main>
       </>
@@ -115,13 +142,17 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
       <>
         <OfferBar />
         <HomeHeader absolute={false} />
-        <main id="main-content" className="flex flex-1 items-center justify-center bg-[#fdf8f0] py-[120px]">
+        <main
+          id="main-content"
+          className="flex flex-1 items-center justify-center bg-[#fdf8f0] py-[120px]"
+        >
           <div className="text-center">
             <h1 className="font-display text-[32px] font-bold text-[#2c0c47]">
               Post Not Found
             </h1>
             <p className="mt-3 text-[15px] text-[#6c6b78]">
-              The article you are looking for does not exist or has been removed.
+              The article you are looking for does not exist or has been
+              removed.
             </p>
             <Link
               href="/blog"
@@ -148,8 +179,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
   const readTime = post.readTime || "5 min read";
   const category = post.category || "Spirituality";
   const author = post.author || SITE_NAME;
-  const badgeClass =
-    CATEGORY_COLORS[category] || "bg-gray-100 text-gray-600";
+  const badgeClass = CATEGORY_COLORS[category] || "bg-gray-100 text-gray-600";
 
   return (
     <>
@@ -221,11 +251,15 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                     height={80}
                     className="h-[32px] w-[32px] rounded-full border-2 border-gold/50 object-cover"
                   />
-                  <span className="font-medium text-white">{sanitize(author)}</span>
+                  <span className="font-medium text-white">
+                    {sanitize(author)}
+                  </span>
                 </div>
               )}
               {!post.authorAvatar && (
-                <span className="font-medium text-white">{sanitize(author)}</span>
+                <span className="font-medium text-white">
+                  {sanitize(author)}
+                </span>
               )}
               <span className="flex items-center gap-1.5">
                 <ClockIcon className="h-[14px] w-[14px]" />
@@ -336,7 +370,10 @@ export default function BlogPostPage({ params }: { params: Promise<{ slug: strin
                 </h3>
                 <ul className="space-y-[8px]">
                   {[
-                    { label: "Numerology", href: "/services/numerology-services" },
+                    {
+                      label: "Numerology",
+                      href: "/services/numerology-services",
+                    },
                     { label: "Tarot Reading", href: "/services/tarot-reading" },
                     { label: "Reiki Healing", href: "/services/reiki-healing" },
                     { label: "Kundali Analysis", href: "/services" },

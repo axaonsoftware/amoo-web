@@ -17,10 +17,20 @@ const legend = [
 ];
 
 export default function RightPanel() {
-  const { items: experts, loading, error } = useApiList<{
-    id: number; name: string; avatar: string | null;
-    specialties: string | null; status: string; rating: number | string | null;
-    total_slots: number; booked_slots: number; available_slots: number;
+  const {
+    items: experts,
+    loading,
+    error,
+  } = useApiList<{
+    id: number;
+    name: string;
+    avatar: string | null;
+    specialties: string | null;
+    status: string;
+    rating: number | string | null;
+    total_slots: number;
+    booked_slots: number;
+    available_slots: number;
     blocked_slots: number;
   }>(() => api.admin.getSlotAvailability(), []);
 
@@ -38,7 +48,10 @@ export default function RightPanel() {
   ];
   const today = now.getDate();
 
-  const monthLabel = now.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const monthLabel = now.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 
   const weekSchedule = useMemo(() => {
     if (!expert?.total_slots) return null;
@@ -57,16 +70,26 @@ export default function RightPanel() {
           Astrologer Details
         </h2>
         {loading ? (
-          <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-[#4c159f]" /></div>
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-5 w-5 animate-spin text-[#4c159f]" />
+          </div>
         ) : error ? (
-          <div className="flex items-center gap-2 py-4 text-[11px] text-red-600"><AlertCircle size={14} />{error}</div>
+          <div className="flex items-center gap-2 py-4 text-[11px] text-red-600">
+            <AlertCircle size={14} />
+            {error}
+          </div>
         ) : expert ? (
           <>
             <div className="mt-3.5 flex items-start gap-3">
               <Image
-                src={expert.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name)}&background=4c159f&color=fff&size=112`}
+                src={
+                  expert.avatar ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name)}&background=4c159f&color=fff&size=112`
+                }
                 alt={expert.name}
-                width={112} height={112} unoptimized
+                width={112}
+                height={112}
+                unoptimized
                 className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"
               />
               <div className="min-w-0 flex-1">
@@ -74,11 +97,13 @@ export default function RightPanel() {
                   <p className="text-[12.5px] font-semibold leading-tight text-[#241f3d]">
                     {expert.name}
                   </p>
-                  <span className={`shrink-0 rounded-full border px-2 py-[2px] text-[9.5px] font-medium ${
-                    expert.status === "active"
-                      ? "border-[#c9e9d7] bg-[#e9f7ef] text-[#2f8f5b]"
-                      : "border-[#e6e6ec] bg-[#f4f4f7] text-[#8a86a0]"
-                  }`}>
+                  <span
+                    className={`shrink-0 rounded-full border px-2 py-[2px] text-[9.5px] font-medium ${
+                      expert.status === "active"
+                        ? "border-[#c9e9d7] bg-[#e9f7ef] text-[#2f8f5b]"
+                        : "border-[#e6e6ec] bg-[#f4f4f7] text-[#8a86a0]"
+                    }`}
+                  >
                     {expert.status === "active" ? "Active" : "Inactive"}
                   </span>
                 </div>
@@ -87,12 +112,17 @@ export default function RightPanel() {
                 </p>
               </div>
             </div>
-            <button type="button" className="mt-3.5 h-[34px] w-full rounded-[8px] border border-[#d7c9f5] bg-white text-[12px] font-semibold text-[#4c159f] hover:bg-[#faf8ff]">
+            <button
+              type="button"
+              className="mt-3.5 h-[34px] w-full rounded-[8px] border border-[#d7c9f5] bg-white text-[12px] font-semibold text-[#4c159f] hover:bg-[#faf8ff]"
+            >
               View Full Profile
             </button>
           </>
         ) : (
-          <p className="py-4 text-[11px] text-[#8a86a0]">No astrologers found</p>
+          <p className="py-4 text-[11px] text-[#8a86a0]">
+            No astrologers found
+          </p>
         )}
       </section>
 
@@ -104,20 +134,28 @@ export default function RightPanel() {
           </h2>
         </div>
         {loading ? (
-          <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-[#4c159f]" /></div>
+          <div className="flex justify-center py-4">
+            <Loader2 className="h-4 w-4 animate-spin text-[#4c159f]" />
+          </div>
         ) : weekSchedule ? (
           <div className="mt-3 space-y-2">
             <div className="flex justify-between text-[11px]">
               <span className="text-[#3f3d56]">Total Slots</span>
-              <span className="font-semibold text-[#241f3d]">{expert!.total_slots}</span>
+              <span className="font-semibold text-[#241f3d]">
+                {expert!.total_slots}
+              </span>
             </div>
             <div className="flex justify-between text-[11px]">
               <span className="text-[#3f3d56]">Booked</span>
-              <span className="font-semibold text-[#4c159f]">{expert!.booked_slots}</span>
+              <span className="font-semibold text-[#4c159f]">
+                {expert!.booked_slots}
+              </span>
             </div>
             <div className="flex justify-between text-[11px]">
               <span className="text-[#3f3d56]">Available</span>
-              <span className="font-semibold text-[#3aa76d]">{expert!.available_slots}</span>
+              <span className="font-semibold text-[#3aa76d]">
+                {expert!.available_slots}
+              </span>
             </div>
             <div className="mt-2 h-[6px] overflow-hidden rounded-full bg-[#ecebf1]">
               <div
@@ -125,7 +163,9 @@ export default function RightPanel() {
                 style={{ width: `${Math.min(weekSchedule.pct, 100)}%` }}
               />
             </div>
-            <p className="text-right text-[10px] text-[#8a86a0]">{weekSchedule.pct}% utilisation</p>
+            <p className="text-right text-[10px] text-[#8a86a0]">
+              {weekSchedule.pct}% utilisation
+            </p>
           </div>
         ) : (
           <p className="py-4 text-[11px] text-[#8a86a0]">No data</p>
@@ -135,17 +175,32 @@ export default function RightPanel() {
       {/* Calendar */}
       <section className="rounded-[14px] border border-[#ecebf1] bg-white px-4 pb-4 pt-3.5 shadow-[0_1px_2px_rgba(23,16,45,.03)]">
         <div className="flex items-center justify-between">
-          <button type="button" aria-label="Previous month" className="flex h-6 w-6 items-center justify-center text-[#c9c5d6]">
+          <button
+            type="button"
+            aria-label="Previous month"
+            className="flex h-6 w-6 items-center justify-center text-[#c9c5d6]"
+          >
             <ChevronLeft className="h-[16px] w-[16px]" strokeWidth={2} />
           </button>
-          <p className="text-[12.5px] font-semibold text-[#241f3d]">{monthLabel}</p>
-          <button type="button" aria-label="Next month" className="flex h-6 w-6 items-center justify-center text-[#4c1d95]">
+          <p className="text-[12.5px] font-semibold text-[#241f3d]">
+            {monthLabel}
+          </p>
+          <button
+            type="button"
+            aria-label="Next month"
+            className="flex h-6 w-6 items-center justify-center text-[#4c1d95]"
+          >
             <ChevronRight className="h-[16px] w-[16px]" strokeWidth={2} />
           </button>
         </div>
         <div className="mt-3 grid grid-cols-7 gap-y-1">
           {dayHeads.map((d) => (
-            <span key={d} className="text-center text-[10px] font-semibold text-[#241f3d]">{d}</span>
+            <span
+              key={d}
+              className="text-center text-[10px] font-semibold text-[#241f3d]"
+            >
+              {d}
+            </span>
           ))}
         </div>
         <div className="mt-1.5 grid grid-cols-7 gap-y-[6px]">
@@ -154,11 +209,13 @@ export default function RightPanel() {
             const isToday = n === today;
             return (
               <div key={n} className="flex flex-col items-center">
-                <span className={
-                  isToday
-                    ? "flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[#2b1a9e] text-[10px] font-semibold text-white"
-                    : "flex h-[20px] w-[20px] items-center justify-center text-[10px] font-normal text-[#241f3d]"
-                }>
+                <span
+                  className={
+                    isToday
+                      ? "flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[#2b1a9e] text-[10px] font-semibold text-white"
+                      : "flex h-[20px] w-[20px] items-center justify-center text-[10px] font-normal text-[#241f3d]"
+                  }
+                >
                   {n}
                 </span>
               </div>
@@ -169,12 +226,16 @@ export default function RightPanel() {
 
       {/* Legend */}
       <section className="rounded-[14px] border border-[#ecebf1] bg-white px-4 pb-4 pt-4 shadow-[0_1px_2px_rgba(23,16,45,.03)]">
-        <h2 className="text-[13px] font-semibold text-[#241f3d]">Slot Status Legend</h2>
+        <h2 className="text-[13px] font-semibold text-[#241f3d]">
+          Slot Status Legend
+        </h2>
         <div className="mt-3 flex flex-col gap-[9px]">
           {legend.map(({ label, dot }) => (
             <span key={label} className="flex items-center gap-2.5">
               <span className={`h-[8px] w-[8px] rounded-full ${dot}`} />
-              <span className="text-[11px] font-light text-[#3f3d56]">{label}</span>
+              <span className="text-[11px] font-light text-[#3f3d56]">
+                {label}
+              </span>
             </span>
           ))}
         </div>

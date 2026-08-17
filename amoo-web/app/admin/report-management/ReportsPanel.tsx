@@ -47,12 +47,24 @@ function fmtDateTime(iso: string) {
   if (!iso) return { date: "", time: "" };
   const d = new Date(iso);
   return {
-    date: d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }),
-    time: d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }),
+    date: d.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }),
+    time: d.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }),
   };
 }
 
-export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void }) {
+export default function ReportsPanel({
+  onReady,
+}: {
+  onReady?: (fns: any) => void;
+}) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [typeFilter, setTypeFilter] = useState("");
@@ -93,7 +105,10 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
     };
   }, []);
 
-  const [toast, setToast] = useState<{ msg: string; kind: "success" | "error" } | null>(null);
+  const [toast, setToast] = useState<{
+    msg: string;
+    kind: "success" | "error";
+  } | null>(null);
   const showToast = (msg: string, kind: "success" | "error" = "success") => {
     setToast({ msg, kind });
     setTimeout(() => setToast(null), 3000);
@@ -112,35 +127,58 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
     api.admin
       .getReports(`?${q.toString()}`)
       .then((res: any) => {
-        const items = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const items = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res)
+            ? res
+            : [];
         const m = res?.meta ?? {};
-        setMeta({ total: m.total ?? items.length, totalPages: m.totalPages ?? 1 });
+        setMeta({
+          total: m.total ?? items.length,
+          totalPages: m.totalPages ?? 1,
+        });
         setList(items);
       })
       .catch((e: any) => setError(errorMessage(e, "Failed to load")))
       .finally(() => setLoading(false));
   }, [page, limit, typeFilter, statusFilter, search]);
 
-  useEffect(() => { loadReports(); }, [loadReports]);
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
 
   const loadUsers = useCallback(() => {
-    api.admin.getUsers("page=1&pageSize=100").then((res: any) => {
-      const items = res?.data ?? res ?? [];
-      if (Array.isArray(items)) setUserList(items);
-    }).catch(() => {});
+    api.admin
+      .getUsers("page=1&pageSize=100")
+      .then((res: any) => {
+        const items = res?.data ?? res ?? [];
+        if (Array.isArray(items)) setUserList(items);
+      })
+      .catch(() => {});
   }, []);
 
   const filteredUsers = useMemo(() => {
     if (!userSearch.trim()) return userList.slice(0, 20);
     const q = userSearch.toLowerCase();
-    return userList.filter(
-      (u: any) => (u.name || "").toLowerCase().includes(q) || (u.email || "").toLowerCase().includes(q)
-    ).slice(0, 20);
+    return userList
+      .filter(
+        (u: any) =>
+          (u.name || "").toLowerCase().includes(q) ||
+          (u.email || "").toLowerCase().includes(q),
+      )
+      .slice(0, 20);
   }, [userList, userSearch]);
 
   const openCreate = () => {
     setEditing(null);
-    setFormValues({ user_id: "", type: "numerology", title: "", content: "", file_url: "", status: "pending" });
+    setFormValues({
+      user_id: "",
+      type: "numerology",
+      title: "",
+      content: "",
+      file_url: "",
+      status: "pending",
+    });
     setFormErrors({});
     loadUsers();
     setModalOpen(true);
@@ -190,37 +228,42 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
           title: String(formValues.title),
           content: String(formValues.content ?? ""),
         });
-          if (!formValues.content) {
-            const reportId = result?.id || result?.data?.id;
-            if (reportId) {
-              pollIntervalRef.current = setInterval(async () => {
-                try {
-                  const res = await api.admin.getReport(reportId);
-                  const report = res?.data || res;
-                  if (report && report.status !== "pending") {
-                    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                    if (pollTimeoutRef.current) clearTimeout(pollTimeoutRef.current);
-                    pollIntervalRef.current = null;
-                    pollTimeoutRef.current = null;
-                    setSaving(false);
-                    setModalOpen(false);
-                    loadReports();
-                    showToast("Report generated successfully");
-                  }
-                } catch { /* continue polling */ }
-              }, 2000);
-              pollTimeoutRef.current = setTimeout(() => {
-                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-                pollIntervalRef.current = null;
-                pollTimeoutRef.current = null;
-                setSaving(false);
-                setModalOpen(false);
-                loadReports();
-                showToast("Report created — generation still in progress");
-              }, 30000);
-              return;
-            }
+        if (!formValues.content) {
+          const reportId = result?.id || result?.data?.id;
+          if (reportId) {
+            pollIntervalRef.current = setInterval(async () => {
+              try {
+                const res = await api.admin.getReport(reportId);
+                const report = res?.data || res;
+                if (report && report.status !== "pending") {
+                  if (pollIntervalRef.current)
+                    clearInterval(pollIntervalRef.current);
+                  if (pollTimeoutRef.current)
+                    clearTimeout(pollTimeoutRef.current);
+                  pollIntervalRef.current = null;
+                  pollTimeoutRef.current = null;
+                  setSaving(false);
+                  setModalOpen(false);
+                  loadReports();
+                  showToast("Report generated successfully");
+                }
+              } catch {
+                /* continue polling */
+              }
+            }, 2000);
+            pollTimeoutRef.current = setTimeout(() => {
+              if (pollIntervalRef.current)
+                clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+              pollTimeoutRef.current = null;
+              setSaving(false);
+              setModalOpen(false);
+              loadReports();
+              showToast("Report created — generation still in progress");
+            }, 30000);
+            return;
           }
+        }
         setSaving(false);
         setModalOpen(false);
         loadReports();
@@ -280,9 +323,23 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
       });
     }
     cols.push(
-      { name: "title", label: "Title", type: "text", placeholder: "Report title" },
-      { name: "content", label: "Content (leave blank to auto-generate)", type: "textarea" },
-      { name: "file_url", label: "File URL (optional)", type: "text", placeholder: "https://..." },
+      {
+        name: "title",
+        label: "Title",
+        type: "text",
+        placeholder: "Report title",
+      },
+      {
+        name: "content",
+        label: "Content (leave blank to auto-generate)",
+        type: "textarea",
+      },
+      {
+        name: "file_url",
+        label: "File URL (optional)",
+        type: "text",
+        placeholder: "https://...",
+      },
     );
     return cols;
   }, [editing]);
@@ -293,7 +350,9 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
       {toast && (
         <div
           className={`fixed right-4 top-4 z-50 rounded-lg px-4 py-3 text-sm font-medium shadow-lg ${
-            toast.kind === "success" ? "bg-green-600 text-white" : "bg-red-600 text-white"
+            toast.kind === "success"
+              ? "bg-green-600 text-white"
+              : "bg-red-600 text-white"
           }`}
         >
           {toast.msg}
@@ -303,12 +362,19 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
       {/* Search & Filters */}
       <div className="flex flex-wrap items-center gap-[10px]">
         <div className="relative flex-1">
-          <Search size={14} className="pointer-events-none absolute left-[12px] top-1/2 -translate-y-1/2 text-[#9D98AA]" strokeWidth={2.2} />
+          <Search
+            size={14}
+            className="pointer-events-none absolute left-[12px] top-1/2 -translate-y-1/2 text-[#9D98AA]"
+            strokeWidth={2.2}
+          />
           <input
             type="text"
             placeholder="Search by title or user..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="h-[38px] w-full rounded-[9px] border border-[#E7E5EF] bg-white pl-[34px] pr-3 text-[12.5px] text-[#1D1630] placeholder:text-[#9D98AA] outline-none focus:border-[#7C3AED]"
           />
         </div>
@@ -316,23 +382,43 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         <div className="relative">
           <select
             value={typeFilter}
-            onChange={(e) => { setTypeFilter(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setTypeFilter(e.target.value);
+              setPage(1);
+            }}
             className="h-[38px] appearance-none rounded-[9px] border border-[#E7E5EF] bg-white pl-[12px] pr-[32px] text-[12.5px] text-[#1D1630] outline-none focus:border-[#7C3AED]"
           >
-            {typeOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {typeOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#9D98AA]" />
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#9D98AA]"
+          />
         </div>
 
         <div className="relative">
           <select
             value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="h-[38px] appearance-none rounded-[9px] border border-[#E7E5EF] bg-white pl-[12px] pr-[32px] text-[12.5px] text-[#1D1630] outline-none focus:border-[#7C3AED]"
           >
-            {statusFilterOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {statusFilterOptions.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
-          <ChevronDown size={14} className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#9D98AA]" />
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-[10px] top-1/2 -translate-y-1/2 text-[#9D98AA]"
+          />
         </div>
 
         <button
@@ -353,7 +439,9 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         ) : error ? (
           <div className="p-6 text-sm text-red-600">{error}</div>
         ) : list.length === 0 ? (
-          <div className="p-6 text-center text-[12.5px] text-[#8B879C]">No reports found.</div>
+          <div className="p-6 text-center text-[12.5px] text-[#8B879C]">
+            No reports found.
+          </div>
         ) : (
           <table className="w-full text-left text-[12.5px]">
             <thead className="border-b border-[#EEEDF4] bg-[#F8F7FC] text-[11px] font-medium uppercase text-[#8B879C]">
@@ -364,26 +452,44 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
                 <th className="whitespace-nowrap px-4 py-3">Title</th>
                 <th className="whitespace-nowrap px-4 py-3">Status</th>
                 <th className="whitespace-nowrap px-4 py-3">Created</th>
-                <th className="whitespace-nowrap px-4 py-3 text-right">Actions</th>
+                <th className="whitespace-nowrap px-4 py-3 text-right">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
               {list.map((r: any) => {
                 const dt = fmtDateTime(r.created_at);
-                const typeClass = reportTypeStyles[r.type?.toLowerCase()] ?? "bg-[#F0EAFB] text-[#7C3AED]";
-                const statClass = statusStyles[r.status] ?? "bg-[#F0EAFB] text-[#7C3AED]";
+                const typeClass =
+                  reportTypeStyles[r.type?.toLowerCase()] ??
+                  "bg-[#F0EAFB] text-[#7C3AED]";
+                const statClass =
+                  statusStyles[r.status] ?? "bg-[#F0EAFB] text-[#7C3AED]";
                 return (
-                  <tr key={r.id} className="border-b border-[#F1F0F7] last:border-0 hover:bg-[#FAF9FE]">
-                    <td className="whitespace-nowrap px-4 py-3 font-medium text-[#3D3752]">{r.id}</td>
-                    <td className="whitespace-nowrap px-4 py-3 text-[#6B6580]">{r.user_id}</td>
+                  <tr
+                    key={r.id}
+                    className="border-b border-[#F1F0F7] last:border-0 hover:bg-[#FAF9FE]"
+                  >
+                    <td className="whitespace-nowrap px-4 py-3 font-medium text-[#3D3752]">
+                      {r.id}
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-3 text-[#6B6580]">
+                      {r.user_id}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      <span className={`inline-block rounded-[6px] px-[9px] py-[3px] text-[11px] font-medium ${typeClass}`}>
+                      <span
+                        className={`inline-block rounded-[6px] px-[9px] py-[3px] text-[11px] font-medium ${typeClass}`}
+                      >
                         {r.type}
                       </span>
                     </td>
-                    <td className="max-w-[200px] truncate px-4 py-3 text-[#1D1630]">{sanitize(r.title)}</td>
+                    <td className="max-w-[200px] truncate px-4 py-3 text-[#1D1630]">
+                      {sanitize(r.title)}
+                    </td>
                     <td className="whitespace-nowrap px-4 py-3">
-                      <span className={`inline-block rounded-[6px] px-[9px] py-[3px] text-[11px] font-medium ${statClass}`}>
+                      <span
+                        className={`inline-block rounded-[6px] px-[9px] py-[3px] text-[11px] font-medium ${statClass}`}
+                      >
                         {r.status}
                       </span>
                     </td>
@@ -425,13 +531,22 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
           <span>Rows per page:</span>
           <select
             value={limit}
-            onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setPage(1);
+            }}
             className="appearance-none rounded-[6px] border border-[#E7E5EF] bg-white px-2 py-1 text-[12px] text-[#1D1630] outline-none"
           >
-            {PAGE_SIZE_OPTIONS.map((n) => <option key={n} value={n}>{n}</option>)}
+            {PAGE_SIZE_OPTIONS.map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
           <span>
-            {meta.total === 0 ? "0 entries" : `${(page - 1) * limit + 1}–${Math.min(page * limit, meta.total)} of ${meta.total}`}
+            {meta.total === 0
+              ? "0 entries"
+              : `${(page - 1) * limit + 1}–${Math.min(page * limit, meta.total)} of ${meta.total}`}
           </span>
         </div>
 
@@ -482,9 +597,19 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         fields={
           editing
             ? [
-                { name: "title", label: "Title", type: "text", placeholder: "Report title" },
+                {
+                  name: "title",
+                  label: "Title",
+                  type: "text",
+                  placeholder: "Report title",
+                },
                 { name: "content", label: "Content", type: "textarea" },
-                { name: "file_url", label: "File URL (optional)", type: "text", placeholder: "https://..." },
+                {
+                  name: "file_url",
+                  label: "File URL (optional)",
+                  type: "text",
+                  placeholder: "https://...",
+                },
                 {
                   name: "status",
                   label: "Status",
@@ -501,7 +626,9 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         values={formValues}
         errors={formErrors}
         saving={saving}
-        onChange={(name, value) => setFormValues((prev) => ({ ...prev, [name]: value }))}
+        onChange={(name, value) =>
+          setFormValues((prev) => ({ ...prev, [name]: value }))
+        }
         onSave={handleSave}
       />
 
@@ -512,7 +639,10 @@ export default function ReportsPanel({ onReady }: { onReady?: (fns: any) => void
         message={`Are you sure you want to delete "${deleting?.title || "this report"}"? This action cannot be undone.`}
         saving={deleteSaving}
         onConfirm={handleConfirmDelete}
-        onCancel={() => { setConfirmOpen(false); setDeleting(null); }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setDeleting(null);
+        }}
       />
     </>
   );

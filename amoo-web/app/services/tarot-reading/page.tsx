@@ -180,20 +180,26 @@ export default function TarotReadingPage() {
   const PAGE_SIZE = 3;
 
   useEffect(() => {
-    api.getServices()
+    api
+      .getServices()
       .then((res: any) => {
-        const items = (res?.data as any[]) ?? Array.isArray(res) ? res : [];
+        const items = ((res?.data as any[]) ?? Array.isArray(res)) ? res : [];
         setServices(items.filter((s: any) => s.category === "Tarot"));
       })
-      .catch(() => setErrorServices("Failed to load services. Please try again."))
+      .catch(() =>
+        setErrorServices("Failed to load services. Please try again."),
+      )
       .finally(() => setLoadingServices(false));
 
-    api.getTestimonials()
+    api
+      .getTestimonials()
       .then((rows: any) => {
-        const list = Array.isArray(rows) ? rows : rows?.data ?? [];
+        const list = Array.isArray(rows) ? rows : (rows?.data ?? []);
         setTestimonials(list.length ? list : []);
       })
-      .catch(() => setErrorTestimonials("Failed to load testimonials. Please try again."))
+      .catch(() =>
+        setErrorTestimonials("Failed to load testimonials. Please try again."),
+      )
       .finally(() => setLoadingTestimonials(false));
   }, []);
 
@@ -201,13 +207,21 @@ export default function TarotReadingPage() {
   const apiServicesRow2 = services.slice(6, 12);
 
   const staticTestimonials = TESTIMONIALS;
-  const allTestimonials = loadingTestimonials ? staticTestimonials : testimonials.length ? testimonials : staticTestimonials;
+  const allTestimonials = loadingTestimonials
+    ? staticTestimonials
+    : testimonials.length
+      ? testimonials
+      : staticTestimonials;
   const totalPages = Math.max(1, Math.ceil(allTestimonials.length / PAGE_SIZE));
   const safePage = Math.min(testimonialPage, totalPages - 1);
-  const visibleTestimonials = allTestimonials.slice(safePage * PAGE_SIZE, (safePage + 1) * PAGE_SIZE);
+  const visibleTestimonials = allTestimonials.slice(
+    safePage * PAGE_SIZE,
+    (safePage + 1) * PAGE_SIZE,
+  );
 
   const prevTestimonials = () => setTestimonialPage((p) => Math.max(0, p - 1));
-  const nextTestimonials = () => setTestimonialPage((p) => Math.min(totalPages - 1, p + 1));
+  const nextTestimonials = () =>
+    setTestimonialPage((p) => Math.min(totalPages - 1, p + 1));
 
   return (
     <>
@@ -280,7 +294,10 @@ export default function TarotReadingPage() {
                     label: ["100% Confidential", "& Safe"],
                   },
                 ].map(({ icon: Icon, label }) => (
-                  <li key={label.join(" ")} className="w-1/3 sm:w-1/4 lg:w-[100px] text-center">
+                  <li
+                    key={label.join(" ")}
+                    className="w-1/3 sm:w-1/4 lg:w-[100px] text-center"
+                  >
                     <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold/50 text-gold">
                       <Icon className="h-[22px] w-[22px]" />
                     </span>
@@ -324,62 +341,74 @@ export default function TarotReadingPage() {
 
           {/* Row 1 */}
           <div className="mt-9 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {(loadingServices ? SERVICES_ROW1 : apiServicesRow1.length ? apiServicesRow1 : SERVICES_ROW1).map((item: any) => {
-              const Icon = item.icon || TAROT_ICON_MAP[item.name] || defaultTarotIcon;
+            {(loadingServices
+              ? SERVICES_ROW1
+              : apiServicesRow1.length
+                ? apiServicesRow1
+                : SERVICES_ROW1
+            ).map((item: any) => {
+              const Icon =
+                item.icon || TAROT_ICON_MAP[item.name] || defaultTarotIcon;
               const title = item.name || item.title || "";
               const desc = item.sub || item.description || item.desc || "";
               return (
-              <article
-                key={title}
-                className="rounded-2xl border border-line bg-white px-4 py-6 text-center shadow-[0_2px_14px_rgba(75,37,131,0.05)]"
-              >
-                <span className="mx-auto flex h-[64px] w-[64px] items-center justify-center rounded-full border-2 border-gold/30 bg-lilac">
-                  <Icon className="h-[36px] w-[36px]" />
-                </span>
-                <h3 className="mt-4 text-[14px] font-semibold text-grape">
-                  {title}
-                </h3>
-                <p className="mt-2 text-[12px] leading-[1.6] text-body">
-                  {desc}
-                </p>
-                <Link
-                  href="/consultation/select-service"
-                  className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-medium text-grape-2 hover:text-gold transition-colors"
+                <article
+                  key={title}
+                  className="rounded-2xl border border-line bg-white px-4 py-6 text-center shadow-[0_2px_14px_rgba(75,37,131,0.05)]"
                 >
-                  Learn More <ArrowRightIcon className="h-3.5 w-3.5" />
-                </Link>
-              </article>
+                  <span className="mx-auto flex h-[64px] w-[64px] items-center justify-center rounded-full border-2 border-gold/30 bg-lilac">
+                    <Icon className="h-[36px] w-[36px]" />
+                  </span>
+                  <h3 className="mt-4 text-[14px] font-semibold text-grape">
+                    {title}
+                  </h3>
+                  <p className="mt-2 text-[12px] leading-[1.6] text-body">
+                    {desc}
+                  </p>
+                  <Link
+                    href="/consultation/select-service"
+                    className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-medium text-grape-2 hover:text-gold transition-colors"
+                  >
+                    Learn More <ArrowRightIcon className="h-3.5 w-3.5" />
+                  </Link>
+                </article>
               );
             })}
           </div>
 
           {/* Row 2 */}
           <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-            {(loadingServices ? SERVICES_ROW2 : apiServicesRow2.length ? apiServicesRow2 : SERVICES_ROW2).map((item: any) => {
-              const Icon = item.icon || TAROT_ICON_MAP[item.name] || defaultTarotIcon;
+            {(loadingServices
+              ? SERVICES_ROW2
+              : apiServicesRow2.length
+                ? apiServicesRow2
+                : SERVICES_ROW2
+            ).map((item: any) => {
+              const Icon =
+                item.icon || TAROT_ICON_MAP[item.name] || defaultTarotIcon;
               const title = item.name || item.title || "";
               const desc = item.sub || item.description || item.desc || "";
               return (
-              <article
-                key={title}
-                className="rounded-2xl border border-line bg-white px-4 py-6 text-center shadow-[0_2px_14px_rgba(75,37,131,0.05)]"
-              >
-                <span className="mx-auto flex h-[64px] w-[64px] items-center justify-center rounded-full border-2 border-gold/30 bg-lilac">
-                  <Icon className="h-[36px] w-[36px]" />
-                </span>
-                <h3 className="mt-4 text-[14px] font-semibold text-grape">
-                  {title}
-                </h3>
-                <p className="mt-2 text-[12px] leading-[1.6] text-body">
-                  {desc}
-                </p>
-                <Link
-                  href="/consultation/select-service"
-                  className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-medium text-grape-2 hover:text-gold transition-colors"
+                <article
+                  key={title}
+                  className="rounded-2xl border border-line bg-white px-4 py-6 text-center shadow-[0_2px_14px_rgba(75,37,131,0.05)]"
                 >
-                  Learn More <ArrowRightIcon className="h-3.5 w-3.5" />
-                </Link>
-              </article>
+                  <span className="mx-auto flex h-[64px] w-[64px] items-center justify-center rounded-full border-2 border-gold/30 bg-lilac">
+                    <Icon className="h-[36px] w-[36px]" />
+                  </span>
+                  <h3 className="mt-4 text-[14px] font-semibold text-grape">
+                    {title}
+                  </h3>
+                  <p className="mt-2 text-[12px] leading-[1.6] text-body">
+                    {desc}
+                  </p>
+                  <Link
+                    href="/consultation/select-service"
+                    className="mt-3 inline-flex items-center gap-1 text-[12.5px] font-medium text-grape-2 hover:text-gold transition-colors"
+                  >
+                    Learn More <ArrowRightIcon className="h-3.5 w-3.5" />
+                  </Link>
+                </article>
               );
             })}
           </div>
@@ -504,7 +533,10 @@ export default function TarotReadingPage() {
                   {/* Avatar */}
                   <div className="mx-auto h-[60px] w-[60px] overflow-hidden rounded-full border-2 border-gold/30">
                     <Image
-                      src={t.img || "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png"}
+                      src={
+                        t.img ||
+                        "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png"
+                      }
                       alt={t.name || "Client"}
                       width={60}
                       height={60}

@@ -3,7 +3,18 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Mail, Lock, KeyRound, Eye, EyeOff, ArrowLeft, ArrowRight, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  KeyRound,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+} from "lucide-react";
 import { api } from "../../lib/api";
 
 function ResetFormInner() {
@@ -17,7 +28,12 @@ function ResetFormInner() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; otp?: string; password?: string; confirmPassword?: string }>({});
+  const [errors, setErrors] = useState<{
+    email?: string;
+    otp?: string;
+    password?: string;
+    confirmPassword?: string;
+  }>({});
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -57,7 +73,10 @@ function ResetFormInner() {
       await api.resetPassword({ email, otp, password });
       setSuccess(true);
     } catch (err: unknown) {
-      setApiError((err as Error)?.message || "Failed to reset password. Please try again.");
+      setApiError(
+        (err as Error)?.message ||
+          "Failed to reset password. Please try again.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +96,10 @@ function ResetFormInner() {
           <span className="text-amber-500 text-lg">⟝</span>
         </div>
 
-        <div role="alert" className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left">
+        <div
+          role="alert"
+          className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left"
+        >
           <CheckCircle2 size={18} className="shrink-0" />
           <span>Your password has been updated successfully.</span>
         </div>
@@ -119,7 +141,10 @@ function ResetFormInner() {
         </div>
 
         {apiError && (
-          <div role="alert" className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm">
+          <div
+            role="alert"
+            className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm"
+          >
             <AlertCircle size={16} />
             {apiError}
           </div>
@@ -127,15 +152,28 @@ function ResetFormInner() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label htmlFor="resetpasswordform-email-address" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="resetpasswordform-email-address"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               Email Address
             </label>
-            <div className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <Mail size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input id="resetpasswordform-email-address"
+            <div
+              className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <Mail
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]"
+              />
+              <input
+                id="resetpasswordform-email-address"
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email)
+                    setErrors((p) => ({ ...p, email: undefined }));
+                }}
                 placeholder="Enter your email address"
                 className="w-full pl-10 pr-3 py-3 rounded-lg border border-purple-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
@@ -148,17 +186,30 @@ function ResetFormInner() {
           </div>
 
           <div>
-            <label htmlFor="resetpasswordform-otp-code" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="resetpasswordform-otp-code"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               OTP Code
             </label>
-            <div className={`relative ${errors.otp ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <KeyRound size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]" />
-              <input id="resetpasswordform-otp-code"
+            <div
+              className={`relative ${errors.otp ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <KeyRound
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]"
+              />
+              <input
+                id="resetpasswordform-otp-code"
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
                 value={otp}
-                onChange={(e) => { const v = e.target.value.replace(/\D/g, "").slice(0, 6); setOtp(v); if (errors.otp) setErrors((p) => ({ ...p, otp: undefined })); }}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setOtp(v);
+                  if (errors.otp) setErrors((p) => ({ ...p, otp: undefined }));
+                }}
                 placeholder="Enter 6-digit OTP"
                 className="w-full pl-10 pr-3 py-3 rounded-lg border border-purple-200 text-sm placeholder-gray-400 tracking-widest focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
@@ -171,15 +222,28 @@ function ResetFormInner() {
           </div>
 
           <div>
-            <label htmlFor="resetpasswordform-new-password" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="resetpasswordform-new-password"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               New Password
             </label>
-            <div className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input id="resetpasswordform-new-password"
+            <div
+              className={`relative ${errors.password ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <Lock
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                id="resetpasswordform-new-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password)
+                    setErrors((p) => ({ ...p, password: undefined }));
+                }}
                 placeholder="At least 8 characters"
                 className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
@@ -199,15 +263,28 @@ function ResetFormInner() {
           </div>
 
           <div>
-            <label htmlFor="resetpasswordform-confirm-new-password" className="block text-sm font-medium text-gray-800 mb-1.5">
+            <label
+              htmlFor="resetpasswordform-confirm-new-password"
+              className="block text-sm font-medium text-gray-800 mb-1.5"
+            >
               Confirm New Password
             </label>
-            <div className={`relative ${errors.confirmPassword ? "ring-2 ring-red-300 rounded-lg" : ""}`}>
-              <Lock size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input id="resetpasswordform-confirm-new-password"
+            <div
+              className={`relative ${errors.confirmPassword ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+            >
+              <Lock
+                size={18}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <input
+                id="resetpasswordform-confirm-new-password"
                 type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
-                onChange={(e) => { setConfirmPassword(e.target.value); if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: undefined })); }}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (errors.confirmPassword)
+                    setErrors((p) => ({ ...p, confirmPassword: undefined }));
+                }}
                 placeholder="Re-enter your new password"
                 className="w-full pl-10 pr-10 py-3 rounded-lg border border-gray-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
@@ -271,11 +348,13 @@ function ResetFormInner() {
 
 export default function ResetPasswordForm() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center py-20">
-        <Loader2 size={24} className="animate-spin text-[#5B2A9D]" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-20">
+          <Loader2 size={24} className="animate-spin text-[#5B2A9D]" />
+        </div>
+      }
+    >
       <ResetFormInner />
     </Suspense>
   );

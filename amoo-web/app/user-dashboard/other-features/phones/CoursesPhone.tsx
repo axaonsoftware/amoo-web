@@ -8,13 +8,15 @@ const COURSES = [
     title: "Vedic Astrology",
     subtitle: "Beginner to Advanced",
     progress: 65,
-    thumb: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
+    thumb:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
   },
   {
     title: "Numerology",
     subtitle: "Mastery Course",
     progress: 45,
-    thumb: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
+    thumb:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&q=80",
   },
 ];
 

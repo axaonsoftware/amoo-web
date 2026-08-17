@@ -108,7 +108,8 @@ export default function RightRail() {
     Promise.all([
       api.admin.getOverview().then((data: any) => {
         const s = data?.stats ?? data;
-        if (s?.kundalis != null) setTotalKundali(Number(s.kundalis).toLocaleString("en-IN"));
+        if (s?.kundalis != null)
+          setTotalKundali(Number(s.kundalis).toLocaleString("en-IN"));
       }),
       api.admin.getTopExperts().then((data: any) => {
         const items = data?.data ?? data;
@@ -118,7 +119,7 @@ export default function RightRail() {
               name: a.name || "Unknown",
               count: `${a.sessions || a.bookings || 0} kundalis`,
               rating: a.rating || "—",
-            }))
+            })),
           );
         }
       }),
@@ -234,14 +235,26 @@ export default function RightRail() {
 
         <div className="mt-[5px] space-y-[1px]">
           <div className="flex items-start gap-[9px] py-[3px]">
-            <span className="mt-[3px] grid h-[10px] w-[10px] shrink-0 place-items-center rounded-full" style={{ background: "#7C3AED33" }}>
-              <span className="h-[4px] w-[4px] rounded-full" style={{ background: "#7C3AED" }} />
+            <span
+              className="mt-[3px] grid h-[10px] w-[10px] shrink-0 place-items-center rounded-full"
+              style={{ background: "#7C3AED33" }}
+            >
+              <span
+                className="h-[4px] w-[4px] rounded-full"
+                style={{ background: "#7C3AED" }}
+              />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[10px] font-bold leading-[13px] text-[#14134A]">Kundalis synced</p>
-              <p className="truncate text-[9px] leading-[13px] text-[#8B879C]">From API</p>
+              <p className="truncate text-[10px] font-bold leading-[13px] text-[#14134A]">
+                Kundalis synced
+              </p>
+              <p className="truncate text-[9px] leading-[13px] text-[#8B879C]">
+                From API
+              </p>
             </div>
-            <span className="shrink-0 whitespace-nowrap text-[9px] leading-[13px] text-[#8B879C]">now</span>
+            <span className="shrink-0 whitespace-nowrap text-[9px] leading-[13px] text-[#8B879C]">
+              now
+            </span>
           </div>
         </div>
       </Card>

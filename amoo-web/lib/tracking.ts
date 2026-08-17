@@ -20,7 +20,7 @@ import api from "./api";
 export function trackEvent(
   action: string,
   actionDetails?: Record<string, unknown>,
-  pageOrRoute?: string
+  pageOrRoute?: string,
 ): void {
   if (typeof window === "undefined") return;
 
@@ -39,10 +39,14 @@ export function trackEvent(
 
 export function useTrackActivity() {
   const track = useCallback(
-    (action: string, actionDetails?: Record<string, unknown>, pageOrRoute?: string) => {
+    (
+      action: string,
+      actionDetails?: Record<string, unknown>,
+      pageOrRoute?: string,
+    ) => {
       trackEvent(action, actionDetails, pageOrRoute);
     },
-    []
+    [],
   );
   return { track };
 }

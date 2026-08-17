@@ -76,7 +76,10 @@ export function NumerologyIcon(props: IconProps) {
   return (
     <svg {...line} strokeWidth={1.5} {...props}>
       <rect x="3.6" y="3.6" width="16.8" height="16.8" rx="3" />
-      <path d="M9 8v8M8 9l1-1M15 8h-2v3.4h1.6a1.6 1.6 0 1 1 0 3.2H13" strokeWidth={1.4} />
+      <path
+        d="M9 8v8M8 9l1-1M15 8h-2v3.4h1.6a1.6 1.6 0 1 1 0 3.2H13"
+        strokeWidth={1.4}
+      />
     </svg>
   );
 }
@@ -94,8 +97,22 @@ export function LotusLineIcon(props: IconProps) {
 export function CardsIcon(props: IconProps) {
   return (
     <svg {...line} strokeWidth={1.5} {...props}>
-      <rect x="3.4" y="6.4" width="9.2" height="13.4" rx="1.8" transform="rotate(-9 8 13)" />
-      <rect x="11.4" y="4.6" width="9.2" height="13.4" rx="1.8" transform="rotate(9 16 11)" />
+      <rect
+        x="3.4"
+        y="6.4"
+        width="9.2"
+        height="13.4"
+        rx="1.8"
+        transform="rotate(-9 8 13)"
+      />
+      <rect
+        x="11.4"
+        y="4.6"
+        width="9.2"
+        height="13.4"
+        rx="1.8"
+        transform="rotate(9 16 11)"
+      />
       <path d="M16 8.6v4M14 10.6h4" strokeWidth={1.3} />
     </svg>
   );
@@ -133,7 +150,10 @@ export function SparkleIcon(props: IconProps) {
   return (
     <svg {...line} strokeWidth={1.5} {...props}>
       <path d="M12 3c.7 2.9 2.1 4.3 5 5-2.9.7-4.3 2.1-5 5-.7-2.9-2.1-4.3-5-5 2.9-.7 4.3-2.1 5-5Z" />
-      <path d="M18.4 14.6c.35 1.4 1 2.1 2.4 2.4-1.4.35-2.05 1-2.4 2.4-.35-1.4-1-2.05-2.4-2.4 1.4-.35 2.05-1 2.4-2.4Z" strokeWidth={1.2} />
+      <path
+        d="M18.4 14.6c.35 1.4 1 2.1 2.4 2.4-1.4.35-2.05 1-2.4 2.4-.35-1.4-1-2.05-2.4-2.4 1.4-.35 2.05-1 2.4-2.4Z"
+        strokeWidth={1.2}
+      />
     </svg>
   );
 }
@@ -211,7 +231,10 @@ export function KundaliWheelIcon(props: IconProps) {
   return (
     <svg {...line} strokeWidth={1.5} {...props}>
       <circle cx="12" cy="12" r="9" />
-      <path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4" strokeWidth={1.2} />
+      <path
+        d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"
+        strokeWidth={1.2}
+      />
       <circle cx="12" cy="12" r="3.4" />
     </svg>
   );

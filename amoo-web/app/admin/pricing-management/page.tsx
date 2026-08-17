@@ -7,7 +7,10 @@ import PricingPanel from "./PricingPanel";
 import RightRail from "./RightRail";
 
 export default function PricingManagementPage() {
-  const panelFns = useRef<{ openCreate: () => void; exportData: () => void } | null>(null);
+  const panelFns = useRef<{
+    openCreate: () => void;
+    exportData: () => void;
+  } | null>(null);
 
   return (
     <main id="main-content" className="flex-1 px-6 pb-8 pt-[18px]">

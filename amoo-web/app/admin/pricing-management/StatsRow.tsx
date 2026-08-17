@@ -14,16 +14,56 @@ import { api } from "../../../lib/api";
 const statDefs: {
   label: string;
   field: string;
-  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  Icon: React.ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>;
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Plans", field: "plans", Icon: Tag, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
-  { label: "Active Plans", field: "activePlans", Icon: CircleCheck, iconBg: "bg-[#E6F7EE]", iconColor: "text-[#16A34A]" },
-  { label: "Inactive Plans", field: "inactivePlans", Icon: CirclePause, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
-  { label: "Total Packages", field: "packages", Icon: Boxes, iconBg: "bg-[#E7F0FE]", iconColor: "text-[#3B82F6]" },
-  { label: "Monthly Revenue (May)", field: "revenue", Icon: IndianRupee, iconBg: "bg-[#EAE9FB]", iconColor: "text-[#4F46E5]" },
-  { label: "Discount Offers", field: "discountOffers", Icon: TicketPercent, iconBg: "bg-[#FEF0DC]", iconColor: "text-[#F59E0B]" },
+  {
+    label: "Total Plans",
+    field: "plans",
+    Icon: Tag,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Active Plans",
+    field: "activePlans",
+    Icon: CircleCheck,
+    iconBg: "bg-[#E6F7EE]",
+    iconColor: "text-[#16A34A]",
+  },
+  {
+    label: "Inactive Plans",
+    field: "inactivePlans",
+    Icon: CirclePause,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Total Packages",
+    field: "packages",
+    Icon: Boxes,
+    iconBg: "bg-[#E7F0FE]",
+    iconColor: "text-[#3B82F6]",
+  },
+  {
+    label: "Monthly Revenue (May)",
+    field: "revenue",
+    Icon: IndianRupee,
+    iconBg: "bg-[#EAE9FB]",
+    iconColor: "text-[#4F46E5]",
+  },
+  {
+    label: "Discount Offers",
+    field: "discountOffers",
+    Icon: TicketPercent,
+    iconBg: "bg-[#FEF0DC]",
+    iconColor: "text-[#F59E0B]",
+  },
 ];
 
 export default function StatsRow() {
@@ -41,8 +81,10 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const fmtCurrency = (n: number | undefined) => (n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const fmtCurrency = (n: number | undefined) =>
+    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
   if (loading) {
     return (

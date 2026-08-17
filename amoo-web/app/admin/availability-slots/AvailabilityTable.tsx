@@ -72,9 +72,12 @@ export default function AvailabilityTable() {
     timerRef.current = setTimeout(() => setDebouncedSearch(value), 300);
   }, []);
 
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    },
+    [],
+  );
 
   const load = useCallback(() => {
     setLoading(true);
@@ -84,7 +87,9 @@ export default function AvailabilityTable() {
       .then((data: unknown) => {
         setRows(Array.isArray(data) ? (data as AvailabilityRow[]) : []);
       })
-      .catch((e: Error) => setError(e?.message || "Failed to load availability."))
+      .catch((e: Error) =>
+        setError(e?.message || "Failed to load availability."),
+      )
       .finally(() => setLoading(false));
   }, [debouncedSearch, status]);
 
@@ -128,7 +133,9 @@ export default function AvailabilityTable() {
             className="h-[36px] w-[126px] appearance-none rounded-[8px] border border-[#e4e2ec] bg-white pl-2.5 pr-7 text-[11px] text-[#3f3d56] outline-none focus:border-[#c9bfe4]"
           >
             {STATUS_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
           <ChevronDown
@@ -140,10 +147,15 @@ export default function AvailabilityTable() {
 
         {/* Replaces a hardcoded "01 May 2025 - 18 May 2025" label: the endpoint
             defaults to today onward, so say that rather than invent a range. */}
-        <span className="text-[11px] text-[#8a86a0]">Upcoming slots (today onward)</span>
+        <span className="text-[11px] text-[#8a86a0]">
+          Upcoming slots (today onward)
+        </span>
 
         {loading && rows.length > 0 && (
-          <Loader2 className="ml-auto h-4 w-4 animate-spin text-[#7C3AED]" aria-label="Refreshing" />
+          <Loader2
+            className="ml-auto h-4 w-4 animate-spin text-[#7C3AED]"
+            aria-label="Refreshing"
+          />
         )}
       </div>
 
@@ -154,13 +166,48 @@ export default function AvailabilityTable() {
           </caption>
           <thead>
             <tr className="border-b border-[#ecebf1]">
-              <th scope="col" className="whitespace-nowrap py-2.5 pr-2 text-left text-[11px] font-medium text-[#6f6b85]">Astrologer</th>
-              <th scope="col" className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]">Specialties</th>
-              <th scope="col" className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]">Slot Window</th>
-              <th scope="col" className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]">Available</th>
-              <th scope="col" className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]">Booked / Total</th>
-              <th scope="col" className="whitespace-nowrap px-2 py-2.5 text-center text-[11px] font-medium text-[#6f6b85]">Status</th>
-              <th scope="col" className="whitespace-nowrap py-2.5 pl-2 text-center text-[11px] font-medium text-[#6f6b85]">Actions</th>
+              <th
+                scope="col"
+                className="whitespace-nowrap py-2.5 pr-2 text-left text-[11px] font-medium text-[#6f6b85]"
+              >
+                Astrologer
+              </th>
+              <th
+                scope="col"
+                className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]"
+              >
+                Specialties
+              </th>
+              <th
+                scope="col"
+                className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]"
+              >
+                Slot Window
+              </th>
+              <th
+                scope="col"
+                className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]"
+              >
+                Available
+              </th>
+              <th
+                scope="col"
+                className="whitespace-nowrap px-2 py-2.5 text-left text-[11px] font-medium text-[#6f6b85]"
+              >
+                Booked / Total
+              </th>
+              <th
+                scope="col"
+                className="whitespace-nowrap px-2 py-2.5 text-center text-[11px] font-medium text-[#6f6b85]"
+              >
+                Status
+              </th>
+              <th
+                scope="col"
+                className="whitespace-nowrap py-2.5 pl-2 text-center text-[11px] font-medium text-[#6f6b85]"
+              >
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -176,7 +223,10 @@ export default function AvailabilityTable() {
               />
             ) : (
               rows.map((r) => (
-                <tr key={r.id} className="border-b border-[#f2f1f6] last:border-b-0">
+                <tr
+                  key={r.id}
+                  className="border-b border-[#f2f1f6] last:border-b-0"
+                >
                   <td className="py-3.5 pr-2">
                     <div className="flex items-center gap-2.5">
                       {r.avatar ? (
@@ -203,14 +253,19 @@ export default function AvailabilityTable() {
                           {sanitize(r.name)}
                         </p>
                         <p className="mt-0.5 text-[10px] font-light leading-tight text-[#a5a2b3]">
-                          {r.rating ? `★ ${Number(r.rating).toFixed(1)}` : "Not yet rated"}
+                          {r.rating
+                            ? `★ ${Number(r.rating).toFixed(1)}`
+                            : "Not yet rated"}
                         </p>
                       </div>
                     </div>
                   </td>
 
                   <td className="px-2 py-3.5">
-                    <p className="max-w-[160px] truncate text-[11px] text-[#3f3d56]" title={sanitize(r.specialties) || undefined}>
+                    <p
+                      className="max-w-[160px] truncate text-[11px] text-[#3f3d56]"
+                      title={sanitize(r.specialties) || undefined}
+                    >
                       {sanitize(r.specialties) || "—"}
                     </p>
                   </td>
@@ -226,7 +281,9 @@ export default function AvailabilityTable() {
                         </p>
                       </>
                     ) : (
-                      <span className="text-[11px] text-[#a5a2b3]">No slots scheduled</span>
+                      <span className="text-[11px] text-[#a5a2b3]">
+                        No slots scheduled
+                      </span>
                     )}
                   </td>
 
@@ -235,7 +292,9 @@ export default function AvailabilityTable() {
                       {r.available_slots}
                     </span>
                     {r.blocked_slots > 0 && (
-                      <span className="ml-1 text-[10px] text-[#a5a2b3]">({r.blocked_slots} blocked)</span>
+                      <span className="ml-1 text-[10px] text-[#a5a2b3]">
+                        ({r.blocked_slots} blocked)
+                      </span>
                     )}
                   </td>
 
@@ -245,7 +304,9 @@ export default function AvailabilityTable() {
                         <span className="text-[10.5px] font-normal text-[#3f3d56]">
                           {r.booked_slots} / {r.total_slots}
                         </span>
-                        <span className="text-[10px] font-medium text-[#6f6b85]">{r.utilisation_pct}%</span>
+                        <span className="text-[10px] font-medium text-[#6f6b85]">
+                          {r.utilisation_pct}%
+                        </span>
                       </div>
                       <div
                         className="mt-1.5 h-[4px] w-full rounded-full bg-[#eeecf4]"
@@ -280,14 +341,22 @@ export default function AvailabilityTable() {
                         aria-label={`View ${sanitize(r.name)}`}
                         className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-[#e4e2ec] text-[#6f6b85] hover:bg-[#f7f6fb]"
                       >
-                        <Eye className="h-[13px] w-[13px]" strokeWidth={1.8} aria-hidden="true" />
+                        <Eye
+                          className="h-[13px] w-[13px]"
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
                       </Link>
                       <Link
                         href={`/admin/expert-management?expert=${r.id}&edit=1`}
                         aria-label={`Edit ${sanitize(r.name)}`}
                         className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-[#e4e2ec] text-[#6f6b85] hover:bg-[#f7f6fb]"
                       >
-                        <Pencil className="h-[13px] w-[13px]" strokeWidth={1.8} aria-hidden="true" />
+                        <Pencil
+                          className="h-[13px] w-[13px]"
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
                       </Link>
                     </div>
                   </td>

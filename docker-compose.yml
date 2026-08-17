@@ -12,11 +12,17 @@
 #   JWT_SECRET=...                        (same as JWT_SECRET below)
 #   JWT_REFRESH_SECRET=...
 #   CLIENT_ORIGIN=https://your-domain
+#   CLIENT_URL=https://your-domain        (public frontend origin, used in email links)
 #   PAYMENT_GATEWAY=razorpay
 #   PAYMENT_WEBHOOK_SECRET=...
 #   RAZORPAY_KEY_ID=... / RAZORPAY_KEY_SECRET=...
-#   NEXT_PUBLIC_API_URL=https://your-domain/api
+#   NEXT_PUBLIC_API_URL=https://your-domain   (BARE origin — the app appends /api itself)
 #   NEXT_PUBLIC_WHATSAPP_NUMBER=...
+#
+# HTTPS is mandatory: before the first `up`, place real certificates at
+# ./certs/fullchain.pem and ./certs/privkey.pem (e.g. via certbot). nginx
+# refuses to start without them. Recommended: APP_URL=https://your-domain
+# so Swagger's "try it" base and webhook callbacks use the public origin.
 #
 # For production deploys via GitHub Actions, set these in the shell or .env
 # on the server before running `docker compose pull`:
@@ -48,7 +54,7 @@ services:
     networks:
       - amoo_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/nginx-health"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -101,7 +107,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:?CLIENT_ORIGIN is required}
-      CLIENT_URL: ${CLIENT_URL:-}
+      CLIENT_URL: ${CLIENT_URL:?CLIENT_URL is required}
       APP_URL: ${APP_URL:-http://localhost:4000}
       PAYMENT_GATEWAY: ${PAYMENT_GATEWAY:?PAYMENT_GATEWAY is required}
       PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:?PAYMENT_WEBHOOK_SECRET is required}

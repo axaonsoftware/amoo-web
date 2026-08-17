@@ -11,7 +11,10 @@ export default function WhatYouReceive() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-6">
             {RECEIVE_ITEMS.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex flex-col items-center text-center gap-2">
+              <div
+                key={label}
+                className="flex flex-col items-center text-center gap-2"
+              >
                 <span className="w-12 h-12 rounded-full border border-amber-500/50 flex items-center justify-center text-amber-400">
                   <Icon className="w-5 h-5" />
                 </span>
@@ -24,7 +27,9 @@ export default function WhatYouReceive() {
         </div>
 
         <div className="bg-[#3a1656]/60 border border-purple-800/60 rounded-xl p-6 text-center">
-          <p className="text-amber-400 font-semibold mb-1">Not Sure Which Service</p>
+          <p className="text-amber-400 font-semibold mb-1">
+            Not Sure Which Service
+          </p>
           <p className="text-amber-400 font-semibold mb-3">is Right for You?</p>
           <p className="text-gray-300 text-sm mb-5">
             Talk to our expert and get free guidance.

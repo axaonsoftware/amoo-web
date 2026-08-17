@@ -43,13 +43,14 @@ export default function RightRail() {
               name: m.name || "Unknown",
               reports: `${m.sessions || m.bookings || 0} reports`,
               rating: m.rating || "—",
-            }))
+            })),
           );
         }
       }),
       api.admin.getOverview().then((data: any) => {
         const s = data?.stats ?? data;
-        if (s?.reports != null) setTotalReports(Number(s.reports).toLocaleString("en-IN"));
+        if (s?.reports != null)
+          setTotalReports(Number(s.reports).toLocaleString("en-IN"));
       }),
     ])
       .catch((err) => setError(err?.message || "Failed to load data"))
@@ -76,8 +77,12 @@ export default function RightRail() {
         </h2>
 
         <div className="mt-3 flex items-center justify-between border-t border-[#EFEDF4] pt-3">
-          <span className="text-[11px] font-medium text-[#4A4557]">Total Reports</span>
-          <span className="text-[12.5px] font-semibold text-[#1B1630]">{totalReports}</span>
+          <span className="text-[11px] font-medium text-[#4A4557]">
+            Total Reports
+          </span>
+          <span className="text-[12.5px] font-semibold text-[#1B1630]">
+            {totalReports}
+          </span>
         </div>
       </section>
 
@@ -87,7 +92,10 @@ export default function RightRail() {
           <h2 className="text-[12.5px] font-semibold text-[#1B1630]">
             Top Numerology Masters
           </h2>
-          <Link href="/admin/numerology-management" className="text-[10.5px] font-medium text-[#7C3AED]">
+          <Link
+            href="/admin/numerology-management"
+            className="text-[10.5px] font-medium text-[#7C3AED]"
+          >
             View All
           </Link>
         </div>
@@ -145,7 +153,10 @@ export default function RightRail() {
           <h2 className="text-[12.5px] font-semibold text-[#1B1630]">
             Recent Activity
           </h2>
-          <Link href="/admin/numerology-management" className="text-[10.5px] font-medium text-[#7C3AED]">
+          <Link
+            href="/admin/numerology-management"
+            className="text-[10.5px] font-medium text-[#7C3AED]"
+          >
             View All
           </Link>
         </div>
@@ -154,10 +165,16 @@ export default function RightRail() {
           <li className="flex items-start gap-[8px]">
             <span className="mt-[5px] h-[7px] w-[7px] shrink-0 rounded-full bg-[#7C3AED]" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[10.5px] font-medium text-[#1B1630]">Reports synced</p>
-              <p className="mt-[1px] truncate text-[9.5px] text-[#8B879C]">From API</p>
+              <p className="truncate text-[10.5px] font-medium text-[#1B1630]">
+                Reports synced
+              </p>
+              <p className="mt-[1px] truncate text-[9.5px] text-[#8B879C]">
+                From API
+              </p>
             </div>
-            <span className="shrink-0 whitespace-nowrap text-[9.5px] text-[#8B879C]">now</span>
+            <span className="shrink-0 whitespace-nowrap text-[9.5px] text-[#8B879C]">
+              now
+            </span>
           </li>
         </ul>
       </section>

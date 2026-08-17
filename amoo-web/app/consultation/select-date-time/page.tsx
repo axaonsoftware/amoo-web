@@ -21,14 +21,34 @@ function SelectDateTimeInner() {
   const service = searchParams.get("service") || "Selected Service";
   const mode = searchParams.get("mode") || "Selected Mode";
 
-  const [selectedDate, setSelectedDate] = useState<number>(10);
+  const now = new Date();
+  const [selectedDate, setSelectedDate] = useState<number>(now.getDate());
+  const [selectedMonth, setSelectedMonth] = useState<number>(now.getMonth());
+  const [selectedYear, setSelectedYear] = useState<number>(now.getFullYear());
   const [selectedPeriod, setSelectedPeriod] = useState("Morning");
   const [selectedSlot, setSelectedSlot] = useState("");
   const [validationError, setValidationError] = useState("");
 
   const handleBack = () => {
-    router.push(`/consultation/consultation-mode?service=${encodeURIComponent(service)}`);
+    router.push(
+      `/consultation/consultation-mode?service=${encodeURIComponent(service)}`,
+    );
   };
+
+  const MONTH_NAMES = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
 
   const handleContinue = () => {
     setValidationError("");
@@ -36,10 +56,20 @@ function SelectDateTimeInner() {
       setValidationError("Please select a time slot before continuing.");
       return;
     }
-    const dateStr = `Tuesday, ${selectedDate} June 2026`;
+    const dateObj = new Date(selectedYear, selectedMonth, selectedDate);
+    const weekday = [
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ][dateObj.getDay()];
+    const dateStr = `${weekday}, ${selectedDate} ${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
     saveConsultationData({ date: dateStr, time: selectedSlot });
     router.push(
-      `/consultation/consultation-booking?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(selectedSlot)}`
+      `/consultation/consultation-booking?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(selectedSlot)}`,
     );
   };
 
@@ -97,13 +127,24 @@ function SelectDateTimeInner() {
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_368px] lg:items-start">
             <DateTimeCard
               selectedDate={selectedDate}
+              selectedMonth={selectedMonth}
+              selectedYear={selectedYear}
+              onSelectDate={setSelectedDate}
+              onSelectMonth={setSelectedMonth}
+              onSelectYear={setSelectedYear}
               selectedPeriod={selectedPeriod}
               selectedSlot={selectedSlot}
-              onSelectDate={setSelectedDate}
               onSelectPeriod={setSelectedPeriod}
               onSelectSlot={setSelectedSlot}
             />
-            <SummaryCard service={service} mode={mode} date={selectedDate} time={selectedSlot} />
+            <SummaryCard
+              service={service}
+              mode={mode}
+              date={selectedDate}
+              month={selectedMonth}
+              year={selectedYear}
+              time={selectedSlot}
+            />
           </div>
         </div>
 

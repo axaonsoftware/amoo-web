@@ -22,17 +22,33 @@ import {
 
 const primaryNav = [
   { label: "Dashboard", Icon: Home, href: "/user-dashboard" },
-  { label: "My Consultations", Icon: CircleDot, href: "/user-dashboard/consultations-booking" },
+  {
+    label: "My Consultations",
+    Icon: CircleDot,
+    href: "/user-dashboard/consultations-booking",
+  },
   { label: "My Reports", Icon: FileText, href: "/user-dashboard/my-reports" },
-  { label: "Numerology", Icon: LayoutGrid, href: "/user-dashboard/numerology-dashboard" },
+  {
+    label: "Numerology",
+    Icon: LayoutGrid,
+    href: "/user-dashboard/numerology-dashboard",
+  },
   { label: "Tarot", Icon: Layers, href: "/user-dashboard/tarot-dashboard" },
   { label: "Kundali", Icon: Orbit, href: "/user-dashboard/kundali-dashboard" },
   { label: "Reiki", Icon: Flower2, href: "/user-dashboard/reiki-dashboard" },
 ];
 
 const secondaryNav = [
-  { label: "Payments & Subscription", Icon: Wallet, href: "/user-dashboard/payments-subscription" },
-  { label: "Account & Profile", Icon: CircleUserRound, href: "/user-dashboard/account-profile" },
+  {
+    label: "Payments & Subscription",
+    Icon: Wallet,
+    href: "/user-dashboard/payments-subscription",
+  },
+  {
+    label: "Account & Profile",
+    Icon: CircleUserRound,
+    href: "/user-dashboard/account-profile",
+  },
   { label: "Notifications", Icon: Bell, href: "/user-dashboard" },
   { label: "My Activity", Icon: Hourglass, href: "/user-dashboard/activity" },
   { label: "Log Out", Icon: LogOut, href: "/user-login" },
@@ -114,7 +130,10 @@ export default function Sidebar() {
         <div className="relative overflow-hidden rounded-[16px] border border-[#8054bf]/45 bg-gradient-to-b from-[#3d1465] via-[#2c0e4c] to-[#1f0736] px-4 pb-4 pt-4 text-center shadow-[0_10px_30px_rgba(0,0,0,.4)]">
           <div className="stars pointer-events-none absolute inset-0 opacity-40" />
           <div className="relative">
-            <Crown className="mx-auto h-6 w-6 text-[#e9b85c]" strokeWidth={1.7} />
+            <Crown
+              className="mx-auto h-6 w-6 text-[#e9b85c]"
+              strokeWidth={1.7}
+            />
             <div className="mx-auto mt-2 flex items-center justify-center gap-1.5">
               <span className="h-px w-8 bg-gradient-to-r from-transparent to-[#c9922f]/70" />
               <span className="h-[3px] w-[3px] rotate-45 bg-[#e9b85c]" />

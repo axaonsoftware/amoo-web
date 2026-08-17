@@ -18,12 +18,48 @@ const statDefs: {
   iconWrap: string;
   iconColor: string;
 }[] = [
-  { label: "Total Kundali Generated", field: "kundalis", Icon: Frame, iconWrap: "bg-[#F2EBFE]", iconColor: "text-[#4F46E5]" },
-  { label: "Today's Kundali", field: "todaysKundali", Icon: CalendarClock, iconWrap: "bg-[#FEF4E9]", iconColor: "text-[#F97316]" },
-  { label: "Detailed Reports", field: "detailedReports", Icon: FileText, iconWrap: "bg-[#E7F5E8]", iconColor: "text-[#16A34A]" },
-  { label: "Active Astrologers", field: "activeAstrologers", Icon: UserRound, iconWrap: "bg-[#E9F0FD]", iconColor: "text-[#2563EB]" },
-  { label: "Total Revenue (May)", field: "revenue", Icon: IndianRupee, iconWrap: "bg-[#F2EBFD]", iconColor: "text-[#4F46E5]" },
-  { label: "Premium Reports", field: "premiumReports", Icon: Crown, iconWrap: "bg-[#FEF4E9]", iconColor: "text-[#F97316]" },
+  {
+    label: "Total Kundali Generated",
+    field: "kundalis",
+    Icon: Frame,
+    iconWrap: "bg-[#F2EBFE]",
+    iconColor: "text-[#4F46E5]",
+  },
+  {
+    label: "Today's Kundali",
+    field: "todaysKundali",
+    Icon: CalendarClock,
+    iconWrap: "bg-[#FEF4E9]",
+    iconColor: "text-[#F97316]",
+  },
+  {
+    label: "Detailed Reports",
+    field: "detailedReports",
+    Icon: FileText,
+    iconWrap: "bg-[#E7F5E8]",
+    iconColor: "text-[#16A34A]",
+  },
+  {
+    label: "Active Astrologers",
+    field: "activeAstrologers",
+    Icon: UserRound,
+    iconWrap: "bg-[#E9F0FD]",
+    iconColor: "text-[#2563EB]",
+  },
+  {
+    label: "Total Revenue (May)",
+    field: "revenue",
+    Icon: IndianRupee,
+    iconWrap: "bg-[#F2EBFD]",
+    iconColor: "text-[#4F46E5]",
+  },
+  {
+    label: "Premium Reports",
+    field: "premiumReports",
+    Icon: Crown,
+    iconWrap: "bg-[#FEF4E9]",
+    iconColor: "text-[#F97316]",
+  },
 ];
 
 export default function StatsRow() {
@@ -41,8 +77,10 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const fmtCurrency = (n: number | undefined) => (n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const fmtCurrency = (n: number | undefined) =>
+    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
   if (loading) {
     return (

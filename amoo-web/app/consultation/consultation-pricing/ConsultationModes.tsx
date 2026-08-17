@@ -1,4 +1,10 @@
-import { Phone, Video, MessageSquare, CheckCircle2, ShieldCheck } from "lucide-react";
+import {
+  Phone,
+  Video,
+  MessageSquare,
+  CheckCircle2,
+  ShieldCheck,
+} from "lucide-react";
 
 const durations = ["15 Min", "30 Min", "45 Min", "60 Min"];
 
@@ -95,7 +101,10 @@ export default function ConsultationModes() {
                       key={f}
                       className="flex items-center gap-2 text-white/80 text-sm"
                     >
-                      <CheckCircle2 size={15} className="text-amber-400 shrink-0" />
+                      <CheckCircle2
+                        size={15}
+                        className="text-amber-400 shrink-0"
+                      />
                       {f}
                     </li>
                   ))}
@@ -121,7 +130,8 @@ export default function ConsultationModes() {
                   href="/consultation/select-service"
                   className="mt-auto w-full block rounded-lg py-2.5 text-sm font-semibold text-[#3E1E7A] text-center"
                   style={{
-                    background: "linear-gradient(90deg,#F3D07A 0%,#C9932F 100%)",
+                    background:
+                      "linear-gradient(90deg,#F3D07A 0%,#C9932F 100%)",
                   }}
                 >
                   {mode.cta}

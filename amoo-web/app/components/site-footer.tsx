@@ -10,7 +10,14 @@ import {
   WhatsAppIcon,
   YoutubeIcon,
 } from "./home-icons";
-import { WHATSAPP_URL, CONTACT_PHONE, CONTACT_EMAIL, SITE_NAME, SOCIAL_LINKS, BUSINESS_HOURS } from "../../lib/constants";
+import {
+  WHATSAPP_URL,
+  CONTACT_PHONE,
+  CONTACT_EMAIL,
+  SITE_NAME,
+  SOCIAL_LINKS,
+  BUSINESS_HOURS,
+} from "../../lib/constants";
 
 const QUICK_LINKS = [
   { label: "Home", href: "/" },
@@ -58,7 +65,12 @@ const COLUMNS = [
 ];
 
 const BRAND_SOCIALS = [
-  { label: "Facebook", Icon: FacebookIcon, className: "bg-[#3b5998] text-white", href: SOCIAL_LINKS.facebook },
+  {
+    label: "Facebook",
+    Icon: FacebookIcon,
+    className: "bg-[#3b5998] text-white",
+    href: SOCIAL_LINKS.facebook,
+  },
   {
     label: "Instagram",
     Icon: InstagramIcon,
@@ -66,8 +78,18 @@ const BRAND_SOCIALS = [
       "bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white",
     href: SOCIAL_LINKS.instagram,
   },
-  { label: "YouTube", Icon: YoutubeIcon, className: "bg-[#ff0000] text-white", href: SOCIAL_LINKS.youtube },
-  { label: "WhatsApp", Icon: WhatsAppIcon, className: "bg-[#25D366] text-white", href: WHATSAPP_URL },
+  {
+    label: "YouTube",
+    Icon: YoutubeIcon,
+    className: "bg-[#ff0000] text-white",
+    href: SOCIAL_LINKS.youtube,
+  },
+  {
+    label: "WhatsApp",
+    Icon: WhatsAppIcon,
+    className: "bg-[#25D366] text-white",
+    href: WHATSAPP_URL,
+  },
 ];
 
 export function SiteFooter() {
@@ -171,8 +193,8 @@ export function SiteFooter() {
             &copy; 2025 {SITE_NAME}. All Rights Reserved.
           </p>
           <p className="hidden items-center gap-1.5 text-[11.5px] text-white/70 sm:flex">
-            Designed with <span className="text-[#e5342c]">&hearts;</span> for Spiritual
-            Seekers
+            Designed with <span className="text-[#e5342c]">&hearts;</span> for
+            Spiritual Seekers
           </p>
         </div>
       </div>

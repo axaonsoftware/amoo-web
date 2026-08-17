@@ -35,7 +35,9 @@ const courses = [
 export default function FeaturedCourses() {
   return (
     <section className="mt-6">
-      <h2 className="font-display text-[17px] font-bold text-[#4a1c7d]">Featured Courses</h2>
+      <h2 className="font-display text-[17px] font-bold text-[#4a1c7d]">
+        Featured Courses
+      </h2>
 
       <div className="mt-3.5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {courses.map(({ title, sub, lessons, rating, img }) => (
@@ -52,8 +54,12 @@ export default function FeaturedCourses() {
             />
 
             <div className="flex min-w-0 flex-1 flex-col justify-center px-3.5 py-3">
-              <h3 className="truncate text-[13.5px] font-semibold text-[#2b0f47]">{title}</h3>
-              <p className="mt-1 truncate text-[11.5px] text-[#8b8697]">{sub}</p>
+              <h3 className="truncate text-[13.5px] font-semibold text-[#2b0f47]">
+                {title}
+              </h3>
+              <p className="mt-1 truncate text-[11.5px] text-[#8b8697]">
+                {sub}
+              </p>
               <div className="mt-3 flex items-center justify-between">
                 <span className="text-[11px] text-[#8b8697]">{lessons}</span>
                 <span className="flex items-center gap-1 text-[11px] font-semibold text-[#2b0f47]">

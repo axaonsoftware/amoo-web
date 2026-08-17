@@ -6,7 +6,11 @@ import { SiteFooter } from "@/app/components/site-footer";
 
 const RefundPage = () => {
   return (
-    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
+    <main
+      id="main-content"
+      className="min-h-screen"
+      style={{ backgroundColor: "#fdf8f0" }}
+    >
       <OfferBar />
       <HomeHeader />
 
@@ -21,7 +25,10 @@ const RefundPage = () => {
           Last updated: July 21, 2026
         </p>
 
-        <div className="mt-12 space-y-10 font-sans" style={{ color: "#6c6b78" }}>
+        <div
+          className="mt-12 space-y-10 font-sans"
+          style={{ color: "#6c6b78" }}
+        >
           <section>
             <h2
               className="font-display text-2xl font-semibold"

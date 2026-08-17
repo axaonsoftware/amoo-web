@@ -19,7 +19,8 @@ const SOFTWARE: Software[] = [
       "Dasha Analysis",
       "Detailed Reports",
     ],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/kundli_generator.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/kundli_generator.png",
     href: "/software-hub/basic-kundali-software",
   },
   {
@@ -30,14 +31,16 @@ const SOFTWARE: Software[] = [
       "Personalized Reports",
       "Remedies & Suggestions",
     ],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/numerology_software.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/numerology_software.png",
     href: "/software-hub/numerology-software",
   },
   {
     title: "Name Numerology",
     description: "Find the perfect name with ideal vibrations.",
     features: ["Name Correction", "Name Suggestions", "Lucky Number & Charts"],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/name_numerology.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/name_numerology.png",
     href: "/software-hub/numerology-software",
   },
   {
@@ -48,28 +51,32 @@ const SOFTWARE: Software[] = [
       "Spreads & Layouts",
       "Client Reading Reports",
     ],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/tarot_reading.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/tarot_reading.png",
     href: "/software-hub/tarot-software",
   },
   {
     title: "Past Life Analysis",
     description: "Discover your past life and karmic lessons.",
     features: ["Past Life Report", "Karmic Patterns", "Soul Purpose Insights"],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/past_life_analysis.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/past_life_analysis.png",
     href: "/software-hub",
   },
   {
     title: "Aura Scanner",
     description: "Analyze aura and energy fields with precision.",
     features: ["Aura Report", "Chakra Analysis", "Energy Balancing Tips"],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aura_scanner.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aura_scanner.png",
     href: "/software-hub",
   },
   {
     title: "Reiki Healer",
     description: "Reiki healing tracking and client management.",
     features: ["Session Management", "Healing Reports", "Energy Tracking"],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/reiki_healer.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/reiki_healer.png",
     href: "/services/reiki-healing",
   },
   {
@@ -80,7 +87,8 @@ const SOFTWARE: Software[] = [
       "Vastu Score & Map",
       "Remedies & Guidance",
     ],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/vastu_analyzer.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/vastu_analyzer.png",
     href: "/software-hub",
   },
   {
@@ -91,14 +99,16 @@ const SOFTWARE: Software[] = [
       "Detailed Predictions",
       "Share & Print Reports",
     ],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/daily_horoscope.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/daily_horoscope.png",
     href: "/software-hub",
   },
   {
     title: "AI Astro Chat",
     description: "AI-powered astrology assistant for all queries.",
     features: ["Instant Answers", "Birth Chart Insights", "24/7 Support"],
-    image: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/ai_astro_chat.png",
+    image:
+      "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/ai_astro_chat.png",
     href: "/software-hub",
   },
 ];

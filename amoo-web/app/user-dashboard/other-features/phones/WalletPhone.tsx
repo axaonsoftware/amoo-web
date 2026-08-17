@@ -3,9 +3,24 @@ import { ChevronLeft } from "lucide-react";
 import Phone, { StatusBar } from "../Phone";
 
 const TXNS = [
-  { title: "Kundali Reading", date: "18 May 2025", amount: "- ₹ 1,999", positive: false },
-  { title: "Tarot Reading", date: "14 May 2025", amount: "- ₹ 799", positive: false },
-  { title: "Added Money", date: "15 May 2025", amount: "+ ₹ 3,000", positive: true },
+  {
+    title: "Kundali Reading",
+    date: "18 May 2025",
+    amount: "- ₹ 1,999",
+    positive: false,
+  },
+  {
+    title: "Tarot Reading",
+    date: "14 May 2025",
+    amount: "- ₹ 799",
+    positive: false,
+  },
+  {
+    title: "Added Money",
+    date: "15 May 2025",
+    amount: "+ ₹ 3,000",
+    positive: true,
+  },
 ];
 
 export default function WalletPhone() {

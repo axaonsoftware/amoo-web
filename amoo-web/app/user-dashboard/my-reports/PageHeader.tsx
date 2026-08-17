@@ -15,7 +15,10 @@ export default function PageHeader() {
     <section>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-5">
         <span className="flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-[16px] bg-[#f3ecfb]">
-          <FileText className="h-[26px] w-[26px] text-[#6d28d9]" strokeWidth={1.7} />
+          <FileText
+            className="h-[26px] w-[26px] text-[#6d28d9]"
+            strokeWidth={1.7}
+          />
         </span>
 
         <div className="min-w-0">

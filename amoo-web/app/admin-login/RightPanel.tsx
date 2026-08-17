@@ -28,7 +28,9 @@ export default function RightPanel() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -38,7 +40,8 @@ export default function RightPanel() {
   // of the default admin dashboard.
   const callbackUrl =
     typeof window !== "undefined"
-      ? new URLSearchParams(window.location.search).get("callbackUrl") || "/admin/admin-dashboard"
+      ? new URLSearchParams(window.location.search).get("callbackUrl") ||
+        "/admin/admin-dashboard"
       : "/admin/admin-dashboard";
 
   function validate(): boolean {
@@ -63,7 +66,16 @@ export default function RightPanel() {
     setIsLoading(true);
     setApiError(null);
     try {
-      const data = await api.adminLogin({ email, password }) as { admin?: { id: number; name: string; email: string; phone?: string; avatar?: string; verified?: boolean } };
+      const data = (await api.adminLogin({ email, password })) as {
+        admin?: {
+          id: number;
+          name: string;
+          email: string;
+          phone?: string;
+          avatar?: string;
+          verified?: boolean;
+        };
+      };
       if (!data.admin) throw new Error("Invalid response from server");
       loginUser({ ...data.admin, kind: "admin" });
       setLoginSuccess(true);
@@ -111,14 +123,22 @@ export default function RightPanel() {
         </p>
 
         {loginSuccess && (
-          <div role="alert" className="mt-6 flex items-center gap-3 rounded-xl bg-green-50 border border-green-200 p-4 text-green-700">
+          <div
+            role="alert"
+            className="mt-6 flex items-center gap-3 rounded-xl bg-green-50 border border-green-200 p-4 text-green-700"
+          >
             <CheckCircle2 size={20} />
-            <span className="text-sm sm:text-base font-medium">Login successful! Redirecting...</span>
+            <span className="text-sm sm:text-base font-medium">
+              Login successful! Redirecting...
+            </span>
           </div>
         )}
 
         {apiError && (
-          <div role="alert" className="mt-6 flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 p-4 text-red-700">
+          <div
+            role="alert"
+            className="mt-6 flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 p-4 text-red-700"
+          >
             <AlertCircle size={20} />
             <span className="text-sm sm:text-base font-medium">{apiError}</span>
           </div>
@@ -126,15 +146,28 @@ export default function RightPanel() {
 
         <form onSubmit={handleSubmit}>
           <div className="mt-8 sm:mt-14">
-            <label htmlFor="rightpanel-email-address" className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]">
+            <label
+              htmlFor="rightpanel-email-address"
+              className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]"
+            >
               Email Address
             </label>
-            <div className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.email ? "border-red-400" : "border-[#DDD9EC]"}`}>
-              <Mail className={`shrink-0 ${errors.email ? "text-red-400" : "text-[#8B86A7]"}`} size={24} />
-              <input id="rightpanel-email-address"
+            <div
+              className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.email ? "border-red-400" : "border-[#DDD9EC]"}`}
+            >
+              <Mail
+                className={`shrink-0 ${errors.email ? "text-red-400" : "text-[#8B86A7]"}`}
+                size={24}
+              />
+              <input
+                id="rightpanel-email-address"
                 type="email"
                 value={email}
-                onChange={(e) => { setEmail(e.target.value); if (errors.email) setErrors((p) => ({ ...p, email: undefined })); }}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email)
+                    setErrors((p) => ({ ...p, email: undefined }));
+                }}
                 placeholder="Enter your admin email"
                 className="ml-4 sm:ml-5 h-full w-full bg-transparent text-base sm:text-lg lg:text-[21px] outline-none placeholder:text-[#9996AF]"
               />
@@ -147,19 +180,36 @@ export default function RightPanel() {
           </div>
 
           <div className="mt-6 sm:mt-10">
-            <label htmlFor="rightpanel-password" className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]">
+            <label
+              htmlFor="rightpanel-password"
+              className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]"
+            >
               Password
             </label>
-            <div className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.password ? "border-red-400" : "border-[#DDD9EC]"}`}>
-              <Lock className={`shrink-0 ${errors.password ? "text-red-400" : "text-[#8B86A7]"}`} size={24} />
-              <input id="rightpanel-password"
+            <div
+              className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.password ? "border-red-400" : "border-[#DDD9EC]"}`}
+            >
+              <Lock
+                className={`shrink-0 ${errors.password ? "text-red-400" : "text-[#8B86A7]"}`}
+                size={24}
+              />
+              <input
+                id="rightpanel-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors((p) => ({ ...p, password: undefined })); }}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password)
+                    setErrors((p) => ({ ...p, password: undefined }));
+                }}
                 placeholder="Enter your password"
                 className="ml-4 sm:ml-5 h-full w-full bg-transparent text-base sm:text-lg lg:text-[21px] outline-none placeholder:text-[#9996AF]"
               />
-              <button type="button" onClick={() => setShowPassword((v) => !v)} className="shrink-0 text-[#8B86A7] hover:text-[#6A21C8] transition">
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="shrink-0 text-[#8B86A7] hover:text-[#6A21C8] transition"
+              >
                 {showPassword ? <Eye size={24} /> : <EyeOff size={24} />}
               </button>
             </div>
@@ -181,7 +231,10 @@ export default function RightPanel() {
             {/* Admins have no self-service reset route by design — accounts are
                 seeded/provisioned. /contact is intentional, not the bug that was
                 fixed on the user login page. */}
-            <Link href="/contact" className="text-base sm:text-lg lg:text-[21px] font-semibold text-[#5B1AC8] hover:underline">
+            <Link
+              href="/contact"
+              className="text-base sm:text-lg lg:text-[21px] font-semibold text-[#5B1AC8] hover:underline"
+            >
               Forgot Password? Contact support
             </Link>
           </div>

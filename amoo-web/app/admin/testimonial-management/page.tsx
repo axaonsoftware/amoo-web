@@ -2,7 +2,14 @@
 
 import { memo, useCallback, useEffect, useState } from "react";
 import Image from "next/image";
-import { MessageSquareQuote, Star, Check, EyeOff, Trash2, Loader2 } from "lucide-react";
+import {
+  MessageSquareQuote,
+  Star,
+  Check,
+  EyeOff,
+  Trash2,
+  Loader2,
+} from "lucide-react";
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
 import { formatDate, initials } from "@/lib/format";
 import { sanitize } from "@/lib/sanitize";
@@ -38,13 +45,18 @@ type Testimonial = {
 function Stars({ rating }: { rating: number }) {
   const value = Math.max(0, Math.min(5, Number(rating) || 0));
   return (
-    <span className="inline-flex items-center gap-0.5" aria-label={`${value} out of 5 stars`}>
+    <span
+      className="inline-flex items-center gap-0.5"
+      aria-label={`${value} out of 5 stars`}
+    >
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
           size={13}
           aria-hidden="true"
-          className={i < value ? "fill-[#F0B429] text-[#F0B429]" : "text-[#D9D5E4]"}
+          className={
+            i < value ? "fill-[#F0B429] text-[#F0B429]" : "text-[#D9D5E4]"
+          }
         />
       ))}
     </span>
@@ -65,7 +77,10 @@ const TestimonialItem = memo(function TestimonialItem({
   onDelete: (t: Testimonial) => void;
 }) {
   return (
-    <li key={t.id} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start">
+    <li
+      key={t.id}
+      className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start"
+    >
       {t.avatar ? (
         <Image
           src={t.avatar}
@@ -99,7 +114,9 @@ const TestimonialItem = memo(function TestimonialItem({
           >
             {t.status === "Active" ? "Published" : "Pending"}
           </span>
-          <span className="text-[10.5px] text-[#8B879C]">{formatDate(t.created_at)}</span>
+          <span className="text-[10.5px] text-[#8B879C]">
+            {formatDate(t.created_at)}
+          </span>
         </div>
         <p className="mt-1.5 whitespace-pre-wrap text-[12px] leading-relaxed text-[#3D3752]">
           {sanitize(t.comment)}
@@ -170,18 +187,26 @@ export default function TestimonialManagementPage() {
         setItems(unwrapList<Testimonial>(res));
         setMeta(unwrapMeta(res));
       })
-      .catch((e: Error) => setError(e?.message || "Failed to load testimonials"))
+      .catch((e: Error) =>
+        setError(e?.message || "Failed to load testimonials"),
+      )
       .finally(() => setLoading(false));
   }, [status, page]);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(1); }, [status]);
+  useEffect(() => {
+    load();
+  }, [load]);
+  useEffect(() => {
+    setPage(1);
+  }, [status]);
 
   const setStatusFor = async (t: Testimonial, next: "Active" | "Inactive") => {
     setBusyId(t.id);
     try {
       await api.admin.updateTestimonial(t.id, { status: next });
-      showToast(next === "Active" ? "Testimonial published" : "Testimonial hidden");
+      showToast(
+        next === "Active" ? "Testimonial published" : "Testimonial hidden",
+      );
       load();
     } catch (e) {
       showToast((e as Error)?.message || "Failed to update", "error");
@@ -205,9 +230,18 @@ export default function TestimonialManagementPage() {
     }
   };
 
-  const handlePublishTestimonial = useCallback((t: Testimonial) => setStatusFor(t, "Active"), []);
-  const handleHideTestimonial = useCallback((t: Testimonial) => setStatusFor(t, "Inactive"), []);
-  const handleDeleteTestimonial = useCallback((t: Testimonial) => setDeleteTarget(t), []);
+  const handlePublishTestimonial = useCallback(
+    (t: Testimonial) => setStatusFor(t, "Active"),
+    [],
+  );
+  const handleHideTestimonial = useCallback(
+    (t: Testimonial) => setStatusFor(t, "Inactive"),
+    [],
+  );
+  const handleDeleteTestimonial = useCallback(
+    (t: Testimonial) => setDeleteTarget(t),
+    [],
+  );
 
   return (
     <main id="main-content" className="flex-1 px-4 pb-8 pt-[18px] sm:px-6">
@@ -218,7 +252,11 @@ export default function TestimonialManagementPage() {
       />
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <div role="tablist" aria-label="Filter testimonials" className="flex gap-2">
+        <div
+          role="tablist"
+          aria-label="Filter testimonials"
+          className="flex gap-2"
+        >
           {[
             { label: "Pending review", value: "Inactive" },
             { label: "Published", value: "Active" },
@@ -249,10 +287,16 @@ export default function TestimonialManagementPage() {
           {
             label: "Average Rating",
             value: items.length
-              ? (items.reduce((s, t) => s + (Number(t.rating) || 0), 0) / items.length).toFixed(1)
+              ? (
+                  items.reduce((s, t) => s + (Number(t.rating) || 0), 0) /
+                  items.length
+                ).toFixed(1)
               : "—",
           },
-          { label: "5-Star", value: items.filter((t) => Number(t.rating) === 5).length },
+          {
+            label: "5-Star",
+            value: items.filter((t) => Number(t.rating) === 5).length,
+          },
         ]}
       />
 
@@ -263,7 +307,11 @@ export default function TestimonialManagementPage() {
           <ErrorState message={error} onRetry={load} />
         ) : items.length === 0 ? (
           <EmptyState
-            title={status === "Inactive" ? "Nothing awaiting review" : "No testimonials"}
+            title={
+              status === "Inactive"
+                ? "Nothing awaiting review"
+                : "No testimonials"
+            }
             message={
               status === "Inactive"
                 ? "New submissions arrive here for approval before going live."
@@ -297,7 +345,9 @@ export default function TestimonialManagementPage() {
           >
             Previous
           </button>
-          <span className="text-[11.5px] text-[#8B879C]">Page {meta.page} of {meta.totalPages}</span>
+          <span className="text-[11.5px] text-[#8B879C]">
+            Page {meta.page} of {meta.totalPages}
+          </span>
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(meta.totalPages, p + 1))}

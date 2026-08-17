@@ -16,14 +16,12 @@ const line = {
 export function GiftIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-      <path d="M3.4 11.4h17.2v9.2a1 1 0 0 1-1 1h-15.2a1 1 0 0 1-1-1Z" opacity="0.9" />
-      <path d="M2.4 7.2h19.2a.8.8 0 0 1 .8.8v2.6a.8.8 0 0 1-.8.8H2.4a.8.8 0 0 1-.8-.8V8a.8.8 0 0 1 .8-.8Z" />
       <path
-        d="M12 7.2V21.6"
-        stroke="#2b0a3d"
-        strokeWidth="1.6"
-        fill="none"
+        d="M3.4 11.4h17.2v9.2a1 1 0 0 1-1 1h-15.2a1 1 0 0 1-1-1Z"
+        opacity="0.9"
       />
+      <path d="M2.4 7.2h19.2a.8.8 0 0 1 .8.8v2.6a.8.8 0 0 1-.8.8H2.4a.8.8 0 0 1-.8-.8V8a.8.8 0 0 1 .8-.8Z" />
+      <path d="M12 7.2V21.6" stroke="#2b0a3d" strokeWidth="1.6" fill="none" />
       <path
         d="M12 7.2S10.6 2.6 8 2.6a2.3 2.3 0 0 0 0 4.6Zm0 0s1.4-4.6 4-4.6a2.3 2.3 0 0 1 0 4.6Z"
         fill="currentColor"
@@ -55,7 +53,10 @@ export function CalendarIcon(props: IconProps) {
     <svg {...line} strokeWidth={1.6} {...props}>
       <rect x="3.6" y="5" width="16.8" height="15.4" rx="2" />
       <path d="M3.6 9.6h16.8M8.4 3.2v3.6M15.6 3.2v3.6" />
-      <path d="M7.6 13h2M11 13h2M14.4 13h2M7.6 16.6h2M11 16.6h2" strokeWidth={1.3} />
+      <path
+        d="M7.6 13h2M11 13h2M14.4 13h2M7.6 16.6h2M11 16.6h2"
+        strokeWidth={1.3}
+      />
     </svg>
   );
 }
@@ -300,7 +301,12 @@ export function MailIcon(props: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
       <path d="M3.6 5.2h16.8a1.6 1.6 0 0 1 1.6 1.6v10.4a1.6 1.6 0 0 1-1.6 1.6H3.6A1.6 1.6 0 0 1 2 17.2V6.8a1.6 1.6 0 0 1 1.6-1.6Zm.9 2.2 7.5 5.4 7.5-5.4Z" />
-      <path d="m4.5 7.4 7.5 5.4 7.5-5.4" fill="none" stroke="#2b0a3d" strokeWidth="1.4" />
+      <path
+        d="m4.5 7.4 7.5 5.4 7.5-5.4"
+        fill="none"
+        stroke="#2b0a3d"
+        strokeWidth="1.4"
+      />
     </svg>
   );
 }
@@ -330,7 +336,13 @@ export function FacebookIcon(props: IconProps) {
 
 export function InstagramIcon(props: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.7}
+      {...props}
+    >
       <rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none" />

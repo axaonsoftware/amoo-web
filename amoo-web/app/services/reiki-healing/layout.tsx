@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ReikiHealingLayout({ children }: { children: React.ReactNode }) {
+export default function ReikiHealingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

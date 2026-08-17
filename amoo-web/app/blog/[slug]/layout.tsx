@@ -21,7 +21,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: post.title,
         description: post.excerpt || undefined,
         type: "article",
-        images: post.image ? [{ url: post.image, width: 1200, height: 630 }] : undefined,
+        images: post.image
+          ? [{ url: post.image, width: 1200, height: 630 }]
+          : undefined,
       },
     };
   } catch {
@@ -29,6 +31,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function BlogSlugLayout({ children }: { children: React.ReactNode }) {
+export default function BlogSlugLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

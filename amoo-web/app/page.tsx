@@ -42,9 +42,18 @@ export const metadata: Metadata = {
 /* ---------------- data ---------------- */
 
 const HERO_POINTS = [
-  { icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-1.png", lines: ["Numerology", "Insight"] },
-  { icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-2.png", lines: ["Reiki", "Healing"] },
-  { icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-3.png", lines: ["Tarot", "Guidance"] },
+  {
+    icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-1.png",
+    lines: ["Numerology", "Insight"],
+  },
+  {
+    icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-2.png",
+    lines: ["Reiki", "Healing"],
+  },
+  {
+    icon: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/hero-ico-3.png",
+    lines: ["Tarot", "Guidance"],
+  },
 ];
 
 const MODES = [
@@ -75,13 +84,41 @@ const MODES = [
 ];
 
 const CHAKRAS = [
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_1.png", name: "Muladhara", sub: "Root Chakra" },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_2.png", name: "Swadhisthana", sub: "Sacral Chakra" },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_3.png", name: "Manipura", sub: "Solar Plexus" },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_4.png", name: "Anahata", sub: "Heart Chakra" },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_5.png", name: "Vishuddha", sub: "Throat Chakra" },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_6.png", name: "Ajna", sub: "Third Eye Chakra" },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_7.png", name: "Sahasrara", sub: "Crown Chakra" },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_1.png",
+    name: "Muladhara",
+    sub: "Root Chakra",
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_2.png",
+    name: "Swadhisthana",
+    sub: "Sacral Chakra",
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_3.png",
+    name: "Manipura",
+    sub: "Solar Plexus",
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_4.png",
+    name: "Anahata",
+    sub: "Heart Chakra",
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_5.png",
+    name: "Vishuddha",
+    sub: "Throat Chakra",
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_6.png",
+    name: "Ajna",
+    sub: "Third Eye Chakra",
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/chakra_7.png",
+    name: "Sahasrara",
+    sub: "Crown Chakra",
+  },
 ];
 
 const CREDENTIALS = [
@@ -133,12 +170,30 @@ const STEPS = [
 ];
 
 const SERVICES = [
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-1.png", lines: ["Numerology", "Guidance"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-2.png", lines: ["Reiki", "Healing"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-3.png", lines: ["Tarot", "Reading"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-4.png", lines: ["Chakra", "Balancing"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-5.png", lines: ["Kundali", "Analysis"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-6.png", lines: ["Love & Relationship", "Guidance"] },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-1.png",
+    lines: ["Numerology", "Guidance"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-2.png",
+    lines: ["Reiki", "Healing"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-3.png",
+    lines: ["Tarot", "Reading"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-4.png",
+    lines: ["Chakra", "Balancing"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-5.png",
+    lines: ["Kundali", "Analysis"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/svc-6.png",
+    lines: ["Love & Relationship", "Guidance"],
+  },
 ];
 
 const SOFTWARE = [
@@ -165,10 +220,22 @@ const SOFTWARE = [
 ];
 
 const TRUST = [
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_1.png", lines: ["Certified Reiki", "Grand Master"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_2.png", lines: ["Professional", "Numerology Expert"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_3.png", lines: ["Certified Tarot", "Reader"] },
-  { img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_4.png", lines: ["Trusted By", "Thousands"] },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_1.png",
+    lines: ["Certified Reiki", "Grand Master"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_2.png",
+    lines: ["Professional", "Numerology Expert"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_3.png",
+    lines: ["Certified Tarot", "Reader"],
+  },
+  {
+    img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/badge_4.png",
+    lines: ["Trusted By", "Thousands"],
+  },
 ];
 
 /* ---------------- section heading ---------------- */
@@ -408,10 +475,10 @@ export default function Home() {
             <div className="mt-[14px] flex items-center justify-center gap-2">
               <ul className="flex flex-1 flex-wrap items-start justify-center gap-x-4 gap-y-6 sm:gap-x-[42px] lg:flex-nowrap lg:justify-between lg:px-[30px]">
                 {CHAKRAS.map(({ img, name, sub }) => (
-<li
-                      key={name}
-                      className="flex w-1/3 sm:w-[110px] flex-col items-center"
-                    >
+                  <li
+                    key={name}
+                    className="flex w-1/3 sm:w-[110px] flex-col items-center"
+                  >
                     <Image
                       src={img}
                       alt=""

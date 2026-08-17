@@ -34,7 +34,8 @@ function buildDays(slots: any[]): Day[] {
   (slots || []).forEach((s: any) => {
     try {
       const d = new Date(s.date || s.start_time);
-      if (!isNaN(d.getTime()) && d.getMonth() === month) slotDates.add(d.getDate());
+      if (!isNaN(d.getTime()) && d.getMonth() === month)
+        slotDates.add(d.getDate());
     } catch {}
   });
   const days: Day[] = [];
@@ -45,7 +46,12 @@ function buildDays(slots: any[]): Day[] {
   for (let d = 1; d <= totalDays; d++) {
     const isToday = d === today;
     const hasSlot = slotDates.has(d);
-    days.push({ n: d, today: isToday, scheduled: hasSlot ? true : undefined, dot: hasSlot ? true : undefined });
+    days.push({
+      n: d,
+      today: isToday,
+      scheduled: hasSlot ? true : undefined,
+      dot: hasSlot ? true : undefined,
+    });
   }
   const remaining = 42 - days.length;
   for (let d = 1; d <= remaining; d++) {
@@ -57,7 +63,11 @@ function buildDays(slots: any[]): Day[] {
 export default function CalendarCard() {
   // /api/slots is paginated -> `{ data, meta }`. The old `Array.isArray(slots)`
   // guard was therefore always false, so the calendar never showed any slot.
-  const { items: slotArray, loading, error } = useApiList<any>(() => api.getSlots());
+  const {
+    items: slotArray,
+    loading,
+    error,
+  } = useApiList<any>(() => api.getSlots());
   const days = buildDays(slotArray);
 
   if (loading) {

@@ -7,7 +7,11 @@ export default function UpgradeBanner() {
     <section className="relative mt-4 flex flex-col items-start gap-5 overflow-hidden rounded-[14px] border border-[#f0e0bd] bg-gradient-to-r from-[#fdf3e2] via-[#fdf6ea] to-[#fdf1dd] px-6 py-[20px] shadow-[0_1px_3px_rgba(43,15,71,.04)] lg:flex-row lg:items-center">
       {/* Left mandala */}
       <span className="pointer-events-none absolute left-3 top-1/2 hidden h-[96px] w-[96px] -translate-y-1/2 text-[#d09b38] opacity-35 lg:block">
-        <Mandala rings={[56, 44, 30, 16]} spokes={16} className="h-full w-full" />
+        <Mandala
+          rings={[56, 44, 30, 16]}
+          spokes={16}
+          className="h-full w-full"
+        />
       </span>
 
       {/* Crystal artwork */}
@@ -26,7 +30,11 @@ export default function UpgradeBanner() {
         <Mandala rings={[54, 38, 22]} spokes={12} className="h-full w-full" />
       </span>
       <span className="pointer-events-none absolute -right-3 top-1/2 hidden h-[104px] w-[104px] -translate-y-1/2 text-[#d09b38] opacity-35 lg:block">
-        <Mandala rings={[56, 42, 26, 12]} spokes={18} className="h-full w-full" />
+        <Mandala
+          rings={[56, 42, 26, 12]}
+          spokes={18}
+          className="h-full w-full"
+        />
       </span>
 
       <div className="relative min-w-0 flex-1 lg:pl-[112px]">

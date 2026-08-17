@@ -79,7 +79,13 @@ export interface Admin {
 // ---------------------------------------------------------------------------
 
 export type ServiceCategory =
-  | "Numerology" | "Tarot" | "Astrology" | "Healing" | "Vastu" | "AI Services" | "Spiritual";
+  | "Numerology"
+  | "Tarot"
+  | "Astrology"
+  | "Healing"
+  | "Vastu"
+  | "AI Services"
+  | "Spiritual";
 
 /** `services` table. */
 export interface Service {
@@ -111,7 +117,8 @@ export interface Package {
 // Booking & scheduling
 // ---------------------------------------------------------------------------
 
-export type BookingStatus = "upcoming" | "completed" | "cancelled" | "pending-payment";
+export type BookingStatus =
+  "upcoming" | "completed" | "cancelled" | "pending-payment";
 
 /**
  * `LIST_SELECT` in routes/bookings.js — `bookings.*` plus three joined names.

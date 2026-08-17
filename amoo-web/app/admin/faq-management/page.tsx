@@ -24,9 +24,22 @@ interface Faq {
   updated_at?: string;
 }
 
-const CATEGORIES = ["General", "Services", "Booking", "Payment", "Spiritual", "Technical"];
+const CATEGORIES = [
+  "General",
+  "Services",
+  "Booking",
+  "Payment",
+  "Spiritual",
+  "Technical",
+];
 
-const EMPTY_FORM = { question: "", answer: "", category: "General", sort_order: 0, active: true };
+const EMPTY_FORM = {
+  question: "",
+  answer: "",
+  category: "General",
+  sort_order: 0,
+  active: true,
+};
 
 const FaqRow = memo(function FaqRow({
   faq,
@@ -38,7 +51,10 @@ const FaqRow = memo(function FaqRow({
   onDelete: (id: number) => void;
 }) {
   return (
-    <tr key={faq.id} className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]">
+    <tr
+      key={faq.id}
+      className="border-b border-[#F0EDF5] last:border-b-0 hover:bg-[#FAF9FE]"
+    >
       <td className="max-w-[300px] truncate px-4 py-3 text-[#3D3752]">
         {faq.question}
       </td>
@@ -181,7 +197,8 @@ export default function FaqManagementPage() {
               FAQ Management
             </h1>
             <p className="mt-[7px] text-[11px] text-[#8B879C]">
-              Manage frequently asked questions shown to users across the platform.
+              Manage frequently asked questions shown to users across the
+              platform.
             </p>
           </div>
         </div>
@@ -197,7 +214,10 @@ export default function FaqManagementPage() {
       {/* Filters */}
       <div className="mt-6 flex flex-wrap items-center gap-3">
         <div className="relative flex-1 min-w-[200px] max-w-[360px]">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]" />
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8B879C]"
+          />
           <input
             type="text"
             placeholder="Search questions..."
@@ -213,7 +233,9 @@ export default function FaqManagementPage() {
         >
           <option value="">All Categories</option>
           {CATEGORIES.map((c) => (
-            <option key={c} value={c}>{c}</option>
+            <option key={c} value={c}>
+              {c}
+            </option>
           ))}
         </select>
       </div>
@@ -224,11 +246,19 @@ export default function FaqManagementPage() {
           { label: "Total FAQs", value: faqs.length },
           { label: "Active", value: faqs.filter((f) => f.active).length },
           { label: "Inactive", value: faqs.filter((f) => !f.active).length },
-          { label: "Categories", value: new Set(faqs.map((f) => f.category)).size },
+          {
+            label: "Categories",
+            value: new Set(faqs.map((f) => f.category)).size,
+          },
         ].map((s) => (
-          <div key={s.label} className="rounded-[12px] border border-[#E5E1F0] bg-white p-4">
+          <div
+            key={s.label}
+            className="rounded-[12px] border border-[#E5E1F0] bg-white p-4"
+          >
             <p className="text-[11px] text-[#8B879C]">{s.label}</p>
-            <p className="mt-1 font-display text-[22px] font-bold text-[#231640]">{s.value}</p>
+            <p className="mt-1 font-display text-[22px] font-bold text-[#231640]">
+              {s.value}
+            </p>
           </div>
         ))}
       </div>
@@ -248,13 +278,19 @@ export default function FaqManagementPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-[#8B879C]">
+                <td
+                  colSpan={5}
+                  className="px-4 py-10 text-center text-[#8B879C]"
+                >
                   Loading...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-[#8B879C]">
+                <td
+                  colSpan={5}
+                  className="px-4 py-10 text-center text-[#8B879C]"
+                >
                   No FAQs found.
                 </td>
               </tr>
@@ -280,52 +316,91 @@ export default function FaqManagementPage() {
               <h2 className="font-display text-lg font-bold text-[#231640]">
                 {editingFaq ? "Edit FAQ" : "Add FAQ"}
               </h2>
-              <button onClick={() => setShowForm(false)} className="rounded-md p-1 hover:bg-gray-100">
+              <button
+                onClick={() => setShowForm(false)}
+                className="rounded-md p-1 hover:bg-gray-100"
+              >
                 <X size={18} className="text-[#8B879C]" />
               </button>
             </div>
 
             <div className="mt-5 space-y-4">
               <div>
-                <label htmlFor="page-question" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Question</label>
-                <textarea id="page-question"
+                <label
+                  htmlFor="page-question"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
+                  Question
+                </label>
+                <textarea
+                  id="page-question"
                   rows={2}
                   value={formData.question}
-                  onChange={(e) => setFormData({ ...formData, question: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, question: e.target.value })
+                  }
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   placeholder="Enter the question..."
                 />
               </div>
               <div>
-                <label htmlFor="page-answer" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Answer</label>
-                <textarea id="page-answer"
+                <label
+                  htmlFor="page-answer"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
+                  Answer
+                </label>
+                <textarea
+                  id="page-answer"
                   rows={4}
                   value={formData.answer}
-                  onChange={(e) => setFormData({ ...formData, answer: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, answer: e.target.value })
+                  }
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   placeholder="Enter the answer..."
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="page-category" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Category</label>
-                  <select id="page-category"
+                  <label
+                    htmlFor="page-category"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Category
+                  </label>
+                  <select
+                    id="page-category"
                     value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   >
                     {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>{c}</option>
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label htmlFor="faq-sort-order" className="mb-1 block text-[11px] font-medium text-[#3D3752]">Sort Order</label>
+                  <label
+                    htmlFor="faq-sort-order"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Sort Order
+                  </label>
                   <input
                     id="faq-sort-order"
                     type="number"
                     value={formData.sort_order}
-                    onChange={(e) => setFormData({ ...formData, sort_order: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        sort_order: Number(e.target.value),
+                      })
+                    }
                     className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
@@ -334,11 +409,18 @@ export default function FaqManagementPage() {
                 <input
                   type="checkbox"
                   checked={formData.active}
-                  onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, active: e.target.checked })
+                  }
                   className="rounded"
                   id="active-check"
                 />
-                <label htmlFor="active-check" className="text-[12px] text-[#3D3752]">Active</label>
+                <label
+                  htmlFor="active-check"
+                  className="text-[12px] text-[#3D3752]"
+                >
+                  Active
+                </label>
               </div>
             </div>
 
@@ -366,9 +448,12 @@ export default function FaqManagementPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="mx-4 w-full max-w-sm rounded-[16px] bg-white p-6 shadow-xl text-center">
             <Trash2 size={32} className="mx-auto text-[#C62828]" />
-            <h2 className="mt-3 font-display text-lg font-bold text-[#231640]">Delete FAQ?</h2>
+            <h2 className="mt-3 font-display text-lg font-bold text-[#231640]">
+              Delete FAQ?
+            </h2>
             <p className="mt-2 text-[12px] text-[#8B879C]">
-              This will deactivate the FAQ. It can be reactivated later from the admin panel.
+              This will deactivate the FAQ. It can be reactivated later from the
+              admin panel.
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <button

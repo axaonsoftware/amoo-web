@@ -13,7 +13,10 @@ import {
 import { api } from "../../../../lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
 
-const PKG_ICON_MAP: Record<string, { icon: React.FC<React.SVGProps<SVGSVGElement>>; tone: "purple" | "gold" }> = {
+const PKG_ICON_MAP: Record<
+  string,
+  { icon: React.FC<React.SVGProps<SVGSVGElement>>; tone: "purple" | "gold" }
+> = {
   "3 Session Healing": { icon: PersonalHealingIcon, tone: "purple" },
   "7 Session Healing": { icon: StepTransformIcon, tone: "gold" },
   "21 Day Healing Program": { icon: ChakraBodyIcon, tone: "purple" },
@@ -26,9 +29,10 @@ export default function Packages() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getPackages()
+    api
+      .getPackages()
       .then((res: any) => {
-        const items = res?.data ?? Array.isArray(res) ? res : [];
+        const items = (res?.data ?? Array.isArray(res)) ? res : [];
         setPackages(items);
       })
       .catch(() => setError("Failed to load packages. Please try again."))
@@ -61,14 +65,21 @@ export default function Packages() {
           ) : (
             packages.map((pkg: any) => {
               const match = PKG_ICON_MAP[pkg.name] || {
-                icon: pkg.name && pkg.name.length % 2 === 0 ? ChakraBodyIcon : CalmMindIcon,
-                tone: (pkg.name && pkg.name.length % 2 === 0 ? "purple" : "gold") as "purple" | "gold",
+                icon:
+                  pkg.name && pkg.name.length % 2 === 0
+                    ? ChakraBodyIcon
+                    : CalmMindIcon,
+                tone: (pkg.name && pkg.name.length % 2 === 0
+                  ? "purple"
+                  : "gold") as "purple" | "gold",
               };
               const Icon = match.icon;
               const tone = match.tone;
               const desc = pkg.description || "";
               const isMostLoved = pkg.name?.toLowerCase().includes("3 session");
-              const price = pkg.price ? `₹${Number(pkg.price).toLocaleString("en-IN")}` : "";
+              const price = pkg.price
+                ? `₹${Number(pkg.price).toLocaleString("en-IN")}`
+                : "";
               return (
                 <article
                   key={pkg.name || pkg.id}
@@ -99,7 +110,9 @@ export default function Packages() {
                   </p>
 
                   {price && (
-                    <p className={`font-display mt-[12px] text-[20px] font-bold ${tone === "purple" ? "text-[#4b2583]" : "text-[#b5711a]"}`}>
+                    <p
+                      className={`font-display mt-[12px] text-[20px] font-bold ${tone === "purple" ? "text-[#4b2583]" : "text-[#b5711a]"}`}
+                    >
                       {price}
                     </p>
                   )}

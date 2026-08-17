@@ -27,9 +27,13 @@ export default function RightRail() {
           >
             <div className="flex items-center gap-[10px]">
               <Icon size={16} strokeWidth={1.8} style={{ color }} />
-              <p className="text-[10px] leading-tight text-[#8B879C]">{label}</p>
+              <p className="text-[10px] leading-tight text-[#8B879C]">
+                {label}
+              </p>
             </div>
-            <p className="mt-[8px] text-[20px] font-semibold leading-none text-[#1F1836]">{value}</p>
+            <p className="mt-[8px] text-[20px] font-semibold leading-none text-[#1F1836]">
+              {value}
+            </p>
           </div>
         ))}
       </div>

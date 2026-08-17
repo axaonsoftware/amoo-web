@@ -15,7 +15,10 @@ export default function PageHeader() {
       {/* Title */}
       <div className="flex items-center gap-4">
         <span className="relative flex h-[58px] w-[58px] shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#6d28d9] via-[#5b21b6] to-[#3b0f6d] shadow-[0_6px_18px_rgba(76,29,149,.35)]">
-          <FlowerGlyph className="relative h-[30px] w-[30px] text-white" strokeWidth={1.3} />
+          <FlowerGlyph
+            className="relative h-[30px] w-[30px] text-white"
+            strokeWidth={1.3}
+          />
         </span>
         <div>
           <h1 className="font-display text-[28px] font-bold leading-[1.15] text-[#2b0f47]">

@@ -15,16 +15,56 @@ import { api } from "../../../lib/api";
 const statDefs: {
   label: string;
   field: string;
-  Icon: React.ComponentType<{ size?: number; strokeWidth?: number; className?: string }>;
+  Icon: React.ComponentType<{
+    size?: number;
+    strokeWidth?: number;
+    className?: string;
+  }>;
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Services", field: "services", Icon: LayoutGrid, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
-  { label: "Active Services", field: "activeServices", Icon: CircleCheck, iconBg: "bg-[#E6F7EE]", iconColor: "text-[#16A34A]" },
-  { label: "Inactive Services", field: "inactiveServices", Icon: CirclePause, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
-  { label: "Total Categories", field: "totalCategories", Icon: FolderTree, iconBg: "bg-[#E7F0FE]", iconColor: "text-[#3B82F6]" },
-  { label: "Total Bookings (May)", field: "bookings", Icon: CalendarDays, iconBg: "bg-[#EAE9FB]", iconColor: "text-[#4F46E5]" },
-  { label: "Total Revenue (May)", field: "revenue", Icon: IndianRupee, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
+  {
+    label: "Total Services",
+    field: "services",
+    Icon: LayoutGrid,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Active Services",
+    field: "activeServices",
+    Icon: CircleCheck,
+    iconBg: "bg-[#E6F7EE]",
+    iconColor: "text-[#16A34A]",
+  },
+  {
+    label: "Inactive Services",
+    field: "inactiveServices",
+    Icon: CirclePause,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Total Categories",
+    field: "totalCategories",
+    Icon: FolderTree,
+    iconBg: "bg-[#E7F0FE]",
+    iconColor: "text-[#3B82F6]",
+  },
+  {
+    label: "Total Bookings (May)",
+    field: "bookings",
+    Icon: CalendarDays,
+    iconBg: "bg-[#EAE9FB]",
+    iconColor: "text-[#4F46E5]",
+  },
+  {
+    label: "Total Revenue (May)",
+    field: "revenue",
+    Icon: IndianRupee,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
 ];
 
 export default function StatsRow() {
@@ -42,8 +82,10 @@ export default function StatsRow() {
       .finally(() => setLoading(false));
   }, []);
 
-  const fmt = (n: number | undefined) => (n != null ? n.toLocaleString("en-IN") : "—");
-  const fmtCurrency = (n: number | undefined) => (n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—");
+  const fmt = (n: number | undefined) =>
+    n != null ? n.toLocaleString("en-IN") : "—";
+  const fmtCurrency = (n: number | undefined) =>
+    n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
   if (loading) {
     return (

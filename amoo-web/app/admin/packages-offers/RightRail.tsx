@@ -16,7 +16,12 @@ import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
 
 const donut = [
-  { label: "Service Packages", value: "12 (42.9%)", pct: 42.9, color: "#6366F1" },
+  {
+    label: "Service Packages",
+    value: "12 (42.9%)",
+    pct: 42.9,
+    color: "#6366F1",
+  },
   { label: "Combo Packages", value: "8 (28.6%)", pct: 28.6, color: "#EF4444" },
   { label: "Offers", value: "6 (21.4%)", pct: 21.4, color: "#F59E0B" },
   { label: "Subscriptions", value: "2 (7.1%)", pct: 7.1, color: "#3B82F6" },
@@ -59,7 +64,7 @@ export default function RightRail() {
               img: "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aura_scanner.png",
               bookings: `${p.bookings || 0} bookings`,
               revenue: `₹ ${Number(p.revenue || p.price || 0).toLocaleString("en-IN")}`,
-            }))
+            })),
           );
         }
       })
@@ -180,7 +185,11 @@ export default function RightRail() {
               type="button"
               className="flex h-[32px] items-center gap-[5px] rounded-[8px] border border-[#EEEDF4] px-[6px] text-left text-[9px] font-medium text-[#3D3752] hover:bg-[#FAF9FD]"
             >
-              <Icon size={12} strokeWidth={1.9} className={`shrink-0 ${color}`} />
+              <Icon
+                size={12}
+                strokeWidth={1.9}
+                className={`shrink-0 ${color}`}
+              />
               <span className="whitespace-nowrap">{label}</span>
             </button>
           ))}
@@ -205,8 +214,12 @@ export default function RightRail() {
           <li className="flex items-start gap-[8px]">
             <span className="mt-[4px] h-[6px] w-[6px] shrink-0 rounded-full bg-[#7C3AED]" />
             <div className="min-w-0 flex-1 leading-tight">
-              <p className="truncate text-[10.5px] font-medium text-[#1F1836]">Packages synced</p>
-              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">From API</p>
+              <p className="truncate text-[10.5px] font-medium text-[#1F1836]">
+                Packages synced
+              </p>
+              <p className="mt-[2px] truncate text-[9.5px] text-[#8B879C]">
+                From API
+              </p>
             </div>
             <p className="shrink-0 text-[9.5px] text-[#A5A2B5]">now</p>
           </li>

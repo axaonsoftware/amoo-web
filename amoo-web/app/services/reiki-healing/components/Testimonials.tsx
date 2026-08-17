@@ -33,18 +33,25 @@ export default function Testimonials() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getTestimonials()
+    api
+      .getTestimonials()
       .then((rows: any) => {
-        const list = Array.isArray(rows) ? rows : rows?.data ?? [];
+        const list = Array.isArray(rows) ? rows : (rows?.data ?? []);
         if (list.length) {
-          setItems(list.map((r: any) => ({
-            img: r.img || "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
-            quote: wrapQuote(r.comment || r.text || ""),
-            name: r.name || "Client",
-          })));
+          setItems(
+            list.map((r: any) => ({
+              img:
+                r.img ||
+                "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",
+              quote: wrapQuote(r.comment || r.text || ""),
+              name: r.name || "Client",
+            })),
+          );
         }
       })
-      .catch((err: Error) => setError(err?.message || "Failed to load testimonials"))
+      .catch((err: Error) =>
+        setError(err?.message || "Failed to load testimonials"),
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -74,43 +81,53 @@ export default function Testimonials() {
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#4b2583] border-t-transparent" />
             </div>
           ) : error ? (
-            <div className="text-center py-12 text-[10.5px] text-red-500">{error}</div>
+            <div className="text-center py-12 text-[10.5px] text-red-500">
+              {error}
+            </div>
           ) : (
-          <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
-            {items.length === 0 ? (
-              <p className="col-span-full text-center text-[10.5px] text-[#6c6b78] py-8">No testimonials yet.</p>
-            ) : (
-              items.map(({ img, quote, name }) => (
-                <article
-                  key={name}
-                  className="flex items-start gap-[14px] rounded-[10px] border border-[#eee4d4] bg-white px-[16px] py-[16px] shadow-[0_2px_14px_rgba(75,37,131,0.06)]"
-                >
-                  <Image
-                    src={img}
-                    alt={name}
-                    width={168}
-                    height={168}
-                    className="h-[46px] w-[46px] shrink-0 rounded-full border-2 border-gold/60 object-cover"
-                  />
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-[2px] text-gold">
-                      {Array.from({ length: 5 }).map((_, index) => (
-                        <StarSolidIcon key={index} className="h-[11px] w-[11px]" />
-                      ))}
+            <div className="grid grid-cols-1 gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
+              {items.length === 0 ? (
+                <p className="col-span-full text-center text-[10.5px] text-[#6c6b78] py-8">
+                  No testimonials yet.
+                </p>
+              ) : (
+                items.map(({ img, quote, name }) => (
+                  <article
+                    key={name}
+                    className="flex items-start gap-[14px] rounded-[10px] border border-[#eee4d4] bg-white px-[16px] py-[16px] shadow-[0_2px_14px_rgba(75,37,131,0.06)]"
+                  >
+                    <Image
+                      src={img}
+                      alt={name}
+                      width={168}
+                      height={168}
+                      className="h-[46px] w-[46px] shrink-0 rounded-full border-2 border-gold/60 object-cover"
+                    />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-[2px] text-gold">
+                        {Array.from({ length: 5 }).map((_, index) => (
+                          <StarSolidIcon
+                            key={index}
+                            className="h-[11px] w-[11px]"
+                          />
+                        ))}
+                      </div>
+                      <p className="mt-[8px] text-[10.5px] leading-[1.7] text-[#6c6b78] italic">
+                        {quote.map((line: string, i: number) => (
+                          <span key={i}>
+                            {sanitize(line)}
+                            {i < quote.length - 1 ? <br /> : null}
+                          </span>
+                        ))}
+                      </p>
+                      <p className="mt-[8px] text-[10.5px] font-semibold text-[#4b2583]">
+                        – {sanitize(name)}
+                      </p>
                     </div>
-                    <p className="mt-[8px] text-[10.5px] leading-[1.7] text-[#6c6b78] italic">
-                      {quote.map((line: string, i: number) => (
-                        <span key={i}>{sanitize(line)}{i < quote.length - 1 ? <br /> : null}</span>
-                      ))}
-                    </p>
-                    <p className="mt-[8px] text-[10.5px] font-semibold text-[#4b2583]">
-                      – {sanitize(name)}
-                    </p>
-                  </div>
-                </article>
-              ))
-            )}
-          </div>
+                  </article>
+                ))
+              )}
+            </div>
           )}
         </div>
       </div>

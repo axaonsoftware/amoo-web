@@ -2,7 +2,14 @@ import { Users } from "lucide-react";
 
 function MeditationMark() {
   return (
-    <svg width="100" height="100" viewBox="0 0 104 104" fill="none" className="shrink-0" aria-hidden>
+    <svg
+      width="100"
+      height="100"
+      viewBox="0 0 104 104"
+      fill="none"
+      className="shrink-0"
+      aria-hidden
+    >
       <defs>
         <radialGradient id="ofOrb" cx="0.5" cy="0.32" r="0.75">
           <stop offset="0" stopColor="#3D1E7A" />
@@ -31,7 +38,14 @@ function MeditationMark() {
           );
         })}
       </g>
-      <circle cx="52" cy="52" r="34" stroke="#6D4CB4" strokeWidth="0.7" opacity="0.4" />
+      <circle
+        cx="52"
+        cy="52"
+        r="34"
+        stroke="#6D4CB4"
+        strokeWidth="0.7"
+        opacity="0.4"
+      />
 
       {/* meditating figure */}
       <g
@@ -49,7 +63,11 @@ function MeditationMark() {
         <path d="M30.8 62.2c4.6 6.4 12 10.2 21.2 10.2s16.6-3.8 21.2-10.2" />
         <path d="M40 68.6c3.6-2.6 8-4 12-4s8.4 1.4 12 4" />
       </g>
-      <path d="M52 20l1.8 3.8 3.8 1.8-3.8 1.8L52 31l-1.8-3.6-3.8-1.8 3.8-1.8L52 20Z" fill="#F6C34A" opacity="0.85" />
+      <path
+        d="M52 20l1.8 3.8 3.8 1.8-3.8 1.8L52 31l-1.8-3.6-3.8-1.8 3.8-1.8L52 20Z"
+        fill="#F6C34A"
+        opacity="0.85"
+      />
     </svg>
   );
 }

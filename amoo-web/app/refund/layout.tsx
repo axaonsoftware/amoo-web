@@ -11,6 +11,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RefundLayout({ children }: { children: React.ReactNode }) {
+export default function RefundLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return children;
 }

@@ -14,7 +14,8 @@ export default function PageHeader() {
             Tarot Dashboard
           </h1>
           <p className="mt-1 text-[13.5px] text-[#6c6b78]">
-            Seek clarity. Trust your intuition. The cards have a message for you.
+            Seek clarity. Trust your intuition. The cards have a message for
+            you.
           </p>
         </div>
       </div>
@@ -30,7 +31,10 @@ export default function PageHeader() {
 
         <div className="relative min-w-0 flex-1 pr-[150px]">
           <div className="flex items-center gap-2">
-            <Crown className="h-[21px] w-[21px] shrink-0 text-[#f3c76e]" strokeWidth={1.8} />
+            <Crown
+              className="h-[21px] w-[21px] shrink-0 text-[#f3c76e]"
+              strokeWidth={1.8}
+            />
             <p className="text-[15px] font-bold leading-none text-[#f3c76e]">
               Unlock Deeper Guidance
             </p>

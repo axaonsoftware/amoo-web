@@ -6,7 +6,11 @@ import { SiteFooter } from "@/app/components/site-footer";
 
 const TermsPage = () => {
   return (
-    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
+    <main
+      id="main-content"
+      className="min-h-screen"
+      style={{ backgroundColor: "#fdf8f0" }}
+    >
       <OfferBar />
       <HomeHeader />
 
@@ -21,7 +25,10 @@ const TermsPage = () => {
           Last updated: July 21, 2026
         </p>
 
-        <div className="mt-12 space-y-10 font-sans" style={{ color: "#6c6b78" }}>
+        <div
+          className="mt-12 space-y-10 font-sans"
+          style={{ color: "#6c6b78" }}
+        >
           <section>
             <h2
               className="font-display text-2xl font-semibold"
@@ -48,11 +55,11 @@ const TermsPage = () => {
             </h2>
             <p className="mt-4 leading-relaxed">
               When you create an account with us, you must provide information
-              that is accurate, complete, and current at all times. Failure to do
-              so constitutes a breach of the Terms, which may result in immediate
-              termination of your account. You are responsible for safeguarding
-              the password used to access our service and for all activities that
-              occur under your account.
+              that is accurate, complete, and current at all times. Failure to
+              do so constitutes a breach of the Terms, which may result in
+              immediate termination of your account. You are responsible for
+              safeguarding the password used to access our service and for all
+              activities that occur under your account.
             </p>
           </section>
 
@@ -64,12 +71,12 @@ const TermsPage = () => {
               3. Intellectual Property
             </h2>
             <p className="mt-4 leading-relaxed">
-              All content, trademarks, logos, and intellectual property displayed
-              on this website are the exclusive property of Amoo or its licensors
-              and are protected by applicable copyright, trademark, and other
-              intellectual property laws. You may not reproduce, distribute, or
-              create derivative works from any content without prior written
-              consent.
+              All content, trademarks, logos, and intellectual property
+              displayed on this website are the exclusive property of Amoo or
+              its licensors and are protected by applicable copyright,
+              trademark, and other intellectual property laws. You may not
+              reproduce, distribute, or create derivative works from any content
+              without prior written consent.
             </p>
           </section>
 
@@ -83,8 +90,8 @@ const TermsPage = () => {
             <p className="mt-4 leading-relaxed">
               To the maximum extent permitted by applicable law, Amoo shall not
               be liable for any indirect, incidental, special, consequential, or
-              punitive damages resulting from your use of or inability to use our
-              services. Our total liability for any claim arising from these
+              punitive damages resulting from your use of or inability to use
+              our services. Our total liability for any claim arising from these
               terms shall not exceed the amount you paid to us in the twelve
               months preceding the claim.
             </p>

@@ -1,4 +1,10 @@
-import { UserRound, ClipboardList, ClipboardCheck, BookOpenCheck, ShieldCheck } from "lucide-react";
+import {
+  UserRound,
+  ClipboardList,
+  ClipboardCheck,
+  BookOpenCheck,
+  ShieldCheck,
+} from "lucide-react";
 
 const chips = [
   {
@@ -50,7 +56,11 @@ export default function FeatureChips() {
             className="flex h-[63px] w-[63px] shrink-0 items-center justify-center rounded-full"
             style={{ backgroundColor: ring }}
           >
-            <Icon className="h-[30px] w-[30px]" strokeWidth={1.8} style={{ color }} />
+            <Icon
+              className="h-[30px] w-[30px]"
+              strokeWidth={1.8}
+              style={{ color }}
+            />
           </span>
 
           <div className="min-w-0 pt-[2px]">

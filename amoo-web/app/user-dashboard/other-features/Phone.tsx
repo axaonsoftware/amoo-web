@@ -8,10 +8,7 @@ export function StatusBar({
   const color = tone === "dark" ? "#1B1340" : "#FFFFFF";
   return (
     <div className="flex h-[20px] shrink-0 items-center justify-between px-[10px] pt-[3px]">
-      <span
-        className="text-[7px] font-semibold leading-none"
-        style={{ color }}
-      >
+      <span className="text-[7px] font-semibold leading-none" style={{ color }}>
         {time}
       </span>
       <span className="flex items-center gap-[3px]">
@@ -24,10 +21,7 @@ export function StatusBar({
         </svg>
         {/* wifi */}
         <svg width="8" height="7" viewBox="0 0 8 7" fill="none">
-          <path
-            d="M4 6.2 6.9 2.5A4.6 4.6 0 0 0 1.1 2.5L4 6.2Z"
-            fill={color}
-          />
+          <path d="M4 6.2 6.9 2.5A4.6 4.6 0 0 0 1.1 2.5L4 6.2Z" fill={color} />
         </svg>
         {/* battery */}
         <svg width="12" height="7" viewBox="0 0 12 7" fill="none">
@@ -40,7 +34,14 @@ export function StatusBar({
             stroke={color}
             strokeWidth="0.8"
           />
-          <rect x="1.6" y="1.6" width="7.2" height="3.8" rx="0.8" fill={color} />
+          <rect
+            x="1.6"
+            y="1.6"
+            width="7.2"
+            height="3.8"
+            rx="0.8"
+            fill={color}
+          />
           <path
             d="M10.9 2.4v2.2c.5-.2.8-.6.8-1.1s-.3-.9-.8-1.1Z"
             fill={color}

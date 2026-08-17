@@ -94,11 +94,17 @@ function FooterColumn({ title, links }) {
       <h4 className="text-amber-500 font-semibold text-sm mb-3">{title}</h4>
       <ul className="space-y-2 text-white/70 text-sm">
         {links.map((item) => (
-          <li key={typeof item === 'string' ? item : item.label} className="hover:text-white">
-            {typeof item === 'string' ? (
+          <li
+            key={typeof item === "string" ? item : item.label}
+            className="hover:text-white"
+          >
+            {typeof item === "string" ? (
               item
             ) : (
-              <Link href={item.href} className="hover:text-white transition-colors">
+              <Link
+                href={item.href}
+                className="hover:text-white transition-colors"
+              >
                 {item.label}
               </Link>
             )}

@@ -8,7 +8,9 @@ import { api } from "@/lib/api";
 type Report = { id: number; title: string; type: string; created_at: string };
 
 export default function RecentCards() {
-  const { data, loading, error } = useApi<{ data: Report[] }>(() => api.getReports());
+  const { data, loading, error } = useApi<{ data: Report[] }>(() =>
+    api.getReports(),
+  );
   const reports: Report[] = (data?.data ?? [])
     .filter((r) => r.type && r.type.toLowerCase().includes("tarot"))
     .slice(0, 4);
@@ -35,12 +37,16 @@ export default function RecentCards() {
       ) : error ? (
         <p className="mt-4 text-[12.5px] text-red-500">{error}</p>
       ) : reports.length === 0 ? (
-        <p className="mt-4 text-[12.5px] text-[#8b8697]">No recent cards yet.</p>
+        <p className="mt-4 text-[12.5px] text-[#8b8697]">
+          No recent cards yet.
+        </p>
       ) : (
         <ul className="mt-2">
           {reports.map((r, i) => {
             const dateStr = new Date(r.created_at).toLocaleDateString("en-IN", {
-              day: "numeric", month: "short", year: "numeric",
+              day: "numeric",
+              month: "short",
+              year: "numeric",
             });
             return (
               <li
@@ -60,9 +66,15 @@ export default function RecentCards() {
                 </span>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13.5px] font-semibold text-[#2b0f47]">{r.title}</p>
-                  <p className="mt-[3px] truncate text-[11.5px] text-[#8b8697]">{r.type}</p>
-                  <p className="mt-[3px] text-[11px] text-[#a09aab]">{dateStr}</p>
+                  <p className="truncate text-[13.5px] font-semibold text-[#2b0f47]">
+                    {r.title}
+                  </p>
+                  <p className="mt-[3px] truncate text-[11.5px] text-[#8b8697]">
+                    {r.type}
+                  </p>
+                  <p className="mt-[3px] text-[11px] text-[#a09aab]">
+                    {dateStr}
+                  </p>
                 </div>
               </li>
             );

@@ -16,11 +16,7 @@ export default function PageHeader() {
       {/* Title row */}
       <div className="mt-[18px] flex items-start">
         <div className="grid h-[48px] w-[48px] shrink-0 place-items-center rounded-full bg-gradient-to-b from-[#3A0F8F] to-[#26046B]">
-          <TarotIcon
-            size={25}
-            strokeWidth={1.15}
-            className="text-[#EFEAFB]"
-          />
+          <TarotIcon size={25} strokeWidth={1.15} className="text-[#EFEAFB]" />
         </div>
 
         <div className="ml-[18px] min-w-0 pt-[4px]">

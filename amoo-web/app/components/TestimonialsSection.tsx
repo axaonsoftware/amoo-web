@@ -5,11 +5,17 @@ import api from "../../lib/api";
 import Image from "next/image";
 import Link from "next/link";
 
-const FALLBACK_AVATAR = "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png";
+const FALLBACK_AVATAR =
+  "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png";
 
 function StarIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 12 12" fill="currentColor" aria-hidden>
+    <svg
+      className={className}
+      viewBox="0 0 12 12"
+      fill="currentColor"
+      aria-hidden
+    >
       <path d="M5.524.467a.4.4 0 0 1 .717 0l1.29 2.615 2.886.42a.4.4 0 0 1 .222.682l-2.088 2.035.492 2.873a.4.4 0 0 1-.58.421L6 7.944l-2.58 1.357a.4.4 0 0 1-.58-.422l.493-2.872L1.247 4.17a.4.4 0 0 1 .205-.68L4.237 3.08 5.524.467Z" />
     </svg>
   );
@@ -18,21 +24,47 @@ function StarIcon({ className }: { className?: string }) {
 function Flourish({ flip = false }: { flip?: boolean }) {
   return (
     <span aria-hidden className="flex items-center gap-1.5">
-      <svg width="44" height="5" viewBox="0 0 44 5" fill="none" className={flip ? "scale-x-[-1]" : ""} aria-hidden>
-        <path d="M1 1.5c8 0 4 2.5 12 2.5s8-2.5 16-2.5 8 2.5 14 2.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <svg
+        width="44"
+        height="5"
+        viewBox="0 0 44 5"
+        fill="none"
+        className={flip ? "scale-x-[-1]" : ""}
+        aria-hidden
+      >
+        <path
+          d="M1 1.5c8 0 4 2.5 12 2.5s8-2.5 16-2.5 8 2.5 14 2.5"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
       </svg>
-      <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" aria-hidden>
+      <svg
+        width="10"
+        height="10"
+        viewBox="0 0 10 10"
+        fill="currentColor"
+        aria-hidden
+      >
         <path d="M5 0l1.2 3.8L10 5 6.2 6.2 5 10 3.8 6.2 0 5l3.8-1.2z" />
       </svg>
     </span>
   );
 }
 
-function Heading({ children, tone = "light" }: { children: React.ReactNode; tone?: "light" | "dark" }) {
+function Heading({
+  children,
+  tone = "light",
+}: {
+  children: React.ReactNode;
+  tone?: "light" | "dark";
+}) {
   return (
     <div className="flex items-center justify-center gap-4">
       <Flourish flip />
-      <h2 className={`font-display text-center text-[20px] leading-tight font-bold sm:text-[24px] sm:whitespace-nowrap lg:text-[28px] ${tone === "dark" ? "text-white" : "text-[#2c0c47]"}`}>
+      <h2
+        className={`font-display text-center text-[20px] leading-tight font-bold sm:text-[24px] sm:whitespace-nowrap lg:text-[28px] ${tone === "dark" ? "text-white" : "text-[#2c0c47]"}`}
+      >
         {children}
       </h2>
       <Flourish />
@@ -43,33 +75,68 @@ function Heading({ children, tone = "light" }: { children: React.ReactNode; tone
 export function TestimonialsSection() {
   const { data: raw } = useApi(() => api.getTestimonials(), []);
 
-  const items: { avatar: string; comment: string; name: string; rating: number }[] =
-    Array.isArray(raw)
-      ? (raw as any[])
-      : Array.isArray((raw as any)?.data)
-        ? (raw as any).data
-        : [];
+  const items: {
+    avatar: string;
+    comment: string;
+    name: string;
+    rating: number;
+  }[] = Array.isArray(raw)
+    ? (raw as any[])
+    : Array.isArray((raw as any)?.data)
+      ? (raw as any).data
+      : [];
 
-  const testimonials = items.length >= 4
-    ? items.slice(0, 4)
-    : [
-        { avatar: FALLBACK_AVATAR, comment: "Surinder Ji's guidance changed my life completely. Her numerology reading was so accurate.", name: "\u2013 Neha Sharma", rating: 5 },
-        { avatar: FALLBACK_AVATAR, comment: "Reiki healing sessions helped me overcome anxiety and stress. Highly recommended!", name: "\u2013 Rajeev Verma", rating: 5 },
-        { avatar: FALLBACK_AVATAR, comment: "Tarot reading was very detailed and gave me clear direction in my career.", name: "\u2013 Priya Malhotra", rating: 5 },
-        { avatar: FALLBACK_AVATAR, comment: "Her predictions and remedies are 100% accurate. I am truly grateful.", name: "\u2013 Ankit S.", rating: 5 },
-      ];
+  const testimonials =
+    items.length >= 4
+      ? items.slice(0, 4)
+      : [
+          {
+            avatar: FALLBACK_AVATAR,
+            comment:
+              "Surinder Ji's guidance changed my life completely. Her numerology reading was so accurate.",
+            name: "\u2013 Neha Sharma",
+            rating: 5,
+          },
+          {
+            avatar: FALLBACK_AVATAR,
+            comment:
+              "Reiki healing sessions helped me overcome anxiety and stress. Highly recommended!",
+            name: "\u2013 Rajeev Verma",
+            rating: 5,
+          },
+          {
+            avatar: FALLBACK_AVATAR,
+            comment:
+              "Tarot reading was very detailed and gave me clear direction in my career.",
+            name: "\u2013 Priya Malhotra",
+            rating: 5,
+          },
+          {
+            avatar: FALLBACK_AVATAR,
+            comment:
+              "Her predictions and remedies are 100% accurate. I am truly grateful.",
+            name: "\u2013 Ankit S.",
+            rating: 5,
+          },
+        ];
 
   return (
     <section className="relative overflow-hidden rounded-[16px] bg-[radial-gradient(120%_150%_at_50%_40%,#3d1662_0%,#2c1049_50%,#200b36_100%)]">
       <div className="haze pointer-events-none absolute inset-0 opacity-60" />
       <Image
         src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-testi-left.png"
-        alt="" width={174} height={423} aria-hidden
+        alt=""
+        width={174}
+        height={423}
+        aria-hidden
         className="pointer-events-none absolute inset-y-0 left-0 hidden h-full w-[58px] object-cover md:block"
       />
       <Image
         src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/deco-testi-right.png"
-        alt="" width={192} height={423} aria-hidden
+        alt=""
+        width={192}
+        height={423}
+        aria-hidden
         className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[64px] object-cover md:block"
       />
       <div className="relative mx-auto w-full max-w-[1336px] px-5 pt-[22px] pb-[30px]">
@@ -83,7 +150,9 @@ export function TestimonialsSection() {
               >
                 <Image
                   src={item.avatar || FALLBACK_AVATAR}
-                  alt="" width={168} height={168}
+                  alt=""
+                  width={168}
+                  height={168}
                   className="h-[62px] w-[62px] shrink-0 rounded-full border-2 border-gold/70 object-cover"
                 />
                 <div className="min-w-0">
@@ -92,8 +161,12 @@ export function TestimonialsSection() {
                       <StarIcon key={i} className="h-[12px] w-[12px]" />
                     ))}
                   </div>
-                  <p className="mt-[10px] text-[11.5px] leading-[1.7] text-white/90">{item.comment}</p>
-                  <p className="mt-[10px] text-[11.5px] text-white/75">{item.name}</p>
+                  <p className="mt-[10px] text-[11.5px] leading-[1.7] text-white/90">
+                    {item.comment}
+                  </p>
+                  <p className="mt-[10px] text-[11.5px] text-white/75">
+                    {item.name}
+                  </p>
                 </div>
               </article>
             ))}

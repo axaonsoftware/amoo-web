@@ -10,16 +10,27 @@ export default function AvailabilitySlotsPage() {
       {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-[11.5px]">
         <span className="font-light text-[#8a86a0]">Dashboard</span>
-        <ChevronRight className="h-[13px] w-[13px] text-[#c9c5d6]" strokeWidth={2} />
-        <span className="font-light text-[#8a86a0]">Availability &amp; Slots</span>
-        <ChevronRight className="h-[13px] w-[13px] text-[#c9c5d6]" strokeWidth={2} />
+        <ChevronRight
+          className="h-[13px] w-[13px] text-[#c9c5d6]"
+          strokeWidth={2}
+        />
+        <span className="font-light text-[#8a86a0]">
+          Availability &amp; Slots
+        </span>
+        <ChevronRight
+          className="h-[13px] w-[13px] text-[#c9c5d6]"
+          strokeWidth={2}
+        />
         <span className="font-semibold text-[#241f3d]">Manage Slots</span>
       </nav>
 
       {/* Page header */}
       <div className="mt-5 flex flex-wrap items-center gap-4">
         <span className="flex h-[46px] w-[46px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#4c159f] to-[#27026e]">
-          <CalendarRange className="h-[21px] w-[21px] text-white" strokeWidth={1.8} />
+          <CalendarRange
+            className="h-[21px] w-[21px] text-white"
+            strokeWidth={1.8}
+          />
         </span>
         <div className="min-w-0">
           <h1 className="font-display text-[25px] font-bold leading-tight text-[#241f3d]">
@@ -35,7 +46,10 @@ export default function AvailabilitySlotsPage() {
             type="button"
             className="flex h-[38px] items-center gap-2 rounded-[9px] border border-[#d7c9f5] bg-white px-4 text-[12px] font-medium text-[#241f3d] hover:bg-[#faf8ff]"
           >
-            <Upload className="h-[15px] w-[15px] text-[#3b0788]" strokeWidth={1.9} />
+            <Upload
+              className="h-[15px] w-[15px] text-[#3b0788]"
+              strokeWidth={1.9}
+            />
             Export Availability
           </button>
           <button

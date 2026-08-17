@@ -55,27 +55,32 @@ const POPULAR_ARTICLES = [
   {
     title: "Life Path Numbers 1 to 9: Meaning and Characteristics",
     date: "May 12, 2025",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&q=80",
+    image:
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&q=80",
   },
   {
     title: "How Tarot Cards Can Guide You in Daily Life",
     date: "May 10, 2025",
-    image: "https://images.unsplash.com/photo-1598919021353-e3f39f3ecbab?w=200&q=80",
+    image:
+      "https://images.unsplash.com/photo-1598919021353-e3f39f3ecbab?w=200&q=80",
   },
   {
     title: "Understanding Your Kundali: Planets & Their Impact",
     date: "May 8, 2025",
-    image: "https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4d5?w=200&q=80",
+    image:
+      "https://images.unsplash.com/photo-1532968961962-8a0cb3a2d4d5?w=200&q=80",
   },
   {
     title: "Reiki Healing Benefits for Mind, Body and Soul",
     date: "May 5, 2025",
-    image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200&q=80",
+    image:
+      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=200&q=80",
   },
   {
     title: "Vastu Tips for Wealth, Health and Happiness",
     date: "May 3, 2025",
-    image: "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=200&q=80",
+    image:
+      "https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=200&q=80",
   },
 ];
 
@@ -89,16 +94,36 @@ const SIDEBAR_CATEGORIES = [
 ];
 
 const SOCIAL_LINKS = [
-  { label: "Facebook", Icon: FacebookIcon, bg: "bg-[#3b5998]", href: "https://facebook.com/amoooguru" },
+  {
+    label: "Facebook",
+    Icon: FacebookIcon,
+    bg: "bg-[#3b5998]",
+    href: "https://facebook.com/amoooguru",
+  },
   {
     label: "Instagram",
     Icon: InstagramIcon,
     bg: "bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
     href: "https://instagram.com/amooguru_official",
   },
-  { label: "YouTube", Icon: YoutubeIcon, bg: "bg-[#ff0000]", href: "https://youtube.com/@amoooguru" },
-  { label: "WhatsApp", Icon: WhatsAppIcon, bg: "bg-[#25D366]", href: WHATSAPP_URL },
-  { label: "Telegram", Icon: SendIcon, bg: "bg-[#0088cc]", href: "https://t.me/amoooguru" },
+  {
+    label: "YouTube",
+    Icon: YoutubeIcon,
+    bg: "bg-[#ff0000]",
+    href: "https://youtube.com/@amoooguru",
+  },
+  {
+    label: "WhatsApp",
+    Icon: WhatsAppIcon,
+    bg: "bg-[#25D366]",
+    href: WHATSAPP_URL,
+  },
+  {
+    label: "Telegram",
+    Icon: SendIcon,
+    bg: "bg-[#0088cc]",
+    href: "https://t.me/amoooguru",
+  },
 ];
 
 const ITEMS_PER_PAGE = 6;
@@ -133,26 +158,34 @@ export default function BlogPage() {
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
 
   const [articles, setArticles] = useState<BlogArticle[]>([]);
-  const [featuredArticle, setFeaturedArticle] = useState<BlogArticle | null>(null);
+  const [featuredArticle, setFeaturedArticle] = useState<BlogArticle | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [totalFromApi, setTotalFromApi] = useState(0);
   const [totalPagesFromApi, setTotalPagesFromApi] = useState(1);
 
   useEffect(() => {
     const params = new URLSearchParams();
-    if (activeCategory !== "All Articles") params.set("category", activeCategory);
+    if (activeCategory !== "All Articles")
+      params.set("category", activeCategory);
     if (searchQuery.trim()) params.set("search", searchQuery);
     params.set("page", String(currentPage));
     params.set("pageSize", String(ITEMS_PER_PAGE));
     const query = `?${params.toString()}`;
-    api.getBlogs(query)
+    api
+      .getBlogs(query)
       .then((res: BlogApiResponse | BlogArticle[]) => {
-        const list = Array.isArray(res) ? res : res?.data ?? [];
+        const list = Array.isArray(res) ? res : (res?.data ?? []);
         setArticles(list as BlogArticle[]);
         setTotalFromApi(!Array.isArray(res) ? (res?.meta?.total ?? 0) : 0);
-        setTotalPagesFromApi(!Array.isArray(res) ? (res?.meta?.totalPages ?? 1) : 1);
+        setTotalPagesFromApi(
+          !Array.isArray(res) ? (res?.meta?.totalPages ?? 1) : 1,
+        );
       })
-      .catch(() => { setArticles([]); })
+      .catch(() => {
+        setArticles([]);
+      })
       .finally(() => setLoading(false));
   }, [activeCategory, searchQuery, currentPage]);
 
@@ -185,14 +218,18 @@ export default function BlogPage() {
     setTimeout(() => setNewsletterSubmitted(false), 4000);
   }
 
-  const showFeatured = featuredArticle && activeCategory === "All Articles" && !searchQuery.trim();
+  const showFeatured =
+    featuredArticle && activeCategory === "All Articles" && !searchQuery.trim();
 
   if (loading) {
     return (
       <>
         <OfferBar />
         <HomeHeader absolute={false} />
-        <main id="main-content" className="flex-1 flex items-center justify-center min-h-[60vh] bg-[#fdf8f0]">
+        <main
+          id="main-content"
+          className="flex-1 flex items-center justify-center min-h-[60vh] bg-[#fdf8f0]"
+        >
           <Loader2 className="h-8 w-8 animate-spin text-[#6d28d9]" />
         </main>
       </>
@@ -340,8 +377,8 @@ export default function BlogPage() {
                       </p>
                       <div className="mt-[16px] flex items-center gap-3">
                         <Image
-                          src={featuredArticle.authorAvatar ?? ''}
-                          alt={featuredArticle.author ?? ''}
+                          src={featuredArticle.authorAvatar ?? ""}
+                          alt={featuredArticle.author ?? ""}
                           width={80}
                           height={80}
                           className="h-[36px] w-[36px] rounded-full border-2 border-gold/50 object-cover"
@@ -420,7 +457,11 @@ export default function BlogPage() {
                             </p>
                             <button
                               type="button"
-                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleBookmark(article.title); }}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleBookmark(article.title);
+                              }}
                               className={`transition-colors ${
                                 bookmarks.has(article.title)
                                   ? "text-[#6b3fa0]"
@@ -488,10 +529,10 @@ export default function BlogPage() {
                     About {SITE_NAME}
                   </h3>
                   <p className="mt-[10px] text-[13px] leading-[1.7] text-[#6c6b78]">
-                    {SITE_NAME} is a spiritual platform providing guidance through
-                    Numerology, Tarot, Reiki, Kundali, Vastu and more. Our
-                    mission is to help you find clarity, peace and purpose in
-                    life.
+                    {SITE_NAME} is a spiritual platform providing guidance
+                    through Numerology, Tarot, Reiki, Kundali, Vastu and more.
+                    Our mission is to help you find clarity, peace and purpose
+                    in life.
                   </p>
                   <Link
                     href="/consultation"
@@ -585,7 +626,10 @@ export default function BlogPage() {
                 and spiritual updates.
               </p>
               {newsletterSubmitted && (
-                <p role="alert" className="mt-2 text-[13px] text-green-400 font-medium">
+                <p
+                  role="alert"
+                  className="mt-2 text-[13px] text-green-400 font-medium"
+                >
                   Subscribed successfully! Thank you.
                 </p>
               )}

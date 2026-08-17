@@ -79,7 +79,8 @@ const PricingRow = memo(function PricingRow({
       <td className="px-2 py-[12px]">
         <span
           className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
-            serviceTone[r.service as keyof typeof serviceTone] || "bg-[#E4F1FD] text-[#0E7FBF]"
+            serviceTone[r.service as keyof typeof serviceTone] ||
+            "bg-[#E4F1FD] text-[#0E7FBF]"
           }`}
         >
           {r.service}
@@ -89,16 +90,21 @@ const PricingRow = memo(function PricingRow({
       <td className="px-2 py-[12px]">
         <span
           className={`inline-flex items-center rounded-[6px] px-[8px] py-[4px] text-[9.5px] font-medium ${
-            planTypeTone[r.planType as keyof typeof planTypeTone] || "bg-[#F1EAFE] text-[#7C3AED]"
+            planTypeTone[r.planType as keyof typeof planTypeTone] ||
+            "bg-[#F1EAFE] text-[#7C3AED]"
           }`}
         >
           {r.planType}
         </span>
       </td>
 
-      <td className="px-2 py-[12px] text-[11.5px] font-semibold text-[#1F1836]">{r.price}</td>
+      <td className="px-2 py-[12px] text-[11.5px] font-semibold text-[#1F1836]">
+        {r.price}
+      </td>
 
-      <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">{r.duration}</td>
+      <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">
+        {r.duration}
+      </td>
 
       <td className="px-2 py-[12px]">
         <span
@@ -112,7 +118,9 @@ const PricingRow = memo(function PricingRow({
         </span>
       </td>
 
-      <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">{r.bookings}</td>
+      <td className="px-2 py-[12px] text-[11px] text-[#3D3752]">
+        {r.bookings}
+      </td>
 
       <td className="py-[12px] pl-2 pr-3">
         <div className="flex items-center gap-[6px]">
@@ -155,7 +163,9 @@ export default function PricingPanel({
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RawPackage | null>(null);
-  const [formValues, setFormValues] = useState<Record<string, string | number>>({});
+  const [formValues, setFormValues] = useState<Record<string, string | number>>(
+    {},
+  );
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
@@ -165,11 +175,17 @@ export default function PricingPanel({
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
 
-  const addToast = useCallback((message: string, kind: Toast["kind"] = "success") => {
-    const id = ++toastIdRef.current;
-    setToasts((prev) => [...prev, { id, message, kind }]);
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3000);
-  }, []);
+  const addToast = useCallback(
+    (message: string, kind: Toast["kind"] = "success") => {
+      const id = ++toastIdRef.current;
+      setToasts((prev) => [...prev, { id, message, kind }]);
+      setTimeout(
+        () => setToasts((prev) => prev.filter((t) => t.id !== id)),
+        3000,
+      );
+    },
+    [],
+  );
 
   const loadData = useCallback(() => {
     setLoading(true);
@@ -178,8 +194,12 @@ export default function PricingPanel({
       .then(([pkgData, svcData]: any[]) => {
         const pkgItems = (pkgData?.data ?? pkgData) as RawPackage[];
         if (pkgData?.meta?.total) setTotal(pkgData.meta.total);
-        const svcItems = Array.isArray(svcData?.data ?? svcData) ? (svcData?.data ?? svcData) : [];
-        const svcNames = svcItems.map((s: any) => s.name || s.title).filter(Boolean);
+        const svcItems = Array.isArray(svcData?.data ?? svcData)
+          ? (svcData?.data ?? svcData)
+          : [];
+        const svcNames = svcItems
+          .map((s: any) => s.name || s.title)
+          .filter(Boolean);
         setServices(svcNames);
 
         if (Array.isArray(pkgItems)) {
@@ -187,7 +207,8 @@ export default function PricingPanel({
           setList(
             pkgItems.map((p: any) => {
               const matchedSvc = svcNames.find(
-                (name: string) => name.toLowerCase() === (p.service_name || "").toLowerCase()
+                (name: string) =>
+                  name.toLowerCase() === (p.service_name || "").toLowerCase(),
               );
               return {
                 id: p.id,
@@ -199,11 +220,16 @@ export default function PricingPanel({
                 priceRaw: Number(p.price),
                 duration: p.duration_days ? `${p.duration_days} days` : "-",
                 durationDaysRaw: p.duration_days || 0,
-                status: p.status === "active" ? "Active" : p.status === "inactive" ? "Inactive" : p.status,
+                status:
+                  p.status === "active"
+                    ? "Active"
+                    : p.status === "inactive"
+                      ? "Inactive"
+                      : p.status,
                 bookings: "-",
                 _raw: p,
               };
-            })
+            }),
           );
         }
       })
@@ -211,14 +237,17 @@ export default function PricingPanel({
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { loadData(); }, [loadData]);
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const rows = list || [];
 
   const filteredRows = rows.filter((r) => {
     if (search) {
       const q = search.toLowerCase();
-      if (!r.name.toLowerCase().includes(q) && !r.sub.toLowerCase().includes(q)) return false;
+      if (!r.name.toLowerCase().includes(q) && !r.sub.toLowerCase().includes(q))
+        return false;
     }
     if (activeTab === 1 && r.planType !== "One-time") return false;
     if (activeTab === 2 && r.planType !== "Subscription") return false;
@@ -247,7 +276,12 @@ export default function PricingPanel({
       description: raw.description || "",
       price: raw.price,
       duration_days: raw.duration_days || "",
-      status: raw.status === "Active" ? "active" : raw.status === "Inactive" ? "inactive" : raw.status,
+      status:
+        raw.status === "Active"
+          ? "active"
+          : raw.status === "Inactive"
+            ? "inactive"
+            : raw.status,
       plan_type: raw.plan_type || "Subscription",
     });
     setFormErrors({});
@@ -257,12 +291,21 @@ export default function PricingPanel({
   const handleSave = async () => {
     const errs: Record<string, string> = {};
     if (!formValues.name) errs.name = "Name is required";
-    if (formValues.price === "" || formValues.price === undefined) errs.price = "Price is required";
+    if (formValues.price === "" || formValues.price === undefined)
+      errs.price = "Price is required";
     if (Number(formValues.price) < 0) errs.price = "Price must be ≥ 0";
-    if (formValues.duration_days === "" || formValues.duration_days === undefined) errs.duration_days = "Duration is required";
-    if (Number(formValues.duration_days) < 1) errs.duration_days = "Duration must be ≥ 1 day";
+    if (
+      formValues.duration_days === "" ||
+      formValues.duration_days === undefined
+    )
+      errs.duration_days = "Duration is required";
+    if (Number(formValues.duration_days) < 1)
+      errs.duration_days = "Duration must be ≥ 1 day";
     if (!formValues.status) errs.status = "Status is required";
-    if (Object.keys(errs).length) { setFormErrors(errs); return; }
+    if (Object.keys(errs).length) {
+      setFormErrors(errs);
+      return;
+    }
 
     setSaving(true);
     try {
@@ -316,7 +359,10 @@ export default function PricingPanel({
       duration: r.duration,
       status: r.status,
     }));
-    if (!rows.length) { addToast("No plans to export", "error"); return; }
+    if (!rows.length) {
+      addToast("No plans to export", "error");
+      return;
+    }
     exportCSV(rows, "pricing-plans.csv");
     addToast(`Exported ${rows.length} plans`);
   };
@@ -334,26 +380,90 @@ export default function PricingPanel({
   }, [onReady]);
 
   const modalFields: ModalField[] = [
-    { name: "name", label: "Plan Name", type: "text", required: true, placeholder: "e.g. Gold Package", full: true },
-    { name: "description", label: "Description", type: "textarea", placeholder: "Describe the plan...", full: true },
-    { name: "price", label: "Price (₹)", type: "number", required: true, min: 0, placeholder: "0" },
-    { name: "duration_days", label: "Duration (days)", type: "number", required: true, min: 1, placeholder: "30" },
-    { name: "plan_type", label: "Plan Type", type: "select", options: [{ label: "Subscription", value: "Subscription" }, { label: "One-time", value: "One-time" }] },
-    { name: "status", label: "Status", type: "select", required: true, options: [{ label: "Active", value: "active" }, { label: "Inactive", value: "inactive" }] },
+    {
+      name: "name",
+      label: "Plan Name",
+      type: "text",
+      required: true,
+      placeholder: "e.g. Gold Package",
+      full: true,
+    },
+    {
+      name: "description",
+      label: "Description",
+      type: "textarea",
+      placeholder: "Describe the plan...",
+      full: true,
+    },
+    {
+      name: "price",
+      label: "Price (₹)",
+      type: "number",
+      required: true,
+      min: 0,
+      placeholder: "0",
+    },
+    {
+      name: "duration_days",
+      label: "Duration (days)",
+      type: "number",
+      required: true,
+      min: 1,
+      placeholder: "30",
+    },
+    {
+      name: "plan_type",
+      label: "Plan Type",
+      type: "select",
+      options: [
+        { label: "Subscription", value: "Subscription" },
+        { label: "One-time", value: "One-time" },
+      ],
+    },
+    {
+      name: "status",
+      label: "Status",
+      type: "select",
+      required: true,
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+    },
   ];
 
   const handleEditPlan = useCallback((r: Row) => handleOpenEdit(r), []);
-  const handleDeletePlan = useCallback((id: number) => { setDeletingId(id); setConfirmOpen(true); }, []);
+  const handleDeletePlan = useCallback((id: number) => {
+    setDeletingId(id);
+    setConfirmOpen(true);
+  }, []);
 
   if (loading)
     return (
       <div className="flex justify-center py-10">
-        <svg className="h-6 w-6 animate-spin text-[#7C3AED]" viewBox="0 0 24 24" fill="none">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" />
+        <svg
+          className="h-6 w-6 animate-spin text-[#7C3AED]"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle
+            cx="12"
+            cy="12"
+            r="10"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeDasharray="32"
+            strokeLinecap="round"
+          />
         </svg>
       </div>
     );
-  if (error) return <div className="flex justify-center py-10 text-[13px] text-[#EF4444]">{error}</div>;
+  if (error)
+    return (
+      <div className="flex justify-center py-10 text-[13px] text-[#EF4444]">
+        {error}
+      </div>
+    );
 
   return (
     <>
@@ -403,7 +513,16 @@ export default function PricingPanel({
           <table className="w-full min-w-[820px] border-collapse">
             <thead>
               <tr className="border-y border-[#EEEDF4] bg-[#FAFAFC]">
-                {["Plan Name", "Service", "Plan Type", "Price", "Duration", "Status", "Bookings", "Actions"].map((h) => (
+                {[
+                  "Plan Name",
+                  "Service",
+                  "Plan Type",
+                  "Price",
+                  "Duration",
+                  "Status",
+                  "Bookings",
+                  "Actions",
+                ].map((h) => (
                   <th
                     key={h}
                     className="px-2 py-[11px] text-left text-[10.5px] font-medium text-[#6B6480] first:pl-3 last:pr-3"
@@ -425,7 +544,10 @@ export default function PricingPanel({
               ))}
               {!filteredRows.length && (
                 <tr>
-                  <td colSpan={8} className="py-10 text-center text-[12px] text-[#8B879C]">
+                  <td
+                    colSpan={8}
+                    className="py-10 text-center text-[12px] text-[#8B879C]"
+                  >
                     No plans found.
                   </td>
                 </tr>
@@ -437,7 +559,8 @@ export default function PricingPanel({
         {/* Footer */}
         <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-[16px] pt-[14px]">
           <p className="text-[10.5px] text-[#8B879C]">
-            Showing {filteredRows.length ? 1 : 0} to {Math.min(PAGE_SIZE, filteredRows.length)} of{" "}
+            Showing {filteredRows.length ? 1 : 0} to{" "}
+            {Math.min(PAGE_SIZE, filteredRows.length)} of{" "}
             {filteredRows.length.toLocaleString("en-IN")} plans
           </p>
         </div>
@@ -448,7 +571,14 @@ export default function PricingPanel({
         title={editing ? "Edit Package" : "Create New Package"}
         fields={modalFields}
         values={formValues}
-        onChange={(name, value) => { setFormValues((prev) => ({ ...prev, [name]: value })); setFormErrors((prev) => { const n = { ...prev }; delete n[name]; return n; }); }}
+        onChange={(name, value) => {
+          setFormValues((prev) => ({ ...prev, [name]: value }));
+          setFormErrors((prev) => {
+            const n = { ...prev };
+            delete n[name];
+            return n;
+          });
+        }}
         onSave={handleSave}
         saving={saving}
         onClose={() => setModalOpen(false)}
@@ -460,7 +590,10 @@ export default function PricingPanel({
         title="Delete Package"
         message="Are you sure you want to delete this package? This action cannot be undone."
         onConfirm={handleDeleteConfirm}
-        onCancel={() => { setConfirmOpen(false); setDeletingId(null); }}
+        onCancel={() => {
+          setConfirmOpen(false);
+          setDeletingId(null);
+        }}
         saving={saving}
       />
 

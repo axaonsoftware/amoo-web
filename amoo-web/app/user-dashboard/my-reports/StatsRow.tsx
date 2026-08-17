@@ -48,7 +48,9 @@ export default function StatsRow() {
             </span>
 
             <div className="min-w-0">
-              <p className="text-[12.5px] leading-none text-[#7a7686]">{label}</p>
+              <p className="text-[12.5px] leading-none text-[#7a7686]">
+                {label}
+              </p>
               <p className="mt-[8px] text-[26px] font-semibold leading-none text-[#2b0f47]">
                 {value}
               </p>

@@ -17,11 +17,41 @@ const statDefs: {
   iconBg: string;
   iconColor: string;
 }[] = [
-  { label: "Total Bookings", field: "bookings", Icon: CalendarDays, iconBg: "bg-[#F0EAFB]", iconColor: "text-[#7C3AED]" },
-  { label: "Upcoming Bookings", field: "upcomingBookings", Icon: CalendarClock, iconBg: "bg-[#FEF1E1]", iconColor: "text-[#F59E0B]" },
-  { label: "Today's Bookings", field: "todaysBookings", Icon: CalendarCheck2, iconBg: "bg-[#E3EDFD]", iconColor: "text-[#2563EB]" },
-  { label: "Completed Bookings", field: "completedBookings", Icon: CircleCheckBig, iconBg: "bg-[#E3F7EC]", iconColor: "text-[#22C55E]" },
-  { label: "Cancelled Bookings", field: "cancelledBookings", Icon: CircleX, iconBg: "bg-[#FDEAEA]", iconColor: "text-[#EF4444]" },
+  {
+    label: "Total Bookings",
+    field: "bookings",
+    Icon: CalendarDays,
+    iconBg: "bg-[#F0EAFB]",
+    iconColor: "text-[#7C3AED]",
+  },
+  {
+    label: "Upcoming Bookings",
+    field: "upcomingBookings",
+    Icon: CalendarClock,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Today's Bookings",
+    field: "todaysBookings",
+    Icon: CalendarCheck2,
+    iconBg: "bg-[#E3EDFD]",
+    iconColor: "text-[#2563EB]",
+  },
+  {
+    label: "Completed Bookings",
+    field: "completedBookings",
+    Icon: CircleCheckBig,
+    iconBg: "bg-[#E3F7EC]",
+    iconColor: "text-[#22C55E]",
+  },
+  {
+    label: "Cancelled Bookings",
+    field: "cancelledBookings",
+    Icon: CircleX,
+    iconBg: "bg-[#FDEAEA]",
+    iconColor: "text-[#EF4444]",
+  },
 ];
 
 export default function StatsRow() {
@@ -71,8 +101,12 @@ export default function StatsRow() {
               <Icon size={20} />
             </span>
             <div className="min-w-0">
-              <p className="whitespace-nowrap text-[11px] text-[#8B879C]">{label}</p>
-              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">{value}</p>
+              <p className="whitespace-nowrap text-[11px] text-[#8B879C]">
+                {label}
+              </p>
+              <p className="mt-[2px] text-[21px] font-bold leading-[1.1] text-[#1D1630]">
+                {value}
+              </p>
             </div>
           </div>
         );

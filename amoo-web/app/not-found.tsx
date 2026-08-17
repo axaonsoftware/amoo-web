@@ -7,7 +7,10 @@ export default function NotFound() {
     <>
       <OfferBar />
       <HomeHeader absolute={false} />
-      <main id="main-content" className="flex min-h-[70vh] flex-col items-center justify-center bg-gradient-to-b from-[#0d0616] to-[#1a0a2e] px-4">
+      <main
+        id="main-content"
+        className="flex min-h-[70vh] flex-col items-center justify-center bg-gradient-to-b from-[#0d0616] to-[#1a0a2e] px-4"
+      >
         <div className="text-center">
           <div className="mb-6 font-serif text-[80px] font-bold leading-none text-[#e9b85c] opacity-60 sm:text-[120px]">
             404

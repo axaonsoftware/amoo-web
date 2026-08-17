@@ -10,7 +10,10 @@ export default function PageHeader() {
           Dashboard
         </Link>
         <ChevronRight size={12} className="text-[#B7B3C4]" />
-        <Link href="/admin/consultation-management" className="hover:text-[#5B2497]">
+        <Link
+          href="/admin/consultation-management"
+          className="hover:text-[#5B2497]"
+        >
           Consultation Management
         </Link>
         <ChevronRight size={12} className="text-[#B7B3C4]" />

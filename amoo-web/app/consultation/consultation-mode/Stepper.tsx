@@ -44,7 +44,9 @@ export default function Stepper() {
               ) : (
                 step.num
               )}
-              {step.state === "done" && <Check size={19} strokeWidth={3} className="hidden sm:block" />}
+              {step.state === "done" && (
+                <Check size={19} strokeWidth={3} className="hidden sm:block" />
+              )}
             </span>
 
             <span

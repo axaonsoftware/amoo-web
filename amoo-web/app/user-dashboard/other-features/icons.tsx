@@ -5,7 +5,14 @@ const AMBER = "#F5901E";
 
 function Experts() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      className="shrink-0"
+      aria-hidden
+    >
       <circle cx="7.6" cy="5.4" r="2.9" stroke={AMBER} strokeWidth="1.3" />
       <path
         d="M2.4 15.4c0-2.9 2.3-5.2 5.2-5.2s5.2 2.3 5.2 5.2"
@@ -13,14 +20,24 @@ function Experts() {
         strokeWidth="1.3"
         strokeLinecap="round"
       />
-      <path d="M14.6 2.2l.7 1.5 1.5.7-1.5.7-.7 1.5-.7-1.5-1.5-.7 1.5-.7.7-1.5Z" fill={AMBER} />
+      <path
+        d="M14.6 2.2l.7 1.5 1.5.7-1.5.7-.7 1.5-.7-1.5-1.5-.7 1.5-.7.7-1.5Z"
+        fill={AMBER}
+      />
     </svg>
   );
 }
 
 function AllInOne() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      className="shrink-0"
+      aria-hidden
+    >
       <path
         d="M9 1.2 15.6 3.5v5.2c0 4-2.8 6.9-6.6 8.1-3.8-1.2-6.6-4.1-6.6-8.1V3.5L9 1.2Z"
         fill={AMBER}
@@ -36,7 +53,14 @@ function AllInOne() {
 
 function Secure() {
   return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" className="shrink-0" aria-hidden>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 18 18"
+      fill="none"
+      className="shrink-0"
+      aria-hidden
+    >
       <path
         d="M9 1.2 15.6 3.5v5.2c0 4-2.8 6.9-6.6 8.1-3.8-1.2-6.6-4.1-6.6-8.1V3.5L9 1.2Z"
         fill={AMBER}
@@ -79,7 +103,15 @@ function Instagram() {
         </radialGradient>
       </defs>
       <circle cx="18" cy="18" r="18" fill="url(#ofIg)" />
-      <rect x="10" y="10" width="16" height="16" rx="5" stroke="#fff" strokeWidth="1.8" />
+      <rect
+        x="10"
+        y="10"
+        width="16"
+        height="16"
+        rx="5"
+        stroke="#fff"
+        strokeWidth="1.8"
+      />
       <circle cx="18" cy="18" r="4.1" stroke="#fff" strokeWidth="1.8" />
       <circle cx="22.9" cy="13.1" r="1.15" fill="#fff" />
     </svg>
@@ -140,9 +172,18 @@ function GooglePlay() {
   return (
     <span className="flex h-[49px] w-[171px] items-center gap-[11px] rounded-[11px] bg-[#0B0B0B] pl-[14px]">
       <svg width="24" height="26" viewBox="0 0 24 26" fill="none" aria-hidden>
-        <path d="M1.3 1.1a2 2 0 0 0-.6 1.4v21a2 2 0 0 0 .6 1.4L13 13.3 1.3 1.1Z" fill="#00D0FF" />
-        <path d="M17.8 17.9 13 13.3 1.3 25.1a1.9 1.9 0 0 0 2.3.2l14.2-7.4Z" fill="#EA4335" />
-        <path d="M17.8 8.6 3.6 1.2a1.9 1.9 0 0 0-2.3.2L13 13.3l4.8-4.7Z" fill="#00F076" />
+        <path
+          d="M1.3 1.1a2 2 0 0 0-.6 1.4v21a2 2 0 0 0 .6 1.4L13 13.3 1.3 1.1Z"
+          fill="#00D0FF"
+        />
+        <path
+          d="M17.8 17.9 13 13.3 1.3 25.1a1.9 1.9 0 0 0 2.3.2l14.2-7.4Z"
+          fill="#EA4335"
+        />
+        <path
+          d="M17.8 8.6 3.6 1.2a1.9 1.9 0 0 0-2.3.2L13 13.3l4.8-4.7Z"
+          fill="#00F076"
+        />
         <path
           d="M17.8 8.6 13 13.3l4.8 4.6 5-2.6c1.4-.8 1.4-2.7 0-3.4l-5-2.6Z"
           fill="#FFCE00"
@@ -168,7 +209,9 @@ function AppStore() {
         <path d="M15.5 5.6c.8-1 1.4-2.4 1.2-3.8-1.2.1-2.7.8-3.6 1.8-.8.9-1.4 2.3-1.2 3.7 1.3.1 2.7-.7 3.6-1.7Z" />
       </svg>
       <span className="flex flex-col leading-none">
-        <span className="text-[8.5px] font-medium text-white">Download on the</span>
+        <span className="text-[8.5px] font-medium text-white">
+          Download on the
+        </span>
         <span className="mt-[3px] text-[17px] font-semibold leading-[1.15] text-white">
           App Store
         </span>
@@ -244,12 +287,32 @@ export function FooterLotus() {
       />
 
       {/* petals */}
-      <path d="M90 46c11 17 15 34 11 51l-11 7-11-7c-4-17 0-34 11-51Z" fill="url(#ofLpIn)" />
-      <path d="M55 60c15 10 25 24 28 41l-5 12-12-2c-12-13-16-30-11-51Z" fill="url(#ofLp)" />
-      <path d="M125 60c5 21 1 38-11 51l-12 2-5-12c3-17 13-31 28-41Z" fill="url(#ofLp)" />
-      <path d="M28 82c18 2 33 11 42 26l-1 13-14 3c-15-9-25-23-27-42Z" fill="url(#ofLp)" opacity="0.92" />
-      <path d="M152 82c-2 19-12 33-27 42l-14-3-1-13c9-15 24-24 42-26Z" fill="url(#ofLp)" opacity="0.92" />
-      <path d="M90 58c7 14 10 28 7 42l-7 5-7-5c-3-14 0-28 7-42Z" fill="#FBD98F" />
+      <path
+        d="M90 46c11 17 15 34 11 51l-11 7-11-7c-4-17 0-34 11-51Z"
+        fill="url(#ofLpIn)"
+      />
+      <path
+        d="M55 60c15 10 25 24 28 41l-5 12-12-2c-12-13-16-30-11-51Z"
+        fill="url(#ofLp)"
+      />
+      <path
+        d="M125 60c5 21 1 38-11 51l-12 2-5-12c3-17 13-31 28-41Z"
+        fill="url(#ofLp)"
+      />
+      <path
+        d="M28 82c18 2 33 11 42 26l-1 13-14 3c-15-9-25-23-27-42Z"
+        fill="url(#ofLp)"
+        opacity="0.92"
+      />
+      <path
+        d="M152 82c-2 19-12 33-27 42l-14-3-1-13c9-15 24-24 42-26Z"
+        fill="url(#ofLp)"
+        opacity="0.92"
+      />
+      <path
+        d="M90 58c7 14 10 28 7 42l-7 5-7-5c-3-14 0-28 7-42Z"
+        fill="#FBD98F"
+      />
 
       {/* base */}
       <path
@@ -259,8 +322,14 @@ export function FooterLotus() {
       <ellipse cx="90" cy="134" rx="46" ry="5" fill="#7B57B5" opacity="0.35" />
 
       {/* flame */}
-      <path d="M90 28c4 5 6 9 6 12a6 6 0 0 1-12 0c0-3 2-7 6-12Z" fill="#F6C34A" />
-      <path d="M90 84c4 6 6 10 6 13a6 6 0 0 1-12 0c0-3 2-7 6-13Z" fill="#FBD35C" />
+      <path
+        d="M90 28c4 5 6 9 6 12a6 6 0 0 1-12 0c0-3 2-7 6-12Z"
+        fill="#F6C34A"
+      />
+      <path
+        d="M90 84c4 6 6 10 6 13a6 6 0 0 1-12 0c0-3 2-7 6-13Z"
+        fill="#FBD35C"
+      />
     </svg>
   );
 }

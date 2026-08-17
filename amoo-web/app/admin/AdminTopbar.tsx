@@ -38,7 +38,10 @@ export default function AdminTopbar() {
         </Link>
 
         <button type="button" aria-label="Notifications" className="relative">
-          <Bell className="h-[21px] w-[21px] text-[#3d1a63]" strokeWidth={1.8} />
+          <Bell
+            className="h-[21px] w-[21px] text-[#3d1a63]"
+            strokeWidth={1.8}
+          />
           <span className="absolute -right-[7px] -top-[7px] flex h-[17px] w-[17px] items-center justify-center rounded-full border-2 border-white bg-[#ef4444] text-[9px] font-bold text-white">
             5
           </span>
@@ -60,8 +63,12 @@ export default function AdminTopbar() {
             </span>
           )}
           <div className="hidden leading-tight sm:block">
-            <p className="text-[13.5px] font-semibold text-[#2a1148]">{user?.name || "Admin"}</p>
-            <p className="text-[11px] text-[#8b8397] capitalize">{user?.role || "Super Admin"}</p>
+            <p className="text-[13.5px] font-semibold text-[#2a1148]">
+              {user?.name || "Admin"}
+            </p>
+            <p className="text-[11px] text-[#8b8397] capitalize">
+              {user?.role || "Super Admin"}
+            </p>
           </div>
           <ChevronDown className="h-4 w-4 text-[#8b8397]" strokeWidth={2} />
         </div>

@@ -60,16 +60,25 @@ type Service = {
   icon: React.ReactNode;
 };
 
-const CATEGORY_VISUALS: Record<string, {
-  icon: React.ReactNode;
-  popular?: boolean;
-  priceColor: string;
-  iconBg: string;
-  btnBg: string;
-  btnText: string;
-}> = {
+const CATEGORY_VISUALS: Record<
+  string,
+  {
+    icon: React.ReactNode;
+    popular?: boolean;
+    priceColor: string;
+    iconBg: string;
+    btnBg: string;
+    btnText: string;
+  }
+> = {
   Numerology: {
-    icon: <div className="grid h-[42px] w-[42px] grid-cols-3 place-items-center gap-x-[3px] rounded-[11px] bg-gradient-to-br from-[#6b3fa0] to-[#4b2583] text-[8.5px] font-semibold leading-none text-white">{([1, 4, 7, 2, 5, 8, 3, 6, 9]).map((n) => (<span key={n}>{n}</span>))}</div>,
+    icon: (
+      <div className="grid h-[42px] w-[42px] grid-cols-3 place-items-center gap-x-[3px] rounded-[11px] bg-gradient-to-br from-[#6b3fa0] to-[#4b2583] text-[8.5px] font-semibold leading-none text-white">
+        {[1, 4, 7, 2, 5, 8, 3, 6, 9].map((n) => (
+          <span key={n}>{n}</span>
+        ))}
+      </div>
+    ),
     popular: true,
     priceColor: "#d6417f",
     iconBg: "#efe7fb",
@@ -124,12 +133,18 @@ const CATEGORY_VISUALS: Record<string, {
 };
 
 const CATEGORY_DESCS: Record<string, string> = {
-  Numerology: "Discover the power of numbers that influence your life path, career, relationships and more.",
-  Tarot: "Get insights and guidance for your current situation and future path with Tarot card reading.",
-  Astrology: "Detailed analysis of your birth chart and planetary positions by expert astrologers.",
-  Healing: "Heal your mind, body and soul with divine energy from our expert healers.",
-  Vastu: "Harmonize your living and working spaces with ancient Vastu principles.",
-  "AI Services": "Get instant astrology answers and insights powered by AI technology.",
+  Numerology:
+    "Discover the power of numbers that influence your life path, career, relationships and more.",
+  Tarot:
+    "Get insights and guidance for your current situation and future path with Tarot card reading.",
+  Astrology:
+    "Detailed analysis of your birth chart and planetary positions by expert astrologers.",
+  Healing:
+    "Heal your mind, body and soul with divine energy from our expert healers.",
+  Vastu:
+    "Harmonize your living and working spaces with ancient Vastu principles.",
+  "AI Services":
+    "Get instant astrology answers and insights powered by AI technology.",
   Spiritual: "Connect with your inner self and explore your spiritual journey.",
 };
 
@@ -142,24 +157,138 @@ const LIFE_INCLUDES = [
 ];
 
 const TRUST_ITEMS = [
-  { Icon: LotusSolidIcon, title: "Expert Guidance", sub: "by Surinder Kaur Sehgal" },
-  { Icon: LockIcon, title: "Secure & Private", sub: "Your data is always safe" },
-  { Icon: BadgeCheckIcon, title: "100% Satisfaction", sub: "Trusted by 25K+ clients" },
+  {
+    Icon: LotusSolidIcon,
+    title: "Expert Guidance",
+    sub: "by Surinder Kaur Sehgal",
+  },
+  {
+    Icon: LockIcon,
+    title: "Secure & Private",
+    sub: "Your data is always safe",
+  },
+  {
+    Icon: BadgeCheckIcon,
+    title: "100% Satisfaction",
+    sub: "Trusted by 25K+ clients",
+  },
   { Icon: CalendarIcon, title: "Easy Booking", sub: "Quick & simple process" },
   { Icon: HeadsetIcon, title: "Multiple Modes", sub: "Audio, Video & Chat" },
 ];
 
-const SORT_OPTIONS = ["Popular First", "Price: Low to High", "Price: High to Low"];
+const SORT_OPTIONS = [
+  "Popular First",
+  "Price: Low to High",
+  "Price: High to Low",
+];
 
 const STATIC_SERVICES: Service[] = [
-  { id: 1, name: "Numerology Report", desc: "Discover the power of numbers that influence your life path, career, relationships and more.", price: "₹999", category: "Numerology", popular: true, priceColor: "#d6417f", iconBg: "#efe7fb", btnBg: "#f7eef6", btnText: "#8a3f86", icon: <div className="grid h-[42px] w-[42px] grid-cols-3 place-items-center gap-x-[3px] rounded-[11px] bg-gradient-to-br from-[#6b3fa0] to-[#4b2583] text-[8.5px] font-semibold leading-none text-white">{([1, 4, 7, 2, 5, 8, 3, 6, 9]).map((n) => (<span key={n}>{n}</span>))}</div> },
-  { id: 2, name: "Tarot Reading", desc: "Get insights and guidance for your current situation and future path with Tarot card reading.", price: "₹799", category: "Tarot", popular: true, priceColor: "#7b3fb0", iconBg: "#efe6fb", btnBg: "#f2ecfb", btnText: "#6b3fa0", icon: <TarotCardsIcon className="h-[32px] w-[32px] text-[#7b3fb0]" /> },
-  { id: 3, name: "Kundli Reading", desc: "Detailed analysis of your birth chart and planetary positions by expert astrologers.", price: "₹1,499", category: "Astrology", priceColor: "#e08a2e", iconBg: "#fdeede", btnBg: "#fcf1e2", btnText: "#c9791f", icon: <KundaliWheelIcon className="h-[34px] w-[34px] text-[#e08a2e]" /> },
-  { id: 4, name: "Reiki Healing Session", desc: "Heal your mind, body and soul with divine energy from our expert healers.", price: "₹999", category: "Healing", popular: true, priceColor: "#2f9e5f", iconBg: "#e4f4e9", btnBg: "#eef4ef", btnText: "#3f8158", icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" /> },
-  { id: 5, name: "Vastu Consultation", desc: "Harmonize your living and working spaces with ancient Vastu principles.", price: "₹1,299", category: "Vastu", priceColor: "#c9791f", iconBg: "#fdeede", btnBg: "#fcf1e2", btnText: "#a06010", icon: <CompassIcon className="h-[34px] w-[34px] text-[#e08a2e]" /> },
-  { id: 6, name: "AI Astro Chat", desc: "Get instant astrology answers and insights powered by AI technology.", price: "₹199", category: "AI Services", popular: true, priceColor: "#3f6fd0", iconBg: "#e7effb", btnBg: "#eaf0fb", btnText: "#3f6fc9", icon: <MonitorIcon className="h-[34px] w-[34px] text-[#4a78d6]" /> },
-  { id: 7, name: "Aura Report", desc: "Energy Aura Analysis — discover the energy field surrounding you.", price: "₹599", category: "Healing", priceColor: "#2f9e5f", iconBg: "#e4f4e9", btnBg: "#eef4ef", btnText: "#3f8158", icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" /> },
-  { id: 8, name: "Past Life Reading", desc: "Explore your past lives and understand the karmic patterns affecting your present.", price: "₹1,199", category: "Spiritual", priceColor: "#b5711a", iconBg: "#fdf0da", btnBg: "#fcf1de", btnText: "#b5711a", icon: <SparkleIcon className="h-[34px] w-[34px] text-[#b5711a]" /> },
+  {
+    id: 1,
+    name: "Numerology Report",
+    desc: "Discover the power of numbers that influence your life path, career, relationships and more.",
+    price: "₹999",
+    category: "Numerology",
+    popular: true,
+    priceColor: "#d6417f",
+    iconBg: "#efe7fb",
+    btnBg: "#f7eef6",
+    btnText: "#8a3f86",
+    icon: (
+      <div className="grid h-[42px] w-[42px] grid-cols-3 place-items-center gap-x-[3px] rounded-[11px] bg-gradient-to-br from-[#6b3fa0] to-[#4b2583] text-[8.5px] font-semibold leading-none text-white">
+        {[1, 4, 7, 2, 5, 8, 3, 6, 9].map((n) => (
+          <span key={n}>{n}</span>
+        ))}
+      </div>
+    ),
+  },
+  {
+    id: 2,
+    name: "Tarot Reading",
+    desc: "Get insights and guidance for your current situation and future path with Tarot card reading.",
+    price: "₹799",
+    category: "Tarot",
+    popular: true,
+    priceColor: "#7b3fb0",
+    iconBg: "#efe6fb",
+    btnBg: "#f2ecfb",
+    btnText: "#6b3fa0",
+    icon: <TarotCardsIcon className="h-[32px] w-[32px] text-[#7b3fb0]" />,
+  },
+  {
+    id: 3,
+    name: "Kundli Reading",
+    desc: "Detailed analysis of your birth chart and planetary positions by expert astrologers.",
+    price: "₹1,499",
+    category: "Astrology",
+    priceColor: "#e08a2e",
+    iconBg: "#fdeede",
+    btnBg: "#fcf1e2",
+    btnText: "#c9791f",
+    icon: <KundaliWheelIcon className="h-[34px] w-[34px] text-[#e08a2e]" />,
+  },
+  {
+    id: 4,
+    name: "Reiki Healing Session",
+    desc: "Heal your mind, body and soul with divine energy from our expert healers.",
+    price: "₹999",
+    category: "Healing",
+    popular: true,
+    priceColor: "#2f9e5f",
+    iconBg: "#e4f4e9",
+    btnBg: "#eef4ef",
+    btnText: "#3f8158",
+    icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" />,
+  },
+  {
+    id: 5,
+    name: "Vastu Consultation",
+    desc: "Harmonize your living and working spaces with ancient Vastu principles.",
+    price: "₹1,299",
+    category: "Vastu",
+    priceColor: "#c9791f",
+    iconBg: "#fdeede",
+    btnBg: "#fcf1e2",
+    btnText: "#a06010",
+    icon: <CompassIcon className="h-[34px] w-[34px] text-[#e08a2e]" />,
+  },
+  {
+    id: 6,
+    name: "AI Astro Chat",
+    desc: "Get instant astrology answers and insights powered by AI technology.",
+    price: "₹199",
+    category: "AI Services",
+    popular: true,
+    priceColor: "#3f6fd0",
+    iconBg: "#e7effb",
+    btnBg: "#eaf0fb",
+    btnText: "#3f6fc9",
+    icon: <MonitorIcon className="h-[34px] w-[34px] text-[#4a78d6]" />,
+  },
+  {
+    id: 7,
+    name: "Aura Report",
+    desc: "Energy Aura Analysis — discover the energy field surrounding you.",
+    price: "₹599",
+    category: "Healing",
+    priceColor: "#2f9e5f",
+    iconBg: "#e4f4e9",
+    btnBg: "#eef4ef",
+    btnText: "#3f8158",
+    icon: <ReikiHandsIcon className="h-[34px] w-[34px] text-[#3aa564]" />,
+  },
+  {
+    id: 8,
+    name: "Past Life Reading",
+    desc: "Explore your past lives and understand the karmic patterns affecting your present.",
+    price: "₹1,199",
+    category: "Spiritual",
+    priceColor: "#b5711a",
+    iconBg: "#fdf0da",
+    btnBg: "#fcf1de",
+    btnText: "#b5711a",
+    icon: <SparkleIcon className="h-[34px] w-[34px] text-[#b5711a]" />,
+  },
 ];
 
 /* ───────────── Page ───────────── */
@@ -175,22 +304,32 @@ export default function SelectServicePage() {
   const [servicesError, setServicesError] = useState("");
 
   useEffect(() => {
-    api.getServices("?pageSize=100").then((res: any) => {
-      const items = res?.data ?? [];
-      if (Array.isArray(items) && items.length) {
-        setApiServices(items);
-      }
-    }).catch(() => {
-      setServicesError("Failed to load services.");
-    }).finally(() => setLoadingServices(false));
+    api
+      .getServices("?pageSize=100")
+      .then((res: any) => {
+        const items = res?.data ?? [];
+        if (Array.isArray(items) && items.length) {
+          setApiServices(items);
+        }
+      })
+      .catch(() => {
+        setServicesError("Failed to load services.");
+      })
+      .finally(() => setLoadingServices(false));
   }, []);
 
   const CATEGORIES = useMemo(() => {
     const derived = apiServices
-      ? [...new Set(apiServices.map((s: any) => s.category as string).filter(Boolean))]
+      ? [
+          ...new Set(
+            apiServices.map((s: any) => s.category as string).filter(Boolean),
+          ),
+        ]
       : [];
     const staticLabels = STATIC_CATEGORIES.slice(1).map((c) => c.label);
-    const allLabels = derived.length ? [...new Set([...derived, ...staticLabels])] : staticLabels;
+    const allLabels = derived.length
+      ? [...new Set([...derived, ...staticLabels])]
+      : staticLabels;
     return [
       STATIC_CATEGORIES[0],
       ...allLabels.map((label: string) => {
@@ -233,21 +372,26 @@ export default function SelectServicePage() {
       const q = search.toLowerCase();
       list = list.filter(
         (s) =>
-          s.name.toLowerCase().includes(q) ||
-          s.desc.toLowerCase().includes(q)
+          s.name.toLowerCase().includes(q) || s.desc.toLowerCase().includes(q),
       );
     }
 
     if (sort === "Price: Low to High") {
       list = [...list].sort(
-        (a, b) => parseFloat(a.price.replace(/[^0-9]/g, "")) - parseFloat(b.price.replace(/[^0-9]/g, ""))
+        (a, b) =>
+          parseFloat(a.price.replace(/[^0-9]/g, "")) -
+          parseFloat(b.price.replace(/[^0-9]/g, "")),
       );
     } else if (sort === "Price: High to Low") {
       list = [...list].sort(
-        (a, b) => parseFloat(b.price.replace(/[^0-9]/g, "")) - parseFloat(a.price.replace(/[^0-9]/g, ""))
+        (a, b) =>
+          parseFloat(b.price.replace(/[^0-9]/g, "")) -
+          parseFloat(a.price.replace(/[^0-9]/g, "")),
       );
     } else {
-      list = [...list].sort((a, b) => (b.popular ? 1 : 0) - (a.popular ? 1 : 0));
+      list = [...list].sort(
+        (a, b) => (b.popular ? 1 : 0) - (a.popular ? 1 : 0),
+      );
     }
 
     return list;
@@ -256,7 +400,9 @@ export default function SelectServicePage() {
   const handleContinue = () => {
     if (selectedService) {
       saveConsultationData({ service: selectedService });
-      router.push(`/consultation/consultation-mode?service=${encodeURIComponent(selectedService)}`);
+      router.push(
+        `/consultation/consultation-mode?service=${encodeURIComponent(selectedService)}`,
+      );
     }
   };
 
@@ -298,8 +444,8 @@ export default function SelectServicePage() {
         <div className="mx-auto w-full max-w-[1440px] px-4 pt-[16px]">
           <SectionHeading>Select Your Consultation Service</SectionHeading>
           <p className="mx-auto mt-[10px] max-w-[760px] text-center text-[14px] text-body">
-            Choose the service you need guidance on. Our expert will help you with
-            clarity and solutions.
+            Choose the service you need guidance on. Our expert will help you
+            with clarity and solutions.
           </p>
         </div>
 
@@ -328,7 +474,9 @@ export default function SelectServicePage() {
                   className="h-[48px] w-full appearance-none rounded-xl border border-line bg-white pl-4 pr-9 text-[13.5px] text-ink focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/25"
                 >
                   {CATEGORIES.map((c) => (
-                    <option key={c.label} value={c.label}>{c.label}</option>
+                    <option key={c.label} value={c.label}>
+                      {c.label}
+                    </option>
                   ))}
                 </select>
                 <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-body" />
@@ -340,7 +488,9 @@ export default function SelectServicePage() {
                   className="h-[48px] w-full appearance-none rounded-xl border border-line bg-white pl-4 pr-9 text-[13.5px] text-ink focus:border-grape-2 focus:outline-none focus:ring-1 focus:ring-grape-2/25"
                 >
                   {SORT_OPTIONS.map((o) => (
-                    <option key={o} value={o}>{o}</option>
+                    <option key={o} value={o}>
+                      {o}
+                    </option>
                   ))}
                 </select>
                 <ChevronDownIcon className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-body" />
@@ -411,7 +561,9 @@ export default function SelectServicePage() {
               <div className="mb-4 flex items-center gap-3">
                 <h2 className="flex items-center gap-2 text-[16px] font-semibold text-grape">
                   <span className="text-[15px]">🔥</span>
-                  {activeCategory === "All Services" ? "Popular Services" : activeCategory}
+                  {activeCategory === "All Services"
+                    ? "Popular Services"
+                    : activeCategory}
                 </h2>
                 <span className="h-px flex-1 bg-line" />
               </div>
@@ -516,8 +668,8 @@ export default function SelectServicePage() {
                   Complete Life Guidance
                 </h3>
                 <p className="relative mt-2 text-center text-[11.5px] leading-[1.6] text-white/75">
-                  A comprehensive consultation covering all major aspects of your life
-                  with personalized guidance.
+                  A comprehensive consultation covering all major aspects of
+                  your life with personalized guidance.
                 </p>
 
                 <p className="relative mt-4 text-[13px] font-semibold text-white">
@@ -559,7 +711,8 @@ export default function SelectServicePage() {
                       Need Help Choosing?
                     </p>
                     <p className="mt-1 text-[11px] leading-[1.5] text-body">
-                      Chat with our expert on WhatsApp for personalized recommendation.
+                      Chat with our expert on WhatsApp for personalized
+                      recommendation.
                     </p>
                   </div>
                 </div>
@@ -580,10 +733,15 @@ export default function SelectServicePage() {
           <div className="border-t border-line pt-6">
             <div className="grid grid-cols-2 gap-x-6 gap-y-5 sm:grid-cols-3 lg:grid-cols-5">
               {TRUST_ITEMS.map(({ Icon, title, sub }) => (
-                <div key={title} className="flex items-center justify-center gap-2.5">
+                <div
+                  key={title}
+                  className="flex items-center justify-center gap-2.5"
+                >
                   <Icon className="h-[26px] w-[26px] shrink-0 text-gold-3" />
                   <div>
-                    <p className="text-[12.5px] font-semibold text-ink">{title}</p>
+                    <p className="text-[12.5px] font-semibold text-ink">
+                      {title}
+                    </p>
                     <p className="mt-0.5 text-[11px] text-body">{sub}</p>
                   </div>
                 </div>

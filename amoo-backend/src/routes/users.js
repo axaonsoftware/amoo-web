@@ -67,7 +67,7 @@ router.get(
     const { rows: byRole } = await pool.query(
       "SELECT role, COUNT(*) AS count FROM users WHERE deleted_at IS NULL GROUP BY role"
     );
-    ok(res, { total: total.total, active: active.total, premium: premium.total, today: today.total, byRole });
+    ok(res, { total, active: active.total, premium: premium.total, today: today.total, byRole });
   })
 );
 

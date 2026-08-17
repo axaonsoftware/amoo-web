@@ -51,7 +51,14 @@ export function EyeMandala({ className }: { className?: string }) {
         <circle r="56" />
         <circle r="44" strokeWidth="0.9" />
         {rays.map((a) => (
-          <line key={a} x1="0" y1="-44" x2="0" y2="-56" transform={`rotate(${a})`} />
+          <line
+            key={a}
+            x1="0"
+            y1="-44"
+            x2="0"
+            y2="-56"
+            transform={`rotate(${a})`}
+          />
         ))}
         <path d="M-30 0 C -16 -20, 16 -20, 30 0 C 16 20, -16 20, -30 0 Z" />
         <circle r="11" />
@@ -98,8 +105,23 @@ export function StarBadge({ className }: { className?: string }) {
         strokeWidth="1"
         strokeLinejoin="round"
       />
-      <circle cx="24" cy="20" r="17" fill="url(#mr-badge)" stroke="#f3d491" strokeWidth="1.4" />
-      <circle cx="24" cy="20" r="13" fill="none" stroke="#fbeecb" strokeWidth="0.9" opacity="0.75" />
+      <circle
+        cx="24"
+        cy="20"
+        r="17"
+        fill="url(#mr-badge)"
+        stroke="#f3d491"
+        strokeWidth="1.4"
+      />
+      <circle
+        cx="24"
+        cy="20"
+        r="13"
+        fill="none"
+        stroke="#fbeecb"
+        strokeWidth="0.9"
+        opacity="0.75"
+      />
       <path
         d="M24 11.5l3 6.1 6.7 1-4.8 4.7 1.1 6.7L24 26.8l-6 3.2 1.1-6.7-4.8-4.7 6.7-1Z"
         fill="#fff8e6"

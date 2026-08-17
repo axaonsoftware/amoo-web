@@ -59,7 +59,10 @@ describe("validationDetails", () => {
     const e = Object.assign(new Error("Validation failed"), {
       details: ['"email" is required', '"password" too short'],
     });
-    assert.deepEqual(validationDetails(e), ['"email" is required', '"password" too short']);
+    assert.deepEqual(validationDetails(e), [
+      '"email" is required',
+      '"password" too short',
+    ]);
   });
 
   test("filters non-strings and returns [] when absent", () => {
@@ -71,7 +74,10 @@ describe("validationDetails", () => {
 
 describe("isUserCancellation / isApiError", () => {
   test("recognises the Razorpay dismiss message", () => {
-    assert.equal(isUserCancellation(new Error("Payment cancelled by user")), true);
+    assert.equal(
+      isUserCancellation(new Error("Payment cancelled by user")),
+      true,
+    );
     assert.equal(isUserCancellation(new Error("Network error")), false);
   });
 

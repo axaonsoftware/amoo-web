@@ -153,7 +153,10 @@ export default function BasicKundaliSoftwarePage() {
                 <HomeIcon className="h-[15px] w-[15px]" />
               </Link>
               <ChevronRightIcon className="h-3 w-3 text-white/45" />
-              <Link href="/software-hub" className="text-white/80 hover:text-gold">
+              <Link
+                href="/software-hub"
+                className="text-white/80 hover:text-gold"
+              >
                 Software Hub
               </Link>
               <ChevronRightIcon className="h-3 w-3 text-white/45" />
@@ -173,13 +176,16 @@ export default function BasicKundaliSoftwarePage() {
 
               <p className="mt-5 w-full max-w-[460px] text-[15px] leading-[1.75] text-white/80">
                 Our Basic Kundali Software helps you create precise Vedic birth
-                charts (Kundalis) with planetary positions, houses, and important
-                astrological details instantly.
+                charts (Kundalis) with planetary positions, houses, and
+                important astrological details instantly.
               </p>
 
               <ul className="mt-8 flex flex-wrap gap-x-9 gap-y-6">
                 {HERO_POINTS.map(({ icon: Icon, lines }) => (
-                  <li key={lines.join(" ")} className="w-1/2 sm:w-[112px] text-center">
+                  <li
+                    key={lines.join(" ")}
+                    className="w-1/2 sm:w-[112px] text-center"
+                  >
                     <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold/60 text-gold">
                       <Icon className="h-[21px] w-[21px]" />
                     </span>
@@ -216,7 +222,9 @@ export default function BasicKundaliSoftwarePage() {
 
         {/* ---------------- WHY CHOOSE ---------------- */}
         <section className="mx-auto w-full max-w-[1400px] px-5 pt-14 lg:px-8">
-          <SectionHeading>Why Choose Our Basic Kundali Software?</SectionHeading>
+          <SectionHeading>
+            Why Choose Our Basic Kundali Software?
+          </SectionHeading>
           <p className="mt-3 text-center text-[14px] text-body">
             Simple yet powerful software trusted by astrologers and learners.
           </p>
@@ -334,7 +342,9 @@ export default function BasicKundaliSoftwarePage() {
                       <p className="font-display text-[24px] leading-none font-bold text-gold">
                         {value}
                       </p>
-                      <p className="mt-2 text-[12.5px] text-white/80">{label}</p>
+                      <p className="mt-2 text-[12.5px] text-white/80">
+                        {label}
+                      </p>
                     </div>
                   </div>
                 ))}

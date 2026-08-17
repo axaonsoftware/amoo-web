@@ -51,7 +51,11 @@ export function CardGridSkeleton({
 }) {
   const t = TONE[tone];
   return (
-    <div className={className || "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"}>
+    <div
+      className={
+        className || "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      }
+    >
       {Array.from({ length: count }, (_, i) => (
         <div
           key={i}
@@ -86,7 +90,9 @@ export function TableSkeletonRows({
             <td key={c} className="py-[14px] pr-3 first:pl-5">
               <div
                 className="h-3 animate-pulse rounded bg-[#f0eaf8]"
-                style={{ width: c === 0 ? "70%" : `${45 + ((r + c) % 3) * 15}%` }}
+                style={{
+                  width: c === 0 ? "70%" : `${45 + ((r + c) % 3) * 15}%`,
+                }}
               />
             </td>
           ))}
@@ -97,12 +103,21 @@ export function TableSkeletonRows({
 }
 
 /** Skeleton for a list of stacked rows (activity feeds, notifications). */
-export function ListSkeleton({ rows = 4, tone = "admin" }: { rows?: number; tone?: Tone }) {
+export function ListSkeleton({
+  rows = 4,
+  tone = "admin",
+}: {
+  rows?: number;
+  tone?: Tone;
+}) {
   const t = TONE[tone];
   return (
     <div className="space-y-3">
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className={`flex items-center gap-3 rounded-[10px] border ${t.border} p-3`}>
+        <div
+          key={i}
+          className={`flex items-center gap-3 rounded-[10px] border ${t.border} p-3`}
+        >
           <div className="h-9 w-9 shrink-0 animate-pulse rounded-full bg-[#f0eaf8]" />
           <div className="min-w-0 flex-1">
             <div className="h-3 w-1/2 animate-pulse rounded bg-[#f0eaf8]" />
@@ -130,7 +145,13 @@ export function ChartSkeleton({ height = 240 }: { height?: number }) {
 }
 
 /** Centred spinner, for small panels where a skeleton would be noisier. */
-export function Spinner({ tone = "admin", className = "py-10" }: { tone?: Tone; className?: string }) {
+export function Spinner({
+  tone = "admin",
+  className = "py-10",
+}: {
+  tone?: Tone;
+  className?: string;
+}) {
   return (
     <div className={`flex justify-center ${className}`}>
       <Loader2 className={`h-6 w-6 animate-spin ${TONE[tone].accent}`} />
@@ -159,12 +180,22 @@ export function EmptyState({
 }) {
   const t = TONE[tone];
   return (
-    <div className={`flex flex-col items-center justify-center px-6 py-12 text-center ${className}`}>
-      <span className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${t.iconWrap}`}>
+    <div
+      className={`flex flex-col items-center justify-center px-6 py-12 text-center ${className}`}
+    >
+      <span
+        className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full ${t.iconWrap}`}
+      >
         {icon ?? <Inbox className="h-6 w-6" strokeWidth={1.8} />}
       </span>
       <p className={`text-[14px] font-semibold ${t.heading}`}>{title}</p>
-      {message && <p className={`mt-1 max-w-[380px] text-[12.5px] leading-[1.55] ${t.muted}`}>{message}</p>}
+      {message && (
+        <p
+          className={`mt-1 max-w-[380px] text-[12.5px] leading-[1.55] ${t.muted}`}
+        >
+          {message}
+        </p>
+      )}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
@@ -209,9 +240,14 @@ export function ErrorState({
       className={`flex flex-col items-center justify-center rounded-[12px] border border-[#F6D7D7] bg-[#FEF6F6] px-6 py-8 text-center ${className}`}
     >
       <span className="mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-[#FDE8E8]">
-        <AlertCircle className="h-[21px] w-[21px] text-[#EF4444]" strokeWidth={1.9} />
+        <AlertCircle
+          className="h-[21px] w-[21px] text-[#EF4444]"
+          strokeWidth={1.9}
+        />
       </span>
-      <p className="text-[13.5px] font-semibold text-[#B42318]">Couldn&apos;t load this</p>
+      <p className="text-[13.5px] font-semibold text-[#B42318]">
+        Couldn&apos;t load this
+      </p>
       <p className={`mt-1 max-w-[380px] text-[12px] leading-[1.55] ${t.muted}`}>
         {message || "Something went wrong while fetching data."}
       </p>

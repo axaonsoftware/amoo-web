@@ -4,7 +4,12 @@ import { useApi } from "../../../lib/useApi";
 import { EmptyState, ErrorState, Skeleton } from "../../components/states";
 import { formatNumber, toNumber } from "../../../lib/format";
 
-type TopService = { id: number; name: string; bookings: number | string; price: number | string };
+type TopService = {
+  id: number;
+  name: string;
+  bookings: number | string;
+  price: number | string;
+};
 
 /**
  * `GET /api/dashboard/overview` already returns the top-5 services ranked by
@@ -15,16 +20,18 @@ type TopService = { id: number; name: string; bookings: number | string; price: 
  * list whenever the fetch returned nothing.
  */
 export default function TopServicesByBookings() {
-  const { data, loading, error, refetch } = useApi<{ topServices: TopService[] }>(() =>
-    api.admin.getOverview()
-  );
+  const { data, loading, error, refetch } = useApi<{
+    topServices: TopService[];
+  }>(() => api.admin.getOverview());
 
   const services = data?.topServices ?? [];
   const max = services.reduce((m, s) => Math.max(m, toNumber(s.bookings)), 0);
 
   return (
     <section className="rounded-[14px] border border-[#EFEDF4] bg-white p-[18px] shadow-[0_1px_2px_rgba(16,12,40,0.03)]">
-      <h2 className="text-[14px] font-semibold text-[#1B1630]">Top Services by Bookings</h2>
+      <h2 className="text-[14px] font-semibold text-[#1B1630]">
+        Top Services by Bookings
+      </h2>
 
       {loading ? (
         <ul className="mt-[18px] space-y-[15px]">
@@ -46,7 +53,8 @@ export default function TopServicesByBookings() {
         <ul className="mt-[18px] space-y-[15px]">
           {services.map((s) => {
             const count = toNumber(s.bookings);
-            const width = max === 0 ? 0 : Math.max(5, Math.round((count / max) * 100));
+            const width =
+              max === 0 ? 0 : Math.max(5, Math.round((count / max) * 100));
             return (
               <li key={s.id} className="relative">
                 <p className="text-[11px] text-[#4A3B63]">{s.name}</p>

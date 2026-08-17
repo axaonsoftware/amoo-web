@@ -66,7 +66,9 @@ export default function SetPasswordDialog({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      setError("Couldn't copy automatically — select the field and copy manually.");
+      setError(
+        "Couldn't copy automatically — select the field and copy manually.",
+      );
     }
   };
 
@@ -95,29 +97,45 @@ export default function SetPasswordDialog({
       aria-modal="true"
       aria-labelledby="set-password-title"
     >
-      <div className="absolute inset-0 bg-black/40" onClick={saving ? undefined : onClose} />
+      <div
+        className="absolute inset-0 bg-black/40"
+        onClick={saving ? undefined : onClose}
+      />
       <div className="relative z-10 w-full max-w-[440px] rounded-[14px] border border-[#EEEDF4] bg-white p-6 shadow-[0_20px_60px_rgba(20,16,40,.18)]">
         <div className="flex items-start gap-3">
           <span
             aria-hidden="true"
             className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#F0EAFF]"
           >
-            <KeyRound className="h-[18px] w-[18px] text-[#6D28D9]" strokeWidth={2} />
+            <KeyRound
+              className="h-[18px] w-[18px] text-[#6D28D9]"
+              strokeWidth={2}
+            />
           </span>
           <div className="min-w-0">
-            <h3 id="set-password-title" className="text-[15px] font-bold text-[#1F1836]">
+            <h3
+              id="set-password-title"
+              className="text-[15px] font-bold text-[#1F1836]"
+            >
               Set login password
             </h3>
             <p className="mt-1 text-[12.5px] leading-[1.5] text-[#6B6480]">
               For <strong>{sanitize(expert.name) || "this expert"}</strong>
-              {expert.email && <> ({sanitize(expert.email)})</>}. They sign in at{" "}
-              <code className="rounded bg-[#F5F4F9] px-1 py-0.5 text-[11px]">/astrologer-login</code>.
+              {expert.email && <> ({sanitize(expert.email)})</>}. They sign in
+              at{" "}
+              <code className="rounded bg-[#F5F4F9] px-1 py-0.5 text-[11px]">
+                /astrologer-login
+              </code>
+              .
             </p>
           </div>
         </div>
 
         <div className="mt-5">
-          <label htmlFor="expert-password" className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+          <label
+            htmlFor="expert-password"
+            className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+          >
             Password
           </label>
           <div className="flex gap-2">
@@ -136,7 +154,11 @@ export default function SetPasswordDialog({
                 aria-label={show ? "Hide password" : "Show password"}
                 className="absolute right-2 top-1/2 -translate-y-1/2 text-[#8B879C] hover:text-[#3D3752]"
               >
-                {show ? <EyeOff size={15} aria-hidden="true" /> : <Eye size={15} aria-hidden="true" />}
+                {show ? (
+                  <EyeOff size={15} aria-hidden="true" />
+                ) : (
+                  <Eye size={15} aria-hidden="true" />
+                )}
               </button>
             </div>
             <button
@@ -145,26 +167,37 @@ export default function SetPasswordDialog({
               aria-label="Copy password"
               className="grid h-[38px] w-[38px] shrink-0 place-items-center rounded-[8px] border border-[#E5E1F0] text-[#6D28D9] hover:bg-[#FAF7FF]"
             >
-              {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+              {copied ? (
+                <Check size={15} aria-hidden="true" />
+              ) : (
+                <Copy size={15} aria-hidden="true" />
+              )}
             </button>
           </div>
 
           <button
             type="button"
-            onClick={() => { setPassword(generatePassword()); setCopied(false); }}
+            onClick={() => {
+              setPassword(generatePassword());
+              setCopied(false);
+            }}
             className="mt-2 text-[11px] font-medium text-[#6D28D9] hover:underline"
           >
             Generate a new one
           </button>
 
           <p className="mt-3 rounded-[8px] bg-[#FFF8E7] px-3 py-2 text-[11px] leading-[1.5] text-[#8A6212]">
-            This password is shown once and stored only as a bcrypt hash — it cannot be
-            retrieved later. Copy it now and send it through a secure channel. Setting it
-            also signs the expert out of any existing session.
+            This password is shown once and stored only as a bcrypt hash — it
+            cannot be retrieved later. Copy it now and send it through a secure
+            channel. Setting it also signs the expert out of any existing
+            session.
           </p>
 
           {error && (
-            <p role="alert" className="mt-3 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700">
+            <p
+              role="alert"
+              className="mt-3 rounded-[8px] border border-red-200 bg-red-50 px-3 py-2 text-[11.5px] text-red-700"
+            >
               {error}
             </p>
           )}
@@ -185,7 +218,12 @@ export default function SetPasswordDialog({
             disabled={saving || password.length < 8}
             className="inline-flex items-center gap-2 rounded-[8px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-4 py-2 text-[12px] font-medium text-white disabled:opacity-60"
           >
-            {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />}
+            {saving && (
+              <Loader2
+                className="h-3.5 w-3.5 animate-spin"
+                aria-hidden="true"
+              />
+            )}
             {saving ? "Setting..." : "Set password"}
           </button>
         </div>

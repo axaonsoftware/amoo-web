@@ -27,8 +27,16 @@ type StatDef = {
   iconColor: string;
 };
 
-type RevenueBucket = { label: string; payments: number; revenue: number | string };
-type TrendBucket = { label: string; count: number | string; cancelled: number | string };
+type RevenueBucket = {
+  label: string;
+  payments: number;
+  revenue: number | string;
+};
+type TrendBucket = {
+  label: string;
+  count: number | string;
+  cancelled: number | string;
+};
 type GrowthBucket = { label: string; new_users: number | string };
 
 /**
@@ -37,11 +45,14 @@ type GrowthBucket = { label: string; new_users: number | string };
  * callers must render "—" rather than inventing a number.
  */
 function delta(current?: number, previous?: number): number | null {
-  if (current === undefined || previous === undefined || previous === 0) return null;
+  if (current === undefined || previous === undefined || previous === 0)
+    return null;
   return ((current - previous) / previous) * 100;
 }
 
-function lastTwo<T>(rows: T[] | null | undefined): [T | undefined, T | undefined] {
+function lastTwo<T>(
+  rows: T[] | null | undefined,
+): [T | undefined, T | undefined] {
   const r = rows ?? [];
   return [r[r.length - 1], r[r.length - 2]];
 }
@@ -49,20 +60,34 @@ function lastTwo<T>(rows: T[] | null | undefined): [T | undefined, T | undefined
 export default function StatsRow() {
   // Four independent aggregations, all server-side. Nothing here re-derives a
   // total the backend already computed.
-  const overview = useApi<{ stats: Record<string, number> }>(() => api.admin.getOverview());
+  const overview = useApi<{ stats: Record<string, number> }>(() =>
+    api.admin.getOverview(),
+  );
   const payments = useApi<{
     total: number;
     collected: number | string;
     by_method: { method: string; count: number | string }[];
   }>(() => api.admin.getPaymentStats());
   const revenue = useApi<RevenueBucket[]>(() => api.admin.getRevenue("month"));
-  const trends = useApi<TrendBucket[]>(() => api.admin.getBookingsTrends("month"));
-  const growth = useApi<GrowthBucket[]>(() => api.admin.getUsersGrowth("month"));
+  const trends = useApi<TrendBucket[]>(() =>
+    api.admin.getBookingsTrends("month"),
+  );
+  const growth = useApi<GrowthBucket[]>(() =>
+    api.admin.getUsersGrowth("month"),
+  );
 
   const loading =
-    overview.loading || payments.loading || revenue.loading || trends.loading || growth.loading;
+    overview.loading ||
+    payments.loading ||
+    revenue.loading ||
+    trends.loading ||
+    growth.loading;
   const error =
-    overview.error || payments.error || revenue.error || trends.error || growth.error;
+    overview.error ||
+    payments.error ||
+    revenue.error ||
+    trends.error ||
+    growth.error;
 
   const retry = () => {
     overview.refetch();
@@ -105,7 +130,7 @@ export default function StatsRow() {
   // already restricts to status='success'.
   const paidCount = (payments.data?.by_method ?? []).reduce(
     (acc, m) => acc + toNumber(m.count),
-    0
+    0,
   );
 
   const cancelRate = (b?: TrendBucket) => {
@@ -168,7 +193,10 @@ export default function StatsRow() {
       label: "Cancellation Rate",
       value: rateNow === undefined ? "—" : `${rateNow.toFixed(2)}%`,
       // Percentage-point change, not a ratio-of-a-ratio.
-      delta: rateNow !== undefined && ratePrev !== undefined ? rateNow - ratePrev : null,
+      delta:
+        rateNow !== undefined && ratePrev !== undefined
+          ? rateNow - ratePrev
+          : null,
       note: "vs last month",
       inverted: true,
       Icon: CircleX,

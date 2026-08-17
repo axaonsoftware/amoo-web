@@ -67,7 +67,11 @@ function getPageNumbers(current: number, total: number): (number | "...")[] {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
   const pages: (number | "...")[] = [1];
   if (current > 3) pages.push("...");
-  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+  for (
+    let i = Math.max(2, current - 1);
+    i <= Math.min(total - 1, current + 1);
+    i++
+  ) {
     pages.push(i);
   }
   if (current < total - 2) pages.push("...");
@@ -120,7 +124,8 @@ export default function ConsultationsPanel() {
       .then((res: any) => {
         if (cancelled) return;
         const items = (res?.data ?? res) as any[];
-        if (res?.meta) setMeta({ total: res.meta.total, totalPages: res.meta.totalPages });
+        if (res?.meta)
+          setMeta({ total: res.meta.total, totalPages: res.meta.totalPages });
         if (Array.isArray(items)) {
           setList(
             items.map((b: any) => {
@@ -139,12 +144,12 @@ export default function ConsultationsPanel() {
                   b.status === "upcoming"
                     ? "upcoming"
                     : b.status === "completed"
-                    ? "completed"
-                    : b.status === "cancelled"
-                    ? "cancelled"
-                    : "upcoming",
+                      ? "completed"
+                      : b.status === "cancelled"
+                        ? "cancelled"
+                        : "upcoming",
               };
-            })
+            }),
           );
         }
       })
@@ -155,7 +160,9 @@ export default function ConsultationsPanel() {
         if (!cancelled) setLoading(false);
       });
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [page, limit, debouncedSearch, status]);
 
   const rows = list;
@@ -207,11 +214,16 @@ export default function ConsultationsPanel() {
           </span>
           <select
             value={status}
-            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
             className="flex h-[38px] w-full appearance-none items-center justify-between rounded-[8px] border border-[#E7E5EF] bg-white pl-[12px] pr-[10px] text-[11.5px] text-[#2E2A3B] outline-none"
           >
             {statusOptions.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -257,18 +269,40 @@ export default function ConsultationsPanel() {
             {loading ? (
               <tr>
                 <td colSpan={8} className="py-10 text-center">
-                  <svg className="mx-auto h-6 w-6 animate-spin text-[#6D28D9]" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" strokeDasharray="32" strokeLinecap="round" />
+                  <svg
+                    className="mx-auto h-6 w-6 animate-spin text-[#6D28D9]"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                      strokeDasharray="32"
+                      strokeLinecap="round"
+                    />
                   </svg>
                 </td>
               </tr>
             ) : error ? (
               <tr>
-                <td colSpan={8} className="py-10 text-center text-[13px] text-[#EF4444]">{error}</td>
+                <td
+                  colSpan={8}
+                  className="py-10 text-center text-[13px] text-[#EF4444]"
+                >
+                  {error}
+                </td>
               </tr>
             ) : rows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-10 text-center text-[12px] text-[#8B879C]">No consultations found.</td>
+                <td
+                  colSpan={8}
+                  className="py-10 text-center text-[12px] text-[#8B879C]"
+                >
+                  No consultations found.
+                </td>
               </tr>
             ) : (
               rows.map((c) => {
@@ -434,7 +468,7 @@ export default function ConsultationsPanel() {
               >
                 {p}
               </button>
-            )
+            ),
           )}
 
           <button
@@ -443,7 +477,9 @@ export default function ConsultationsPanel() {
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page >= totalPages}
             className={`grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#8B879C] ${
-              page >= totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-[#FAF9FC]"
+              page >= totalPages
+                ? "opacity-50 cursor-not-allowed"
+                : "hover:bg-[#FAF9FC]"
             }`}
           >
             <ChevronRight size={15} />
@@ -451,7 +487,10 @@ export default function ConsultationsPanel() {
 
           <select
             value={limit}
-            onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setPage(1);
+            }}
             className="ml-2 flex h-[32px] items-center justify-between rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11.5px] text-[#4A4658] outline-none"
           >
             <option value={10}>10 / page</option>

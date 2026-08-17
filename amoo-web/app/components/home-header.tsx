@@ -140,57 +140,59 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
         </Link>
 
         <nav className="hidden items-center gap-[26px] lg:flex">
-          {NAV.filter((item) => !isAuthenticated || item.label !== "Login").map((item) => {
-            const active = isActive(item.href);
-            const hasDropdown = !!item.dropdown;
-            const isOpen = desktopOpen === item.label;
+          {NAV.filter((item) => !isAuthenticated || item.label !== "Login").map(
+            (item) => {
+              const active = isActive(item.href);
+              const hasDropdown = !!item.dropdown;
+              const isOpen = desktopOpen === item.label;
 
-            return (
-              <div
-                key={item.label}
-                className="relative"
-                onMouseEnter={() => hasDropdown && setDesktopOpen(item.label)}
-                onMouseLeave={() => hasDropdown && setDesktopOpen(null)}
-              >
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-1 text-[14px] transition-colors ${
-                    active
-                      ? "font-medium text-gold"
-                      : "font-normal text-white hover:text-gold"
-                  }`}
+              return (
+                <div
+                  key={item.label}
+                  className="relative"
+                  onMouseEnter={() => hasDropdown && setDesktopOpen(item.label)}
+                  onMouseLeave={() => hasDropdown && setDesktopOpen(null)}
                 >
-                  {item.label}
-                  {hasDropdown && (
-                    <ChevronDownIcon
-                      className={`mt-px h-[13px] w-[13px] transition-transform ${
-                        isOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  )}
-                </Link>
-
-                {hasDropdown && isOpen && item.dropdown && (
-                  <div className="absolute left-0 top-full w-56 rounded-xl border border-white/10 bg-[#170426] py-2 shadow-2xl shadow-black/50 backdrop-blur-xl">
-                    {item.dropdown.map((sub) => (
-                      <Link
-                        key={sub.label}
-                        href={sub.href}
-                        onClick={() => setDesktopOpen(null)}
-                        className={`flex items-center px-4 py-2.5 text-[13px] transition-colors ${
-                          isActive(sub.href)
-                            ? "text-gold font-medium"
-                            : "text-white/70 hover:bg-white/5 hover:text-gold"
+                  <Link
+                    href={item.href}
+                    className={`flex items-center gap-1 text-[14px] transition-colors ${
+                      active
+                        ? "font-medium text-gold"
+                        : "font-normal text-white hover:text-gold"
+                    }`}
+                  >
+                    {item.label}
+                    {hasDropdown && (
+                      <ChevronDownIcon
+                        className={`mt-px h-[13px] w-[13px] transition-transform ${
+                          isOpen ? "rotate-180" : ""
                         }`}
-                      >
-                        {sub.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                      />
+                    )}
+                  </Link>
+
+                  {hasDropdown && isOpen && item.dropdown && (
+                    <div className="absolute left-0 top-full w-56 rounded-xl border border-white/10 bg-[#170426] py-2 shadow-2xl shadow-black/50 backdrop-blur-xl">
+                      {item.dropdown.map((sub) => (
+                        <Link
+                          key={sub.label}
+                          href={sub.href}
+                          onClick={() => setDesktopOpen(null)}
+                          className={`flex items-center px-4 py-2.5 text-[13px] transition-colors ${
+                            isActive(sub.href)
+                              ? "text-gold font-medium"
+                              : "text-white/70 hover:bg-white/5 hover:text-gold"
+                          }`}
+                        >
+                          {sub.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            },
+          )}
           {isAuthenticated && (
             <button
               onClick={logout}
@@ -249,7 +251,9 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
       {mobileOpen && (
         <div className="border-t border-white/10 bg-[#170426] lg:hidden">
           <div className="mx-auto max-w-[1336px] px-5 py-4 space-y-1">
-            {NAV.filter((item) => !isAuthenticated || item.label !== "Login").map((item) => {
+            {NAV.filter(
+              (item) => !isAuthenticated || item.label !== "Login",
+            ).map((item) => {
               const active = isActive(item.href);
               const hasDropdown = !!item.dropdown;
               const isSubOpen = mobileSubOpen === item.label;
@@ -307,7 +311,10 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
             })}
             {isAuthenticated && (
               <button
-                onClick={() => { setMobileOpen(false); logout(); }}
+                onClick={() => {
+                  setMobileOpen(false);
+                  logout();
+                }}
                 className="flex w-full items-center gap-2 py-2.5 text-[14px] text-white/80 hover:text-gold transition-colors"
               >
                 <LogOut className="h-4 w-4" />

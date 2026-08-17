@@ -55,7 +55,10 @@ export default function PageHeader() {
 
       <div className="relative flex flex-wrap items-center gap-4 px-6 pb-5 pt-6">
         <span className="flex h-[62px] w-[62px] shrink-0 items-center justify-center rounded-[16px] bg-[#f3ecfb]">
-          <CalendarDays className="h-[28px] w-[28px] text-[#5b21a8]" strokeWidth={1.8} />
+          <CalendarDays
+            className="h-[28px] w-[28px] text-[#5b21a8]"
+            strokeWidth={1.8}
+          />
         </span>
 
         <div className="min-w-0">

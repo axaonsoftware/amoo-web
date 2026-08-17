@@ -64,7 +64,8 @@ export function saveConsultationData(data: ConsultationData): void {
   Object.assign(store, readSession() ?? {});
 
   for (const [key, val] of Object.entries(data)) {
-    if (val !== undefined && val !== null && val !== "") store[key] = String(val);
+    if (val !== undefined && val !== null && val !== "")
+      store[key] = String(val);
   }
 
   try {
@@ -92,8 +93,12 @@ export function clearConsultationData(): void {
   globalThis.__amooConsultation = {};
   try {
     sessionStorage.removeItem(STORAGE_KEY);
-  } catch { /* storage unavailable — memory copy is already cleared */ }
+  } catch {
+    /* storage unavailable — memory copy is already cleared */
+  }
   try {
     localStorage.removeItem(STORAGE_KEY);
-  } catch { /* ditto */ }
+  } catch {
+    /* ditto */
+  }
 }

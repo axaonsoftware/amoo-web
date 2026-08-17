@@ -215,14 +215,17 @@ export default function NumerologySoftwarePage() {
               </h1>
 
               <p className="mt-5 w-full max-w-[420px] text-[15px] leading-[1.75] text-white/80">
-                Our advanced Numerology Software helps you analyze names, numbers
-                and dates to reveal accurate insights, life purpose and future
-                possibilities.
+                Our advanced Numerology Software helps you analyze names,
+                numbers and dates to reveal accurate insights, life purpose and
+                future possibilities.
               </p>
 
               <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-6">
                 {HERO_POINTS.map(({ icon: Icon, lines }) => (
-                  <li key={lines.join(" ")} className="w-1/3 sm:w-[86px] text-center">
+                  <li
+                    key={lines.join(" ")}
+                    className="w-1/3 sm:w-[86px] text-center"
+                  >
                     <Icon className="mx-auto h-[30px] w-[30px] text-gold" />
                     <p className="mt-2.5 text-[11.5px] leading-[1.45] font-medium text-gold">
                       {lines[0]}
@@ -375,10 +378,7 @@ export default function NumerologySoftwarePage() {
             <div className="stars pointer-events-none absolute inset-0 opacity-70" />
 
             <div className="relative">
-              <SectionHeading
-                tone="dark"
-                className="[&_h2]:whitespace-normal"
-              >
+              <SectionHeading tone="dark" className="[&_h2]:whitespace-normal">
                 Trusted by Numerology Experts
               </SectionHeading>
 

@@ -24,7 +24,7 @@ function ModePageInner() {
     if (selectedMode) {
       saveConsultationData({ mode: selectedMode });
       router.push(
-        `/consultation/select-date-time?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(selectedMode)}`
+        `/consultation/select-date-time?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(selectedMode)}`,
       );
     }
   };
@@ -36,7 +36,10 @@ function ModePageInner() {
       <main id="main-content" className="min-h-screen bg-[#2a1046]">
         <div className="relative z-[1] -mt-[26px] rounded-t-[46px] bg-[#fbf6ef]">
           <Stepper />
-          <ModeCards selectedMode={selectedMode} onSelectMode={setSelectedMode} />
+          <ModeCards
+            selectedMode={selectedMode}
+            onSelectMode={setSelectedMode}
+          />
           <TrustRow />
 
           {/* Continue button */}
@@ -48,7 +51,16 @@ function ModePageInner() {
                 className="flex h-[52px] items-center gap-3 rounded-xl bg-gradient-to-b from-[#f2cd76] to-[#dfa63f] px-10 text-[16px] font-semibold text-[#2b0a3d] shadow-[0_6px_20px_rgba(224,163,62,0.35)] transition-opacity hover:opacity-90"
               >
                 Continue with {selectedMode}
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="m9 18 6-6-6-6" />
                 </svg>
               </button>

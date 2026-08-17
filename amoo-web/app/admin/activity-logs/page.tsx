@@ -52,21 +52,34 @@ export default function AdminActivityLogsPage() {
     if (filterDateFrom) params.set("date_from", filterDateFrom);
     if (filterDateTo) params.set("date_to", filterDateTo);
     return `?${params.toString()}`;
-  }, [page, filterAction, filterActorType, filterActorId, filterDateFrom, filterDateTo]);
+  }, [
+    page,
+    filterAction,
+    filterActorType,
+    filterActorId,
+    filterDateFrom,
+    filterDateTo,
+  ]);
 
   const fetchLogs = useCallback(() => {
     setLoading(true);
     api.admin
       .getAudit(buildQuery())
       .then((res) => {
-        const r = res as { data?: ActivityItem[]; meta?: { total: number; totalPages: number } } | null;
+        const r = res as {
+          data?: ActivityItem[];
+          meta?: { total: number; totalPages: number };
+        } | null;
         const d = r?.data || [];
         setItems(Array.isArray(d) ? d : []);
         const total = r?.meta?.total || 0;
         setTotal(total);
         setTotalPages(r?.meta?.totalPages || Math.ceil(total / pageSize) || 1);
       })
-      .catch((e) => { setItems([]); setError(e?.message || "Failed to load") })
+      .catch((e) => {
+        setItems([]);
+        setError(e?.message || "Failed to load");
+      })
       .finally(() => setLoading(false));
   }, [buildQuery]);
 
@@ -83,7 +96,12 @@ export default function AdminActivityLogsPage() {
     setPage(1);
   }
 
-  const hasFilters = filterAction || filterActorType || filterActorId || filterDateFrom || filterDateTo;
+  const hasFilters =
+    filterAction ||
+    filterActorType ||
+    filterActorId ||
+    filterDateFrom ||
+    filterDateTo;
 
   function actionBadge(action: string) {
     const colors: Record<string, string> = {
@@ -96,12 +114,14 @@ export default function AdminActivityLogsPage() {
       booking: "bg-amber-100 text-amber-700",
       payment: "bg-emerald-100 text-emerald-700",
       "profile.update": "bg-indigo-100 text-indigo-700",
-      "profile_update": "bg-indigo-100 text-indigo-700",
+      profile_update: "bg-indigo-100 text-indigo-700",
       download: "bg-cyan-100 text-cyan-700",
     };
     const color = colors[action] || "bg-slate-100 text-slate-700";
     return (
-      <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium ${color}`}>
+      <span
+        className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-medium ${color}`}
+      >
         {action.replace(/_/g, " ")}
       </span>
     );
@@ -114,7 +134,9 @@ export default function AdminActivityLogsPage() {
       system: "bg-gray-100 text-gray-700",
     };
     return (
-      <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${colors[type] || "bg-gray-100 text-gray-700"}`}>
+      <span
+        className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${colors[type] || "bg-gray-100 text-gray-700"}`}
+      >
         {type}
       </span>
     );
@@ -128,13 +150,19 @@ export default function AdminActivityLogsPage() {
           type="text"
           placeholder="Actor ID"
           value={filterActorId}
-          onChange={(e) => { setFilterActorId(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setFilterActorId(e.target.value);
+            setPage(1);
+          }}
           className="h-[38px] w-[100px] rounded-lg border border-[#ece4f6] pl-9 pr-3 text-[12px] outline-none"
         />
       </div>
       <select
         value={filterActorType}
-        onChange={(e) => { setFilterActorType(e.target.value); setPage(1); }}
+        onChange={(e) => {
+          setFilterActorType(e.target.value);
+          setPage(1);
+        }}
         className="h-[38px] rounded-lg border border-[#ece4f6] px-3 text-[12px] outline-none"
       >
         <option value="">All types</option>
@@ -146,20 +174,29 @@ export default function AdminActivityLogsPage() {
         type="text"
         placeholder="Action (e.g. login)"
         value={filterAction}
-        onChange={(e) => { setFilterAction(e.target.value); setPage(1); }}
+        onChange={(e) => {
+          setFilterAction(e.target.value);
+          setPage(1);
+        }}
         className="h-[38px] w-[160px] rounded-lg border border-[#ece4f6] px-3 text-[12px] outline-none"
       />
       <input
         type="date"
         value={filterDateFrom}
-        onChange={(e) => { setFilterDateFrom(e.target.value); setPage(1); }}
+        onChange={(e) => {
+          setFilterDateFrom(e.target.value);
+          setPage(1);
+        }}
         className="h-[38px] rounded-lg border border-[#ece4f6] px-3 text-[12px] outline-none"
         title="From date"
       />
       <input
         type="date"
         value={filterDateTo}
-        onChange={(e) => { setFilterDateTo(e.target.value); setPage(1); }}
+        onChange={(e) => {
+          setFilterDateTo(e.target.value);
+          setPage(1);
+        }}
         className="h-[38px] rounded-lg border border-[#ece4f6] px-3 text-[12px] outline-none"
         title="To date"
       />
@@ -172,7 +209,10 @@ export default function AdminActivityLogsPage() {
         </button>
       )}
       <button
-        onClick={() => { setPage(1); fetchLogs(); }}
+        onClick={() => {
+          setPage(1);
+          fetchLogs();
+        }}
         className="flex h-[38px] items-center gap-1.5 rounded-lg border border-[#ece4f6] px-3 text-[12px] font-medium text-[#3d1a63] hover:bg-[#f8f5fc]"
       >
         <RefreshCw className="h-3.5 w-3.5" /> Refresh
@@ -181,10 +221,15 @@ export default function AdminActivityLogsPage() {
   );
 
   return (
-    <main id="main-content" className="flex flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6">
+    <main
+      id="main-content"
+      className="flex flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6"
+    >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[22px] font-bold text-[#2a1148] font-serif">Activity Logs</h1>
+          <h1 className="text-[22px] font-bold text-[#2a1148] font-serif">
+            Activity Logs
+          </h1>
           <p className="mt-1 text-[13px] text-[#8b8397]">
             {total} total event{total !== 1 ? "s" : ""}
           </p>
@@ -199,7 +244,9 @@ export default function AdminActivityLogsPage() {
         </div>
       ) : error ? (
         <div className="flex items-center justify-center py-10">
-          <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-4 text-center text-[14px] text-red-700">{error}</div>
+          <div className="rounded-lg border border-red-200 bg-red-50 px-6 py-4 text-center text-[14px] text-red-700">
+            {error}
+          </div>
         </div>
       ) : items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-[#8b8397]">
@@ -223,7 +270,10 @@ export default function AdminActivityLogsPage() {
               </thead>
               <tbody>
                 {items.map((item) => (
-                  <tr key={item.id} className="border-b border-[#f0e8f2] last:border-0 hover:bg-[#f8f5fc]">
+                  <tr
+                    key={item.id}
+                    className="border-b border-[#f0e8f2] last:border-0 hover:bg-[#f8f5fc]"
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {actionBadge(item.action)}

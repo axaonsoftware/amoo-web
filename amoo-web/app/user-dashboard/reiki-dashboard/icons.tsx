@@ -8,9 +8,21 @@ export function Mandala({
   className?: string;
 }) {
   return (
-    <svg viewBox="0 0 120 120" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       {rings.map((r) => (
-        <circle key={r} cx="60" cy="60" r={r} stroke="currentColor" strokeWidth="1" />
+        <circle
+          key={r}
+          cx="60"
+          cy="60"
+          r={r}
+          stroke="currentColor"
+          strokeWidth="1"
+        />
       ))}
       {Array.from({ length: spokes }).map((_, i) => (
         <line
@@ -36,7 +48,12 @@ export function LotusGlyph({
   strokeWidth?: number;
 }) {
   return (
-    <svg viewBox="0 0 32 32" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <g
         stroke="currentColor"
         strokeWidth={strokeWidth}
@@ -66,7 +83,12 @@ export function HealingHands({
   strokeWidth?: number;
 }) {
   return (
-    <svg viewBox="0 0 32 32" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <g
         stroke="currentColor"
         strokeWidth={strokeWidth}
@@ -90,8 +112,20 @@ export function HealingHands({
 
 export function ChakraGlyph({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.2" strokeOpacity=".55" />
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="1.2"
+        strokeOpacity=".55"
+      />
       {Array.from({ length: 8 }).map((_, i) => (
         <ellipse
           key={i}
@@ -117,7 +151,12 @@ export function DiyaGlyph({
   strokeWidth?: number;
 }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <g
         stroke="currentColor"
         strokeWidth={strokeWidth}
@@ -144,7 +183,12 @@ export function MeditationGlyph({
   strokeWidth?: number;
 }) {
   return (
-    <svg viewBox="0 0 32 32" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       {/* Head */}
       <circle cx="16" cy="6.6" r="3.6" fill="currentColor" />
       {/* Torso */}
@@ -177,7 +221,12 @@ export function SparkleGlyph({
   strokeWidth?: number;
 }) {
   return (
-    <svg viewBox="0 0 16 16" fill="none" className={className} aria-hidden="true">
+    <svg
+      viewBox="0 0 16 16"
+      fill="none"
+      className={className}
+      aria-hidden="true"
+    >
       <path
         d="M8 0 C 8.9 4.3 11.7 7.1 16 8 C 11.7 8.9 8.9 11.7 8 16 C 7.1 11.7 4.3 8.9 0 8 C 4.3 7.1 7.1 4.3 8 0 Z"
         fill="currentColor"

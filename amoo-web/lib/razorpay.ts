@@ -8,7 +8,11 @@ type RazorpayOptions = {
   image?: string;
   prefill?: { name?: string; email?: string; contact?: string };
   theme?: { color?: string };
-  handler?: (response: { razorpay_payment_id: string; razorpay_order_id: string; razorpay_signature: string }) => void;
+  handler?: (response: {
+    razorpay_payment_id: string;
+    razorpay_order_id: string;
+    razorpay_signature: string;
+  }) => void;
   modal?: { ondismiss?: () => void };
 };
 
@@ -88,7 +92,9 @@ export function openRazorpayCheckout(options: RazorpayOptions): Promise<{
       rzp.open();
     } catch (e) {
       cleanup();
-      reject(new Error(`Failed to initialize Razorpay: ${(e as Error).message}`));
+      reject(
+        new Error(`Failed to initialize Razorpay: ${(e as Error).message}`),
+      );
     }
   });
 }

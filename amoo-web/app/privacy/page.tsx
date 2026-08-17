@@ -6,7 +6,11 @@ import { SiteFooter } from "@/app/components/site-footer";
 
 const PrivacyPage = () => {
   return (
-    <main id="main-content" className="min-h-screen" style={{ backgroundColor: "#fdf8f0" }}>
+    <main
+      id="main-content"
+      className="min-h-screen"
+      style={{ backgroundColor: "#fdf8f0" }}
+    >
       <OfferBar />
       <HomeHeader />
 
@@ -21,7 +25,10 @@ const PrivacyPage = () => {
           Last updated: July 21, 2026
         </p>
 
-        <div className="mt-12 space-y-10 font-sans" style={{ color: "#6c6b78" }}>
+        <div
+          className="mt-12 space-y-10 font-sans"
+          style={{ color: "#6c6b78" }}
+        >
           <section>
             <h2
               className="font-display text-2xl font-semibold"
@@ -30,9 +37,9 @@ const PrivacyPage = () => {
               1. Information We Collect
             </h2>
             <p className="mt-4 leading-relaxed">
-              We collect personal information you provide directly to us, such as
-              your name, email address, phone number, and payment details when
-              you register for an account, make a purchase, or contact our
+              We collect personal information you provide directly to us, such
+              as your name, email address, phone number, and payment details
+              when you register for an account, make a purchase, or contact our
               support team. We also automatically collect certain information
               about your device, including your IP address, browser type,
               operating system, and usage data through cookies and similar
@@ -48,12 +55,12 @@ const PrivacyPage = () => {
               2. Use of Information
             </h2>
             <p className="mt-4 leading-relaxed">
-              We use the information we collect to provide, maintain, and improve
-              our services; process transactions and send related information;
-              send technical notices, updates, security alerts, and support
-              messages; respond to your comments, questions, and customer service
-              requests; and to monitor and analyze trends, usage, and
-              activities in connection with our services.
+              We use the information we collect to provide, maintain, and
+              improve our services; process transactions and send related
+              information; send technical notices, updates, security alerts, and
+              support messages; respond to your comments, questions, and
+              customer service requests; and to monitor and analyze trends,
+              usage, and activities in connection with our services.
             </p>
           </section>
 
@@ -67,11 +74,11 @@ const PrivacyPage = () => {
             <p className="mt-4 leading-relaxed">
               We do not sell your personal information. We may share your
               information with trusted third-party service providers who assist
-              us in operating our website and conducting our business, so long as
-              those parties agree to keep this information confidential. We may
-              also release your information when we believe release is appropriate
-              to comply with the law, enforce our site policies, or protect ours
-              or others rights, property, or safety.
+              us in operating our website and conducting our business, so long
+              as those parties agree to keep this information confidential. We
+              may also release your information when we believe release is
+              appropriate to comply with the law, enforce our site policies, or
+              protect ours or others rights, property, or safety.
             </p>
           </section>
 

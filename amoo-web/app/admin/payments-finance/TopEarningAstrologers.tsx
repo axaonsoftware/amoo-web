@@ -26,15 +26,29 @@ export default function TopEarningAstrologers() {
 
   useEffect(() => {
     let cancelled = false;
-    api.admin.getTopExperts(4)
+    api.admin
+      .getTopExperts(4)
       .then((res) => {
         if (cancelled) return;
-        const data = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+        const data = Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res)
+            ? res
+            : [];
         setAstrologers(data);
       })
-      .catch((e) => { if (!cancelled) { setAstrologers([]); setError(e?.message || "Failed to load"); } })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+      .catch((e) => {
+        if (!cancelled) {
+          setAstrologers([]);
+          setError(e?.message || "Failed to load");
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
@@ -43,7 +57,10 @@ export default function TopEarningAstrologers() {
         <h2 className="text-[14px] font-semibold text-[#1B1630]">
           Top Earning Astrologers
         </h2>
-        <Link href="/admin/payments-finance" className="text-[11px] font-medium text-[#7C3AED]">
+        <Link
+          href="/admin/payments-finance"
+          className="text-[11px] font-medium text-[#7C3AED]"
+        >
           View All
         </Link>
       </div>
@@ -64,9 +81,15 @@ export default function TopEarningAstrologers() {
       ) : (
         <ul className="mt-4 space-y-[14px]">
           {astrologers.map((a, idx) => (
-            <li key={a.id ?? a.name ?? idx} className="flex items-center gap-[10px]">
+            <li
+              key={a.id ?? a.name ?? idx}
+              className="flex items-center gap-[10px]"
+            >
               <Image
-                src={a.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name || "A")}&background=7C3AED&color=fff&size=30`}
+                src={
+                  a.avatar ||
+                  `https://ui-avatars.com/api/?name=${encodeURIComponent(a.name || "A")}&background=7C3AED&color=fff&size=30`
+                }
                 alt={a.name || "Astrologer"}
                 width={30}
                 height={30}

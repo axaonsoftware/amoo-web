@@ -22,7 +22,10 @@ export function isApiError(e: unknown): e is ApiError {
  * Message for display. Never returns an empty string, so a UI branching on
  * truthiness cannot end up showing a blank error box.
  */
-export function errorMessage(e: unknown, fallback = "Something went wrong"): string {
+export function errorMessage(
+  e: unknown,
+  fallback = "Something went wrong",
+): string {
   if (typeof e === "string" && e.trim()) return e;
   if (e instanceof Error && e.message) return e.message;
   if (e && typeof e === "object" && "message" in e) {
@@ -47,7 +50,9 @@ export function errorStatus(e: unknown): number | undefined {
 export function validationDetails(e: unknown): string[] {
   if (!(e instanceof Error)) return [];
   const d = (e as ApiError).details;
-  return Array.isArray(d) ? d.filter((x): x is string => typeof x === "string") : [];
+  return Array.isArray(d)
+    ? d.filter((x): x is string => typeof x === "string")
+    : [];
 }
 
 /**

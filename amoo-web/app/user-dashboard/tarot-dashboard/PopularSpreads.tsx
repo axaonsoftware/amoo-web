@@ -21,14 +21,22 @@ const ART_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 
 export default function PopularSpreads() {
   // /api/services is paginated -> `{ data, meta }`, never a bare array.
-  const { items: services, loading, error } = useApiList<any>(() => api.getServices());
+  const {
+    items: services,
+    loading,
+    error,
+  } = useApiList<any>(() => api.getServices());
   const tarotServices = services.filter(
-    (s: any) => s.category === "Tarot" || (s.type as string || "").toLowerCase() === "tarot"
+    (s: any) =>
+      s.category === "Tarot" ||
+      ((s.type as string) || "").toLowerCase() === "tarot",
   );
   return (
     <section className="rounded-[14px] border border-[#ece9f3] bg-white px-5 py-[16px] shadow-[0_1px_3px_rgba(43,15,71,.04)]">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-[19px] font-bold text-[#2b0f47]">Popular Spreads</h2>
+        <h2 className="font-display text-[19px] font-bold text-[#2b0f47]">
+          Popular Spreads
+        </h2>
         <button
           type="button"
           className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#7a3fc0]"
@@ -46,7 +54,9 @@ export default function PopularSpreads() {
       ) : error ? (
         <p className="mt-4 text-[12.5px] text-red-500">{error}</p>
       ) : tarotServices.length === 0 ? (
-        <p className="mt-4 text-[12.5px] text-[#8b8697]">No tarot services available.</p>
+        <p className="mt-4 text-[12.5px] text-[#8b8697]">
+          No tarot services available.
+        </p>
       ) : (
         <div className="mt-4 grid grid-cols-2 gap-[10px] sm:grid-cols-3 lg:grid-cols-5">
           {tarotServices.slice(0, 5).map((s: any, i: number) => {
@@ -55,7 +65,9 @@ export default function PopularSpreads() {
               <div
                 key={s.id || i}
                 className={`flex flex-col rounded-[12px] border p-[8px] text-center ${
-                  i === 0 ? "border-[#c9a5f0] bg-[#f4ecfd]" : "border-[#efecf6] bg-[#faf8fd]"
+                  i === 0
+                    ? "border-[#c9a5f0] bg-[#f4ecfd]"
+                    : "border-[#efecf6] bg-[#faf8fd]"
                 }`}
               >
                 <div
@@ -66,7 +78,9 @@ export default function PopularSpreads() {
                   <Art className="h-[128px] w-[112px]" />
                 </div>
 
-                <p className="mt-3 text-[13px] font-bold leading-[1.2] text-[#2b0f47]">{s.name}</p>
+                <p className="mt-3 text-[13px] font-bold leading-[1.2] text-[#2b0f47]">
+                  {s.name}
+                </p>
                 <p className="mt-1 text-[11px] font-semibold text-[#7a3fc0]">
                   {s.duration || s.category || "1 Session"}
                 </p>

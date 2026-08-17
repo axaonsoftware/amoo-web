@@ -82,7 +82,13 @@ export function FacebookIcon(props: IconProps) {
 
 export function InstagramIcon(props: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} {...props}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.8}
+      {...props}
+    >
       <rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5" />
       <circle cx="12" cy="12" r="4" />
       <circle cx="16.9" cy="7.1" r="1.1" fill="currentColor" stroke="none" />
@@ -136,7 +142,10 @@ export function CalendarIcon(props: IconProps) {
     <svg {...base} strokeWidth={1.6} {...props}>
       <rect x="3.6" y="5" width="16.8" height="15.4" rx="2" />
       <path d="M3.6 9.6h16.8M8.4 3.2v3.6M15.6 3.2v3.6" />
-      <path d="M7.6 13h2M11 13h2M14.4 13h2M7.6 16.6h2M11 16.6h2" strokeWidth={1.3} />
+      <path
+        d="M7.6 13h2M11 13h2M14.4 13h2M7.6 16.6h2M11 16.6h2"
+        strokeWidth={1.3}
+      />
     </svg>
   );
 }

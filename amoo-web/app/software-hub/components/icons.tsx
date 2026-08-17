@@ -4,7 +4,12 @@ type IconProps = { className?: string };
 
 export function NavHomeIcon({ className = "" }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
       <path d="M11.35 2.72a1 1 0 0 1 1.3 0l8.02 6.86a1 1 0 0 1 .35.76V20a1.4 1.4 0 0 1-1.4 1.4h-4.3a.9.9 0 0 1-.9-.9v-4.03a.9.9 0 0 0-.9-.9h-3.04a.9.9 0 0 0-.9.9V20.5a.9.9 0 0 1-.9.9H4.38A1.4 1.4 0 0 1 2.98 20v-9.66a1 1 0 0 1 .35-.76l8.02-6.86Z" />
     </svg>
   );
@@ -88,7 +93,12 @@ export function NavTagIcon({ className = "" }: IconProps) {
 /** Gold hexagon software mark shown inside the active "Software Hub" pill. */
 export function NavSoftwareIcon({ className = "" }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+      className={className}
+    >
       <path
         d="M12 2.4 20.5 7v10L12 21.6 3.5 17V7L12 2.4Z"
         fill="currentColor"
@@ -106,14 +116,23 @@ export function NavSoftwareIcon({ className = "" }: IconProps) {
         stroke="currentColor"
         strokeWidth="1.3"
       />
-      <path d="M8.2 11.2h7.6M12 8.6v2.6" stroke="currentColor" strokeWidth="1.3" />
+      <path
+        d="M8.2 11.2h7.6M12 8.6v2.6"
+        stroke="currentColor"
+        strokeWidth="1.3"
+      />
     </svg>
   );
 }
 
 export function WhatsAppIcon({ className = "" }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className={className}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      className={className}
+    >
       <path d="M17.5 14.4c-.3-.2-1.8-.9-2-1-.3-.1-.5-.2-.7.1-.2.3-.7 1-.9 1.2-.2.2-.3.2-.6.1-.3-.2-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.5-.5c.1-.2.2-.3.3-.5v-.5c-.1-.2-.7-1.6-.9-2.2-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.3 5.3 4.6.7.3 1.3.5 1.7.6.7.2 1.4.2 1.9.1.6-.1 1.8-.7 2-1.4.3-.7.3-1.3.2-1.4-.1-.1-.3-.2-.6-.3ZM12 21.5a9.4 9.4 0 0 1-4.8-1.3l-.4-.2-3.6.9.9-3.5-.2-.4A9.5 9.5 0 1 1 12 21.5Z" />
     </svg>
   );
@@ -189,7 +208,11 @@ export function BadgeAccurateIcon({ className = "" }: IconProps) {
       className={className}
     >
       <path d={SCALLOP} />
-      <path d="m8.6 12.4 2.1 2.1 4.9-4.9" strokeWidth="1.5" strokeLinecap="round" />
+      <path
+        d="m8.6 12.4 2.1 2.1 4.9-4.9"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

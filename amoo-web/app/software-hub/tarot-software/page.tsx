@@ -164,7 +164,10 @@ export default function TarotSoftwarePage() {
                 <HomeIcon className="h-[15px] w-[15px]" />
               </Link>
               <ChevronRightIcon className="h-3 w-3 text-white/45" />
-              <Link href="/software-hub" className="text-white/80 hover:text-gold">
+              <Link
+                href="/software-hub"
+                className="text-white/80 hover:text-gold"
+              >
                 Software Hub
               </Link>
               <ChevronRightIcon className="h-3 w-3 text-white/45" />
@@ -183,13 +186,16 @@ export default function TarotSoftwarePage() {
               </h1>
 
               <p className="mt-5 w-full max-w-[430px] text-[15px] leading-[1.75] text-white/80">
-                Advanced, beautiful &amp; easy-to-use tarot software for readers,
-                healers and spiritual businesses.
+                Advanced, beautiful &amp; easy-to-use tarot software for
+                readers, healers and spiritual businesses.
               </p>
 
               <ul className="mt-9 flex flex-wrap gap-x-6 gap-y-6">
                 {HERO_POINTS.map(({ icon: Icon, lines }) => (
-                  <li key={lines.join(" ")} className="w-1/3 sm:w-[92px] text-center">
+                  <li
+                    key={lines.join(" ")}
+                    className="w-1/3 sm:w-[92px] text-center"
+                  >
                     <Icon className="mx-auto h-[30px] w-[30px] text-gold" />
                     <p className="mt-2.5 text-[11px] leading-[1.5] text-white/85">
                       {lines[0]}
@@ -269,7 +275,9 @@ export default function TarotSoftwarePage() {
                   <span className="flex h-[19px] w-[19px] shrink-0 items-center justify-center rounded-full bg-grape-2 text-white">
                     <CheckIcon className="h-[11px] w-[11px]" />
                   </span>
-                  <span className="text-[13.5px] text-[#3b3a45]">{feature}</span>
+                  <span className="text-[13.5px] text-[#3b3a45]">
+                    {feature}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -357,7 +365,9 @@ export default function TarotSoftwarePage() {
                       <p className="font-display text-[24px] leading-none font-bold text-gold">
                         {value}
                       </p>
-                      <p className="mt-2 text-[12.5px] text-white/80">{label}</p>
+                      <p className="mt-2 text-[12.5px] text-white/80">
+                        {label}
+                      </p>
                     </div>
                   </div>
                 ))}

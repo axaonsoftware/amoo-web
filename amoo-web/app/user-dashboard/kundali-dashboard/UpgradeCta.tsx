@@ -2,9 +2,20 @@ import { ArrowRight } from "lucide-react";
 
 function Mandala({ rings, spokes }: { rings: number[]; spokes: number }) {
   return (
-    <svg viewBox="0 0 120 120" fill="none" className="h-full w-full text-[#d09b38]">
+    <svg
+      viewBox="0 0 120 120"
+      fill="none"
+      className="h-full w-full text-[#d09b38]"
+    >
       {rings.map((r) => (
-        <circle key={r} cx="60" cy="60" r={r} stroke="currentColor" strokeWidth="1" />
+        <circle
+          key={r}
+          cx="60"
+          cy="60"
+          r={r}
+          stroke="currentColor"
+          strokeWidth="1"
+        />
       ))}
       {Array.from({ length: spokes }).map((_, i) => (
         <line
@@ -43,7 +54,8 @@ export default function UpgradeCta() {
           Want Accurate Predictions &amp; Personalized Remedies?
         </h2>
         <p className="mt-1.5 text-[12.5px] leading-[1.6] text-[#6c6b78]">
-          Upgrade to Premium and unlock advanced dasha analysis, detailed predictions,
+          Upgrade to Premium and unlock advanced dasha analysis, detailed
+          predictions,
           <br />
           dosha remedies and expert guidance.
         </p>
