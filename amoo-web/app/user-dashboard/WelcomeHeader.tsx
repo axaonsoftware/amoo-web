@@ -74,7 +74,11 @@ function Mandala() {
 
 export default function WelcomeHeader() {
   const { data, loading, error } = useApi(() => api.me());
-  const name = data?.user?.name || data?.name || "there";
+  // api.me() resolves to the envelope's `data` — { kind, data: { ...user } } —
+  // after request() unwraps `{ success, data }`. Read the name defensively so
+  // every field the backend returns is honoured.
+  const name =
+    data?.user?.name || data?.data?.name || data?.name || "there";
 
   if (loading) {
     return (
