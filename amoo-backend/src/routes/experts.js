@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
 const bcrypt = require("bcryptjs");
-const { adminRequired, verifyAccessToken, extractToken } = require("../middleware/auth");
+const { adminRequired, verifyAccessToken, extractToken, checkTokenVersion } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
@@ -36,8 +36,12 @@ router.get(
       if (token) {
         try {
           const decoded = verifyAccessToken(token);
+          // Verify the token is still valid (not revoked by logout / password
+          // change / logout-all). Signature-only checks leave a revoked admin
+          // token able to read inactive experts' PII for its remaining life.
+          await checkTokenVersion(decoded);
           isAdmin = decoded.kind === "admin";
-        } catch (_) { /* token invalid or expired — not admin */ }
+        } catch (_) { /* token invalid, revoked, or expired — not admin */ }
       }
       if (!isAdmin) {
         return fail(res, 401, "Admin authentication required");
