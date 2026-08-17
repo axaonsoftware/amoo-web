@@ -940,13 +940,19 @@ function BookingForm() {
                 <label
                   htmlFor="page-setagree-agree-i-confirm"
                   className="mt-5 flex items-start gap-3 cursor-pointer"
-                  onClick={() => setAgree(!agree)}
                 >
                   <span
-                    className={`flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded mt-0.5 ${agree ? "bg-grape-2" : "border border-line bg-white"}`}
+                    className={`relative flex h-[20px] w-[20px] shrink-0 items-center justify-center rounded mt-0.5 ${agree ? "bg-grape-2" : "border border-line bg-white"}`}
                   >
+                    <input
+                      id="page-setagree-agree-i-confirm"
+                      type="checkbox"
+                      checked={agree}
+                      onChange={(e) => setAgree(e.target.checked)}
+                      className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+                    />
                     {agree && (
-                      <CheckIcon className="h-[12px] w-[12px] text-white" />
+                      <CheckIcon className="h-[12px] w-[12px] text-white pointer-events-none" />
                     )}
                   </span>
                   <span className="text-[13px] leading-[1.5] text-ink">
@@ -1055,7 +1061,7 @@ function BookingForm() {
                   </p>
                   <div className="flex gap-2">
                     <input
-                      id="page-setagree-agree-i-confirm"
+                      id="page-coupon-code"
                       type="text"
                       placeholder="Enter coupon code"
                       value={couponCode}
