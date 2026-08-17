@@ -16,6 +16,10 @@
 #   PAYMENT_GATEWAY=razorpay
 #   PAYMENT_WEBHOOK_SECRET=...
 #   RAZORPAY_KEY_ID=... / RAZORPAY_KEY_SECRET=...
+#   EMAIL_ENABLED=true                       (REQUIRED in prod — forgot-password /
+#                                              verify-email flows depend on SMTP;
+#                                              the backend refuses to boot without it)
+#   EMAIL_HOST=... EMAIL_PORT=587 EMAIL_USER=... EMAIL_PASS=...
 #   NEXT_PUBLIC_API_URL=https://your-domain   (BARE origin — the app appends /api itself)
 #   NEXT_PUBLIC_WHATSAPP_NUMBER=...
 #
@@ -53,6 +57,11 @@ services:
       - ./certs:/etc/nginx/certs:ro
     networks:
       - amoo_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/nginx-health"]
       interval: 30s
@@ -80,6 +89,11 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
     networks:
       - amoo_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/"]
       interval: 30s
@@ -125,6 +139,11 @@ services:
       - amoo_uploads:/app/uploads
     networks:
       - amoo_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:4000/api/health"]
       interval: 30s
@@ -145,12 +164,47 @@ services:
       - amoo_db_data:/var/lib/postgresql/data
     networks:
       - amoo_network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     healthcheck:
       test: ["CMD", "pg_isready", "-U", "${DB_USER:-postgres}"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+
+  # ── Daily database backup ────────────────────────────────────────────────
+  # pg_dump to a named volume once a day, keeping the last 14 dumps. Restore
+  # procedure:  pg_restore -h db -U postgres -d amoo_db <backup_file>.dump
+  db-backup:
+    image: postgres:16-alpine
+    container_name: amoo_db_backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DB_NAME: ${DB_NAME:-amoo_db}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+    volumes:
+      - amoo_db_backups:/backups
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >
+        while true; do
+          FILE="/backups/amoo_$$(date +%Y%m%d_%H%M%S).dump";
+          PGPASSWORD="$$DB_PASSWORD" pg_dump -h "$$DB_HOST" -U "$$DB_USER" -d "$$DB_NAME" -Fc > "$$FILE" && echo "backup written: $$FILE" || echo "backup FAILED";
+          ls -1t /backups/amoo_*.dump 2>/dev/null | tail -n +$$((BACKUP_KEEP + 1)) | xargs -r rm -f;
+          sleep 86400;
+        done
+    networks:
+      - amoo_network
 
 networks:
   amoo_network:
@@ -159,3 +213,4 @@ networks:
 volumes:
   amoo_db_data:
   amoo_uploads:
+  amoo_db_backups:
