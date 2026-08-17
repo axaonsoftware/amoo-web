@@ -3,6 +3,7 @@
 process.env.NODE_ENV = "test";
 const { describe, it, before, after, beforeEach } = require("node:test");
 const assert = require("node:assert");
+const crypto = require("crypto");
 
 // ---------------------------------------------------------------------------
 // Monkey‑patch the real pool BEFORE routes load
@@ -301,6 +302,61 @@ describe("POST /api/bookings", () => {
     });
     assert.strictEqual(res.status, 401);
   });
+
+  it("returns the original booking when the same Idempotency-Key is replayed", async () => {
+    const bookingBody = {
+      service_id: 1, slot_id: 1, date: FUTURE_DATE, time: "10:00",
+      amount: 100, method: "card",
+    };
+    const idemHeaders = { "Idempotency-Key": "booking-retry-123" };
+
+    // First attempt: pre-check finds nothing, booking is created.
+    mockResolvedValue([{ token_version: 0 }]);                     // checkTokenVersion
+    mockResolvedValue([{ verified: 1 }]);                          // verifiedRequired
+    mockResolvedValue([{ }]);                                       // BEGIN
+    mockResolvedValue([]);                                          // idempotency pre-check -> none
+    mockResolvedValue([{ id: 1, price: 100 }]);                     // SELECT service
+    mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// SELECT slot FOR UPDATE
+    mockResolvedValue([]);                                          // UPDATE slot -> booked
+    mockResolvedValue([{ id: 1 }]);                                 // INSERT booking
+    mockResolvedValue([{ }]);                                       // COMMIT
+    mockResolvedValue([{                                            // SELECT created
+      id: 1, booking_ref: "BOOK-T", user_id: 1, service_id: 1,
+      date: FUTURE_DATE, time: "10:00", amount: 100,
+      payment: "Pending", status: "pending-payment",
+    }]);
+
+    const first = await api("POST", "/api/bookings", {
+      headers: { Authorization: `Bearer ${userToken}`, ...idemHeaders },
+      body: bookingBody,
+    });
+    assert.strictEqual(first.status, 201);
+    assert.strictEqual(first.body.data.payment, "Pending");
+    const insertsAfterFirst = queryLog.filter((q) => /INSERT INTO bookings/i.test(q));
+
+    // Retry with the same key: pre-check finds the original and returns it.
+    resetMocks();
+    mockResolvedValue([{ token_version: 0 }]);                     // checkTokenVersion
+    mockResolvedValue([{ verified: 1 }]);                          // verifiedRequired
+    mockResolvedValue([{ }]);                                       // BEGIN
+    mockResolvedValue([{                                            // idempotency pre-check -> found
+      id: 1, user_id: 1, booking_ref: "BOOK-T", service_id: 1,
+      date: FUTURE_DATE, time: "10:00", amount: 100,
+      payment: "Pending", status: "pending-payment",
+    }]);
+    mockResolvedValue([{ }]);                                       // COMMIT
+
+    const second = await api("POST", "/api/bookings", {
+      headers: { Authorization: `Bearer ${userToken}`, ...idemHeaders },
+      body: bookingBody,
+    });
+    assert.strictEqual(second.status, 200);
+    assert.strictEqual(second.body.data.id, 1);
+    // Only one INSERT ever ran for this key.
+    const insertsAfterSecond = queryLog.filter((q) => /INSERT INTO bookings/i.test(q));
+    assert.strictEqual(insertsAfterFirst.length, 1, "the first attempt must insert once");
+    assert.strictEqual(insertsAfterSecond.length, 0, "a replayed key must not insert twice");
+  });
 });
 
 describe("GET /api/bookings/:id — cross-user security", () => {
@@ -445,9 +501,11 @@ describe("POST /api/auth/forgot-password", () => {
 });
 
 describe("POST /api/auth/reset-password", () => {
+  const hash = (s) => crypto.createHash("sha256").update(s).digest("hex");
   const userRow = {
     id: 1, name: "Test", email: "test@test.com", password_hash: "$2a$12$x",
-    reset_otp: "123456", reset_otp_expires: new Date(Date.now() + 60000).toISOString(),
+    // reset_otp is now stored hashed (sha256 hex)
+    reset_otp: hash("123456"), reset_otp_expires: new Date(Date.now() + 60000).toISOString(),
     reset_otp_attempts: 0,
     role: "free", status: "active", verified: 1, token_version: 0,
     failed_attempts: 0, locked_until: null, deleted_at: null,
@@ -530,9 +588,12 @@ describe("POST /api/auth/reset-password", () => {
 // Email Verification
 // ---------------------------------------------------------------------------
 describe("POST /api/auth/verify-email", () => {
+  // verify_token is now stored hashed (sha256 hex), not plaintext.
+  const hash = (s) => crypto.createHash("sha256").update(s).digest("hex");
+  const VALID_VERIFY_TOKEN = "verify-token-12345";
   const userRow = {
     id: 1, name: "Test", email: "test@test.com",
-    verify_token: "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+    verify_token: hash(VALID_VERIFY_TOKEN),
     verify_token_expires: new Date(Date.now() + 86400000).toISOString(),
     verified: 0, role: "free", status: "active", token_version: 0,
     failed_attempts: 0, locked_until: null, deleted_at: null,
@@ -546,7 +607,7 @@ describe("POST /api/auth/verify-email", () => {
     // audit fire-and-forget (no mock)
 
     const res = await api("POST", "/api/auth/verify-email", {
-      body: { email: "test@test.com", token: userRow.verify_token },
+      body: { email: "test@test.com", token: VALID_VERIFY_TOKEN },
     });
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.data.verified, true);
@@ -567,7 +628,7 @@ describe("POST /api/auth/verify-email", () => {
     mockResolvedValue([{ ...userRow, verify_token_expires: expired }]);
 
     const res = await api("POST", "/api/auth/verify-email", {
-      body: { email: "test@test.com", token: userRow.verify_token },
+      body: { email: "test@test.com", token: VALID_VERIFY_TOKEN },
     });
     assert.strictEqual(res.status, 400);
     assert.match(res.body.error, /Verification token expired/i);
@@ -577,7 +638,7 @@ describe("POST /api/auth/verify-email", () => {
     mockResolvedValue([{ ...userRow, verified: 1 }]);
 
     const res = await api("POST", "/api/auth/verify-email", {
-      body: { email: "test@test.com", token: userRow.verify_token },
+      body: { email: "test@test.com", token: VALID_VERIFY_TOKEN },
     });
     assert.strictEqual(res.status, 200);
     assert.strictEqual(res.body.data.verified, true);
@@ -720,5 +781,45 @@ describe("Admin-only routes reject regular users", () => {
       !queryLog.some((q) => /FROM payments/i.test(q)),
       "must reject before touching the payment record"
     );
+  });
+});
+
+describe("GET /api/experts?all=1 — admin token must still be valid (not revoked)", () => {
+  beforeEach(resetMocks);
+
+  it("returns 401 when the admin token has been revoked (token_version mismatch)", async () => {
+    mockResolvedValue([{ token_version: 99 }]);                    // checkTokenVersion -> mismatch
+
+    const res = await api("GET", "/api/experts?all=1", {
+      csrf: false,
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    assert.strictEqual(res.status, 401);
+    assert.ok(
+      !queryLog.some((q) => /FROM experts/i.test(q)),
+      "must not list experts for a revoked admin token"
+    );
+  });
+
+  it("returns all experts (incl. inactive) for a valid admin token", async () => {
+    mockResolvedValue([{ token_version: 0 }]);                     // checkTokenVersion -> ok
+    mockResolvedValue([{ total: 2 }]);                             // COUNT(*)
+    mockResolvedValue([{ id: 1, name: "A" }, { id: 2, name: "B" }]);// SELECT experts
+
+    const res = await api("GET", "/api/experts?all=1", {
+      csrf: false,
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.data.length, 2);
+  });
+
+  it("still serves public, non-all listing without any token", async () => {
+    mockResolvedValue([{ total: 1 }]);                             // COUNT(*) active only
+    mockResolvedValue([{ rows: [1] }]);
+
+    const res = await api("GET", "/api/experts", { csrf: false });
+    assert.strictEqual(res.status, 200);
+    assert.strictEqual(res.body.data.length, 1);
   });
 });
