@@ -160,16 +160,34 @@ export default function DateTimeCard({
       .then(
         (
           res:
-            | { data?: { period?: string; time?: string; label?: string }[] }
-            | { period?: string; time?: string; label?: string }[],
+            | { data?: { period?: string; time?: string; label?: string; start_time?: string }[] }
+            | { period?: string; time?: string; label?: string; start_time?: string }[],
         ) => {
           const list = Array.isArray(res) ? res : (res?.data ?? []);
           if (list.length) {
+            // Backend rows carry start_time ("HH:mm:ss"); server defaults to
+            // "HH:mm AM/PM" for the label used on the button and the summary.
+            const toLocale = (raw: string) => {
+              if (/[AP]M$/.test(raw)) return raw;
+              const [h, m] = raw.split(":").map(Number);
+              const suffix = h >= 12 ? "PM" : "AM";
+              const hour = h % 12 === 0 ? 12 : h % 12;
+              return `${String(hour).padStart(2, "0")}:${String(m).padStart(2, "0")} ${suffix}`;
+            };
+            const periodOf = (raw: string) => {
+              const hour = Number(raw.split(":")[0]);
+              if (hour < 12) return "Morning";
+              if (hour < 17) return "Afternoon";
+              if (hour < 22) return "Evening";
+              return "Night";
+            };
             const grouped: Record<string, string[]> = {};
             for (const slot of list) {
-              const period = slot.period || "Morning";
+              const rawTime = slot.time || slot.label || slot.start_time || "";
+              if (!rawTime) continue;
+              const period = slot.period || periodOf(rawTime.split(" ")[0]);
               if (!grouped[period]) grouped[period] = [];
-              grouped[period].push(slot.time || slot.label || "");
+              grouped[period].push(toLocale(rawTime));
             }
             setSlotsByPeriod((prev) => ({ ...prev, ...grouped }));
           }
