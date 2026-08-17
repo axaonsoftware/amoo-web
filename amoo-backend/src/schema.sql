@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS users (
   refresh_jti     VARCHAR(64),
   verify_token    VARCHAR(64),
   verify_token_expires TIMESTAMP,
-  reset_otp       VARCHAR(12),
+  reset_otp       VARCHAR(64),
   reset_otp_expires TIMESTAMP,
   reset_otp_attempts INTEGER NOT NULL DEFAULT 0,
   failed_attempts INTEGER NOT NULL DEFAULT 0,
@@ -151,7 +151,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   payment     VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (payment IN ('Paid','Pending')),
   status      VARCHAR(20) NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming','completed','cancelled','pending-payment')),
   notes       TEXT,
-  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+  -- Client-supplied idempotency key (retries of POST /api/bookings). NULL keys
+  -- are allowed and never conflict; UNIQUE(user_id, idempotency_key) makes a
+  -- concurrent double-submit resolve to a single booking.
+  idempotency_key VARCHAR(64),
+  created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT uq_bookings_idempotency UNIQUE (user_id, idempotency_key)
 );
 
 -- --------------------------------------------------------
@@ -456,3 +461,55 @@ CREATE TABLE IF NOT EXISTS audit_log (
   page_or_route VARCHAR(255),
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- --------------------------------------------------------
+-- Secondary indexes (kept in sync with the defensive index list in
+-- src/migrate.js so a database built from this file alone is indexed too).
+-- --------------------------------------------------------
+CREATE INDEX IF NOT EXISTS idx_users_status ON users (status);
+CREATE INDEX IF NOT EXISTS idx_users_role ON users (role);
+CREATE INDEX IF NOT EXISTS idx_users_deleted ON users (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_bookings_user ON bookings (user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_expert ON bookings (expert_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_service ON bookings (service_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_slot ON bookings (slot_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings (status);
+CREATE INDEX IF NOT EXISTS idx_bookings_date ON bookings (date);
+CREATE INDEX IF NOT EXISTS idx_payments_user ON payments (user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_booking ON payments (booking_id);
+CREATE INDEX IF NOT EXISTS idx_payments_sub ON payments (subscription_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments (status);
+CREATE INDEX IF NOT EXISTS idx_payments_method ON payments (method);
+CREATE INDEX IF NOT EXISTS idx_payments_gateway_order ON payments (gateway_order_id);
+CREATE INDEX IF NOT EXISTS idx_reports_user ON reports (user_id);
+CREATE INDEX IF NOT EXISTS idx_reports_status ON reports (status);
+CREATE INDEX IF NOT EXISTS idx_reports_type ON reports (type);
+CREATE INDEX IF NOT EXISTS idx_reports_deleted ON reports (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_slots_expert ON slots (expert_id);
+CREATE INDEX IF NOT EXISTS idx_slots_date ON slots (date);
+CREATE INDEX IF NOT EXISTS idx_wallet_user ON wallets (user_id);
+CREATE INDEX IF NOT EXISTS idx_wallet_txn ON wallet_transactions (wallet_id);
+CREATE INDEX IF NOT EXISTS idx_sub_user ON subscriptions (user_id);
+CREATE INDEX IF NOT EXISTS idx_sub_status ON subscriptions (status);
+CREATE INDEX IF NOT EXISTS idx_sub_expires ON subscriptions (expires_at);
+CREATE INDEX IF NOT EXISTS idx_notif_user ON notifications (user_id);
+CREATE INDEX IF NOT EXISTS idx_notif_read ON notifications (is_read);
+CREATE INDEX IF NOT EXISTS idx_contact_status ON contacts (status);
+CREATE INDEX IF NOT EXISTS idx_experts_status ON experts (status);
+CREATE INDEX IF NOT EXISTS idx_experts_deleted ON experts (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_services_status ON services (status);
+CREATE INDEX IF NOT EXISTS idx_services_cat ON services (category);
+CREATE INDEX IF NOT EXISTS idx_services_deleted ON services (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_packages_deleted ON packages (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_testimonials_deleted ON testimonials (deleted_at);
+CREATE INDEX IF NOT EXISTS idx_coupon_code ON coupons (code);
+CREATE INDEX IF NOT EXISTS idx_messages_conv ON messages (conversation_id);
+CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages (sender_id);
+CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_log (actor_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log (action);
+CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_log (entity);
+CREATE INDEX IF NOT EXISTS idx_audit_page ON audit_log (page_or_route);
+CREATE INDEX IF NOT EXISTS idx_audit_actor_type ON audit_log (actor_type);
+CREATE INDEX IF NOT EXISTS idx_coupon_usage_coupon ON coupon_usages (coupon_id);
+CREATE INDEX IF NOT EXISTS idx_coupon_usage_booking ON coupon_usages (booking_id);
+CREATE INDEX IF NOT EXISTS idx_coupon_usage_user ON coupon_usages (user_id);

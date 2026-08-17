@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const { pool, testConnection } = require("./config/db");
 const logger = require("./utils/logger");
+const { insertContentData } = require("./seed-content");
 
 // Applies the consolidated schema.sql idempotently.
 // Splits the script into individual statements so we don't need multipleStatements.
@@ -93,6 +94,7 @@ const logger = require("./utils/logger");
       ["contacts", "reply", "TEXT"],
       ["conversations", "last_message_at", "TIMESTAMP"],
       ["bookings", "slot_id", "INT"],
+      ["bookings", "idempotency_key", "VARCHAR(64)"],
       ["payments", "gateway", "VARCHAR(40)"],
       ["payments", "subscription_id", "INT"],
       ["payments", "gateway_order_id", "VARCHAR(255)"],
@@ -118,6 +120,32 @@ const logger = require("./utils/logger");
       );
       if (rows.length) continue;
       await client.query(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`);
+    }
+
+    // Widen users.reset_otp to hold the SHA-256 hash (64 hex chars) now stored
+    // instead of the plaintext OTP. Idempotent: re-running against a column that
+    // is already 64 wide is a no-op.
+    const { rows: otpCol } = await client.query(
+      "SELECT CHARACTER_MAXIMUM_LENGTH FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'users' AND column_name = 'reset_otp'"
+    );
+    // pg returns lowercased column names (character_maximum_length)
+    if (otpCol[0] && Number(otpCol[0].character_maximum_length) < 64) {
+      await client.query("ALTER TABLE users ALTER COLUMN reset_otp TYPE VARCHAR(64)");
+    }
+
+    // Unique constraint backing booking idempotency (ON CONFLICT target).
+    // IMPORTANT: pre-check existence and only ADD when missing. A caught
+    // "already exists" error is NOT recoverable inside the single transaction
+    // below — any failed statement aborts it, so everything after it fails with
+    // "current transaction is aborted" on the very next run (idempotent re-run
+    // would be permanently broken).
+    const { rows: idemConstraint } = await client.query(
+      "SELECT conname FROM pg_constraint WHERE conname = 'uq_bookings_idempotency' LIMIT 1"
+    );
+    if (!idemConstraint.length) {
+      await client.query(
+        "ALTER TABLE bookings ADD CONSTRAINT uq_bookings_idempotency UNIQUE (user_id, idempotency_key)"
+      );
     }
 
     // ── Chat participant model (migration 006) ────────────────────────────
@@ -178,17 +206,17 @@ const logger = require("./utils/logger");
     }
 
     // Extend the subscriptions `status` CHECK to allow 'pending-payment'
-    // (idempotent: drop and recreate the constraint).
-    try {
-      await client.query("ALTER TABLE subscriptions DROP CONSTRAINT IF EXISTS subscriptions_status_check");
-      await client.query("ALTER TABLE subscriptions ADD CONSTRAINT subscriptions_status_check CHECK (status IN ('active', 'expired', 'cancelled', 'pending-payment'))");
-      await client.query("ALTER TABLE subscriptions ALTER COLUMN status SET NOT NULL");
-      await client.query("ALTER TABLE subscriptions ALTER COLUMN status SET DEFAULT 'active'");
-    } catch (e) {
-      if (!/duplicate|already exists/i.test(e.message)) throw e;
-    }
+    // (idempotent: drop and recreate the constraint). No tolerant catch here by
+    // design: swallowing a failure would leave the transaction aborted and hide
+    // real data problems behind a misleading "current transaction is aborted".
+    await client.query("ALTER TABLE subscriptions DROP CONSTRAINT IF EXISTS subscriptions_status_check");
+    await client.query("ALTER TABLE subscriptions ADD CONSTRAINT subscriptions_status_check CHECK (status IN ('active', 'expired', 'cancelled', 'pending-payment'))");
+    await client.query("ALTER TABLE subscriptions ALTER COLUMN status SET NOT NULL");
+    await client.query("ALTER TABLE subscriptions ALTER COLUMN status SET DEFAULT 'active'");
 
     // Indexes — created defensively (older MySQL lacks CREATE INDEX IF NOT EXISTS).
+    // Pre-checked like columns/constraints: no error-swallowing, since a caught
+    // failure would abort the enclosing transaction.
     const indexes = [
       // Primary keys auto-indexed — secondary indexes below
       ["idx_users_email", "users", "email"],
@@ -246,12 +274,16 @@ const logger = require("./utils/logger");
         [name]
       );
       if (rows.length) continue;
-      try {
-        await client.query(`CREATE INDEX ${name} ON ${table} (${col})`);
-      } catch (e) {
-        if (!/duplicate|already exists/i.test(e.message)) throw e;
-      }
+      await client.query(`CREATE INDEX ${name} ON ${table} (${col})`);
     }
+
+    // ── Site content (idempotent default rows) ────────────────────────
+    // Services, packages, coupons, testimonials, blogs and faqs are seeded
+    // here so they exist in EVERY environment including production. Only
+    // missing rows are inserted; admin edits are never overwritten. Demo
+    // accounts with known passwords stay in seed.js, which refuses to run
+    // where NODE_ENV=production (see tests/security_audits.test.js).
+    await insertContentData(client);
 
     await client.query("COMMIT");
     logger.info(`Migration applied: ${statements.length} statements executed. Schema is up to date.`);
