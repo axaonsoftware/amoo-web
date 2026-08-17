@@ -422,24 +422,19 @@ router.post(
     }
     if (canVerify) {
       if (env.payments.gateway === "stripe") {
-        const stripeSig = req.headers["stripe-signature"];
-        if (!stripeSig) return fail(res, 401, "Missing Stripe signature");
-        try {
-          const stripe = require("stripe")(env.payments.webhookSecret);
-          stripe.webhooks.constructEvent(req.rawBody || JSON.stringify(req.body), stripeSig, env.payments.webhookSecret);
-        } catch (e) {
-          return fail(res, 401, `Invalid Stripe signature: ${e.message}`);
-        }
-      } else {
-        const sig = req.headers["x-razorpay-signature"] || req.headers["x-payment-signature"];
-        const raw = req.rawBody || JSON.stringify(req.body);
-        const expected = crypto
-          .createHmac("sha256", env.payments.webhookSecret)
-          .update(raw)
-          .digest("hex");
-        if (!sig || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
-          return fail(res, 401, "Invalid signature");
-        }
+        // The Stripe SDK is not installed and the frontend checkout is Razorpay-
+        // only, so PAYMENT_GATEWAY=stripe is unsupported. Reject loudly instead
+        // of returning a misleading "invalid signature" for valid events.
+        return fail(res, 503, "Stripe gateway is not supported in this build. Use Razorpay.");
+      }
+      const sig = req.headers["x-razorpay-signature"] || req.headers["x-payment-signature"];
+      const raw = req.rawBody || JSON.stringify(req.body);
+      const expected = crypto
+        .createHmac("sha256", env.payments.webhookSecret)
+        .update(raw)
+        .digest("hex");
+      if (!sig || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) {
+        return fail(res, 401, "Invalid signature");
       }
     }
 
