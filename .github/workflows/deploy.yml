@@ -1,17 +1,24 @@
 name: Deploy
 
+# Deployment only runs AFTER the CI workflow has finished successfully on the
+# branch head. A red CI can never ship: the `deploy` job aborts unless the
+# triggering workflow_run concluded with `success`. Manual dispatch
+# (workflow_dispatch) bypasses the gate for emergency deploys.
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
     branches: [main, master]
+    types: [completed]
   workflow_dispatch:
 
 concurrency:
-  group: deploy-${{ github.ref }}
+  group: deploy-${{ github.ref_name }}
   cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_TAG: ${{ github.sha }}
+  # Use the commit that CI ran on (workflow_run) or the manual-dispatch head.
+  IMAGE_TAG: ${{ github.event.workflow_run.head_sha || github.sha }}
 
 jobs:
   build-and-push:
@@ -22,7 +29,11 @@ jobs:
       packages: write
 
     steps:
+      # The workflow_run event carries the branch name and SHA for us, but
+      # actions/checkout needs them passed explicitly.
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
 
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
@@ -83,7 +94,9 @@ jobs:
     name: Deploy to server
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref_name == 'main' || github.ref_name == 'master'
+    # Only deploy from the branch CI just ran on, and only when CI succeeded.
+    # Manual workflow_dispatch has no workflow_run event -> gate is skipped.
+    if: (github.event.workflow_run == null || github.event.workflow_run.conclusion == 'success')
 
     steps:
       - name: Deploy via SSH
