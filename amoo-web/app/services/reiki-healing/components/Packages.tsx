@@ -12,6 +12,7 @@ import {
 } from "./icons";
 import { api } from "../../../../lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
+import type { Package } from "../../../../lib/types";
 
 const PKG_ICON_MAP: Record<
   string,
@@ -24,15 +25,18 @@ const PKG_ICON_MAP: Record<
 };
 
 export default function Packages() {
-  const [packages, setPackages] = useState<any[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .getPackages()
-      .then((res: any) => {
-        const items = (res?.data ?? Array.isArray(res)) ? res : [];
+      .then((res: unknown) => {
+        const payload = res as { data?: Package[] } | Package[];
+        const items = Array.isArray(payload)
+          ? (payload as Package[])
+          : (payload?.data ?? []);
         setPackages(items);
       })
       .catch(() => setError("Failed to load packages. Please try again."))
@@ -63,7 +67,7 @@ export default function Packages() {
               <Loader2 className="h-6 w-6 animate-spin text-[#4b2583]" />
             </div>
           ) : (
-            packages.map((pkg: any) => {
+            packages.map((pkg) => {
               const match = PKG_ICON_MAP[pkg.name] || {
                 icon:
                   pkg.name && pkg.name.length % 2 === 0

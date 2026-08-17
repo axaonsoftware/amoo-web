@@ -44,7 +44,27 @@ import {
 
 /* ─── Service cards data ─── */
 
-const SERVICES_ROW1 = [
+interface TarotServiceCard {
+  id?: number;
+  name?: string;
+  icon?: React.FC<{ className?: string }>;
+  title?: string;
+  desc?: string;
+  sub?: string | null;
+  description?: string | null;
+  img?: string | null;
+  category?: string;
+}
+
+interface TarotTestimonialCard {
+  id?: number;
+  name?: string;
+  img?: string;
+  comment?: string;
+  text?: string;
+}
+
+const SERVICES_ROW1: TarotServiceCard[] = [
   {
     icon: TarotCardIcon,
     title: "General Tarot Reading",
@@ -77,7 +97,7 @@ const SERVICES_ROW1 = [
   },
 ];
 
-const SERVICES_ROW2 = [
+const SERVICES_ROW2: TarotServiceCard[] = [
   {
     icon: CalendarCardIcon,
     title: "Monthly Guidance Reading",
@@ -149,7 +169,7 @@ const STEPS = [
   },
 ];
 
-const TESTIMONIALS = [
+const TESTIMONIALS: TarotTestimonialCard[] = [
   {
     name: "Neha Sharma",
     text: '"Tarot reading by Surinder Ji gave me clarity when I was completely confused about my career. Highly accurate!"',
@@ -170,8 +190,8 @@ const TESTIMONIALS = [
 /* ─── Page ─── */
 
 export default function TarotReadingPage() {
-  const [services, setServices] = useState<any[]>([]);
-  const [testimonials, setTestimonials] = useState<any[]>([]);
+  const [services, setServices] = useState<TarotServiceCard[]>([]);
+  const [testimonials, setTestimonials] = useState<TarotTestimonialCard[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
   const [loadingTestimonials, setLoadingTestimonials] = useState(true);
   const [, setErrorServices] = useState<string | null>(null);
@@ -182,9 +202,13 @@ export default function TarotReadingPage() {
   useEffect(() => {
     api
       .getServices()
-      .then((res: any) => {
-        const items = ((res?.data as any[]) ?? Array.isArray(res)) ? res : [];
-        setServices(items.filter((s: any) => s.category === "Tarot"));
+      .then((res: unknown) => {
+        const payload = res as
+          { data?: TarotServiceCard[] } | TarotServiceCard[];
+        const items = Array.isArray(payload)
+          ? (payload as TarotServiceCard[])
+          : (payload?.data ?? []);
+        setServices(items.filter((s) => s.category === "Tarot"));
       })
       .catch(() =>
         setErrorServices("Failed to load services. Please try again."),
@@ -193,8 +217,12 @@ export default function TarotReadingPage() {
 
     api
       .getTestimonials()
-      .then((rows: any) => {
-        const list = Array.isArray(rows) ? rows : (rows?.data ?? []);
+      .then((res: unknown) => {
+        const payload = res as
+          { data?: TarotTestimonialCard[] } | TarotTestimonialCard[];
+        const list = Array.isArray(payload)
+          ? (payload as TarotTestimonialCard[])
+          : (payload?.data ?? []);
         setTestimonials(list.length ? list : []);
       })
       .catch(() =>
@@ -346,9 +374,10 @@ export default function TarotReadingPage() {
               : apiServicesRow1.length
                 ? apiServicesRow1
                 : SERVICES_ROW1
-            ).map((item: any) => {
-              const Icon =
-                item.icon || TAROT_ICON_MAP[item.name] || defaultTarotIcon;
+            ).map((item) => {
+              const Icon = (item.icon ||
+                TAROT_ICON_MAP[item.name ?? ""] ||
+                defaultTarotIcon) as React.FC<{ className?: string }>;
               const title = item.name || item.title || "";
               const desc = item.sub || item.description || item.desc || "";
               return (
@@ -383,9 +412,10 @@ export default function TarotReadingPage() {
               : apiServicesRow2.length
                 ? apiServicesRow2
                 : SERVICES_ROW2
-            ).map((item: any) => {
-              const Icon =
-                item.icon || TAROT_ICON_MAP[item.name] || defaultTarotIcon;
+            ).map((item) => {
+              const Icon = (item.icon ||
+                TAROT_ICON_MAP[item.name ?? ""] ||
+                defaultTarotIcon) as React.FC<{ className?: string }>;
               const title = item.name || item.title || "";
               const desc = item.sub || item.description || item.desc || "";
               return (
@@ -525,7 +555,7 @@ export default function TarotReadingPage() {
             </button>
 
             <div className="mx-auto grid max-w-[1100px] grid-cols-1 gap-5 sm:grid-cols-3">
-              {visibleTestimonials.map((t: any, idx: number) => (
+              {visibleTestimonials.map((t, idx) => (
                 <div
                   key={t.name || t.id || `t-${idx}`}
                   className="rounded-2xl border border-line bg-white p-6 text-center shadow-[0_2px_14px_rgba(75,37,131,0.05)]"

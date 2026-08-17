@@ -10,6 +10,18 @@ import {
 } from "../../../components/home-icons";
 import { sanitize } from "../../../../lib/sanitize";
 import { api } from "../../../../lib/api";
+import type { Testimonial } from "../../../../lib/types";
+
+interface TestimonialRow extends Partial<Testimonial> {
+  img?: string;
+  text?: string;
+}
+
+interface TestimonialCard {
+  img: string;
+  quote: string[];
+  name: string;
+}
 
 function wrapQuote(text: string, maxLen = 38): string[] {
   const words = text.split(" ");
@@ -28,18 +40,21 @@ function wrapQuote(text: string, maxLen = 38): string[] {
 }
 
 export default function Testimonials() {
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<TestimonialCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .getTestimonials()
-      .then((rows: any) => {
-        const list = Array.isArray(rows) ? rows : (rows?.data ?? []);
+      .then((res: unknown) => {
+        const payload = res as { data?: TestimonialRow[] } | TestimonialRow[];
+        const list = Array.isArray(payload)
+          ? (payload as TestimonialRow[])
+          : (payload?.data ?? []);
         if (list.length) {
           setItems(
-            list.map((r: any) => ({
+            list.map((r) => ({
               img:
                 r.img ||
                 "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png",

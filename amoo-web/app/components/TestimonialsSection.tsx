@@ -4,6 +4,7 @@ import { useApi } from "../../lib/useApi";
 import api from "../../lib/api";
 import Image from "next/image";
 import Link from "next/link";
+import type { Testimonial } from "../../lib/types";
 
 const FALLBACK_AVATAR =
   "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png";
@@ -73,17 +74,13 @@ function Heading({
 }
 
 export function TestimonialsSection() {
-  const { data: raw } = useApi(() => api.getTestimonials(), []);
+  const { data: raw } = useApi<unknown>(() => api.getTestimonials(), []);
 
-  const items: {
-    avatar: string;
-    comment: string;
-    name: string;
-    rating: number;
-  }[] = Array.isArray(raw)
-    ? (raw as any[])
-    : Array.isArray((raw as any)?.data)
-      ? (raw as any).data
+  const payload = raw as { data?: Testimonial[] } | Testimonial[] | null;
+  const items: Testimonial[] = Array.isArray(payload)
+    ? (payload as Testimonial[])
+    : Array.isArray(payload?.data)
+      ? (payload?.data as Testimonial[])
       : [];
 
   const testimonials =

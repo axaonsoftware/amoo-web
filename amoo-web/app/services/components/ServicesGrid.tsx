@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { ArrowFlourish, CheckCircleIcon } from "./icons";
 import { useApi, api } from "../../../lib/useApi";
+import { unwrapList } from "../../../lib/api";
+import type { Service } from "../../../lib/types";
 
 const AMBER = "#b5711a";
 const BLUE = "#2f6fb0";
@@ -120,10 +122,10 @@ const COPY: Record<
 };
 
 export default function ServicesGrid() {
-  const { data: services, loading } = useApi(() => api.getServices());
+  const { data: services, loading } = useApi<unknown>(() => api.getServices());
 
-  const items: any[] = ((services as any)?.data as any[]) ?? [];
-  const rows = items.map((s: any) => {
+  const items: Service[] = unwrapList<Service>(services);
+  const rows = items.map((s) => {
     const c =
       COPY[s.category] ||
       COPY[s.category === "Astrology" ? "Astrology" : "Spiritual"];

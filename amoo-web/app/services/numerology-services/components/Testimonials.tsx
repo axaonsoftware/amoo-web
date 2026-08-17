@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Star, Quote } from "lucide-react";
 import { useState, useEffect } from "react";
 import { api } from "../../../../lib/api";
+import type { Testimonial } from "../../../../lib/types";
 
 const FALLBACK = [
   {
@@ -27,12 +28,14 @@ export default function Testimonials() {
   useEffect(() => {
     api
       .getTestimonials()
-      .then((rows: any[]) => {
-        if (Array.isArray(rows) && rows.length) {
+      .then((res: unknown) => {
+        const payload = res as Testimonial[] | { data?: Testimonial[] };
+        if (Array.isArray(payload) && payload.length) {
+          const rows = payload as Testimonial[];
           setItems(
-            rows.map((r: any) => ({
-              name: (r.name as string) || "Client",
-              text: r.comment as string,
+            rows.map((r) => ({
+              name: r.name || "Client",
+              text: r.comment,
             })),
           );
         }

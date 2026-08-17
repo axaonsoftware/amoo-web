@@ -15,6 +15,13 @@ import {
 import { api } from "../../../../lib/api";
 import { Loader2, AlertCircle } from "lucide-react";
 
+interface ReikiServiceCard {
+  name: string;
+  sub?: string | null;
+  description?: string | null;
+  category?: string;
+}
+
 const ICON_TONE_MAP: Record<
   string,
   { icon: React.FC<React.SVGProps<SVGSVGElement>>; tone: "purple" | "gold" }
@@ -46,16 +53,20 @@ export function SectionHeading({
 }
 
 export default function ServicesGrid() {
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<ReikiServiceCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .getServices()
-      .then((res: any) => {
-        const items = ((res?.data as any[]) ?? Array.isArray(res)) ? res : [];
-        setServices(items.filter((s: any) => s.category === "Healing"));
+      .then((res: unknown) => {
+        const payload = res as
+          { data?: ReikiServiceCard[] } | ReikiServiceCard[];
+        const items = Array.isArray(payload)
+          ? (payload as ReikiServiceCard[])
+          : (payload?.data ?? []);
+        setServices(items.filter((s) => s.category === "Healing"));
       })
       .catch(() => setError("Failed to load services. Please try again."))
       .finally(() => setLoading(false));
@@ -90,7 +101,7 @@ export default function ServicesGrid() {
         <SectionHeading>Our Reiki Healing Services</SectionHeading>
 
         <div className="mt-[24px] grid grid-cols-1 gap-[14px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {services.map((svc: any) => {
+          {services.map((svc) => {
             const match = ICON_TONE_MAP[svc.name] ||
               ICON_TONE_MAP[
                 Object.keys(ICON_TONE_MAP).find((k) =>

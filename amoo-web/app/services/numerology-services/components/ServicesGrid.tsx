@@ -21,6 +21,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 
+interface NumerologyServiceCard {
+  name: string;
+  sub?: string | null;
+  description?: string | null;
+  category?: string;
+}
+
 function HorseshoeGlyph() {
   return (
     <svg viewBox="0 0 40 40" className="w-6 h-6">
@@ -68,16 +75,20 @@ const STATIC_ICONS: Record<string, { Icon?: LucideIcon; glyph?: string }> = {
 };
 
 export default function ServicesGrid() {
-  const [services, setServices] = useState<any[]>([]);
+  const [services, setServices] = useState<NumerologyServiceCard[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     api
       .getServices()
-      .then((res: any) => {
-        const items = ((res?.data as any[]) ?? Array.isArray(res)) ? res : [];
-        setServices(items.filter((s: any) => s.category === "Numerology"));
+      .then((res: unknown) => {
+        const payload = res as
+          { data?: NumerologyServiceCard[] } | NumerologyServiceCard[];
+        const items = Array.isArray(payload)
+          ? (payload as NumerologyServiceCard[])
+          : (payload?.data ?? []);
+        setServices(items.filter((s) => s.category === "Numerology"));
       })
       .catch(() => setError("Failed to load services. Please try again."))
       .finally(() => setLoading(false));
@@ -123,7 +134,7 @@ export default function ServicesGrid() {
         </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
-          {services.map((svc: any) => {
+          {services.map((svc) => {
             const match = STATIC_ICONS[svc.name] || {};
             const Icon = match.Icon;
             const glyph = match.glyph;
