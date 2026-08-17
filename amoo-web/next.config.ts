@@ -32,24 +32,29 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   outputFileTracingRoot: path.resolve(__dirname),
-  // Hides the framework/version banner from responses.
   poweredByHeader: false,
   images: {
-    // Cloudinary serves already-optimized images, so skip Next.js's
-    // built-in optimizer to avoid timeouts fetching from the CDN.
     unoptimized: true,
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },
-      // Used by the admin login page's provider icon.
       { protocol: "https", hostname: "upload.wikimedia.org" },
-      // Used by the site logo and other Cloudinary-hosted images.
       { protocol: "https", hostname: "res.cloudinary.com" },
     ],
+  },
+  // Dev-only proxy: in production nginx routes /api/* straight to the backend,
+  // so this rewrite only ever runs under `next dev` (or a standalone frontend
+  // that is not sitting behind nginx). Keeps API calls same-origin.
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:4000/api/:path*",
+      },
+    ];
   },
   async headers() {
     return [
       {
-        // Every route, including static assets and the 404 page.
         source: "/:path*",
         headers: securityHeaders,
       },

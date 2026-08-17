@@ -1,5 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
+// Use relative same-origin paths. In production nginx proxies /api/* to the
+// backend directly; in local `next dev` the rewrite in next.config.ts forwards
+// /api/* to the backend on localhost:4000. Either way requests stay
+// same-origin so cookies (sameSite: lax) are sent.
+const API_URL = "";
 const REQUEST_TIMEOUT_MS = 30000;
 
 type Headers = Record<string, string>;
@@ -133,6 +137,8 @@ async function request(method: string, path: string, body?: unknown) {
     "Content-Type": "application/json",
   });
 
+  // Same-origin path; nginx (production) or the Next.js rewrite (local dev)
+  // forwards it to the backend.
   const res = await fetchWithTimeout(`${API_URL}${path}`, {
     method,
     headers,

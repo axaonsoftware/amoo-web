@@ -1,5 +1,7 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
-const WS_URL = API_URL.replace(/^http/, "ws");
+// WebSocket connects directly to backend (not through Next.js rewrites)
+const WS_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+).replace(/^http/, "ws");
 
 type EventHandler = (data: unknown) => void;
 
