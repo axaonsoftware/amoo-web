@@ -33,7 +33,7 @@ function attachChat(server) {
     try {
       const jwt = require("jsonwebtoken");
       const env = require("./config/env");
-      const decoded = jwt.verify(token, env.jwt.secret);
+      const decoded = jwt.verify(token, env.jwt.secret, { algorithms: ["HS256"] });
       await checkTokenVersion(decoded);
       ws._userId = decoded.id;
       ws._kind = decoded.kind;
@@ -66,6 +66,16 @@ function attachChat(server) {
           return;
         }
 
+        // SECURITY: the sender must be a participant of this conversation
+        // (or an admin). Previously the insert ran against any conversationId
+        // the client named, so any authenticated caller could write into a
+        // thread they did not belong to.
+        const conv = await loadConversation(conversationId);
+        if (!conv || !isParticipant(ws, conv)) {
+          ws.send(JSON.stringify({ type: "error", error: "Forbidden" }));
+          return;
+        }
+
         // Persist to database then broadcast to conversation participants.
         try {
           const result = await pool.query(
@@ -88,7 +98,7 @@ function attachChat(server) {
             isRead: false,
             createdAt: row.created_at.toISOString(),
           });
-          broadcastToConversation(wss, clients, conversationId, broadcast, ws._id);
+          broadcastToConversation(clients, conv, broadcast, ws._id);
         } catch (e) {
           logger.warn("[ws] message persist failed:", e.message);
           ws.send(JSON.stringify({ type: "error", error: "Failed to save message" }));
@@ -96,6 +106,12 @@ function attachChat(server) {
       } else if (msg.type === "read") {
         const { conversationId } = msg;
         if (!conversationId) return;
+        // SECURITY: only a participant may mark a conversation read.
+        const conv = await loadConversation(conversationId);
+        if (!conv || !isParticipant(ws, conv)) {
+          ws.send(JSON.stringify({ type: "error", error: "Forbidden" }));
+          return;
+        }
         const viewerType = ws._kind === "expert" ? "expert" : "user";
         try {
           await pool.query(
@@ -103,9 +119,8 @@ function attachChat(server) {
             [conversationId, viewerType]
           );
           broadcastToConversation(
-            wss,
             clients,
-            conversationId,
+            conv,
             JSON.stringify({ type: "read", conversationId }),
             ws._id
           );
@@ -130,12 +145,33 @@ function attachChat(server) {
   logger.info("[ws] chat WebSocket server attached on /chat");
 }
 
-// Send a message to every connected client in the same conversation,
-// excluding the sender.
-function broadcastToConversation(wss, clients, conversationId, data, senderId) {
+async function loadConversation(conversationId) {
+  const { rows } = await pool.query(
+    "SELECT id, user_id, expert_id FROM conversations WHERE id = $1",
+    [conversationId]
+  );
+  return rows[0] || null;
+}
+
+// Membership rule, shared by message/read handlers and the broadcast fan-out.
+// Admins may observe any thread; a user only their own; an expert only their own.
+function isParticipant(ws, conv) {
+  if (!ws || !conv) return false;
+  if (ws._kind === "admin") return true;
+  if (ws._kind === "user") return conv.user_id === ws._userId;
+  if (ws._kind === "expert") return conv.expert_id === ws._userId;
+  return false;
+}
+
+// Send a message to every connected client that belongs to THIS conversation,
+// excluding the sender. Previously every connected client received every
+// message regardless of which conversation they were in — a cross-conversation
+// leak. The fan-out is now bounded by the conversation's participants.
+function broadcastToConversation(clients, conv, data, senderId) {
   for (const [id, ws] of clients) {
     if (id === senderId) continue;
     if (ws.readyState !== 1) continue; // OPEN
+    if (!isParticipant(ws, conv)) continue;
     try {
       ws.send(data);
     } catch {
@@ -144,4 +180,4 @@ function broadcastToConversation(wss, clients, conversationId, data, senderId) {
   }
 }
 
-module.exports = { attachChat };
+module.exports = { attachChat, isParticipant, broadcastToConversation };
