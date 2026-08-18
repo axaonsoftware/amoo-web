@@ -90,7 +90,7 @@ services:
           memory: 512M
     depends_on:
       backend:
-        condition: service_healthy
+        condition: service_started
     environment:
       NODE_ENV: production
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
@@ -138,6 +138,8 @@ services:
       CLIENT_URL: ${CLIENT_URL:?CLIENT_URL is required}
       APP_URL: ${APP_URL:-http://localhost:4000}
       PAYMENT_GATEWAY: ${PAYMENT_GATEWAY:?PAYMENT_GATEWAY is required}
+      PAYMENT_KEY: ${PAYMENT_KEY:-}
+      PAYMENT_SECRET: ${PAYMENT_SECRET:-}
       PAYMENT_WEBHOOK_SECRET: ${PAYMENT_WEBHOOK_SECRET:?PAYMENT_WEBHOOK_SECRET is required}
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
