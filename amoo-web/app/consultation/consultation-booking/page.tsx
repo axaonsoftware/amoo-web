@@ -23,6 +23,7 @@ import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
 import { WHATSAPP_URL } from "../../../lib/constants";
 import { errorMessage, validationDetails } from "../../../lib/errors";
+import StartChatButton from "../../user-dashboard/chat/StartChatButton";
 import {
   ArrowRightIcon,
   CheckIcon,
@@ -214,6 +215,7 @@ function BookingForm() {
     mode: "Video Call",
     date: "",
     time: "",
+    slot_id: undefined as number | undefined,
   });
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -251,10 +253,11 @@ function BookingForm() {
       mode: stored.mode || urlParams.get("mode") || "Video Call",
       date: stored.date || urlParams.get("date") || "",
       time: stored.time || urlParams.get("time") || "",
+      slot_id: stored.slot_id || undefined,
     });
   }, []);
 
-  const { service, mode, date, time } = params;
+  const { service, mode, date, time, slot_id } = params;
 
   // Price comes from the services table, never from a constant in this file —
   // it's also what the API cross-checks the booking amount against.
@@ -327,6 +330,7 @@ function BookingForm() {
 
       await api.createBooking({
         service_id: match.id,
+        ...(slot_id ? { slot_id } : {}),
         date: parseDisplayDate(date),
         time: parseDisplayTime(time),
         mode: toApiMode(mode),
@@ -1139,13 +1143,18 @@ function BookingForm() {
                   </div>
 
                   {/* WhatsApp Button */}
-                  <button
-                    type="button"
-                    className="mt-4 flex h-[42px] w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] text-[14px] font-semibold text-white shadow-[0_4px_12px_rgba(37,211,102,0.3)] hover:bg-[#20bd5a] transition-colors"
-                  >
-                    <WhatsAppIcon className="h-[22px] w-[22px]" />
-                    Chat on WhatsApp
-                  </button>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <StartChatButton variant="secondary" className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-lg border border-[#c9b3e6] bg-white px-4 text-[14px] font-semibold text-[#5b21a8] shadow-none hover:bg-[#f3ecfb] transition-colors" />
+                    <a
+                      href={WHATSAPP_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex h-[42px] w-full items-center justify-center gap-2 rounded-lg bg-[#25D366] text-[14px] font-semibold text-white shadow-[0_4px_12px_rgba(37,211,102,0.3)] hover:bg-[#20bd5a] transition-colors"
+                    >
+                      <WhatsAppIcon className="h-[22px] w-[22px]" />
+                      Chat on WhatsApp
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
