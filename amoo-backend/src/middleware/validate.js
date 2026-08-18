@@ -338,7 +338,7 @@ const schemas = {
 
   walletAdjust: Joi.object({
     user_id: Joi.number().integer().positive().required(),
-    amount: Joi.number().required(),
+    amount: Joi.number().min(-999999).max(999999).required(),
     reason: optionalString.max(120),
   }),
 
