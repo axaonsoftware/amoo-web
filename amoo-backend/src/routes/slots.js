@@ -90,13 +90,23 @@ router.get(
   })
 );
 
-// admin create slot
+// admin create slot (with overlap detection)
 router.post(
   "/",
   adminRequired,
   validate("slot"),
   asyncHandler(async (req, res) => {
     const { expert_id, date, start_time, end_time, status } = req.body;
+    const effectiveEnd = end_time || `${String(Number(start_time.slice(0, 2)) + 1).padStart(2, "0")}${start_time.slice(2)}`;
+    const { rows: [{ count }] } = await pool.query(
+      `SELECT COUNT(*)::int AS count FROM slots
+        WHERE expert_id = $1 AND date = $2
+          AND start_time < $3 AND COALESCE(end_time, (start_time + INTERVAL '1 hour')) > $4`,
+      [expert_id, date, effectiveEnd, start_time]
+    );
+    if (count > 0) {
+      throw new HttpError(409, "Slot overlaps with an existing slot for this expert on this date");
+    }
     const result = await pool.query(
       "INSERT INTO slots (expert_id, date, start_time, end_time, status) VALUES ($1,$2,$3,$4,$5) RETURNING id",
       [expert_id, date, start_time, end_time || null, status || "available"]
@@ -121,16 +131,27 @@ router.patch(
   })
 );
 
-// admin delete slot
+// admin delete slot (refuse if booked)
 router.delete(
   "/:id",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const { rows } = await pool.query("SELECT id FROM slots WHERE id = $1", [req.params.id]);
-    if (assertFound(res, rows[0])) return;
-    await pool.query("DELETE FROM slots WHERE id = $1", [req.params.id]);
-    req.audit("delete", "slot", Number(req.params.id));
-    ok(res, { id: Number(req.params.id), deleted: true });
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const { rows } = await client.query("SELECT id, status FROM slots WHERE id = $1 FOR UPDATE", [req.params.id]);
+      if (!rows.length) { await client.query("ROLLBACK"); throw new HttpError(404, "Slot not found"); }
+      if (rows[0].status === "booked") { await client.query("ROLLBACK"); throw new HttpError(409, "Cannot delete a slot that has a booking. Cancel the booking first."); }
+      await client.query("DELETE FROM slots WHERE id = $1", [req.params.id]);
+      await client.query("COMMIT");
+      req.audit("delete", "slot", Number(req.params.id));
+      ok(res, { id: Number(req.params.id), deleted: true });
+    } catch (err) {
+      await client.query("ROLLBACK").catch(() => {});
+      throw err;
+    } finally {
+      client.release();
+    }
   })
 );
 
