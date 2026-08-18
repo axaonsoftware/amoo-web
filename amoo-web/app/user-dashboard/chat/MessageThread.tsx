@@ -275,7 +275,9 @@ export default function MessageThread({
       if (convId === conversationId) {
         setMessages((prev) =>
           prev.map((m) =>
-            m.sender_id !== myId ? { ...m, is_read: true } : m,
+            !(m.sender_type === myKind && m.sender_id === myId)
+              ? { ...m, is_read: true }
+              : m,
           ),
         );
       }
@@ -283,7 +285,7 @@ export default function MessageThread({
     return () => {
       delete (window as unknown as Record<string, unknown>).__chatUpdateRead;
     };
-  }, [conversationId, myId, setMessages]);
+  }, [conversationId, myId, myKind, setMessages]);
 
   const expertName = conversation.expert_name;
   const expertInitial = expertName?.charAt(0)?.toUpperCase() || "E";
