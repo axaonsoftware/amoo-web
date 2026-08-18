@@ -39,6 +39,7 @@ function SelectDateTimeInner() {
   );
   const [selectedPeriod, setSelectedPeriod] = useState("Morning");
   const [selectedSlot, setSelectedSlot] = useState("");
+  const [selectedSlotId, setSelectedSlotId] = useState<number | undefined>();
   const [validationError, setValidationError] = useState("");
 
   const handleBack = () => {
@@ -79,7 +80,7 @@ function SelectDateTimeInner() {
       "Saturday",
     ][dateObj.getDay()];
     const dateStr = `${weekday}, ${selectedDate} ${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
-    saveConsultationData({ date: dateStr, time: selectedSlot });
+    saveConsultationData({ date: dateStr, time: selectedSlot, slot_id: selectedSlotId });
     router.push(
       `/consultation/consultation-booking?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(selectedSlot)}`,
     );
@@ -147,7 +148,10 @@ function SelectDateTimeInner() {
               selectedPeriod={selectedPeriod}
               selectedSlot={selectedSlot}
               onSelectPeriod={setSelectedPeriod}
-              onSelectSlot={setSelectedSlot}
+              onSelectSlot={(slot, slotId) => {
+                setSelectedSlot(slot);
+                setSelectedSlotId(slotId);
+              }}
             />
             <SummaryCard
               service={service}
