@@ -157,6 +157,15 @@ if (env.isProd && (INSECURE_JWT_SECRETS.has(env.jwt.secret) || INSECURE_JWT_SECR
   );
 }
 
+// Enforce minimum secret length even in development to prevent accidentally
+// shipping weak secrets to production.
+if (env.jwt.secret.length < 32) {
+  throw new Error("JWT_SECRET must be at least 32 characters. Run: openssl rand -base64 48");
+}
+if (env.jwt.refreshSecret.length < 32) {
+  throw new Error("JWT_REFRESH_SECRET must be at least 32 characters. Run: openssl rand -base64 48");
+}
+
 if (env.isProd && env.clientOrigin.includes("*")) {
   throw new Error("CLIENT_ORIGIN must not be '*' in production. Set specific origins.");
 }
