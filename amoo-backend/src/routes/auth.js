@@ -92,10 +92,14 @@ async function checkLockout(table, id) {
     const remaining = Math.ceil((new Date(row.locked_until) - new Date()) / 60000);
     throw new HttpError(423, `Account locked. Try again in ${remaining} minute(s).`);
   }
-  // Lock has expired — reset so the next attempt can succeed
+  // Lock has expired — reset so the next attempt can succeed. The WHERE
+  // guard prevents wiping a concurrent recordFailedAttempt that already
+  // set a new locked_until (race between expiry-reset and new lockout).
   if (row.locked_until && new Date(row.locked_until) <= new Date()) {
     await pool.query(
-      `UPDATE ${table} SET failed_attempts = 0, locked_until = NULL WHERE id = $1`,
+      `UPDATE ${table}
+         SET failed_attempts = 0, locked_until = NULL
+       WHERE id = $1 AND locked_until IS NOT NULL AND locked_until <= NOW()`,
       [id]
     );
   }
@@ -103,24 +107,20 @@ async function checkLockout(table, id) {
 
 async function recordFailedAttempt(table, id) {
   if (!ALLOWED_AUTH_TABLES.has(table)) throw new HttpError(500, "Invalid table");
-  const { rows } = await pool.query(
-    `SELECT failed_attempts FROM ${table} WHERE id = $1`,
-    [id]
+  // Single atomic UPDATE: increment failed_attempts and conditionally lock
+  // the account in one statement, eliminating the read-then-write race where
+  // two concurrent failures both read the same count and only increment once.
+  const lockedUntil = new Date(Date.now() + env.lockout.durationMin * 60000);
+  await pool.query(
+    `UPDATE ${table}
+       SET failed_attempts = failed_attempts + 1,
+           locked_until = CASE
+             WHEN failed_attempts + 1 >= $2 THEN ($3)::timestamp
+             ELSE locked_until
+           END
+     WHERE id = $1`,
+    [id, env.lockout.maxAttempts, lockedUntil]
   );
-  if (!rows.length) return;
-  const attempts = (rows[0].failed_attempts || 0) + 1;
-  if (attempts >= env.lockout.maxAttempts) {
-    const lockedUntil = new Date(Date.now() + env.lockout.durationMin * 60000);
-    await pool.query(
-      `UPDATE ${table} SET failed_attempts = $1, locked_until = $2 WHERE id = $3`,
-      [attempts, lockedUntil, id]
-    );
-  } else {
-    await pool.query(
-      `UPDATE ${table} SET failed_attempts = $1 WHERE id = $2`,
-      [attempts, id]
-    );
-  }
 }
 
 async function resetFailedAttempts(table, id) {
@@ -188,7 +188,7 @@ router.post(
   validate("adminLogin"),
   asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-    const { rows } = await pool.query("SELECT * FROM admins WHERE email = $1", [email]);
+    const { rows } = await pool.query("SELECT * FROM admins WHERE email = $1 AND deleted_at IS NULL", [email]);
     const admin = rows[0];
     if (!admin) throw new HttpError(401, "Invalid credentials");
 
@@ -254,7 +254,7 @@ router.post(
       throw new HttpError(401, "Invalid or expired refresh token");
     }
     const table = payload.kind === "admin" ? "admins" : payload.kind === "expert" ? "experts" : "users";
-    const deletedAtFilter = table === "users" ? " AND deleted_at IS NULL" : "";
+    const deletedAtFilter = " AND deleted_at IS NULL";
     const { rows } = await pool.query(
       `SELECT id, token_version, refresh_jti FROM ${table} WHERE id = $1${deletedAtFilter}`,
       [payload.id]
@@ -325,7 +325,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const { current_password, password } = req.body;
     const table = req.user.kind === "admin" ? "admins" : req.user.kind === "expert" ? "experts" : "users";
-    const { rows } = await pool.query(`SELECT * FROM ${table} WHERE id = $1`, [req.user.id]);
+    const { rows } = await pool.query(`SELECT * FROM ${table} WHERE id = $1 AND deleted_at IS NULL`, [req.user.id]);
     const user = rows[0];
     if (!user || !user.password_hash) throw new HttpError(401, "Account not found");
     const okPw = await bcrypt.compare(current_password, user.password_hash);
@@ -463,18 +463,16 @@ router.post(
     // digit. The stored value is a SHA-256 hash; verifySecret() also accepts
     // legacy plaintext rows written before hashing shipped.
     if (!verifySecret(user.reset_otp, otp)) {
-      const attempts = (user.reset_otp_attempts || 0) + 1;
-      if (attempts >= env.otp.maxAttempts) {
-        await pool.query(
-          "UPDATE users SET reset_otp = NULL, reset_otp_expires = NULL, reset_otp_attempts = 0 WHERE id = $1",
-          [user.id]
-        );
-      } else {
-        await pool.query(
-          "UPDATE users SET reset_otp_attempts = $1 WHERE id = $2",
-          [attempts, user.id]
-        );
-      }
+      // Atomic increment + conditional invalidation in one statement to avoid
+      // a read-then-write race between concurrent OTP failures.
+      await pool.query(
+        `UPDATE users
+           SET reset_otp_attempts = reset_otp_attempts + 1,
+               reset_otp = CASE WHEN reset_otp_attempts + 1 >= $2 THEN NULL ELSE reset_otp END,
+               reset_otp_expires = CASE WHEN reset_otp_attempts + 1 >= $2 THEN NULL ELSE reset_otp_expires END
+         WHERE id = $1`,
+        [user.id, env.otp.maxAttempts]
+      );
       throw new HttpError(400, "Invalid OTP");
     }
 
@@ -511,7 +509,7 @@ router.get(
   authRequired,
   asyncHandler(async (req, res) => {
     if (req.user.kind === "admin") {
-      const { rows } = await pool.query("SELECT id, name, email, role FROM admins WHERE id = $1", [req.user.id]);
+      const { rows } = await pool.query("SELECT id, name, email, role FROM admins WHERE id = $1 AND deleted_at IS NULL", [req.user.id]);
       if (!rows.length) throw new HttpError(404, "Admin not found");
       return ok(res, { kind: "admin", data: rows[0] });
     }
