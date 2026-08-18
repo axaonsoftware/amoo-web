@@ -133,8 +133,6 @@ const FOOTER_COLS = [
   },
 ];
 
-const FIXED_DISCOUNT = 50; // Flat discount applied to all consultations
-
 /* ------------------------------------------------------------------ */
 /*  Small building blocks                                              */
 /* ------------------------------------------------------------------ */
@@ -320,8 +318,7 @@ function BookingSummaryContent() {
   ];
 
   const price = servicePrice ?? 0;
-  const discount = FIXED_DISCOUNT;
-  const total = price - discount;
+  const total = price;
 
   const dateShort = date ? date.replace(/,?\s*\d{4}/, "") : "";
 
@@ -609,8 +606,7 @@ function BookingSummaryContent() {
                   Special Offer for You!
                 </p>
                 <p className="text-gray-300 text-sm">
-                  You saved ₹{discount} with code{" "}
-                  <span className="text-amber-300 font-semibold">FIRST10</span>
+                  Apply a coupon code on the payment page to get a discount.
                 </p>
                 <p className="text-gray-400 text-xs mt-1">
                   Thank you for choosing {SITE_NAME}.
@@ -679,12 +675,6 @@ function BookingSummaryContent() {
               <div className="flex items-center justify-between text-sm mb-2">
                 <span className="text-gray-600">Consultation Fee</span>
                 <span className="text-purple-950 font-medium">₹{price}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm mb-3">
-                <span className="text-gray-600">Discount (FIRST10)</span>
-                <span className="text-green-600 font-medium">
-                  - ₹{discount}
-                </span>
               </div>
               <div className="border-t border-dashed border-amber-200 pt-3 flex items-center justify-between">
                 <span className="font-bold text-purple-950">Total Amount</span>
