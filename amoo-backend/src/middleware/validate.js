@@ -146,7 +146,7 @@ const schemas = {
     subscription_id: optionalNumber.integer().positive(),
     amount: Joi.number().min(0),
     method: optionalString.max(40),
-    status: Joi.string().valid("success", "pending", "failed", "refunded").default("pending"),
+    status: Joi.string().valid("success", "pending", "failed", "refunded", "refund_pending").default("pending"),
     txn_id: optionalString.max(120),
     gateway: optionalString.max(40),
   }),
@@ -325,7 +325,7 @@ const schemas = {
 
   walletTxn: Joi.object({
     user_id: optionalNumber.integer().positive(),
-    amount: Joi.number().positive().required(),
+    amount: Joi.number().positive().max(999999).required(),
     reason: optionalString.max(120),
     ref: optionalString.max(64),
   }),
