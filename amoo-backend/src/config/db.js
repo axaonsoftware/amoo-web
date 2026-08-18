@@ -20,7 +20,7 @@ const pool = new Pool({
   statement_timeout: env.isProd ? 15000 : 0,
   // Managed databases (RDS etc.) typically require TLS. pg will also honour an
   // sslmode=require in DATABASE_URL; DB_SSL=true covers the component-vars path.
-  ...(env.db.ssl ? { ssl: { rejectUnauthorized: false } } : {}),
+  ...(env.db.ssl ? { ssl: { rejectUnauthorized: true } } : {}),
 });
 
 // Set the session timezone on every new connection. The `options` libpq param
