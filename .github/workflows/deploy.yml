@@ -107,6 +107,8 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           envs: REGISTRY,IMAGE_TAG,GITHUB_REPOSITORY
           script: |
+            # Log in to GHCR so `docker compose pull` can fetch private images.
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
             cd /opt/amoo-web
             export REGISTRY=${{ env.REGISTRY }}
             export IMAGE_TAG=${{ env.IMAGE_TAG }}
