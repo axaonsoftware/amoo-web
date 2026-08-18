@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const crypto = require("crypto");
 const { pool } = require("../config/db");
 const { authRequired, verifiedRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, genBookingRef, buildUpdate } = require("../utils/helpers");
@@ -94,21 +95,26 @@ router.post(
     // Idempotency: the client sends the same Idempotency-Key on retries (e.g.
     // after a token-refresh race or a timeout). A replay returns the original
     // booking instead of double-reserving a slot / double-inserting a booking.
-    const idemKey = (req.headers["idempotency-key"] || "").slice(0, 64) || null;
+    // When no key is provided, generate a deterministic one from the request
+    // parameters so that concurrent/retried identical requests collide on the
+    // UNIQUE constraint instead of silently creating duplicates.
+    const idemKey = (req.headers["idempotency-key"] || "").slice(0, 64)
+      || crypto.createHash("sha256")
+          .update(`${req.user.id}:${service_id}:${slot_id || ""}:${date}:${time}`)
+          .digest("hex")
+          .slice(0, 64);
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
 
       // Short-circuit the common replay case before any side effects.
-      if (idemKey) {
-        const existing = await client.query(
-          "SELECT * FROM bookings WHERE user_id = $1 AND idempotency_key = $2",
-          [req.user.id, idemKey]
-        );
-        if (existing.rows.length) {
-          await client.query("COMMIT");
-          return ok(res, existing.rows[0]);
-        }
+      const existing = await client.query(
+        "SELECT * FROM bookings WHERE user_id = $1 AND idempotency_key = $2",
+        [req.user.id, idemKey]
+      );
+      if (existing.rows.length) {
+        await client.query("COMMIT");
+        return ok(res, { ...existing.rows[0], idempotency_key: idemKey });
       }
 
       // Server-side price enforcement: never trust the client-supplied amount.
@@ -148,20 +154,20 @@ router.post(
       );
       let bookingId = result.rows[0]?.id;
 
-      if (!bookingId && idemKey) {
+      if (!bookingId) {
         const { rows } = await client.query(
           "SELECT * FROM bookings WHERE user_id = $1 AND idempotency_key = $2",
           [req.user.id, idemKey]
         );
         if (!rows.length) throw new HttpError(409, "Booking already created");
         await client.query("COMMIT");
-        return ok(res, rows[0]);
+        return ok(res, { ...rows[0], idempotency_key: idemKey });
       }
 
       await client.query("COMMIT");
       const { rows } = await client.query("SELECT * FROM bookings WHERE id = $1", [bookingId]);
       req.audit("create", "booking", bookingId, { booking_ref: ref });
-      created(res, rows[0]);
+      created(res, { ...rows[0], idempotency_key: idemKey });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
@@ -257,16 +263,60 @@ router.delete(
   })
 );
 
-// POST /api/bookings/:id/complete  (admin marks a booking completed)
+// POST /api/bookings/:id/complete  (expert marks a booking completed)
 router.post(
   "/:id/complete",
-  adminRequired,
+  authRequired,
   asyncHandler(async (req, res) => {
-    const { rows } = await pool.query("SELECT id FROM bookings WHERE id = $1", [req.params.id]);
-    if (assertFound(res, rows[0])) return;
-    await pool.query("UPDATE bookings SET status = 'completed' WHERE id = $1", [req.params.id]);
-    req.audit("complete", "booking", Number(req.params.id));
-    ok(res, { id: Number(req.params.id), status: "completed" });
+    const { rows } = await pool.query(
+      `SELECT id, expert_id, user_id, status, slot_id, date, time
+       FROM bookings WHERE id = $1`,
+      [req.params.id]
+    );
+    const booking = rows[0];
+    if (assertFound(res, booking)) return;
+
+    if (booking.status === "completed") {
+      return ok(res, { id: booking.id, status: "completed", already_completed: true });
+    }
+
+    if (booking.status !== "upcoming") {
+      return fail(res, 409, `Cannot complete booking — status is "${booking.status}"`);
+    }
+
+    if (req.user.kind !== "expert" || req.user.id !== booking.expert_id) {
+      return fail(res, 403, "Only the assigned expert can complete this booking");
+    }
+
+    if (new Date() < new Date(`${booking.date}T${booking.time}`)) {
+      return fail(res, 400, "Cannot complete booking before the scheduled time");
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      await client.query(
+        "UPDATE bookings SET status = 'completed' WHERE id = $1",
+        [booking.id]
+      );
+
+      if (booking.slot_id) {
+        await client.query(
+          "UPDATE slots SET status = 'available' WHERE id = $1 AND status = 'booked'",
+          [booking.slot_id]
+        );
+      }
+
+      await client.query("COMMIT");
+      req.audit("complete", "booking", booking.id);
+      ok(res, { id: booking.id, status: "completed" });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   })
 );
 
