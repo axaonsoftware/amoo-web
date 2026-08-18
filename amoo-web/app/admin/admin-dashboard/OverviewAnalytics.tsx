@@ -7,7 +7,7 @@ import {
   IndianRupee, 
   Activity, 
   ChevronDown } from "lucide-react";
-import {  useApi  } from "@/lib/useApi";
+import {  useAutoRefreshApi  } from "@/lib/useAutoRefreshApi";
 import {  api  } from "@/lib/api";
 import {  ChartSkeleton,  ErrorState  } from "@/app/components/states";
 import { 
@@ -70,9 +70,9 @@ function smoothPath(values: number[], n: number, y: (v: number) => number) {
 
 export default function OverviewAnalytics() {
   const [period, setPeriod] = useState("month");
-  const bookings = useApi(() => api.admin.getBookingsTrends(period));
-  const users = useApi(() => api.admin.getUsersGrowth(period));
-  const revenue = useApi(() => api.admin.getRevenue(period));
+  const bookings = useAutoRefreshApi(() => api.admin.getBookingsTrends(period), [], 30_000);
+  const users = useAutoRefreshApi(() => api.admin.getUsersGrowth(period), [], 30_000);
+  const revenue = useAutoRefreshApi(() => api.admin.getRevenue(period), [], 30_000);
 
   const loading = bookings.loading || users.loading || revenue.loading;
   const error = bookings.error || users.error || revenue.error;

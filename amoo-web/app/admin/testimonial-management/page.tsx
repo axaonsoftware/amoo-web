@@ -13,6 +13,8 @@ import {
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
 import { formatDate, initials } from "@/lib/format";
 import { sanitize } from "@/lib/sanitize";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import AdminPageHeader, { AdminStats } from "../shared/AdminPageHeader";
 import { useToast } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
@@ -199,6 +201,12 @@ export default function TestimonialManagementPage() {
   useEffect(() => {
     setPage(1);
   }, [status]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const setStatusFor = async (t: Testimonial, next: "Active" | "Inactive") => {
     setBusyId(t.id);

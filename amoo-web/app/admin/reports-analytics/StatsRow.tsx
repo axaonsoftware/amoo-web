@@ -10,7 +10,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { ErrorState, Skeleton } from "../../components/states";
 import { formatCompact, formatNumber, toNumber } from "../../../lib/format";
 
@@ -60,20 +60,20 @@ function lastTwo<T>(
 export default function StatsRow() {
   // Four independent aggregations, all server-side. Nothing here re-derives a
   // total the backend already computed.
-  const overview = useApi<{ stats: Record<string, number> }>(() =>
-    api.admin.getOverview(),
+  const overview = useAutoRefreshApi<{ stats: Record<string, number> }>(() =>
+    api.admin.getOverview(), [], 30_000,
   );
-  const payments = useApi<{
+  const payments = useAutoRefreshApi<{
     total: number;
     collected: number | string;
     by_method: { method: string; count: number | string }[];
-  }>(() => api.admin.getPaymentStats());
-  const revenue = useApi<RevenueBucket[]>(() => api.admin.getRevenue("month"));
-  const trends = useApi<TrendBucket[]>(() =>
-    api.admin.getBookingsTrends("month"),
+  }>(() => api.admin.getPaymentStats(), [], 30_000);
+  const revenue = useAutoRefreshApi<RevenueBucket[]>(() => api.admin.getRevenue("month"), [], 30_000);
+  const trends = useAutoRefreshApi<TrendBucket[]>(() =>
+    api.admin.getBookingsTrends("month"), [], 30_000,
   );
-  const growth = useApi<GrowthBucket[]>(() =>
-    api.admin.getUsersGrowth("month"),
+  const growth = useAutoRefreshApi<GrowthBucket[]>(() =>
+    api.admin.getUsersGrowth("month"), [], 30_000,
   );
 
   const loading =

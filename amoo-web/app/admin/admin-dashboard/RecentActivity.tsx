@@ -11,7 +11,7 @@ import {
   MessageSquare,
   RefreshCw,
 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useAutoRefreshApi } from "@/lib/useAutoRefreshApi";
 import { api } from "@/lib/api";
 
 type AuditRow = {
@@ -103,9 +103,9 @@ function describe(row: AuditRow) {
 }
 
 export default function RecentActivity() {
-  const { data, loading, error } = useApi(() =>
+  const { data, loading, error } = useAutoRefreshApi(() =>
     api.admin.getAudit("?pageSize=8"),
-  );
+  [], 30_000);
   const rows: AuditRow[] = (data as { data?: AuditRow[] } | null)?.data ?? [];
 
   return (

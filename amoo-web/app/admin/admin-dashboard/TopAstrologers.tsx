@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { Star } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useAutoRefreshApi } from "@/lib/useAutoRefreshApi";
 import { api } from "@/lib/api";
 
 export default function TopAstrologers() {
-  const { data, loading, error } = useApi(() => api.admin.getTopExperts(5));
+  const { data, loading, error } = useAutoRefreshApi(() => api.admin.getTopExperts(5), [], 30_000);
   const rows = data?.data ?? [];
 
   return (

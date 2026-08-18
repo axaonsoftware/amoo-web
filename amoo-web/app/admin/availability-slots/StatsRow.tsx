@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Users,
   UserCheck,
@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import { errorMessage } from "../../../lib/errors";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 const statDefs: {
   label: string;
@@ -72,7 +74,7 @@ export default function StatsRow() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     setError(null);
     api.admin
@@ -84,6 +86,16 @@ export default function StatsRow() {
       .catch((e: unknown) => setError(errorMessage(e, "Failed to load stats")))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const fmt = (n: number | undefined) =>
     n != null ? n.toLocaleString("en-IN") : "—";

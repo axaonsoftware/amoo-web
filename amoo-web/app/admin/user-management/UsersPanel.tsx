@@ -15,6 +15,8 @@ import {
   Ban } from "lucide-react";
 import {  roleStyles,  statusStyles,  type RoleKey,  type StatusKey  } from "./data";
 import {  api,  qs,  unwrapList,  unwrapMeta  } from "../../../lib/api";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import {  EmptyRow,  ErrorRow,  TableSkeletonRows  } from "../../components/states";
 import {  useToast  } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
@@ -341,6 +343,12 @@ export default function UsersPanel() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   useEffect(() => {
     setPage(1);

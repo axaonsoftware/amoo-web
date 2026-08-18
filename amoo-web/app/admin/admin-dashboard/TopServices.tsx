@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useAutoRefreshApi } from "@/lib/useAutoRefreshApi";
 import { api } from "@/lib/api";
 
 const COLORS = ["#7c3aed", "#f0b429", "#c026d3", "#ec4899", "#22c55e"];
@@ -10,9 +10,9 @@ const COLORS = ["#7c3aed", "#f0b429", "#c026d3", "#ec4899", "#22c55e"];
 type Service = { name: string; bookings: number };
 
 export default function TopServices() {
-  const { data, loading, error } = useApi<{ topServices: Service[] }>(() =>
+  const { data, loading, error } = useAutoRefreshApi<{ topServices: Service[] }>(() =>
     api.admin.getOverview(),
-  );
+  [], 30_000);
   const services: Service[] = data?.topServices ?? [];
   const total =
     services.reduce((s, d) => s + (Number(d.bookings) || 0), 0) || 1;

@@ -15,6 +15,8 @@ import {
 import { api, qs, unwrapList, unwrapMeta, type PageMeta } from "@/lib/api";
 import { formatDate, formatNumber } from "@/lib/format";
 import { sanitize } from "@/lib/sanitize";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import AdminPageHeader, { AdminStats } from "../shared/AdminPageHeader";
 import { useToast } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
@@ -196,6 +198,12 @@ export default function BlogManagementPage() {
       .catch((e: Error) => setError(e?.message || "Failed to load posts"))
       .finally(() => setLoading(false));
   }, [search, status, page]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   useEffect(() => {
     const t = setTimeout(load, search ? 300 : 0);

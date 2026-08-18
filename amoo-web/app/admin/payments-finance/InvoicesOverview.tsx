@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { FileText, FileCheck2, FileClock, FileX2 } from "lucide-react";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { ErrorState, Skeleton } from "../../components/states";
 import { formatNumber } from "../../../lib/format";
 
@@ -26,8 +26,8 @@ type PaymentStats = {
  * See WIRING_NOTES.md gap G10.
  */
 export default function InvoicesOverview() {
-  const { data, loading, error, refetch } = useApi<PaymentStats>(() =>
-    api.admin.getPaymentStats(),
+  const { data, loading, error, refetch } = useAutoRefreshApi<PaymentStats>(() =>
+    api.admin.getPaymentStats(), [], 30_000,
   );
 
   const rows = [

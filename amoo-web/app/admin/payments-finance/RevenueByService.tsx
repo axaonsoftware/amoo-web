@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { EmptyState, ErrorState, Skeleton } from "../../components/states";
 import { formatCurrency, toNumber } from "../../../lib/format";
 
@@ -31,8 +31,8 @@ const C = 2 * Math.PI * R;
  * `GET /api/payments` on a non-existent `service_name` column.
  */
 export default function RevenueByService() {
-  const { data, loading, error, refetch } = useApi<ServiceRevenue[]>(() =>
-    api.admin.getRevenueByService(),
+  const { data, loading, error, refetch } = useAutoRefreshApi<ServiceRevenue[]>(() =>
+    api.admin.getRevenueByService(), [], 30_000,
   );
 
   const rows = data ?? [];

@@ -11,6 +11,8 @@ import {
   Search, 
   X } from "lucide-react";
 import {  api  } from "@/lib/api";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 interface Faq {
   id: number;
@@ -104,7 +106,7 @@ export default function FaqManagementPage() {
   const [formData, setFormData] = useState(EMPTY_FORM);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
-  const loadFaqs = async () => {
+  const loadFaqs = useCallback(async () => {
     try {
       setLoading(true);
       const res = await api.admin.getFaqs();
@@ -115,11 +117,17 @@ export default function FaqManagementPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const { isRefreshing } = useAutoRefresh(loadFaqs);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   useEffect(() => {
     loadFaqs();
-  }, []);
+  }, [loadFaqs]);
 
   const filtered = faqs.filter((f) => {
     const matchSearch =

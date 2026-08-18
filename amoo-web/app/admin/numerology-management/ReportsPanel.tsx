@@ -20,6 +20,8 @@ import ConfirmDialog from "../shared/ConfirmDialog";
 import {  exportCSV  } from "../shared/exportCSV";
 import {  sanitize  } from "../../../lib/sanitize";
 import {  errorMessage  } from "../../../lib/errors";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 const statusOptions = [
   { label: "Pending", value: "pending" },
@@ -162,6 +164,12 @@ export default function ReportsPanel() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const reportRows = list || [];
 

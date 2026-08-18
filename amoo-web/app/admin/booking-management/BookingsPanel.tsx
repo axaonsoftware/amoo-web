@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { serviceStyles, statusStyles, type ServiceKey } from "./data";
 import { api, type PageMeta } from "../../../lib/api";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import { sanitize } from "../../../lib/sanitize";
 import { errorMessage } from "../../../lib/errors";
@@ -162,6 +164,12 @@ export default function BookingsPanel() {
       .catch(() => {})
       .finally(() => setLoading(false));
   };
+
+  const { isRefreshing } = useAutoRefresh(reload);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
 

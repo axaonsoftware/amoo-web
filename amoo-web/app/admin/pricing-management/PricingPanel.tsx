@@ -8,6 +8,8 @@ import {
   Trash2 } from "lucide-react";
 import {  serviceTone,  planTypeTone  } from "./data";
 import {  api,  type PageMeta  } from "../../../lib/api";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import AdminModal, {  type ModalField  } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import {  exportCSV  } from "../shared/exportCSV";
@@ -250,6 +252,12 @@ export default function PricingPanel({
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const { isRefreshing } = useAutoRefresh(loadData);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const rows = list || [];
 

@@ -10,7 +10,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { ErrorState, Skeleton } from "../../components/states";
 import { formatCompact, formatNumber, toNumber } from "../../../lib/format";
 
@@ -70,8 +70,8 @@ function pctChange(current?: number, previous?: number): number | null {
  * aggregate genuinely provides. See WIRING_NOTES.md gap G8.
  */
 export default function StatsRow() {
-  const stats = useApi<PaymentStats>(() => api.admin.getPaymentStats());
-  const revenue = useApi<RevenueBucket[]>(() => api.admin.getRevenue("month"));
+  const stats = useAutoRefreshApi<PaymentStats>(() => api.admin.getPaymentStats(), [], 30_000);
+  const revenue = useAutoRefreshApi<RevenueBucket[]>(() => api.admin.getRevenue("month"), [], 30_000);
 
   const loading = stats.loading || revenue.loading;
   const error = stats.error || revenue.error;

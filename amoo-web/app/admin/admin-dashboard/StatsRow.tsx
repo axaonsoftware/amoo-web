@@ -9,13 +9,13 @@ import {
   Star,
   ArrowRight,
 } from "lucide-react";
-import { useApi } from "@/lib/useApi";
+import { useAutoRefreshApi } from "@/lib/useAutoRefreshApi";
 import { api } from "@/lib/api";
 
 const fmt = (n: number) => n.toLocaleString("en-IN");
 
 export default function StatsRow() {
-  const { data, loading, error } = useApi(() => api.admin.getOverview());
+  const { data, loading, error } = useAutoRefreshApi(() => api.admin.getOverview(), [], 30_000);
   const stats = (
     data as {
       stats?: {

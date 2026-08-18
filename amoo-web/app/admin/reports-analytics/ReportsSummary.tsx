@@ -1,7 +1,7 @@
 "use client";
 import { BarChart3, Sparkles, Hash, HandHeart, FileText } from "lucide-react";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { EmptyState, ErrorState, Skeleton } from "../../components/states";
 import { formatNumber, titleCase, toNumber } from "../../../lib/format";
 
@@ -67,8 +67,8 @@ function styleFor(type: string) {
 }
 
 export default function ReportsSummary() {
-  const { data, loading, error, refetch } = useApi<ReportTypeRow[]>(() =>
-    api.admin.getReportsByType(),
+  const { data, loading, error, refetch } = useAutoRefreshApi<ReportTypeRow[]>(() =>
+    api.admin.getReportsByType(), [], 30_000,
   );
 
   const rows = data ?? [];

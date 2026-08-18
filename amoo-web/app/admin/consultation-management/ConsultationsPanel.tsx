@@ -22,6 +22,8 @@ import {
   type StatusTone, 
   type TypeKey } from "./data";
 import {  api,  type PageMeta  } from "../../../lib/api";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import type { Booking } from "../../../lib/types";
 import {  sanitize  } from "../../../lib/sanitize";
 
@@ -120,8 +122,7 @@ export default function ConsultationsPanel() {
     };
   }, []);
 
-  useEffect(() => {
-    let cancelled = false;
+  const load = useCallback(() => {
     setLoading(true);
     setError("");
 
@@ -134,7 +135,6 @@ export default function ConsultationsPanel() {
     api.admin
       .getBookings(`?${q.toString()}`)
       .then((res: ListResponse<Booking> | Booking[]) => {
-        if (cancelled) return;
         const items = Array.isArray(res) ? res : (res?.data ?? []);
         const meta = Array.isArray(res) ? undefined : res?.meta;
         if (meta) setMeta({ total: meta.total, totalPages: meta.totalPages });
@@ -166,16 +166,24 @@ export default function ConsultationsPanel() {
         }
       })
       .catch((e) => {
-        if (!cancelled) setError(e.message);
+        setError(e.message);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        setLoading(false);
       });
-
-    return () => {
-      cancelled = true;
-    };
   }, [page, limit, debouncedSearch, status]);
+
+  useEffect(() => {
+    let cancelled = false;
+    load();
+    return () => { cancelled = true; };
+  }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const track = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) track.start(); else track.stop();
+  }, [isRefreshing, track]);
 
   const rows = list;
 

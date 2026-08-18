@@ -8,6 +8,8 @@ import { api, qs } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
 import { formatDate, initials } from "../../../lib/format";
 import { EmptyRow, ErrorRow, TableSkeletonRows } from "../../components/states";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 /**
  * Per-expert slot utilisation.
@@ -96,6 +98,12 @@ export default function AvailabilityTable() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const COLS = 7;
 

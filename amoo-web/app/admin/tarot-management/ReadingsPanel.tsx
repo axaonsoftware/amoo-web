@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -16,6 +16,8 @@ import {
 import { statusStyles, type StatusKey } from "./data";
 import { api, type PageMeta } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 type RawReport = {
   id: number;
@@ -97,7 +99,7 @@ export default function ReadingsPanel() {
   const [error, setError] = useState("");
   const [total, setTotal] = useState(0);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api.admin
       .getReports()
       .then((data: ListResponse<RawReport> | RawReport[]) => {
@@ -138,6 +140,14 @@ export default function ReadingsPanel() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const readingRows = list || [];
 

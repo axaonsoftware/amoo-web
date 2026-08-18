@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle } from "lucide-react";
 import { useApiList } from "../../../lib/useApi";
 import { api } from "../../../lib/api";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 const dayHeads = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -21,6 +22,7 @@ export default function RightPanel() {
     items: experts,
     loading,
     error,
+    isRefreshing,
   } = useApiList<{
     id: number;
     name: string;
@@ -32,7 +34,12 @@ export default function RightPanel() {
     booked_slots: number;
     available_slots: number;
     blocked_slots: number;
-  }>(() => api.admin.getSlotAvailability(), []);
+  }>(() => api.admin.getSlotAvailability(), [], 30_000);
+
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const expert = experts?.[0] ?? null;
   const now = new Date();

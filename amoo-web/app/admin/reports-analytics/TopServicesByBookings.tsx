@@ -1,6 +1,6 @@
 "use client";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { EmptyState, ErrorState, Skeleton } from "../../components/states";
 import { formatNumber, toNumber } from "../../../lib/format";
 
@@ -20,9 +20,9 @@ type TopService = {
  * list whenever the fetch returned nothing.
  */
 export default function TopServicesByBookings() {
-  const { data, loading, error, refetch } = useApi<{
+  const { data, loading, error, refetch } = useAutoRefreshApi<{
     topServices: TopService[];
-  }>(() => api.admin.getOverview());
+  }>(() => api.admin.getOverview(), [], 30_000);
 
   const services = data?.topServices ?? [];
   const max = services.reduce((m, s) => Math.max(m, toNumber(s.bookings)), 0);

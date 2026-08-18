@@ -6,7 +6,6 @@ import TodaysAppointments from "./TodaysAppointments";
 import TopAstrologers from "./TopAstrologers";
 import TopServices from "./TopServices";
 import WelcomeHeader from "./WelcomeHeader";
-import { PageViewTracker } from "../../components/PageViewTracker";
 
 export default function AdminDashboardPage() {
   return (
@@ -14,10 +13,6 @@ export default function AdminDashboardPage() {
       id="main-content"
       className="flex flex-col gap-5 px-4 py-5 sm:px-6 sm:py-6"
     >
-      <PageViewTracker
-        page="/admin/admin-dashboard"
-        meta={{ area: "admin-dashboard" }}
-      />
       <WelcomeHeader />
       <StatsRow />
 

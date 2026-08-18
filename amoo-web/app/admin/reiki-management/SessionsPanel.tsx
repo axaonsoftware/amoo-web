@@ -29,6 +29,8 @@ import ConfirmDialog from "../shared/ConfirmDialog";
 import { exportCSV } from "../shared/exportCSV";
 import { sanitize } from "../../../lib/sanitize";
 import { errorMessage } from "../../../lib/errors";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 const tabs = [
   { label: "All Sessions", active: true },
@@ -316,6 +318,12 @@ export default function SessionsPanel({
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  const { isRefreshing } = useAutoRefresh(loadData);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   const sessionRows = list || [];
 

@@ -9,7 +9,7 @@ import {
   ArrowUp,
 } from "lucide-react";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { ErrorState, Skeleton } from "../../components/states";
 import { formatNumber, formatTime, toNumber } from "../../../lib/format";
 
@@ -57,10 +57,10 @@ const DAY_NAMES = [
  * See WIRING_NOTES.md gap G9.
  */
 export default function QuickInsights() {
-  const patterns = useApi<Patterns>(() => api.admin.getBookingPatterns());
-  const overview = useApi<Overview>(() => api.admin.getOverview());
-  const trends = useApi<TrendBucket[]>(() =>
-    api.admin.getBookingsTrends("month"),
+  const patterns = useAutoRefreshApi<Patterns>(() => api.admin.getBookingPatterns(), [], 30_000);
+  const overview = useAutoRefreshApi<Overview>(() => api.admin.getOverview(), [], 30_000);
+  const trends = useAutoRefreshApi<TrendBucket[]>(() =>
+    api.admin.getBookingsTrends("month"), [], 30_000,
   );
 
   const loading = patterns.loading || overview.loading || trends.loading;

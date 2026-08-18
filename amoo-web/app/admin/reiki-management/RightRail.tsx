@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -16,6 +16,8 @@ import {
 import { api } from "../../../lib/api";
 import { sanitize } from "../../../lib/sanitize";
 import type { TopExpert } from "../../../lib/types";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 interface MasterRow {
   name: string;
@@ -43,7 +45,7 @@ export default function RightRail() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     setError(null);
     api.admin
@@ -64,6 +66,14 @@ export default function RightRail() {
       .catch((err) => setError(err?.message || "Failed to load top masters"))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-4 xl:w-[276px]">

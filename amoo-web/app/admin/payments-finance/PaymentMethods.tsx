@@ -1,6 +1,6 @@
 "use client";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { EmptyState, ErrorState, Skeleton } from "../../components/states";
 import { formatCurrency, titleCase, toNumber } from "../../../lib/format";
 
@@ -47,8 +47,8 @@ function label(method: string | null): string {
  * On an empty result it swapped in a hardcoded five-slice donut.
  */
 export default function PaymentMethods() {
-  const { data, loading, error, refetch } = useApi<PaymentStats>(() =>
-    api.admin.getPaymentStats(),
+  const { data, loading, error, refetch } = useAutoRefreshApi<PaymentStats>(() =>
+    api.admin.getPaymentStats(), [], 30_000,
   );
 
   const rows = (data?.by_method ?? [])

@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Users, CircleCheck, Clock, CircleX } from "lucide-react";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import { ErrorState, Skeleton } from "../../components/states";
 import { formatCurrency, toNumber } from "../../../lib/format";
 
@@ -27,8 +27,8 @@ type PaymentStats = {
  * the backend addition described in WIRING_NOTES.md gap G8.
  */
 export default function PayoutsSummary() {
-  const { data, loading, error, refetch } = useApi<PaymentStats>(() =>
-    api.admin.getPaymentStats(),
+  const { data, loading, error, refetch } = useAutoRefreshApi<PaymentStats>(() =>
+    api.admin.getPaymentStats(), [], 30_000,
   );
 
   const rows = [

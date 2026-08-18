@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
 import api from "../../../lib/api";
-import { useApi } from "../../../lib/useApi";
+import { useAutoRefreshApi } from "../../../lib/useAutoRefreshApi";
 import {
   EmptyState,
   ErrorState,
@@ -52,8 +52,8 @@ const HEADERS = [
  * schema does not record. Replaced with a real distinct-client count.
  */
 export default function TopPerformingAstrologers() {
-  const { data, loading, error, refetch } = useApi<TopExpert[]>(() =>
-    api.admin.getTopExperts(5),
+  const { data, loading, error, refetch } = useAutoRefreshApi<TopExpert[]>(() =>
+    api.admin.getTopExperts(5), [], 30_000,
   );
 
   const rows = data ?? [];

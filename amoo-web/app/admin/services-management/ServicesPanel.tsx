@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Search,
   ChevronDown,
@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { categoryTone, typeTone, type ServiceRow } from "./data";
 import { api } from "../../../lib/api";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal from "../shared/AdminModal";
 import { errorMessage } from "../../../lib/errors";
@@ -72,7 +74,7 @@ export default function ServicesPanel() {
     kind: "success" | "error";
   } | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api.admin
       .getServices()
       .then((data: ServicesResponse) => {
@@ -100,39 +102,20 @@ export default function ServicesPanel() {
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => { load(); }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
+
   const showToast = (msg: string, kind: "success" | "error" = "success") => {
     setToast({ msg, kind });
     setTimeout(() => setToast(null), 3000);
   };
 
-  const reload = () => {
-    setLoading(true);
-    api.admin
-      .getServices()
-      .then((data: ServicesResponse) => {
-        const items = data?.data ?? data;
-        if (data?.meta?.total) setTotal(data.meta.total);
-        if (Array.isArray(items) && items.length) {
-          setRows(
-            items.map((s: Service) => ({
-              id: s.id,
-              name: s.name,
-              sub: s.sub,
-              img: s.img,
-              category: s.category,
-              type: s.type,
-              price: `₹ ${Number(s.price).toLocaleString("en-IN")}`,
-              priceRaw: s.price,
-              duration: s.duration,
-              status: s.status,
-              bookings: s.bookings,
-            })),
-          );
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  };
+  const reload = load;
 
   const list = rows || [];
 

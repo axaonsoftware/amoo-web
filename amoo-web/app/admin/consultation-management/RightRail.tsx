@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +12,8 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { api } from "../../../lib/api";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import { sanitize } from "../../../lib/sanitize";
 import type { Booking } from "../../../lib/types";
 
@@ -84,7 +86,7 @@ export default function RightRail() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     setError(null);
     api.admin
@@ -107,6 +109,14 @@ export default function RightRail() {
       .catch((err) => setError(err?.message || "Failed to load schedule"))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   return (
     <div className="flex flex-col gap-4">

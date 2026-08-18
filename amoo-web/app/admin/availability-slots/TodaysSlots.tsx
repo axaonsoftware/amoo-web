@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   ArrowRight,
   Plus,
@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { api } from "../../../lib/api";
 import type { Slot } from "../../../lib/types";
+import { useAutoRefresh } from "../../../lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 type SlotLike = Omit<Slot, "status"> & { status: Slot["status"] | "break" };
 
@@ -59,7 +61,7 @@ export default function TodaysSlots() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true);
     api
       .getSlots()
@@ -83,9 +85,19 @@ export default function TodaysSlots() {
           );
         }
       })
-      .catch(() =>  setError("Failed to load slots. Please try again."))
+      .catch(() => setError("Failed to load slots. Please try again."))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   if (loading) {
     return (

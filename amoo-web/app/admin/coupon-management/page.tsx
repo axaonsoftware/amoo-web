@@ -5,6 +5,8 @@ import { Ticket, Plus, Pencil, Trash2, Search, X, Loader2 } from "lucide-react";
 import { api, qs, unwrapList } from "@/lib/api";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { sanitize } from "@/lib/sanitize";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 import AdminPageHeader, { AdminStats } from "../shared/AdminPageHeader";
 import { useToast } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
@@ -178,6 +180,12 @@ export default function CouponManagementPage() {
       .catch((e: Error) => setError(e?.message || "Failed to load coupons"))
       .finally(() => setLoading(false));
   }, [search, status]);
+
+  const { isRefreshing } = useAutoRefresh(load);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
 
   useEffect(() => {
     const t = setTimeout(load, search ? 300 : 0);
