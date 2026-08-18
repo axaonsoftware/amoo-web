@@ -4,7 +4,7 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AlertCircle } from "lucide-react";
-import { saveConsultationData } from "../lib/consultation-storage";
+import { saveConsultationData, loadConsultationData } from "../lib/consultation-storage";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
 import { ArrowRightIcon } from "../../components/home-icons";
@@ -21,6 +21,8 @@ function SelectDateTimeInner() {
   const searchParams = useSearchParams();
   const service = searchParams.get("service") || "Selected Service";
   const mode = searchParams.get("mode") || "Selected Mode";
+  const storedData = loadConsultationData();
+  const duration = storedData.duration || undefined;
 
   const now = new Date();
   // Default to tomorrow: the backend rejects bookings for today/past dates
@@ -160,6 +162,7 @@ function SelectDateTimeInner() {
               month={selectedMonth}
               year={selectedYear}
               time={selectedSlot}
+              duration={duration}
             />
           </div>
         </div>

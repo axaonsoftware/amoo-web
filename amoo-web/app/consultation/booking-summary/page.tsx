@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { RequireAuth } from "../../../lib/auth-context";
-import { loadConsultationData } from "../lib/consultation-storage";
+import { loadConsultationData, saveConsultationData } from "../lib/consultation-storage";
 import Link from "next/link";
 import {
   WHATSAPP_URL,
@@ -271,7 +271,12 @@ function BookingSummaryContent() {
   useEffect(() => {
     if (data.service) {
       resolveService(data.service)
-        .then((svc) => setServicePrice(svc.price))
+        .then((svc) => {
+          setServicePrice(svc.price);
+          if (svc.duration) {
+            saveConsultationData({ duration: svc.duration });
+          }
+        })
         .catch(() => {
           // Fallback: price will show as unavailable
         });
@@ -335,7 +340,7 @@ function BookingSummaryContent() {
       value: date ? `${date}\n${time} (IST)` : "—",
       error: validationErrors.date || validationErrors.time,
     },
-    { icon: Clock, label: "Duration", value: "60 Minutes" },
+    { icon: Clock, label: "Duration", value: data.duration || "N/A" },
   ];
 
   const BOOKING_OVERVIEW = [
@@ -363,7 +368,7 @@ function BookingSummaryContent() {
       value: time ? `${time} (IST)` : "—",
       error: validationErrors.time,
     },
-    { icon: Clock, label: "Duration", value: "60 Minutes" },
+    { icon: Clock, label: "Duration", value: data.duration || "N/A" },
   ];
 
   return (

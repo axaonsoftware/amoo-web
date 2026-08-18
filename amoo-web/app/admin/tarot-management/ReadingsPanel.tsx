@@ -125,7 +125,7 @@ export default function ReadingsPanel() {
                 type: r.type || "Full Reading",
                 date,
                 time,
-                duration: "60 mins",
+                duration: r.duration || "N/A",
                 status: "completed",
                 amount: "-",
                 payment: "Paid",

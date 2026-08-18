@@ -16,6 +16,7 @@ export default function SummaryCard({
   year,
   time,
   price,
+  duration,
 }: {
   service: string;
   mode: string;
@@ -24,6 +25,7 @@ export default function SummaryCard({
   year: number;
   time: string;
   price?: number;
+  duration?: string;
 }) {
   const dateObj = new Date(year, month, date);
   const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
@@ -34,7 +36,7 @@ export default function SummaryCard({
     { Icon: VideoLineIcon, label: "Mode", value: `${mode} Consultation` },
     { Icon: CalendarLineIcon, label: "Date", value: dateStr },
     { Icon: ClockLineIcon, label: "Time", value: `${time || "—"} (IST)` },
-    { Icon: HourglassIcon, label: "Duration", value: "60 Minutes" },
+    { Icon: HourglassIcon, label: "Duration", value: duration || "N/A" },
   ];
 
   return (

@@ -24,6 +24,7 @@ type BookingInfo = {
   time?: string;
   amount?: number;
   payment?: string;
+  duration?: string;
 };
 
 function BookingDetailsInner() {
@@ -91,10 +92,13 @@ function BookingDetailsInner() {
     : "\u2014";
   const ref = booking?.booking_ref || (bookingId ? `AG${bookingId}` : "\u2014");
 
+  const storedData = loadConsultationData();
+  const duration = booking?.duration || storedData.duration || "N/A";
+
   const rows = [
     { icon: Video, label: "Consultation Mode", value: md },
     { icon: CalendarDays, label: "Date & Time", value: dt },
-    { icon: Clock, label: "Duration", value: "60 Minutes" },
+    { icon: Clock, label: "Duration", value: duration },
     { icon: Hash, label: "Booking ID", value: ref },
     {
       icon: CreditCard,

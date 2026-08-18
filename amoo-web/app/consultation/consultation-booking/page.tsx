@@ -265,7 +265,12 @@ function BookingForm() {
     let live = true;
     resolveService(service)
       .then((row) => {
-        if (live) setSvcRow(row);
+        if (live) {
+          setSvcRow(row);
+          if (row.duration) {
+            saveConsultationData({ duration: row.duration });
+          }
+        }
       })
       .catch(() => {});
     return () => {
