@@ -1,4 +1,5 @@
 import { MessageSquare } from "lucide-react";
+import StartChatButton from "./StartChatButton";
 
 export default function PageHeader() {
   return (
@@ -11,7 +12,7 @@ export default function PageHeader() {
           />
         </span>
 
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <h1 className="font-display text-[30px] font-bold leading-[1.15] text-[#4c1d95]">
             Messages
           </h1>
@@ -19,6 +20,8 @@ export default function PageHeader() {
             Chat with your experts in real time.
           </p>
         </div>
+
+        <StartChatButton variant="icon" />
       </div>
     </section>
   );
