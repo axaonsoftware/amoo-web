@@ -114,7 +114,7 @@ export async function proxy(req: NextRequest) {
       const { payload } = await jwtVerify(token, key);
       if (pathname.startsWith("/admin") && payload.kind !== "admin")
         return redirectToLogin(req.url, pathname);
-      if (pathname.startsWith("/user-dashboard") && payload.kind !== "user")
+      if (pathname.startsWith("/user-dashboard") && payload.kind !== "user" && payload.kind !== "expert")
         return redirectToLogin(req.url, pathname);
       if (pathname.startsWith("/consultation") && payload.kind !== "user")
         return redirectToLogin(req.url, pathname);
