@@ -9,6 +9,7 @@ import { Playfair_Display, Poppins } from "next/font/google";
 // trivially bypassed. The file is kept at app/components/ContentProtection.tsx
 // if you want to revisit it; see docs/changes/019.
 import ErrorBoundary from "./components/ErrorBoundary";
+import { RouteChangeTracker } from "./components/RouteChangeTracker";
 import { AuthProvider } from "../lib/auth-context";
 import { SITE_NAME } from "../lib/constants";
 import "./globals.css";
@@ -108,6 +109,7 @@ export default async function RootLayout({
           Skip to main content
         </a>
         <AuthProvider>
+          <RouteChangeTracker />
           <ErrorBoundary>{children}</ErrorBoundary>
         </AuthProvider>
       </body>

@@ -510,6 +510,8 @@ export const api = {
   logActivity: (body: {
     action: string;
     action_details?: any;
+    entity?: string;
+    entity_id?: number;
     page_or_route?: string;
   }) => request("POST", "/api/activity/log", body),
 

@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { HomeHeader, OfferBar } from "./components/home-header";
 import { TestimonialsSection } from "./components/TestimonialsSection";
-import { PageViewTracker } from "./components/PageViewTracker";
 import { SiteFooter } from "./components/site-footer";
 import { WHATSAPP_URL, SITE_NAME } from "../lib/constants";
 import {
@@ -282,7 +281,6 @@ function Heading({
 export default function Home() {
   return (
     <>
-      <PageViewTracker page="/" meta={{ page: "home" }} />
       <OfferBar />
 
       <main id="main-content" className="flex-1 bg-white">

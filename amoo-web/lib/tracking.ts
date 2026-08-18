@@ -15,12 +15,13 @@ import api from "./api";
  * could only ever render "No activity recorded yet".
  *
  * `api.logActivity` also supplies `credentials: "include"` and the single-flight
- * 401→refresh→retry, neither of which the bare fetch had.
+ * 401->refresh->retry, neither of which the bare fetch had.
  */
 export function trackEvent(
   action: string,
   actionDetails?: Record<string, unknown>,
   pageOrRoute?: string,
+  options?: { entity?: string; entityId?: number },
 ): void {
   if (typeof window === "undefined") return;
 
@@ -28,6 +29,8 @@ export function trackEvent(
     .logActivity({
       action,
       ...(actionDetails ? { action_details: actionDetails } : {}),
+      ...(options?.entity ? { entity: options.entity } : {}),
+      ...(options?.entityId != null ? { entity_id: options.entityId } : {}),
       page_or_route: pageOrRoute || window.location.pathname,
     })
     .catch((err) => {
@@ -43,8 +46,9 @@ export function useTrackActivity() {
       action: string,
       actionDetails?: Record<string, unknown>,
       pageOrRoute?: string,
+      options?: { entity?: string; entityId?: number },
     ) => {
-      trackEvent(action, actionDetails, pageOrRoute);
+      trackEvent(action, actionDetails, pageOrRoute, options);
     },
     [],
   );
