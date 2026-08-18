@@ -158,9 +158,7 @@ export default function BlogPage() {
   const [newsletterSubmitted, setNewsletterSubmitted] = useState(false);
 
   const [articles, setArticles] = useState<BlogArticle[]>([]);
-  const [featuredArticle, setFeaturedArticle] = useState<BlogArticle | null>(
-    null,
-  );
+  const [featuredArticle] = useState<BlogArticle | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalFromApi, setTotalFromApi] = useState(0);
   const [totalPagesFromApi, setTotalPagesFromApi] = useState(1);

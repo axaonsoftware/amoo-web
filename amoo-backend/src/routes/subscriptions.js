@@ -146,13 +146,25 @@ router.patch(
 // Shared expire logic (used by both the HTTP endpoint and the cron job).
 // Returns { expired: number } so callers can log or respond accordingly.
 async function expireSubscriptions() {
-  const { rows: expired } = await pool.query(
-    "SELECT id, user_id FROM subscriptions WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW()"
-  );
-if (expired.length) {
-    const ids = expired.map((e) => e.id);
+  const BATCH_SIZE = 1000;
+  let totalExpired = 0;
+  let allUserIds = [];
+
+  for (;;) {
+    const { rows: batch } = await pool.query(
+      "SELECT id, user_id FROM subscriptions WHERE status = 'active' AND expires_at IS NOT NULL AND expires_at < NOW() LIMIT $1",
+      [BATCH_SIZE]
+    );
+    if (!batch.length) break;
+
+    const ids = batch.map((e) => e.id);
     await pool.query("UPDATE subscriptions SET status = 'expired' WHERE id = ANY($1::int[])", [ids]);
-    const userIds = [...new Set(expired.map((e) => e.user_id))];
+    allUserIds.push(...batch.map((e) => e.user_id));
+    totalExpired += batch.length;
+  }
+
+  if (allUserIds.length) {
+    const userIds = [...new Set(allUserIds)];
     const { rows: [{ keepActive }] } = await pool.query(
       "SELECT COUNT(DISTINCT user_id)::int AS keepActive FROM subscriptions WHERE user_id = ANY($1::int[]) AND status = 'active'",
       [userIds]
@@ -164,7 +176,7 @@ if (expired.length) {
       );
     }
   }
-  return { expired: expired.length };
+  return { expired: totalExpired };
 }
 
 // POST /api/subscriptions/expire  (cron: mark expired subs, downgrade users)

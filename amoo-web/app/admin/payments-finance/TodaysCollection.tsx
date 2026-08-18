@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Wallet, ArrowUp, Loader2, AlertCircle } from "lucide-react";
+import { Wallet,  Loader2, AlertCircle } from "lucide-react";
 import api from "../../../lib/api";
 import type { Payment } from "../../../lib/types";
 import { errorMessage } from "../../../lib/errors";

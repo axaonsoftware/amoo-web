@@ -1,22 +1,17 @@
 "use client";
 
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import {
-  Search,
-  ChevronDown,
-  SlidersHorizontal,
-  Eye,
-  Pencil,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import { serviceTone, planTypeTone } from "./data";
-import { api, type PageMeta } from "../../../lib/api";
-import AdminModal, { type ModalField } from "../shared/AdminModal";
+import {  memo,  useCallback,  useEffect,  useRef,  useState  } from "react";
+import { 
+  Search, 
+  SlidersHorizontal, 
+  Pencil, 
+  Trash2 } from "lucide-react";
+import {  serviceTone,  planTypeTone  } from "./data";
+import {  api,  type PageMeta  } from "../../../lib/api";
+import AdminModal, {  type ModalField  } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
-import { exportCSV } from "../shared/exportCSV";
-import { errorMessage } from "../../../lib/errors";
+import {  exportCSV  } from "../shared/exportCSV";
+import {  errorMessage  } from "../../../lib/errors";
 
 type RawPackage = {
   id: number;
@@ -61,8 +56,7 @@ const allTabs = [
   { label: "Offers & Coupons" },
 ];
 
-const planTypes = ["All Plan Types", "Subscription", "One-time"];
-const statuses = ["All Status", "Active", "Inactive"];
+
 
 const PAGE_SIZE = 10;
 
@@ -159,12 +153,12 @@ export default function PricingPanel({
 }: {
   onReady?: (fns: { openCreate: () => void; exportData: () => void }) => void;
 } = {}) {
-  const [rawList, setRawList] = useState<RawPackage[]>([]);
+  const [, setRawList] = useState<RawPackage[]>([]);
   const [list, setList] = useState<Row[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [total, setTotal] = useState(0);
-  const [services, setServices] = useState<string[]>([]);
+  const [, setTotal] = useState(0);
+  const [, setServices] = useState<string[]>([]);
 
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(0);
@@ -396,10 +390,7 @@ export default function PricingPanel({
   // every single render, handing the parent toolbar new closures each time.
   useEffect(() => {
     onReady?.({ openCreate: handleOpenAdd, exportData: handleExport });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleOpenAdd and
-    // handleExport are redefined every render; depending on them would restore
-    // the every-render loop this fix removes. They close over state that is
-    // only read when the user clicks, so a stable identity is not required.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onReady]);
 
   const modalFields: ModalField[] = [

@@ -3,10 +3,10 @@
 import { AlertTriangle } from "lucide-react";
 
 export default function Error({
-  _error,
+  error,
   reset,
 }: {
-  _error: Error & { digest?: string };
+  error: Error & { digest?: string };
   reset: () => void;
 }) {
   return (
@@ -20,6 +20,11 @@ export default function Error({
         </h2>
         <p className="max-w-sm text-sm text-[#6c6b78]">
           We hit an unexpected snag. Please try again.
+          {error?.digest && (
+            <span className="mt-2 block text-xs text-[#6c6b78]/60">
+              Reference: {error.digest}
+            </span>
+          )}
         </p>
         <button
           onClick={reset}

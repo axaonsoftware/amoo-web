@@ -1,36 +1,33 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import {  useState,  useCallback,  useRef  } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { HomeHeader, OfferBar } from "../../components/home-header";
-import {
-  ArrowRightIcon,
-  CalendarIcon,
-  LotusSolidIcon,
-} from "../../components/home-icons";
-import { WHATSAPP_URL, CONTACT_EMAIL, SITE_NAME } from "../../../lib/constants";
-import {
-  ClockIcon,
-  SendIcon,
-  ChevronRightIcon,
-  EyeIcon,
-  FacebookIcon,
-  TwitterIcon,
-  WhatsAppIcon,
-  LinkIcon,
-  CheckCircleIcon,
-  SearchIcon,
-  PhoneIcon,
-  MailIcon,
-  MapPinIcon,
-  InstagramIcon,
-  YoutubeIcon,
-  BookOpenIcon,
-  StarIcon,
-  HeartIcon,
-  CheckCircleFilledIcon,
-} from "./icons";
+import {  HomeHeader,  OfferBar  } from "../../components/home-header";
+import { 
+  CalendarIcon, 
+  LotusSolidIcon } from "../../components/home-icons";
+import {  WHATSAPP_URL,  CONTACT_EMAIL,  SITE_NAME  } from "../../../lib/constants";
+import { 
+  ClockIcon, 
+  SendIcon, 
+  ChevronRightIcon, 
+  EyeIcon, 
+  FacebookIcon, 
+  TwitterIcon, 
+  WhatsAppIcon, 
+  LinkIcon, 
+  CheckCircleIcon, 
+  SearchIcon, 
+  PhoneIcon, 
+  MailIcon, 
+  MapPinIcon, 
+  InstagramIcon, 
+  YoutubeIcon, 
+  BookOpenIcon, 
+  StarIcon, 
+  HeartIcon, 
+  CheckCircleFilledIcon } from "./icons";
 
 /* ---------------- Data ---------------- */
 

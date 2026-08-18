@@ -145,7 +145,7 @@ jobs:
       # dependency (adding multiple MB) will.
       - name: Check bundle size
         run: |
-          MAX_SIZE=5000000
+          MAX_SIZE=2000000
           STATS=$(find .next/static -name '*.js' 2>/dev/null | xargs -I{} wc -c {} 2>/dev/null | awk '{total += $1} END {print total}')
           echo "Total JS bundle size: $STATS bytes (limit: $MAX_SIZE)"
           if [ "$STATS" -gt "$MAX_SIZE" ]; then

@@ -1,39 +1,36 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import {  usePathname  } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { SidebarShell } from "@/app/components/sidebar-shell";
-import {
-  Home,
-  User,
-  UserCog,
-  CalendarDays,
-  CalendarCheck,
-  CreditCard,
-  BarChart3,
-  LayoutGrid,
-  HandHeart,
-  GraduationCap,
-  FileText,
-  Tag,
-  Bell,
-  Settings,
-  ScrollText,
-  ShieldCheck,
-  HelpCircle,
-  ChevronRight,
-  Flower2,
-  Gift,
-  Orbit,
-  Layers,
-  Package,
-  Ticket,
-  Inbox,
-  MessageSquareQuote,
-  CalendarClock,
-  LogOut,
-} from "lucide-react";
+import {  SidebarShell  } from "@/app/components/sidebar-shell";
+import { 
+  Home, 
+  User, 
+  UserCog, 
+  CalendarDays, 
+  CalendarCheck, 
+  CreditCard, 
+  BarChart3, 
+  LayoutGrid, 
+  HandHeart, 
+  FileText, 
+  Tag, 
+  Bell, 
+  ScrollText, 
+  ShieldCheck, 
+  HelpCircle, 
+  ChevronRight, 
+  Flower2, 
+  Gift, 
+  Orbit, 
+  Layers, 
+  Package, 
+  Ticket, 
+  Inbox, 
+  MessageSquareQuote, 
+  CalendarClock, 
+  LogOut } from "lucide-react";
 
 const nav: {
   label: string;

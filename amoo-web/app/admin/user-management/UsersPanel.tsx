@@ -1,29 +1,26 @@
 "use client";
 
 import Image from "next/image";
-import { memo, useCallback, useEffect, useRef, useState } from "react";
-import {
-  Search,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal,
-  Check,
-  Eye,
-  MoreVertical,
-  Loader2,
-  Pencil,
-  Trash2,
-  Ban,
-} from "lucide-react";
-import { roleStyles, statusStyles, type RoleKey, type StatusKey } from "./data";
-import { api, qs, unwrapList, unwrapMeta } from "../../../lib/api";
-import { EmptyRow, ErrorRow, TableSkeletonRows } from "../../components/states";
-import { useToast } from "../shared/useToast";
+import {  memo,  useCallback,  useEffect,  useRef,  useState  } from "react";
+import { 
+  Search, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  SlidersHorizontal, 
+  Check, 
+  Loader2, 
+  Pencil, 
+  Trash2, 
+  Ban } from "lucide-react";
+import {  roleStyles,  statusStyles,  type RoleKey,  type StatusKey  } from "./data";
+import {  api,  qs,  unwrapList,  unwrapMeta  } from "../../../lib/api";
+import {  EmptyRow,  ErrorRow,  TableSkeletonRows  } from "../../components/states";
+import {  useToast  } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
-import AdminModal, { type ModalField } from "../shared/AdminModal";
-import { sanitize } from "../../../lib/sanitize";
-import { errorMessage } from "../../../lib/errors";
+import AdminModal from "../shared/AdminModal";
+import {  sanitize  } from "../../../lib/sanitize";
+import {  errorMessage  } from "../../../lib/errors";
 import type { User } from "../../../lib/types";
 
 // Each tab is a preset over the filters `GET /api/users` actually parses:

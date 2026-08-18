@@ -25,7 +25,7 @@ const securityHeaders = [
   // browsers ignore HSTS from non-secure origins.
   {
     key: "Strict-Transport-Security",
-    value: "max-age=31536000; includeSubDomains; preload",
+    value: "max-age=63072000; includeSubDomains; preload",
   },
 ];
 

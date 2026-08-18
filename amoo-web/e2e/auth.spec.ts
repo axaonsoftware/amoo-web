@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 
 // E2E for the primary user sign-in path: route protection redirect, a
 // successful login through the real UI, and a rejected login for bad

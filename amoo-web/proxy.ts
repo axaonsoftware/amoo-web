@@ -3,13 +3,13 @@ import { jwtVerify } from "jose";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
-// Without a secret we can't verify tokens — block access to
-// protected routes with a 503. Set JWT_SECRET in .env.local
-// (same value as the backend's JWT_SECRET).
+// Without a secret we can't verify tokens — refuse to start in production.
+// Set JWT_SECRET in .env.local (same value as the backend's JWT_SECRET).
 if (!JWT_SECRET && process.env.NODE_ENV === "production") {
   console.error(
-    "CRITICAL: JWT_SECRET is not set. Route protection is DISABLED.",
+    "FATAL: JWT_SECRET is not set. Refusing to start in production.",
   );
+  process.exit(1);
 }
 const key = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
 

@@ -16,11 +16,11 @@ router.get(
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const { rows: [{ total }] } = await pool.query(
-      "SELECT COUNT(*) AS total FROM notifications WHERE (user_id = $1 OR user_id IS NULL)",
+      "SELECT (SELECT COUNT(*) FROM notifications WHERE user_id = $1) + (SELECT COUNT(*) FROM notifications WHERE user_id IS NULL) AS total",
       [req.user.id]
     );
     const { rows } = await pool.query(
-      "SELECT * FROM notifications WHERE (user_id = $1 OR user_id IS NULL) ORDER BY created_at DESC LIMIT $2 OFFSET $3",
+      "(SELECT * FROM notifications WHERE user_id = $1 UNION ALL SELECT * FROM notifications WHERE user_id IS NULL) AS combined ORDER BY created_at DESC LIMIT $2 OFFSET $3",
       [req.user.id, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -33,7 +33,7 @@ router.get(
   authRequired,
   asyncHandler(async (req, res) => {
     const { rows } = await pool.query(
-      "SELECT COUNT(*) AS count FROM notifications WHERE (user_id = $1 OR user_id IS NULL) AND is_read = false",
+      "SELECT (SELECT COUNT(*) FROM notifications WHERE user_id = $1 AND is_read = false) + (SELECT COUNT(*) FROM notifications WHERE user_id IS NULL AND is_read = false) AS count",
       [req.user.id]
     );
     ok(res, rows[0]);

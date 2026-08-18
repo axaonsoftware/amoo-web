@@ -81,6 +81,13 @@ services:
     image: ${REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-axaonsoftware/amoo-web}/frontend:${IMAGE_TAG:-latest}
     container_name: amoo_frontend
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          memory: 512M
     depends_on:
       backend:
         condition: service_healthy
@@ -107,6 +114,13 @@ services:
     image: ${REGISTRY:-ghcr.io}/${GITHUB_REPOSITORY:-axaonsoftware/amoo-web}/backend:${IMAGE_TAG:-latest}
     container_name: amoo_backend
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+        reservations:
+          memory: 512M
     depends_on:
       db:
         condition: service_healthy
@@ -156,6 +170,13 @@ services:
     image: postgres:16
     container_name: amoo_db
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 4G
+        reservations:
+          memory: 1G
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}

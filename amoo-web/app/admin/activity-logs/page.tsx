@@ -1,17 +1,15 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import {
-  ScrollText,
-  Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  Loader2,
-  RefreshCw,
-  X,
-} from "lucide-react";
-import { api } from "@/lib/api";
+import {  useState,  useEffect,  useCallback  } from "react";
+import { 
+  ScrollText, 
+  Search, 
+  ChevronLeft, 
+  ChevronRight, 
+  Loader2, 
+  RefreshCw, 
+  X } from "lucide-react";
+import {  api  } from "@/lib/api";
 
 type ActivityItem = {
   id: number;

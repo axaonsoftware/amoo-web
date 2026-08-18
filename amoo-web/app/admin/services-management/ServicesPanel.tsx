@@ -15,7 +15,7 @@ import {
 import { categoryTone, typeTone, type ServiceRow } from "./data";
 import { api } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
-import AdminModal, { type ModalField } from "../shared/AdminModal";
+import AdminModal from "../shared/AdminModal";
 import { errorMessage } from "../../../lib/errors";
 import type { Decimal, Service } from "../../../lib/types";
 

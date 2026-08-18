@@ -1,15 +1,11 @@
 "use client";
-import { useState, useEffect } from "react";
-import {
-  Users,
-  CircleCheck,
-  CirclePause,
-  Star,
-  CalendarDays,
-  IndianRupee,
-  Loader2,
-} from "lucide-react";
-import { api } from "../../../lib/api";
+import { 
+  Users, 
+  CircleCheck, 
+  CirclePause, 
+  Star, 
+  CalendarDays, 
+  IndianRupee } from "lucide-react";
 import type { Expert } from "../../../lib/types";
 
 type StatsExpert = Expert & { sessions?: number; revenue?: number };

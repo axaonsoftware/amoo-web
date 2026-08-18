@@ -15,24 +15,29 @@ router.get(
   "/overview",
   adminRequired,
   asyncHandler(async (req, res) => {
-    const { rows: [{ total: users }] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE deleted_at IS NULL");
-    const { rows: [{ total: experts }] } = await pool.query("SELECT COUNT(*) AS total FROM experts WHERE status='active' AND deleted_at IS NULL");
-    const { rows: [{ total: services }] } = await pool.query("SELECT COUNT(*) AS total FROM services WHERE status='Active' AND deleted_at IS NULL");
-    const { rows: [bookings] } = await pool.query(
-      "SELECT COUNT(*) AS total, COALESCE(SUM(amount),0) AS revenue FROM bookings WHERE status != 'cancelled' AND payment = 'Paid'"
-    );
-    const { rows: [{ total: today }] } = await pool.query("SELECT COUNT(*) AS total FROM bookings WHERE date = CURRENT_DATE");
-    const { rows: [pendingPayments] } = await pool.query(
-      "SELECT COALESCE(SUM(amount),0) AS amount FROM payments WHERE status = 'pending'"
-    );
-    const { rows: topServices } = await pool.query(
-      "SELECT id, name, bookings, price FROM services WHERE deleted_at IS NULL ORDER BY bookings DESC LIMIT 5"
-    );
-    const { rows: recent } = await pool.query(
-      `SELECT b.booking_ref, u.name AS user_name, s.name AS service_name, b.amount, b.status, b.date
-       FROM bookings b JOIN users u ON u.id=b.user_id JOIN services s ON s.id=b.service_id
-       ORDER BY b.created_at DESC LIMIT 8`
-    );
+    const [
+      { rows: [{ total: users }] },
+      { rows: [{ total: experts }] },
+      { rows: [{ total: services }] },
+      { rows: [bookings] },
+      { rows: [{ total: today }] },
+      { rows: [pendingPayments] },
+      { rows: topServices },
+      { rows: recent },
+    ] = await Promise.all([
+      pool.query("SELECT COUNT(*) AS total FROM users WHERE deleted_at IS NULL"),
+      pool.query("SELECT COUNT(*) AS total FROM experts WHERE status='active' AND deleted_at IS NULL"),
+      pool.query("SELECT COUNT(*) AS total FROM services WHERE status='Active' AND deleted_at IS NULL"),
+      pool.query("SELECT COUNT(*) AS total, COALESCE(SUM(amount),0) AS revenue FROM bookings WHERE status != 'cancelled' AND payment = 'Paid'"),
+      pool.query("SELECT COUNT(*) AS total FROM bookings WHERE date = CURRENT_DATE"),
+      pool.query("SELECT COALESCE(SUM(amount),0) AS amount FROM payments WHERE status = 'pending'"),
+      pool.query("SELECT id, name, bookings, price FROM services WHERE deleted_at IS NULL ORDER BY bookings DESC LIMIT 5"),
+      pool.query(
+        `SELECT b.booking_ref, u.name AS user_name, s.name AS service_name, b.amount, b.status, b.date
+         FROM bookings b JOIN users u ON u.id=b.user_id JOIN services s ON s.id=b.service_id
+         ORDER BY b.created_at DESC LIMIT 8`
+      ),
+    ]);
     ok(res, {
       stats: {
         users,

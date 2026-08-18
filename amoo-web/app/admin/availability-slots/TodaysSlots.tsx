@@ -83,7 +83,7 @@ export default function TodaysSlots() {
           );
         }
       })
-      .catch((err) => setError("Failed to load slots. Please try again."))
+      .catch(() =>  setError("Failed to load slots. Please try again."))
       .finally(() => setLoading(false));
   }, []);
 

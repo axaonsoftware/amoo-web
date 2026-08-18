@@ -6,6 +6,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
 import { useRouter } from "next/navigation";
 import api from "./api";
@@ -60,12 +61,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(userData);
   }, []);
 
+  const userRef = useRef<User | null>(null);
+  useEffect(() => {
+    userRef.current = user;
+  });
+
   const logout = useCallback(() => {
-    const wasExpert = user?.kind === "expert";
+    const wasExpert = userRef.current?.kind === "expert";
     api.logout().catch(() => {});
     setUser(null);
     router.push(wasExpert ? "/astrologer-login" : "/user-login");
-  }, [router, user]);
+  }, [router]);
 
   return (
     <AuthContext.Provider
@@ -103,7 +109,13 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     }
   }, [loading, isAuthenticated, router, pathname]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9b85c] border-t-transparent" />
+      </div>
+    );
+  }
   if (!isAuthenticated) return null;
   return <>{children}</>;
 }
@@ -121,7 +133,13 @@ export function RequireAdmin({ children }: { children: React.ReactNode }) {
     }
   }, [loading, isAdmin, router, pathname]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9b85c] border-t-transparent" />
+      </div>
+    );
+  }
   if (!isAdmin) return null;
   return <>{children}</>;
 }
@@ -156,7 +174,13 @@ export function RequireExpert({
     fallbackPath,
   ]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#e9b85c] border-t-transparent" />
+      </div>
+    );
+  }
   if (!isAuthenticated) return null;
   if (!isExpert && !isAdmin) return null;
   return <>{children}</>;

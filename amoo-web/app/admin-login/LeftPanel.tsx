@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import { ShieldCheck, Shield, Users, CloudCog } from "lucide-react";
 
 export default function LeftPanel() {
   return (

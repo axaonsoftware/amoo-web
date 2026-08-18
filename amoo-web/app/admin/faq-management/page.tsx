@@ -1,17 +1,16 @@
 "use client";
 
-import { memo, useCallback, useState, useEffect } from "react";
-import Link from "next/link";
-import {
-  ChevronRight,
-  HelpCircle,
-  Plus,
-  Pencil,
-  Trash2,
-  Search,
-  X,
-} from "lucide-react";
-import { api } from "@/lib/api";
+import {  memo,  useCallback,  useState,  useEffect  } from "react";
+
+import { 
+  ChevronRight, 
+  HelpCircle, 
+  Plus, 
+  Pencil, 
+  Trash2, 
+  Search, 
+  X } from "lucide-react";
+import {  api  } from "@/lib/api";
 
 interface Faq {
   id: number;
@@ -158,7 +157,7 @@ export default function FaqManagementPage() {
       }
       setShowForm(false);
       loadFaqs();
-    } catch (err) {
+    } catch {
       alert("Failed to save FAQ. Please try again.");
     }
   };

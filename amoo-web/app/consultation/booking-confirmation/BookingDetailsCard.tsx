@@ -54,7 +54,7 @@ function BookingDetailsInner() {
       .then((data: BookingInfo) => {
         if (data) setBooking(data);
       })
-      .catch((err: unknown) =>
+      .catch(() => 
         setError("Failed to load booking details. Please try again."),
       )
       .finally(() => setLoading(false));
@@ -87,13 +87,6 @@ function BookingDetailsInner() {
         day: "numeric",
         month: "long",
         year: "numeric",
-      })
-    : "\u2014";
-  const tm = booking?.time
-    ? new Date("2000-01-01T" + booking.time).toLocaleTimeString("en-IN", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
       })
     : "\u2014";
   const ref = booking?.booking_ref || (bookingId ? `AG${bookingId}` : "\u2014");

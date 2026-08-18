@@ -3,9 +3,7 @@
 import { AlertTriangle } from "lucide-react";
 
 export default function Error({
-  _error,
-  reset,
-}: {
+  reset, }: {
   _error: Error & { digest?: string };
   reset: () => void;
 }) {

@@ -63,7 +63,7 @@ router.get(
     const { rows: [{ total }] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE deleted_at IS NULL");
     const { rows: [active] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE status='active' AND deleted_at IS NULL");
     const { rows: [premium] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE role='premium' AND deleted_at IS NULL");
-    const { rows: [today] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE DATE(created_at) = CURRENT_DATE");
+    const { rows: [today] } = await pool.query("SELECT COUNT(*) AS total FROM users WHERE created_at >= CURRENT_DATE AND created_at < CURRENT_DATE + INTERVAL '1 day'");
     const { rows: byRole } = await pool.query(
       "SELECT role, COUNT(*) AS count FROM users WHERE deleted_at IS NULL GROUP BY role"
     );

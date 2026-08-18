@@ -515,9 +515,7 @@ export default function SessionsPanel({
   // not-yet-initialised binding, and re-running on every render.
   useEffect(() => {
     onReady?.({ openCreate: handleOpenAdd, exportData: handleExport });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- see PricingPanel:
-    // these handlers are redefined each render, so depending on them restores
-    // the every-render loop. They read state only when invoked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onReady]);
 
   const handleEditSession = useCallback(

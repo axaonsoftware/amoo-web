@@ -78,10 +78,14 @@ export function useApi<T>(
   }, [...deps, nonce]);
 
   // Polling refreshes in the background — no spinner, so the list does not
-  // flash back to a skeleton every interval.
+  // flash back to a skeleton every interval. Pauses when the tab is hidden
+  // to avoid wasted bandwidth and battery on mobile.
   useEffect(() => {
     if (pollInterval <= 0) return;
-    const id = setInterval(() => run(false), pollInterval);
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      run(false);
+    }, pollInterval);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pollInterval, ...deps]);

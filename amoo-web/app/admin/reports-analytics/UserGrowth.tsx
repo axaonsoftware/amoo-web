@@ -23,7 +23,7 @@ type GrowthPoint = {
 export default function UserGrowth() {
   const [users, setUsers] = useState(fallbackUsers);
   const [total, setTotal] = useState("18,542");
-  const [growth, setGrowth] = useState("21.6%");
+  const [growth] = useState("21.6%");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

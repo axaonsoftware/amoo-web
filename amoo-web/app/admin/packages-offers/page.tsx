@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { ChevronRight, Package, Upload, Plus } from "lucide-react";
 import StatsRow from "./StatsRow";
 import PackagesPanel from "./PackagesPanel";

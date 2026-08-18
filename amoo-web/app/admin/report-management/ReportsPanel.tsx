@@ -1,23 +1,20 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Search,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Trash2,
-  Loader2,
-  Plus,
-  Pencil,
-  Eye,
-} from "lucide-react";
-import { reportTypeStyles, statusStyles } from "./data";
-import { api, type PageMeta } from "../../../lib/api";
+import {  useCallback,  useEffect,  useMemo,  useRef,  useState  } from "react";
+import { 
+  Search, 
+  ChevronDown, 
+  ChevronLeft, 
+  ChevronRight, 
+  Trash2, 
+  Loader2, 
+  Pencil } from "lucide-react";
+import {  reportTypeStyles,  statusStyles  } from "./data";
+import {  api,  type PageMeta  } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
-import AdminModal, { type ModalField } from "../shared/AdminModal";
-import { exportCSV } from "../shared/exportCSV";
-import { sanitize } from "../../../lib/sanitize";
-import { errorMessage } from "../../../lib/errors";
+import AdminModal, {  type ModalField  } from "../shared/AdminModal";
+import {  exportCSV  } from "../shared/exportCSV";
+import {  sanitize  } from "../../../lib/sanitize";
+import {  errorMessage  } from "../../../lib/errors";
 import type { Report, User } from "../../../lib/types";
 
 const typeOptions = [
@@ -97,8 +94,7 @@ export default function ReportsPanel({
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
 
-  const [userList, setUserList] = useState<User[]>([]);
-  const [userSearch, setUserSearch] = useState("");
+  const [, setUserList] = useState<User[]>([]);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -162,17 +158,7 @@ export default function ReportsPanel({
       .catch(() => {});
   }, []);
 
-  const filteredUsers = useMemo(() => {
-    if (!userSearch.trim()) return userList.slice(0, 20);
-    const q = userSearch.toLowerCase();
-    return userList
-      .filter(
-        (u: User) =>
-          (u.name || "").toLowerCase().includes(q) ||
-          (u.email || "").toLowerCase().includes(q),
-      )
-      .slice(0, 20);
-  }, [userList, userSearch]);
+
 
   const openCreate = () => {
     setEditing(null);

@@ -1,33 +1,29 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  Search,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal,
-  Calendar,
-  Eye,
-  MoreVertical,
-  Grid2x2,
-  Layers,
-  Hash,
-  Compass,
-  Heart,
-  Briefcase,
-  SpellCheck,
-} from "lucide-react";
-import {
-  statusStyles,
-  typeStyles,
-  type StatusTone,
-  type TypeKey,
-} from "./data";
-import { api, type PageMeta } from "../../../lib/api";
+import {  useCallback,  useEffect,  useRef,  useState  } from "react";
+import { 
+  Search, 
+  ChevronLeft, 
+  ChevronRight, 
+  SlidersHorizontal, 
+  Eye, 
+  MoreVertical, 
+  Grid2x2, 
+  Layers, 
+  Hash, 
+  Compass, 
+  Heart, 
+  Briefcase, 
+  SpellCheck } from "lucide-react";
+import { 
+  statusStyles, 
+  typeStyles, 
+  type StatusTone, 
+  type TypeKey } from "./data";
+import {  api,  type PageMeta  } from "../../../lib/api";
 import type { Booking } from "../../../lib/types";
-import { sanitize } from "../../../lib/sanitize";
+import {  sanitize  } from "../../../lib/sanitize";
 
 type ListResponse<T> = { data?: T[]; meta?: PageMeta };
 

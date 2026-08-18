@@ -36,14 +36,16 @@ export default class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Console is the floor, not the goal: it at least surfaces in browser
-    // devtools and in any log-forwarding wrapper. Wire a real reporter here
-    // (Sentry, Datadog RUM, Bugsnag) — the call site is deliberately isolated
-    // so that is a one-line change. See the manual steps in
-    // docs/PRODUCTION_READINESS_REPORT.md.
     console.error("[ErrorBoundary]", error, info.componentStack);
-
-    // window.__errorReporter?.(error, info)   <- example integration point
+    try {
+      import("@sentry/nextjs").then((Sentry) => {
+        Sentry.captureException(error, {
+          contexts: { react: { componentStack: info.componentStack } },
+        });
+      });
+    } catch {
+      // Sentry not available — fall through silently
+    }
   }
 
   private reset = () => {
