@@ -467,9 +467,10 @@ export const api = {
       }),
     getMessages: (convId: number, query = "") =>
       request("GET", `/api/chat/conversations/${convId}/messages${query}`),
-    sendMessage: (convId: number, content: string) =>
+    sendMessage: (convId: number, content: string, clientId?: string) =>
       request("POST", `/api/chat/conversations/${convId}/messages`, {
         content,
+        ...(clientId ? { client_id: clientId } : {}),
       }),
     markRead: (convId: number) =>
       request("POST", `/api/chat/conversations/${convId}/read`),
