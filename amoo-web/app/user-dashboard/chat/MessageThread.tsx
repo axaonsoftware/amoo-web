@@ -3,18 +3,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 import { api } from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
 import type { WsHandle } from "@/lib/ws";
 
 type Message = {
-  id: number;
+  id: number | string;
   conversation_id: number;
   sender_type: string;
   sender_id: number;
   content: string;
   is_read: boolean;
   created_at: string;
+  client_id?: string;
+  status?: "pending" | "sent";
 };
 
 type ConversationMeta = {
@@ -170,26 +173,49 @@ export default function MessageThread({
       textareaRef.current.style.height = "auto";
     }
 
+    const clientId = uuidv4();
     const optimistic: Message = {
-      id: Date.now(),
+      id: clientId,
       conversation_id: conversationId,
       sender_type: myKind,
       sender_id: myId,
       content,
       is_read: false,
       created_at: new Date().toISOString(),
+      client_id: clientId,
+      status: "pending",
     };
     setMessages((prev) => [...prev, optimistic]);
     shouldAutoScroll.current = true;
 
     if (ws) {
-      ws.send({ type: "message", conversationId, content });
+      ws.send({ type: "message", conversationId, content, client_id: clientId });
     } else {
       setSending(true);
       try {
-        await api.chat.sendMessage(conversationId, content);
+        const res = (await api.chat.sendMessage(
+          conversationId,
+          content,
+          clientId,
+        )) as { id?: number } | undefined;
+        const serverId = res?.id;
+        if (serverId != null) {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.client_id === clientId
+                ? { ...msg, id: serverId, status: "sent" }
+                : msg,
+            ),
+          );
+        }
       } catch {
-        /* optimistic message stays */
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.client_id === clientId
+              ? { ...msg, status: "sent" }
+              : msg,
+          ),
+        );
       } finally {
         setSending(false);
       }
@@ -213,6 +239,23 @@ export default function MessageThread({
     ) => {
       if (msg.conversation_id === conversationId) {
         setMessages((prev) => {
+          if (msg.client_id) {
+            const idx = prev.findIndex(
+              (m) => m.client_id === msg.client_id && m.status === "pending",
+            );
+            if (idx !== -1) {
+              const updated = [...prev];
+              updated[idx] = {
+                ...updated[idx],
+                id: msg.id,
+                status: "sent",
+                is_read: msg.is_read,
+                created_at: msg.created_at,
+              };
+              shouldAutoScroll.current = true;
+              return updated;
+            }
+          }
           if (prev.some((m) => m.id === msg.id)) return prev;
           shouldAutoScroll.current = true;
           return [...prev, msg];
@@ -246,7 +289,7 @@ export default function MessageThread({
   const expertInitial = expertName?.charAt(0)?.toUpperCase() || "E";
 
   // Compute date separators without mutating during render
-  const dateSeparators = new Map<number, string>();
+  const dateSeparators = new Map<number | string, string>();
   {
     let lastDate = "";
     for (const msg of messages) {
