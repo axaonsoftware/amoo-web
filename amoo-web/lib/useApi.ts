@@ -7,6 +7,8 @@ export interface UseApiResult<T> {
   data: T | null;
   loading: boolean;
   error: string | null;
+  /** True while a background (polling) refresh is in-flight. False during the initial load — use `loading` for that. */
+  isRefreshing: boolean;
   /** Re-run the fetch. Wire this to the "Try again" button of an error state. */
   refetch: () => void;
   /** Local write, for optimistic updates. Overwritten by the next fetch. */
@@ -28,6 +30,7 @@ export function useApi<T>(
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [nonce, setNonce] = useState(0);
 
   // Bumped on every new fetch generation. A response whose generation is stale
@@ -47,6 +50,7 @@ export function useApi<T>(
   const run = useCallback((showSpinner: boolean) => {
     const gen = ++genRef.current;
     if (showSpinner) setLoading(true);
+    else setIsRefreshing(true);
     setError(null);
     fnRef
       .current()
@@ -61,6 +65,7 @@ export function useApi<T>(
       .finally(() => {
         if (gen !== genRef.current) return;
         setLoading(false);
+        setIsRefreshing(false);
       });
   }, []);
 
@@ -92,7 +97,7 @@ export function useApi<T>(
 
   const refetch = useCallback(() => setNonce((n) => n + 1), []);
 
-  return { data, loading, error, refetch, setData };
+  return { data, loading, error, isRefreshing, refetch, setData };
 }
 
 /**
@@ -109,7 +114,7 @@ export function useApiList<T>(
   meta: PageMeta | null;
   setData: React.Dispatch<React.SetStateAction<T[] | null>>;
 } {
-  const { data, loading, error, refetch, setData } = useApi<unknown>(
+  const { data, loading, error, isRefreshing, refetch, setData } = useApi<unknown>(
     fn,
     deps,
     pollInterval,
@@ -120,6 +125,7 @@ export function useApiList<T>(
     meta: unwrapMeta(data),
     loading,
     error,
+    isRefreshing,
     refetch,
     setData,
   };
