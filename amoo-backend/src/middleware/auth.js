@@ -56,6 +56,8 @@ setInterval(() => {
 
 function clearTokenVersionCache() { tvCache.clear(); }
 
+function invalidateTokenVersion(kind, id) { tvCache.delete(`${kind}:${id}`); }
+
 // Verify the token's embedded tokenVersion still matches the DB (revocation).
 async function checkTokenVersion(user) {
   if (user.tokenVersion === undefined) return true; // legacy tokens: trust
@@ -163,7 +165,8 @@ function expertRequired(req, res, next) {
 }
 
 // Attaches a `req.audit(action, entity, entityId, meta)` helper so route
-// handlers can record audit-log entries with the acting user filled in.
+// handlers can record audit-log entries with the acting user and full
+// request context (IP, user-agent, referer route) filled in automatically.
 function withAudit(req, res, next) {
   req.audit = (action, entity, entityId, meta) => {
     const actor = req.user || {};
@@ -174,6 +177,9 @@ function withAudit(req, res, next) {
       entity,
       entity_id: entityId ?? null,
       meta,
+      ip_address: req.ip || req.socket?.remoteAddress || null,
+      user_agent: req.headers["user-agent"] || null,
+      page_or_route: req.headers["referer"] || req.originalUrl || null,
     });
   };
   next();
@@ -193,4 +199,5 @@ module.exports = {
   withAudit,
   checkTokenVersion,
   clearTokenVersionCache,
+  invalidateTokenVersion,
 };

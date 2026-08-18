@@ -20,6 +20,7 @@ router.get(
     if (req.query.actor_type) { where += ` AND actor_type = $${++p}`; params.push(req.query.actor_type); }
     if (req.query.action) { where += ` AND action LIKE $${++p}`; params.push(`%${req.query.action}%`); }
     if (req.query.entity) { where += ` AND entity = $${++p}`; params.push(req.query.entity); }
+    if (req.query.entity_id) { where += ` AND entity_id = $${++p}`; params.push(req.query.entity_id); }
     if (req.query.date_from) { where += ` AND created_at >= $${++p}`; params.push(req.query.date_from); }
     if (req.query.date_to) { where += ` AND created_at <= $${++p}`; params.push(req.query.date_to + " 23:59:59"); }
     const resultCount = await pool.query(`SELECT COUNT(*) AS total FROM audit_log ${where}`, params);

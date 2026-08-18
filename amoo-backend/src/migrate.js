@@ -290,6 +290,20 @@ const { insertContentData } = require("./seed-content");
       await client.query(`CREATE INDEX ${name} ON ${table} (${col})`);
     }
 
+    // Composite indexes for audit_log query patterns
+    const compositeIndexes = [
+      ["idx_audit_actor_time", "audit_log", "actor_id, actor_type, created_at DESC"],
+      ["idx_audit_entity_id", "audit_log", "entity, entity_id"],
+    ];
+    for (const [name, table, cols] of compositeIndexes) {
+      const { rows } = await client.query(
+        "SELECT indexname AS index_name FROM pg_indexes WHERE schemaname = 'public' AND indexname = $1",
+        [name]
+      );
+      if (rows.length) continue;
+      await client.query(`CREATE INDEX ${name} ON ${table} (${cols})`);
+    }
+
     // ── Site content (idempotent default rows) ────────────────────────
     // Services, packages, coupons, testimonials, blogs and faqs are seeded
     // here so they exist in EVERY environment including production. Only

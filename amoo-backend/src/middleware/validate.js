@@ -440,6 +440,8 @@ const schemas = {
   activityLog: Joi.object({
     action: Joi.string().min(1).max(60).required(),
     action_details: Joi.object().max(30).unknown(true).default({}),
+    entity: optionalString.max(60),
+    entity_id: Joi.number().integer().positive().allow(null).optional(),
     page_or_route: optionalString.max(255),
   }),
 

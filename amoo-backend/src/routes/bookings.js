@@ -284,8 +284,10 @@ router.post(
       return fail(res, 409, `Cannot complete booking — status is "${booking.status}"`);
     }
 
-    if (req.user.kind !== "expert" || req.user.id !== booking.expert_id) {
-      return fail(res, 403, "Only the assigned expert can complete this booking");
+    if (req.user.kind === "admin") {
+      // Admin may complete any upcoming booking
+    } else if (req.user.kind !== "expert" || req.user.id !== booking.expert_id) {
+      return fail(res, 403, "Only the assigned expert or an admin can complete this booking");
     }
 
     if (new Date() < new Date(`${booking.date}T${booking.time}`)) {

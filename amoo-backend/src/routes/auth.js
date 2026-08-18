@@ -9,6 +9,7 @@ const {
   generateJti,
   verifyRefreshToken,
   authRequired,
+  invalidateTokenVersion,
 } = require("../middleware/auth");
 const { asyncHandler, HttpError, genOtp } = require("../utils/helpers");
 const { hashSecret, verifySecret } = require("../utils/secrets");
@@ -269,6 +270,7 @@ router.post(
     // (stolen or leaked), so we revoke every session for this account.
     if (payload.jti && rows[0].refresh_jti && payload.jti !== rows[0].refresh_jti) {
       await pool.query(`UPDATE ${table} SET token_version = token_version + 1, refresh_jti = NULL WHERE id = $1`, [payload.id]);
+      invalidateTokenVersion(payload.kind, payload.id);
       throw new HttpError(401, "Session revoked. Please login again.");
     }
 
@@ -295,6 +297,7 @@ router.post(
           `UPDATE ${table} SET token_version = token_version + 1, refresh_jti = NULL WHERE id = $1`,
           [payload.id]
         );
+        invalidateTokenVersion(payload.kind, payload.id);
       } catch {
         // Token already invalid/expired — nothing to revoke server-side.
       }
@@ -311,6 +314,7 @@ router.post(
   asyncHandler(async (req, res) => {
     const table = req.user.kind === "admin" ? "admins" : req.user.kind === "expert" ? "experts" : "users";
     await pool.query(`UPDATE ${table} SET token_version = token_version + 1, refresh_jti = NULL WHERE id = $1`, [req.user.id]);
+    invalidateTokenVersion(req.user.kind, req.user.id);
     clearAuthCookies(res);
     req.audit("logout-all", req.user.kind, req.user.id);
     ok(res, { message: "Logged out of all sessions" });

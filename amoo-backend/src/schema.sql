@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS payments (
   amount        DECIMAL(10,2) NOT NULL DEFAULT 0,
   method        VARCHAR(40),
   gateway       VARCHAR(40),
-  status        VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('success','pending','failed','refunded')),
+  status        VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('success','pending','failed','refunded','refund_pending')),
   txn_id        VARCHAR(120),
   gateway_order_id VARCHAR(255),
   -- Refund bookkeeping, written by POST /api/payments/:id/refund.
@@ -512,6 +512,8 @@ CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log (action);
 CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_log (entity);
 CREATE INDEX IF NOT EXISTS idx_audit_page ON audit_log (page_or_route);
 CREATE INDEX IF NOT EXISTS idx_audit_actor_type ON audit_log (actor_type);
+CREATE INDEX IF NOT EXISTS idx_audit_actor_time ON audit_log (actor_id, actor_type, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_audit_entity_id ON audit_log (entity, entity_id);
 CREATE INDEX IF NOT EXISTS idx_coupon_usage_coupon ON coupon_usages (coupon_id);
 CREATE INDEX IF NOT EXISTS idx_coupon_usage_booking ON coupon_usages (booking_id);
 CREATE INDEX IF NOT EXISTS idx_coupon_usage_user ON coupon_usages (user_id);
