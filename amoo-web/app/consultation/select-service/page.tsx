@@ -12,6 +12,7 @@ import Stepper from "./Stepper";
 import { WHATSAPP_URL } from "../../../lib/constants";
 import { saveConsultationData } from "../lib/consultation-storage";
 import { api } from "../../../lib/api";
+import StartChatButton from "../../user-dashboard/chat/StartChatButton";
 import {
   SearchIcon,
   ChevronDownIcon,
@@ -718,18 +719,20 @@ export default function SelectServicePage() {
                       Need Help Choosing?
                     </p>
                     <p className="mt-1 text-[11px] leading-[1.5] text-body">
-                      Chat with our expert on WhatsApp for personalized
-                      recommendation.
+                      Chat with our expert for personalized recommendation.
                     </p>
                   </div>
                 </div>
-                <a
-                  href={WHATSAPP_URL}
-                  className="mt-3 inline-flex h-[34px] items-center gap-2 rounded-lg bg-[#25D366] px-4 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_rgba(37,211,102,0.3)]"
-                >
-                  <WhatsAppIcon className="h-[16px] w-[16px]" />
-                  Chat Now
-                </a>
+                <div className="mt-3 flex flex-col gap-2">
+                  <StartChatButton variant="secondary" className="inline-flex h-[34px] w-full items-center justify-center gap-2 rounded-lg border border-[#c9b3e6] bg-white px-4 text-[12.5px] font-semibold text-[#5b21a8] shadow-none" />
+                  <a
+                    href={WHATSAPP_URL}
+                    className="inline-flex h-[34px] items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 text-[12.5px] font-semibold text-white shadow-[0_4px_12px_rgba(37,211,102,0.3)]"
+                  >
+                    <WhatsAppIcon className="h-[16px] w-[16px]" />
+                    Chat on WhatsApp
+                  </a>
+                </div>
               </div>
             </div>
           </div>
