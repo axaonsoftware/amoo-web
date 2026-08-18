@@ -235,12 +235,13 @@ describe("POST /api/bookings", () => {
     mockResolvedValue([{ token_version: 0 }]);                      // 0: checkTokenVersion (pool.query)
     mockResolvedValue([{ verified: 1 }]);                           // 1: verifiedRequired (pool.query)
     mockResolvedValue([{ }]);                                        // 2: BEGIN (client.query)
-    mockResolvedValue([{ id: 1, price: 100 }]);                     // 3: SELECT service price
-    mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// 4: SELECT slot FOR UPDATE
-    mockResolvedValue([]);                                          // 5: UPDATE slot → booked
-    mockResolvedValue([{ id: 1 }]);                                 // 6: INSERT booking RETURNING id
-    mockResolvedValue([{ }]);                                        // 7: COMMIT (client.query)
-    mockResolvedValue([{                                          // 8: SELECT created booking
+    mockResolvedValue([]);                                          // 3: idempotency pre-check -> none
+    mockResolvedValue([{ id: 1, price: 100 }]);                     // 4: SELECT service price
+    mockResolvedValue([{ id: 1, expert_id: 1, status: "available" }]);// 5: SELECT slot FOR UPDATE
+    mockResolvedValue([]);                                          // 6: UPDATE slot → booked
+    mockResolvedValue([{ id: 1 }]);                                 // 7: INSERT booking RETURNING id
+    mockResolvedValue([{ }]);                                        // 8: COMMIT (client.query)
+    mockResolvedValue([{                                          // 9: SELECT created booking
       id: 1, booking_ref: "BOOK-T", user_id: 1, service_id: 1,
       date: FUTURE_DATE, time: "10:00", amount: 100,
       payment: "Pending", status: "pending-payment",
@@ -286,8 +287,9 @@ describe("POST /api/bookings", () => {
     mockResolvedValue([{ token_version: 0 }]);                     // 0: checkTokenVersion
     mockResolvedValue([{ verified: 1 }]);                          // 1: verifiedRequired
     mockResolvedValue([{ }]);                                       // 2: BEGIN
-    mockResolvedValue([{ id: 1, price: 100 }]);                    // 3: SELECT service (price=100)
-    mockResolvedValue([{ }]);                                       // 4: ROLLBACK
+    mockResolvedValue([]);                                          // 3: idempotency pre-check -> none
+    mockResolvedValue([{ id: 1, price: 100 }]);                    // 4: SELECT service (price=100)
+    mockResolvedValue([{ }]);                                       // 5: ROLLBACK
 
     const res = await api("POST", "/api/bookings", {
       headers: { Authorization: `Bearer ${userToken}` },
