@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Calendar, Clock, BadgeCheck } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import StartChatButton from "./chat/StartChatButton";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -20,6 +21,7 @@ type Booking = {
   id: number;
   booking_ref: string;
   service_name: string;
+  expert_id: number | null;
   expert_name: string | null;
   date: string;
   time: string;
@@ -180,11 +182,16 @@ export default function UpcomingConsultation() {
         <span className="text-[12px] text-white/80">
           Booking {next.booking_ref}
         </span>
-        <span
-          className={`rounded-[8px] px-3 py-1.5 text-[12px] font-semibold ${paid ? "bg-[#e7f7ee] text-[#16a34a]" : "bg-[#fdf3e2] text-[#b7791f]"}`}
-        >
-          {paid ? "Paid" : "Pay Now"}
-        </span>
+        <div className="flex items-center gap-2">
+          {next.expert_id && (
+            <StartChatButton variant="icon" className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20" />
+          )}
+          <span
+            className={`rounded-[8px] px-3 py-1.5 text-[12px] font-semibold ${paid ? "bg-[#e7f7ee] text-[#16a34a]" : "bg-[#fdf3e2] text-[#b7791f]"}`}
+          >
+            {paid ? "Paid" : "Pay Now"}
+          </span>
+        </div>
       </div>
     </section>
   );
