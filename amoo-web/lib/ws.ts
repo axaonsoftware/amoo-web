@@ -24,11 +24,12 @@ export function connectChatWebSocket(
   handlers: Record<string, EventHandler>,
   token?: string,
 ): WsHandle {
-  const url = token
-    ? `${WS_URL}/chat?token=${token}`
-    : `${WS_URL}/chat`;
+  const url = `${WS_URL}/chat`;
 
-  const ws = new WebSocket(url);
+  // Pass the JWT via Sec-WebSocket-Protocol header instead of URL query string
+  // to avoid leaking the token in server logs, browser history, and Referer.
+  const protocols = token ? [token] : [];
+  const ws = new WebSocket(url, protocols);
 
   ws.onopen = () => {
     handlers.onOpen?.(null);

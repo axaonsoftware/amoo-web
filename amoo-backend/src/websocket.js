@@ -6,9 +6,11 @@ const env = require("./config/env");
 
 // Attach a WebSocket server to the existing HTTP server so that
 // ws connections share the same port as the Express API.
-// Clients connect with ws://host:port/chat and pass the access token
-// in the URL query string (?token=<jwt>) or as a cookie (the
-// browser automatically sends httpOnly cookies).
+// Clients connect with ws://host:port/chat and authenticate via:
+//   1. The Sec-WebSocket-Protocol header (token passed as subprotocol)
+//   2. The access_token cookie (browser sends it automatically on same-origin)
+// JWT in URL query strings is no longer accepted — it leaks tokens in
+// server logs, browser history, and Referer headers.
 function attachChat(server) {
   const wss = new WebSocketServer({
     server,
@@ -23,10 +25,12 @@ function attachChat(server) {
 
   wss.on("connection", async (ws, req) => {
     // Try to authenticate the connection. Accept either:
-    //   1. A Bearer token in the URL query string (?token=...)
-    //   2. The access_token cookie (browser sends it automatically).
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const token = url.searchParams.get("token") || req.headers.cookie?.match(/access_token=([^;]+)/)?.[1];
+    //   1. A token passed via the Sec-WebSocket-Protocol header
+    //   2. The access_token cookie (browser sends it automatically)
+    // JWT in URL query strings is rejected — they leak in logs and Referer.
+    const protoHeader = req.headers["sec-websocket-protocol"] || "";
+    const protocols = protoHeader.split(",").map((p) => p.trim());
+    const token = protocols[0] || req.headers.cookie?.match(/access_token=([^;]+)/)?.[1];
 
     if (!token) {
       ws.close(4001, "Authentication required");
