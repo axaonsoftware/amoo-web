@@ -24,6 +24,7 @@ type BookingParams = {
   mode: string;
   date: string;
   time: string;
+  slot_id?: number;
 };
 
 /**
@@ -45,7 +46,7 @@ function readParams(): BookingParams | null {
   const time = stored.time || url.get("time") || "";
 
   if (!service || !date || !time) return null;
-  return { service, mode: mode || "Video Call", date, time };
+  return { service, mode: mode || "Video Call", date, time, slot_id: stored.slot_id || undefined };
 }
 
 function ConsultationPaymentPageInner() {
@@ -133,7 +134,7 @@ function ConsultationPaymentPageInner() {
     );
   }
 
-  const { service, mode, date, time } = params;
+  const { service, mode, date, time, slot_id } = params;
   const price = svc?.price ?? 0;
   const discount = coupon?.discount ?? 0;
   const total = Math.max(0, Math.round((price - discount) * 100) / 100);
@@ -175,6 +176,7 @@ function ConsultationPaymentPageInner() {
           mode={mode}
           date={date}
           time={time}
+          slot_id={slot_id}
           svc={svc}
           coupon={coupon}
           total={total}
