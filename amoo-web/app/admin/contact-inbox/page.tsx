@@ -135,11 +135,6 @@ export default function ContactInboxPage() {
   // Any filter change invalidates the current page number.
   useEffect(() => setPage(1), [search, status]);
 
-  const openDetail = (c: Contact) => {
-    setSelected(c);
-    setReplyText(c.reply ?? "");
-  };
-
   const saveReply = async (nextStatus: Contact["status"]) => {
     if (!selected) return;
     setSaving(true);

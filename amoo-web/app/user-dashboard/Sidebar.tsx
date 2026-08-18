@@ -18,6 +18,7 @@ import {
   LogOut,
   Crown,
   ArrowRight,
+  MessageSquare,
 } from "lucide-react";
 
 const primaryNav = [
@@ -26,6 +27,11 @@ const primaryNav = [
     label: "My Consultations",
     Icon: CircleDot,
     href: "/user-dashboard/consultations-booking",
+  },
+  {
+    label: "Messages",
+    Icon: MessageSquare,
+    href: "/user-dashboard/chat",
   },
   { label: "My Reports", Icon: FileText, href: "/user-dashboard/my-reports" },
   {

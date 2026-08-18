@@ -82,12 +82,11 @@ router.get(
       SELECT c.*,
              u.name   AS user_name,   u.avatar AS user_avatar,
              e.name   AS expert_name, e.avatar AS expert_avatar,
-             (SELECT COUNT(*) FROM messages m
-               WHERE m.conversation_id = c.id AND m.is_read = false AND m.sender_type <> $1
-             ) AS unread_count
+             COUNT(CASE WHEN m.is_read = false AND m.sender_type <> $1 THEN 1 END) AS unread_count
       FROM conversations c
       JOIN users   u ON u.id = c.user_id
-      JOIN experts e ON e.id = c.expert_id`;
+      JOIN experts e ON e.id = c.expert_id
+      LEFT JOIN messages m ON m.conversation_id = c.id`;
 
     const viewerType = req.user.kind === "expert" ? "expert" : "user";
 
@@ -112,7 +111,7 @@ router.get(
       countParams
     );
     const { rows } = await pool.query(
-      `${base} ${selectWhere} ORDER BY c.last_message_at IS NULL, c.last_message_at DESC LIMIT $${selectParams.length + 1} OFFSET $${selectParams.length + 2}`,
+      `${base} ${selectWhere} GROUP BY c.id, u.name, u.avatar, e.name, e.avatar ORDER BY c.last_message_at IS NULL, c.last_message_at DESC LIMIT $${selectParams.length + 1} OFFSET $${selectParams.length + 2}`,
       [...selectParams, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });

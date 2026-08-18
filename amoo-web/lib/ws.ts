@@ -1,15 +1,34 @@
-// WebSocket connects directly to backend (not through Next.js rewrites)
+// WebSocket connects directly to backend (not through Next.js rewrites).
+// In production nginx proxies /chat to the backend on the same origin,
+// so the browser sends the httpOnly access_token cookie automatically.
+// In development set NEXT_PUBLIC_API_URL to match the backend origin.
 const WS_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
 ).replace(/^http/, "ws");
 
 type EventHandler = (data: unknown) => void;
 
+export interface WsHandle {
+  send: (data: unknown) => void;
+  close: () => void;
+}
+
+/**
+ * Open a chat WebSocket connection.
+ *
+ * @param handlers  Map of message `type` to handler.  Special keys:
+ *                  `onOpen`, `onError`, `onClose` are called on lifecycle events.
+ * @param token     Optional JWT.  If omitted the browser cookie is used.
+ */
 export function connectChatWebSocket(
-  token: string,
   handlers: Record<string, EventHandler>,
-): { send: (data: unknown) => void; close: () => void } {
-  const ws = new WebSocket(`${WS_URL}/chat?token=${token}`);
+  token?: string,
+): WsHandle {
+  const url = token
+    ? `${WS_URL}/chat?token=${token}`
+    : `${WS_URL}/chat`;
+
+  const ws = new WebSocket(url);
 
   ws.onopen = () => {
     handlers.onOpen?.(null);
@@ -23,7 +42,7 @@ export function connectChatWebSocket(
         handler(data);
       }
     } catch {
-      // Ignore non-JSON messages (e.g. pongs).
+      // Ignore non-JSON messages.
     }
   };
 
