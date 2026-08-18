@@ -26,6 +26,20 @@ type ConversationMeta = {
   user_avatar: string | null;
 };
 
+export type ChatMessage = {
+  id: number | string;
+  conversation_id: number;
+  sender_type: string;
+  sender_id: number;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  client_id?: string;
+};
+
+type AddMessageHandler = (msg: ChatMessage) => void;
+type UpdateReadHandler = (convId: number) => void;
+
 export default function ChatApp() {
   const { user } = useAuth();
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
@@ -36,6 +50,17 @@ export default function ChatApp() {
   const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttempts = useRef(0);
   const startWsRef = useRef<() => void>(() => {});
+
+  const addMessageRef = useRef<AddMessageHandler | null>(null);
+  const updateReadRef = useRef<UpdateReadHandler | null>(null);
+
+  const registerAddMessage = useCallback((handler: AddMessageHandler) => {
+    addMessageRef.current = handler;
+  }, []);
+
+  const registerUpdateRead = useCallback((handler: UpdateReadHandler) => {
+    updateReadRef.current = handler;
+  }, []);
 
   const startWs = useCallback(() => {
     const handle = connectChatWebSocket({
@@ -53,40 +78,21 @@ export default function ChatApp() {
           createdAt: string;
           client_id?: string;
         };
-        const addMsg = (window as unknown as Record<string, unknown>)
-          .__chatAddMessage as
-          | ((msg: {
-              id: number | string;
-              conversation_id: number;
-              sender_type: string;
-              sender_id: number;
-              content: string;
-              is_read: boolean;
-              created_at: string;
-              client_id?: string;
-            }) => void)
-          | undefined;
-        if (addMsg) {
-          addMsg({
-            id: msg.id,
-            conversation_id: msg.conversationId,
-            sender_type: msg.senderType,
-            sender_id: msg.senderId,
-            content: msg.content,
-            is_read: msg.isRead,
-            created_at: msg.createdAt,
-            client_id: msg.client_id,
-          });
-        }
+        addMessageRef.current?.({
+          id: msg.id,
+          conversation_id: msg.conversationId,
+          sender_type: msg.senderType,
+          sender_id: msg.senderId,
+          content: msg.content,
+          is_read: msg.isRead,
+          created_at: msg.createdAt,
+          client_id: msg.client_id,
+        });
         setUnreadRefresh((n) => n + 1);
       },
       read: (data: unknown) => {
         const msg = data as { conversationId: number };
-        const updateRead = (window as unknown as Record<string, unknown>)
-          .__chatUpdateRead as
-          | ((convId: number) => void)
-          | undefined;
-        if (updateRead) updateRead(msg.conversationId);
+        updateReadRef.current?.(msg.conversationId);
         setUnreadRefresh((n) => n + 1);
       },
       error: (data: unknown) => {
@@ -171,6 +177,8 @@ export default function ChatApp() {
             myKind={user?.kind ?? "user"}
             onBack={handleBack}
             ws={ws}
+            onRegisterHandlers={registerAddMessage}
+            onRegisterReadHandler={registerUpdateRead}
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center text-center">

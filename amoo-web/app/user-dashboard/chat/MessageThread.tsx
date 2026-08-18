@@ -7,18 +7,7 @@ import { v4 as uuidv4 } from "uuid";
 import { api } from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
 import type { WsHandle } from "@/lib/ws";
-
-type Message = {
-  id: number | string;
-  conversation_id: number;
-  sender_type: string;
-  sender_id: number;
-  content: string;
-  is_read: boolean;
-  created_at: string;
-  client_id?: string;
-  status?: "pending" | "sent";
-};
+import type { ChatMessage } from "./ChatApp";
 
 type ConversationMeta = {
   id: number;
@@ -63,7 +52,7 @@ function formatDate(iso: string): string {
 }
 
 function useMessages(conversationId: number) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const genRef = useRef(0);
@@ -77,11 +66,11 @@ function useMessages(conversationId: number) {
       .getMessages(conversationId)
       .then((res: unknown) => {
         if (gen !== genRef.current) return;
-        const d = res as { data?: Message[] };
+        const d = res as { data?: ChatMessage[] };
         const list = Array.isArray(d?.data)
           ? d.data
           : Array.isArray(res)
-            ? (res as Message[])
+            ? (res as ChatMessage[])
             : [];
         setMessages(list);
       })
@@ -114,6 +103,8 @@ export default function MessageThread({
   myKind,
   onBack,
   ws,
+  onRegisterHandlers,
+  onRegisterReadHandler,
 }: {
   conversationId: number;
   conversation: ConversationMeta;
@@ -121,6 +112,8 @@ export default function MessageThread({
   myKind: string;
   onBack: () => void;
   ws: WsHandle | null;
+  onRegisterHandlers: (handler: (msg: ChatMessage) => void) => void;
+  onRegisterReadHandler: (handler: (convId: number) => void) => void;
 }) {
   const { messages, setMessages, loading, error, refetch } =
     useMessages(conversationId);
@@ -174,7 +167,7 @@ export default function MessageThread({
     }
 
     const clientId = uuidv4();
-    const optimistic: Message = {
+    const optimistic: ChatMessage = {
       id: clientId,
       conversation_id: conversationId,
       sender_type: myKind,
@@ -232,11 +225,9 @@ export default function MessageThread({
     [handleSend],
   );
 
-  // Expose addMessage for parent (ChatApp) to call on WS message
+  // Register message handler with parent (ChatApp) via ref-based callback
   useEffect(() => {
-    (window as unknown as Record<string, unknown>).__chatAddMessage = (
-      msg: Message,
-    ) => {
+    onRegisterHandlers((msg: ChatMessage) => {
       if (msg.conversation_id === conversationId) {
         setMessages((prev) => {
           if (msg.client_id) {
@@ -261,17 +252,12 @@ export default function MessageThread({
           return [...prev, msg];
         });
       }
-    };
-    return () => {
-      delete (window as unknown as Record<string, unknown>).__chatAddMessage;
-    };
-  }, [conversationId, setMessages]);
+    });
+  }, [conversationId, setMessages, onRegisterHandlers]);
 
-  // Expose updateRead for parent
+  // Register read handler with parent (ChatApp) via ref-based callback
   useEffect(() => {
-    (window as unknown as Record<string, unknown>).__chatUpdateRead = (
-      convId: number,
-    ) => {
+    onRegisterReadHandler((convId: number) => {
       if (convId === conversationId) {
         setMessages((prev) =>
           prev.map((m) =>
@@ -281,11 +267,8 @@ export default function MessageThread({
           ),
         );
       }
-    };
-    return () => {
-      delete (window as unknown as Record<string, unknown>).__chatUpdateRead;
-    };
-  }, [conversationId, myId, myKind, setMessages]);
+    });
+  }, [conversationId, myId, myKind, setMessages, onRegisterReadHandler]);
 
   const expertName = conversation.expert_name;
   const expertInitial = expertName?.charAt(0)?.toUpperCase() || "E";
