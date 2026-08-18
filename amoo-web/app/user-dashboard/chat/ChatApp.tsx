@@ -51,17 +51,19 @@ export default function ChatApp() {
           content: string;
           isRead: boolean;
           createdAt: string;
+          client_id?: string;
         };
         const addMsg = (window as unknown as Record<string, unknown>)
           .__chatAddMessage as
           | ((msg: {
-              id: number;
+              id: number | string;
               conversation_id: number;
               sender_type: string;
               sender_id: number;
               content: string;
               is_read: boolean;
               created_at: string;
+              client_id?: string;
             }) => void)
           | undefined;
         if (addMsg) {
@@ -73,6 +75,7 @@ export default function ChatApp() {
             content: msg.content,
             is_read: msg.isRead,
             created_at: msg.createdAt,
+            client_id: msg.client_id,
           });
         }
         setUnreadRefresh((n) => n + 1);
