@@ -6,6 +6,7 @@ import { Search, MessageSquare } from "lucide-react";
 import { api } from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
 import { EmptyState, ErrorState } from "@/app/components/states";
+import StartChatButton from "./StartChatButton";
 
 type Conversation = {
   id: number;
@@ -150,6 +151,7 @@ export default function ConversationList({
             message="Start a chat with an expert to see your conversations here."
             icon={<MessageSquare className="h-6 w-6" strokeWidth={1.8} />}
             tone="dashboard"
+            action={<StartChatButton variant="primary" />}
           />
         ) : (
           filtered.map((conv) => {
