@@ -68,6 +68,10 @@ const env = {
   },
 
   maxFileSize: Number(required("MAX_FILE_SIZE", "5242880")),
+
+  // WebSocket limits
+  wsMaxConnectionsPerUser: Number(required("WS_MAX_CONNECTIONS_PER_USER", "3")),
+  wsMaxMessagesPerSecond: Number(required("WS_MAX_MESSAGES_PER_SECOND", "10")),
   // When true, OTPs and verification tokens are returned in API responses for
   // debugging. Never enable this in production or on any internet-facing host
   // (a production guard below refuses to boot with it on).
