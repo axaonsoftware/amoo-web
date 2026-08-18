@@ -67,6 +67,11 @@ describe("walletTxn schema", () => {
     const errs = check(schemas.walletTxn, { amount: 0 });
     assert.ok(errs.length > 0);
   });
+
+  it("rejects amount exceeding max", () => {
+    const errs = check(schemas.walletTxn, { amount: 1000000 });
+    assert.ok(errs.length > 0);
+  });
 });
 
 describe("walletAdjust schema", () => {
