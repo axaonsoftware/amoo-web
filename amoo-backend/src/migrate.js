@@ -148,6 +148,19 @@ const { insertContentData } = require("./seed-content");
       );
     }
 
+    // Ensure idempotency_key is NOT NULL. Any existing NULL values (from before
+    // the server-side generation was added) are backfilled with a deterministic
+    // placeholder so the UNIQUE constraint can enforce non-duplication.
+    const { rows: idemCol } = await client.query(
+      "SELECT is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'bookings' AND column_name = 'idempotency_key' LIMIT 1"
+    );
+    if (idemCol[0] && idemCol[0].is_nullable === "YES") {
+      await client.query(
+        "UPDATE bookings SET idempotency_key = 'legacy_' || id || '_' || EXTRACT(EPOCH FROM created_at)::bigint WHERE idempotency_key IS NULL"
+      );
+      await client.query("ALTER TABLE bookings ALTER COLUMN idempotency_key SET NOT NULL");
+    }
+
     // ── Chat participant model (migration 006) ────────────────────────────
     // The original `conversations` modelled both sides as `users` rows, but the
     // route passes an `experts.id` as the participant. Those are separate id
