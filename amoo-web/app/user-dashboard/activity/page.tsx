@@ -7,8 +7,11 @@ import api from "../../../lib/api";
 type ActivityItem = {
   id: number;
   action: string;
+  entity: string | null;
+  entity_id: number | null;
   action_details: Record<string, unknown> | null;
   page_or_route: string | null;
+  ip_address: string | null;
   created_at: string;
 };
 
@@ -43,11 +46,22 @@ export default function MyActivityPage() {
       page_view: "bg-blue-100 text-blue-700",
       login: "bg-green-100 text-green-700",
       logout: "bg-gray-100 text-gray-700",
+      "logout-all": "bg-gray-100 text-gray-700",
       signup: "bg-purple-100 text-purple-700",
-      booking: "bg-amber-100 text-amber-700",
-      payment: "bg-emerald-100 text-emerald-700",
-      profile_update: "bg-indigo-100 text-indigo-700",
-      download: "bg-cyan-100 text-cyan-700",
+      create: "bg-emerald-100 text-emerald-700",
+      update: "bg-amber-100 text-amber-700",
+      delete: "bg-red-100 text-red-700",
+      cancel: "bg-orange-100 text-orange-700",
+      complete: "bg-green-100 text-green-700",
+      "change-password": "bg-yellow-100 text-yellow-700",
+      "verify-email": "bg-teal-100 text-teal-700",
+      "reset-password": "bg-pink-100 text-pink-700",
+      "attach-file": "bg-cyan-100 text-cyan-700",
+      "chat-message": "bg-indigo-100 text-indigo-700",
+      "create-order": "bg-emerald-100 text-emerald-700",
+      "verify-payment": "bg-green-100 text-green-700",
+      refund: "bg-red-100 text-red-700",
+      apply: "bg-violet-100 text-violet-700",
     };
     const color = colors[action] || "bg-slate-100 text-slate-700";
     return (
@@ -95,7 +109,7 @@ export default function MyActivityPage() {
               <thead>
                 <tr className="border-b border-[#ece3d5] bg-[#faf7f2] text-[12px] font-semibold text-[#6b5f7a]">
                   <th className="px-4 py-3">Action</th>
-                  <th className="px-4 py-3 hidden sm:table-cell">Details</th>
+                  <th className="px-4 py-3 hidden sm:table-cell">Entity</th>
                   <th className="px-4 py-3 hidden md:table-cell">Page</th>
                   <th className="px-4 py-3 text-right">Date</th>
                 </tr>
@@ -107,10 +121,20 @@ export default function MyActivityPage() {
                     className="border-b border-[#f0e8dc] last:border-0 hover:bg-[#faf7f2]"
                   >
                     <td className="px-4 py-3">{actionBadge(item.action)}</td>
-                    <td className="px-4 py-3 hidden sm:table-cell text-[#6b5f7a] max-w-[240px] truncate">
-                      {item.action_details
-                        ? JSON.stringify(item.action_details).slice(0, 60)
-                        : "\u2014"}
+                    <td className="px-4 py-3 hidden sm:table-cell text-[#6b5f7a]">
+                      {item.entity ? (
+                        <span className="font-medium">{item.entity}</span>
+                      ) : (
+                        "\u2014"
+                      )}
+                      {item.entity && item.entity_id && (
+                        <span className="ml-1 text-[11px] text-[#a49bb1]">#{item.entity_id}</span>
+                      )}
+                      {!item.entity && item.action_details && (
+                        <span className="text-[11px] text-[#a49bb1] truncate max-w-[160px] inline-block">
+                          {JSON.stringify(item.action_details).slice(0, 50)}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3 hidden md:table-cell text-[#6b5f7a]">
                       {item.page_or_route || "\u2014"}
