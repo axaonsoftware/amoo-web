@@ -218,6 +218,7 @@ function BookingSummaryContent() {
         mode: stored.mode || params.get("mode") || "Video Call",
         date: stored.date || params.get("date") || "Tuesday, 10 June 2026",
         time: stored.time || params.get("time") || "08:00 AM",
+        duration: stored.duration || "",
         fullName: stored.fullName || "",
         email: stored.email || "",
         phone: stored.phone || "",
@@ -235,6 +236,7 @@ function BookingSummaryContent() {
         mode: "Video Call",
         date: "Tuesday, 10 June 2026",
         time: "08:00 AM",
+        duration: "",
         fullName: "",
         email: "",
         phone: "",
@@ -306,6 +308,7 @@ function BookingSummaryContent() {
     foundUs,
     concern,
     specialRequests,
+    duration,
   } = data;
 
   const personalInfoLeft = [
@@ -340,7 +343,7 @@ function BookingSummaryContent() {
       value: date ? `${date}\n${time} (IST)` : "—",
       error: validationErrors.date || validationErrors.time,
     },
-    { icon: Clock, label: "Duration", value: data.duration || "N/A" },
+    { icon: Clock, label: "Duration", value: duration || "N/A" },
   ];
 
   const BOOKING_OVERVIEW = [
@@ -368,7 +371,7 @@ function BookingSummaryContent() {
       value: time ? `${time} (IST)` : "—",
       error: validationErrors.time,
     },
-    { icon: Clock, label: "Duration", value: data.duration || "N/A" },
+    { icon: Clock, label: "Duration", value: duration || "N/A" },
   ];
 
   return (

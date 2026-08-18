@@ -289,6 +289,8 @@ export const api = {
       request("PATCH", `/api/bookings/${id}`, body),
     completeBooking: (id: number) =>
       request("POST", `/api/bookings/${id}/complete`),
+    addAttachment: (id: number, uploadId: number) =>
+      request("POST", `/api/bookings/${id}/attachment`, { upload_id: uploadId }),
     cancelBooking: (id: number) => request("DELETE", `/api/bookings/${id}`),
 
     getPackages: () => request("GET", "/api/packages/all"),

@@ -443,6 +443,10 @@ const schemas = {
     page_or_route: optionalString.max(255),
   }),
 
+  bookingAttachment: Joi.object({
+    upload_id: Joi.number().integer().positive().required(),
+  }),
+
   query: Joi.object({
     page: Joi.number().integer().min(1),
     limit: Joi.number().integer().min(1).max(100),

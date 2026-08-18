@@ -35,6 +35,7 @@ export type ChatMessage = {
   is_read: boolean;
   created_at: string;
   client_id?: string;
+  status?: "pending" | "sent" | "delivered" | "failed";
 };
 
 type AddMessageHandler = (msg: ChatMessage) => void;

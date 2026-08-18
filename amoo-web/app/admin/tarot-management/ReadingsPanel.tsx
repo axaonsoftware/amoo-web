@@ -21,6 +21,7 @@ type RawReport = {
   id: number;
   type?: string;
   title?: string | null;
+  duration?: string;
   created_at: string;
 };
 

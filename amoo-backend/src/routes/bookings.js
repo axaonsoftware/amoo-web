@@ -320,4 +320,42 @@ router.post(
   })
 );
 
+// POST /api/bookings/:id/attachment  (associate an uploaded file with a booking)
+router.post(
+  "/:id/attachment",
+  authRequired,
+  validate("bookingAttachment"),
+  asyncHandler(async (req, res) => {
+    const bookingId = Number(req.params.id);
+    const { upload_id } = req.body;
+
+    // Verify the booking exists and the caller owns it (or is admin)
+    const { rows: bookings } = await pool.query(
+      "SELECT id, user_id FROM bookings WHERE id = $1",
+      [bookingId]
+    );
+    if (!bookings.length) return fail(res, 404, "Booking not found");
+    if (req.user.kind !== "admin" && bookings[0].user_id !== req.user.id) {
+      return fail(res, 403, "Forbidden");
+    }
+
+    // Verify the upload exists and belongs to the caller (or is admin)
+    const { rows: uploads } = await pool.query(
+      "SELECT id, user_id FROM uploads WHERE id = $1",
+      [upload_id]
+    );
+    if (!uploads.length) return fail(res, 404, "Upload not found");
+    if (req.user.kind !== "admin" && uploads[0].user_id !== req.user.id) {
+      return fail(res, 403, "Forbidden");
+    }
+
+    await pool.query(
+      "UPDATE uploads SET booking_id = $1 WHERE id = $2",
+      [bookingId, upload_id]
+    );
+    req.audit("attach-file", "booking", bookingId, { upload_id });
+    ok(res, { booking_id: bookingId, upload_id, attached: true });
+  })
+);
+
 module.exports = router;
