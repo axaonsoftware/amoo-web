@@ -190,11 +190,18 @@ export function SiteFooter() {
       <div className="relative border-t border-white/10">
         <div className="mx-auto flex w-full max-w-[1336px] items-center justify-between px-5 py-[13px]">
           <p className="text-[11.5px] text-white/70">
-            &copy; 2025 {SITE_NAME}. All Rights Reserved.
+            &copy; {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
           </p>
           <p className="hidden items-center gap-1.5 text-[11.5px] text-white/70 sm:flex">
-            Designed with <span className="text-[#e5342c]">&hearts;</span> for
-            Spiritual Seekers
+            Developed by{" "}
+            <Link
+              href="https://www.axaonsoftware.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-white"
+            >
+              Axaon Software
+            </Link>
           </p>
         </div>
       </div>
