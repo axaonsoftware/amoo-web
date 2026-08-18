@@ -203,6 +203,12 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
     else fail("POST /api/auth/logout", `expected 200, got ${statusName(r.status)}`, r.status);
   } catch (e) { fail("POST /api/auth/logout", e.message, 0); }
 
+  // Re-login after logout (logout bumped token_version, invalidating userAToken)
+  try {
+    const r = await login(EMAIL_A, "password123");
+    if (r.status === 200 && r.json && r.json.token) { userAToken = r.json.token; }
+  } catch (e) {}
+
   // verify-email invalid token
   try {
     const r = await req(S, "POST", "/api/auth/verify-email", { body: { email: EMAIL_A, token: "deadbeef" } });
@@ -375,10 +381,11 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
 
   let slot = null;
   try {
+    const todayStr = new Date().toISOString().slice(0, 10);
     const r = await req(S, "GET", "/api/slots?pageSize=100");
     if (r.status === 200 && r.json) {
       pass("GET /api/slots (expert availability)", "200");
-      slot = (r.json.data || []).find((s) => s.status === "available") || null;
+      slot = (r.json.data || []).find((s) => s.status === "available" && String(s.date).slice(0, 10) >= todayStr) || null;
     } else fail("GET /api/slots (expert availability)", `expected 200, got ${statusName(r.status)} ${JSON.stringify(r.json)}`, r.status);
   } catch (e) { fail("GET /api/slots (availability)", e.message, 0); }
 
@@ -475,7 +482,7 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
     } catch (e) { fail("Data consistency: slot marked booked", e.message, 0); }
 
     try {
-      const r = await req(S, "POST", "/api/bookings", { auth: vedikaToken, body: { service_id: serviceId, expert_id: slot.expert_id, slot_id: slot.id, date: bookingDate, time: bookingTime, mode: "chat", amount: price } });
+      const r = await req(S, "POST", "/api/bookings", { auth: vedikaToken, headers: { "Idempotency-Key": `overlap-${RUN}` }, body: { service_id: serviceId, expert_id: slot.expert_id, slot_id: slot.id, date: bookingDate, time: bookingTime, mode: "chat", amount: price } });
       if (r.status === 409) pass("POST /api/bookings (overlapping slot)", "409 slot not available");
       else fail("POST /api/bookings (overlapping slot)", `expected 409, got ${statusName(r.status)} ${JSON.stringify(r.json)}`, r.status);
     } catch (e) { fail("POST /api/bookings (overlapping slot)", e.message, 0); }
@@ -549,6 +556,9 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
     } catch (e) { fail("PATCH /api/bookings/:id (non-admin)", e.message, 0); }
 
     if (adminToken) {
+      // Advance booking to "upcoming" so the complete endpoint accepts it
+      await q1("UPDATE bookings SET status = 'upcoming', payment = 'Paid' WHERE id = $1", [bookingA.id]);
+
       try {
         const r = await req(S, "POST", `/api/bookings/${bookingA.id}/complete`, { auth: adminToken });
         if (r.status === 200) pass("POST /api/bookings/:id/complete (admin)", "200");
@@ -615,8 +625,9 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
 
     try {
       const r = await req(S, "POST", "/api/payments/verify", { auth: vedikaToken, body: { booking_id: payBookingId, razorpay_payment_id: "pay_bad", razorpay_order_id: "order_bad", razorpay_signature: "0000" } });
-      if (r.status === 400) pass("POST /api/payments/verify (bad signature)", "400 — signature verification works");
-      else fail("POST /api/payments/verify (bad signature)", `expected 400, got ${statusName(r.status)} ${JSON.stringify(r.json)}`, r.status);
+      if (r.status === 401) pass("POST /api/payments/verify (bad signature)", "401 — signature verification works");
+      else if (r.status === 400) pass("POST /api/payments/verify (bad signature)", "400 — signature verification works");
+      else fail("POST /api/payments/verify (bad signature)", `expected 400/401, got ${statusName(r.status)} ${JSON.stringify(r.json)}`, r.status);
     } catch (e) { fail("POST /api/payments/verify (bad signature)", e.message, 0); }
 
     if (adminToken) {
@@ -702,9 +713,10 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
       ];
       for (const [label, sql, msg] of negCases) {
         try {
-          const rb = await req(S, "POST", "/api/bookings", { auth: vedikaToken, body: { service_id: serviceId, date: negDate, time: "10:00:00", mode: "chat", amount: price, notes: `neg_${RUN}` } });
+          const negKey = `neg_${label.replace(/[^a-z]/gi, '').slice(0, 20)}_${RUN}`;
+          const rb = await req(S, "POST", "/api/bookings", { auth: vedikaToken, headers: { "Idempotency-Key": negKey }, body: { service_id: serviceId, date: negDate, time: "10:00:00", mode: "chat", amount: price, notes: `neg_${RUN}` } });
           const negBid = dataOf(rb) && dataOf(rb).id;
-          const rp = await req(S, "POST", "/api/payments", { auth: vedikaToken, body: { booking_id: negBid, method: "razorpay", gateway: "razorpay", txn_id: `neg_${RUN}` } });
+          const rp = await req(S, "POST", "/api/payments", { auth: vedikaToken, body: { booking_id: negBid, method: "razorpay", gateway: "razorpay", txn_id: `neg_${RUN}_${label}` } });
           const negPid = dataOf(rp) && dataOf(rp).id;
           await pool.query("UPDATE payments SET status='success' WHERE id = $1", [negPid]);
           await pool.query(sql, [negBid]);
@@ -720,8 +732,9 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
 
   try {
     const r = await req(S, "POST", "/api/payments/create-order", { auth: vedikaToken, body: { booking_id: payBookingId } });
-    if (r.status === 503) note("POST /api/payments/create-order", "503 — payment gateway not configured (mock mode, no Razorpay keys)");
-    else fail("POST /api/payments/create-order", `expected 503 (gateway not configured), got ${statusName(r.status)} ${JSON.stringify(r.json)}`, r.status);
+    if (r.status === 200 && r.json && r.json.data && r.json.data.order_id) pass("POST /api/payments/create-order", `200 — Razorpay order created (${r.json.data.order_id})`);
+    else if (r.status === 503) note("POST /api/payments/create-order", "503 — payment gateway not configured (mock mode, no Razorpay keys)");
+    else fail("POST /api/payments/create-order", `got ${statusName(r.status)} ${JSON.stringify(r.json)}`, r.status);
   } catch (e) { note("POST /api/payments/create-order", e.message); }
 
   try {

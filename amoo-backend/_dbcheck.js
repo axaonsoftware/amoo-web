@@ -1,18 +1,9 @@
-require("dotenv").config();
-const { Pool } = require("pg");
-const pool = new Pool({
-  host: process.env.DB_HOST || "127.0.0.1",
-  port: Number(process.env.DB_PORT || 5432),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
-const q = async (s, p) => (await pool.query(s, p)).rows;
+const { Pool } = require('pg');
+const p = new Pool({ host: '127.0.0.1', port: 5432, user: 'postgres', password: 'postgres', database: 'amoo_db' });
 (async () => {
-  console.log("admins:", JSON.stringify(await q("SELECT id,email,failed_attempts,locked_until,token_version FROM admins")));
-  console.log("expert8:", JSON.stringify(await q("SELECT id,email,status,failed_attempts,locked_until,token_version FROM experts WHERE id=8")));
-  console.log("users:", JSON.stringify(await q("SELECT id,email,failed_attempts,locked_until,token_version FROM users WHERE id IN (4,18)")));
-  console.log("tob col:", JSON.stringify(await q("SELECT data_type FROM information_schema.columns WHERE table_name='users' AND column_name='tob'")));
-  console.log("slots:", JSON.stringify(await q("SELECT id,expert_id,date,start_time,status FROM slots ORDER BY date LIMIT 10")));
-  await pool.end();
-})().catch((e) => { console.error(e.message); process.exit(1); });
+  const cols = await p.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'admins' ORDER BY ordinal_position");
+  console.log('Admin columns:', cols.rows.map(r => r.column_name));
+  const admins = await p.query('SELECT email, token_version FROM admins LIMIT 3');
+  console.log('Admin rows:', admins.rows);
+  await p.end();
+})().catch(e => { console.error(e.message); p.end(); });
