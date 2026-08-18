@@ -135,8 +135,16 @@ const schemas = {
   }),
 
   bookingUpdate: Joi.object({
-    status: Joi.string().valid("upcoming", "completed", "cancelled", "pending-payment"),
-    payment: Joi.string().valid("Paid", "Pending"),
+    status: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("upcoming", "completed", "cancelled", "pending-payment"),
+      otherwise: Joi.forbidden(),
+    }),
+    payment: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("Paid", "Pending"),
+      otherwise: Joi.forbidden(),
+    }),
     expert_id: optionalNumber.integer().positive(),
     notes: optionalString.max(2000),
   }),
@@ -179,7 +187,11 @@ const schemas = {
     type: Joi.string().valid("Report", "Consultation", "Chat"),
     price: Joi.number().min(0),
     duration: optionalString.max(40),
-    status: Joi.string().valid("Active", "Inactive"),
+    status: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("Active", "Inactive"),
+      otherwise: Joi.forbidden(),
+    }),
   }),
 
   setExpertPassword: Joi.object({
@@ -212,7 +224,11 @@ const schemas = {
     bio: optionalString.max(4000),
     specialties: optionalString.max(255),
     rating: Joi.number().min(0).max(5),
-    status: Joi.string().valid("active", "inactive"),
+    status: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("active", "inactive"),
+      otherwise: Joi.forbidden(),
+    }),
   }),
 
   slot: Joi.object({
@@ -258,7 +274,11 @@ const schemas = {
   // Admin PATCH on a subscription. `expires_at` is an ISO datetime; `status`
   // must match the ENUM exactly or PostgreSQL throws an error.
   subscriptionUpdate: Joi.object({
-    status: Joi.string().valid("active", "expired", "cancelled", "pending-payment"),
+    status: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("active", "expired", "cancelled", "pending-payment"),
+      otherwise: Joi.forbidden(),
+    }),
     auto_renew: Joi.boolean(),
     plan_name: Joi.string().max(120),
     expires_at: Joi.date().iso(),
@@ -269,7 +289,11 @@ const schemas = {
   }),
 
   testimonialUpdate: Joi.object({
-    status: Joi.string().valid("Active", "Inactive"),
+    status: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("Active", "Inactive"),
+      otherwise: Joi.forbidden(),
+    }),
     comment: Joi.string().min(2).max(2000),
     rating: Joi.number().integer().min(1).max(5),
     name: Joi.string().max(120),
@@ -391,9 +415,21 @@ const schemas = {
     name: Joi.string().min(2).max(120),
     email: Joi.string().email(),
     phone: optionalString.max(20),
-    role: Joi.string().valid("free", "premium", "consultant"),
-    status: Joi.string().valid("active", "blocked", "pending"),
-    verified: Joi.boolean(),
+    role: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("free", "premium", "consultant"),
+      otherwise: Joi.forbidden(),
+    }),
+    status: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.string().valid("active", "blocked", "pending"),
+      otherwise: Joi.forbidden(),
+    }),
+    verified: Joi.when('$userRole', {
+      is: 'admin',
+      then: Joi.boolean(),
+      otherwise: Joi.forbidden(),
+    }),
   }),
 
   // Frontend activity beacon. This route had no validation at all, which
@@ -441,12 +477,17 @@ const schemas = {
 };
 
 // Validate req.body with a named schema (or pass a Joi schema directly).
-// Strips unknown keys.
+// Strips unknown keys. Passes req.user.kind as $userRole so schemas can use
+// Joi.when('$userRole', ...) for role-based conditional validation.
 function validate(schemaOrName, _unused, inlineSchema) {
   const schema = inlineSchema || schemas[schemaOrName];
   if (!schema) throw new Error(`Unknown validation schema: ${schemaOrName}`);
   return (req, res, next) => {
-    const { error, value } = schema.validate(req.body, { abortEarly: false, stripUnknown: true });
+    const { error, value } = schema.validate(req.body, {
+      abortEarly: false,
+      stripUnknown: true,
+      context: { userRole: req.user?.kind || "" },
+    });
     if (error) {
       return res.status(400).json({
         success: false,
