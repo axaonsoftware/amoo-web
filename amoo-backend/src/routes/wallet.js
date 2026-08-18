@@ -5,6 +5,7 @@ const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, parsePagination, fail } = require("../utils/response");
+const logger = require("../utils/logger");
 
 async function ensureWallet(client, userId) {
   const { rows } = await client.query("SELECT * FROM wallets WHERE user_id = $1 FOR UPDATE", [userId]);
@@ -40,6 +41,24 @@ router.get(
   })
 );
 
+// GET /api/wallet/transaction/:id  (single transaction receipt)
+router.get(
+  "/transaction/:id",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    const txnId = Number(req.params.id);
+    if (!Number.isFinite(txnId) || txnId <= 0) throw new HttpError(400, "Invalid transaction id");
+    const { rows: w } = await pool.query("SELECT id FROM wallets WHERE user_id = $1", [req.user.id]);
+    if (!w.length) throw new HttpError(404, "Wallet not found");
+    const { rows: txns } = await pool.query(
+      "SELECT id, amount, type, reason, ref, created_at FROM wallet_transactions WHERE id = $1 AND wallet_id = $2",
+      [txnId, w[0].id]
+    );
+    if (!txns.length) throw new HttpError(404, "Transaction not found");
+    ok(res, txns[0]);
+  })
+);
+
 // POST /api/wallet/credit  ->  DEPRECATED for users.
 router.post(
   "/credit",
@@ -69,6 +88,7 @@ router.post(
       await client.query("COMMIT");
       const { rows: [updated] } = await client.query("SELECT balance, currency FROM wallets WHERE id = $1", [w.id]);
       req.audit("wallet-admin-credit", "wallet", w.id, { user_id, amount });
+      logger.info(`Admin ${req.user.id} credited user ${user_id} ₹${amount}`);
       ok(res, updated);
     } catch (err) {
       await client.query("ROLLBACK");
