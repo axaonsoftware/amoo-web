@@ -24,6 +24,29 @@ describe("Security Issue 2: POST /api/payments/:id/refund authorization guard", 
     assert.ok(refundRouteMatch, "Refund route must be defined");
     assert.strictEqual(refundRouteMatch[1], "adminRequired", "Refund route must be guarded by adminRequired");
   });
+
+  it("verify-refund route guarded by adminRequired", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/routes/payments.js"), "utf8");
+    const verifyRouteMatch = code.match(/router\.post\(\s*"\/:\s*id\/verify-refund"\s*,\s*(\w+)/);
+    assert.ok(verifyRouteMatch, "Verify-refund route must be defined");
+    assert.strictEqual(verifyRouteMatch[1], "adminRequired", "Verify-refund route must be guarded by adminRequired");
+  });
+
+  it("refund handler returns 402 on gateway failure (does not mark refunded)", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/routes/payments.js"), "utf8");
+    assert.ok(code.includes("return fail(res, 402,"), "Must return 402 on gateway failure");
+    assert.ok(code.includes("ROLLBACK"), "Must rollback transaction on gateway failure");
+  });
+
+  it("refund does not cancel booking directly", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/routes/payments.js"), "utf8");
+    const refundSection = code.substring(
+      code.indexOf('"/:id/refund"'),
+      code.indexOf('"/:id/verify-refund"')
+    );
+    assert.ok(!refundSection.includes("UPDATE bookings SET"), "Refund handler must NOT cancel bookings directly");
+    assert.ok(refundSection.includes("'pending'"), "Refund must be recorded as pending");
+  });
 });
 
 describe("Security Issue 3: seed.js production refusal & password protection", () => {
