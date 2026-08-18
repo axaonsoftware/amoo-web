@@ -10,7 +10,8 @@ const { ok, paginated, created, fail, assertFound, parsePagination } = require("
 const EXPERT_UPDATE_ALLOWED = [
   "name", "email", "phone", "avatar", "role_title", "bio", "specialties", "rating", "status",
 ];
-const EXPERT_SELECT = "id, name, email, phone, avatar, role_title, bio, specialties, rating, status, created_at";
+const EXPERT_SELECT_PUBLIC = "id, name, avatar, role_title, bio, specialties, rating, status, created_at";
+const EXPERT_SELECT_FULL = "id, name, email, phone, avatar, role_title, bio, specialties, rating, status, created_at";
 
 // GET /api/experts (public, active only) + admin sees all via ?all=1
 //
@@ -53,9 +54,10 @@ router.get(
     if (req.query.status) { where += ` AND status = $${params.length + 1}`; params.push(req.query.status); }
     if (req.query.search) { where += ` AND (name LIKE $${params.length + 1} OR specialties LIKE $${params.length + 2})`; params.push(`%${req.query.search}%`, `%${req.query.search}%`); }
     const { rows: [{ total }] } = await pool.query(`SELECT COUNT(*) AS total FROM experts ${where}`, params);
+    const select = isAdmin ? EXPERT_SELECT_FULL : EXPERT_SELECT_PUBLIC;
     const n = params.length;
     const { rows } = await pool.query(
-      `SELECT ${EXPERT_SELECT} FROM experts ${where} ORDER BY rating DESC LIMIT $${n + 1} OFFSET $${n + 2}`,
+      `SELECT ${select} FROM experts ${where} ORDER BY rating DESC LIMIT $${n + 1} OFFSET $${n + 2}`,
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -63,10 +65,30 @@ router.get(
 );
 
 // GET /api/experts/:id
+// Unauthenticated: public fields only.
+// Authenticated users who have booked this expert see the full profile (email, phone).
 router.get(
   "/:id",
   asyncHandler(async (req, res) => {
-    const { rows } = await pool.query(`SELECT ${EXPERT_SELECT} FROM experts WHERE id = $1 AND deleted_at IS NULL`, [req.params.id]);
+    const token = extractToken(req);
+    let userId = null;
+    if (token) {
+      try {
+        const decoded = verifyAccessToken(token);
+        if (decoded.kind === "user") userId = decoded.id;
+      } catch (_) { /* not a valid user token — treat as public */ }
+    }
+
+    let select = EXPERT_SELECT_PUBLIC;
+    if (userId) {
+      const { rows: linked } = await pool.query(
+        "SELECT 1 FROM bookings WHERE user_id = $1 AND expert_id = $2 LIMIT 1",
+        [userId, req.params.id]
+      );
+      if (linked.length) select = EXPERT_SELECT_FULL;
+    }
+
+    const { rows } = await pool.query(`SELECT ${select} FROM experts WHERE id = $1 AND deleted_at IS NULL`, [req.params.id]);
     if (assertFound(res, rows[0])) return;
     ok(res, rows[0]);
   })
