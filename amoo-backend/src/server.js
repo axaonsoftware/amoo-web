@@ -219,8 +219,6 @@ process.on("uncaughtException", (err) => {
 });
 process.on("unhandledRejection", (reason) => {
   logger.error("UNHANDLED_REJECTION:", typeof reason === "object" ? reason.message : reason, reason?.stack ?? "");
-  // eslint-disable-next-line no-process-exit
-  process.exit(1);
 });
 
 // Graceful shutdown: stop accepting requests, drain in-flight, then close DB
