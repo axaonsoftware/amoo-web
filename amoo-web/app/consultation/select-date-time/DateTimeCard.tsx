@@ -112,10 +112,11 @@ export default function DateTimeCard({
   selectedPeriod: string;
   selectedSlot: string;
   onSelectPeriod: (period: string) => void;
-  onSelectSlot: (slot: string) => void;
+  onSelectSlot: (slot: string, slotId?: number) => void;
 }) {
   const [slotsByPeriod, setSlotsByPeriod] =
     useState<Record<string, string[]>>(DEFAULT_SLOTS);
+  const [slotIdByTime, setSlotIdByTime] = useState<Record<string, number>>({});
   const [loadingSlots, setLoadingSlots] = useState(true);
   const [slotsError, setSlotsError] = useState("");
 
@@ -160,8 +161,8 @@ export default function DateTimeCard({
       .then(
         (
           res:
-            | { data?: { period?: string; time?: string; label?: string; start_time?: string }[] }
-            | { period?: string; time?: string; label?: string; start_time?: string }[],
+            | { data?: { id?: number; period?: string; time?: string; label?: string; start_time?: string }[] }
+            | { id?: number; period?: string; time?: string; label?: string; start_time?: string }[],
         ) => {
           const list = Array.isArray(res) ? res : (res?.data ?? []);
           if (list.length) {
@@ -182,14 +183,18 @@ export default function DateTimeCard({
               return "Night";
             };
             const grouped: Record<string, string[]> = {};
+            const idMap: Record<string, number> = {};
             for (const slot of list) {
               const rawTime = slot.time || slot.label || slot.start_time || "";
               if (!rawTime) continue;
               const period = slot.period || periodOf(rawTime.split(" ")[0]);
               if (!grouped[period]) grouped[period] = [];
               grouped[period].push(toLocale(rawTime));
+              const display = toLocale(rawTime);
+              if (slot.id && !idMap[display]) idMap[display] = slot.id;
             }
             setSlotsByPeriod((prev) => ({ ...prev, ...grouped }));
+            setSlotIdByTime(idMap);
           }
         },
       )
@@ -381,7 +386,7 @@ export default function DateTimeCard({
                 <button
                   key={slot}
                   type="button"
-                  onClick={() => onSelectSlot(slot)}
+                  onClick={() => onSelectSlot(slot, slotIdByTime[slot])}
                   className={`flex h-[50px] items-center justify-center rounded-xl text-[14px] transition-all ${
                     isSelected
                       ? "border-2 border-[#e0a33e] bg-[linear-gradient(180deg,#3d1a6d_0%,#2a1148_100%)] font-semibold text-white shadow-[0_4px_14px_rgba(61,26,109,0.28)]"
