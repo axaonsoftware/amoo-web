@@ -653,12 +653,46 @@ const q1 = async (s, p) => (await pool.query(s, p)).rows[0];
       try {
         const r3 = await req(S, "POST", `/api/payments/${paymentId}/refund`, { auth: adminToken, body: { reason: "cancellation" } });
         if (r3.status === 200 && r3.json && r3.json.data && r3.json.data.refunded) {
-          pass("POST /api/payments/:id/refund (successful payment)", "200 refunded + booking cancelled");
+          pass("POST /api/payments/:id/refund (successful payment)", "200 refunded, booking still active");
           const b2 = await q1("SELECT status FROM bookings WHERE id=$1", [payBookingId]);
-          if (b2 && b2.status === "cancelled") pass("Refund cancels associated booking", "booking=cancelled");
-          else fail("Refund cancels associated booking", `expected cancelled, got ${b2 && b2.status}`, 0);
+          if (b2 && b2.status !== "cancelled") pass("Refund does NOT cancel booking (pending verify)", `booking=${b2.status} (not cancelled)`);
+          else fail("Refund does NOT cancel booking (pending verify)", `expected not cancelled, got ${b2 && b2.status}`, 0);
+          const rf = await q1("SELECT status FROM refunds WHERE payment_id=$1 ORDER BY created_at DESC LIMIT 1", [paymentId]);
+          if (rf && rf.status === "pending") pass("Refund recorded as pending", "status=pending");
+          else fail("Refund recorded as pending", `expected pending, got ${rf && rf.status}`, 0);
         } else fail("POST /api/payments/:id/refund (successful payment)", `expected 200, got ${statusName(r3.status)} ${JSON.stringify(r3.json)}`, r3.status);
       } catch (e) { fail("POST /api/payments/:id/refund (successful payment)", e.message, 0); }
+
+      try {
+        const rv = await req(S, "POST", `/api/payments/${paymentId}/verify-refund`, { auth: adminToken });
+        if (rv.status === 200 && rv.json && rv.json.data && rv.json.data.status === "processed") {
+          pass("POST /api/payments/:id/verify-refund (mock gateway)", "200 processed, booking cancelled");
+          const b3 = await q1("SELECT status FROM bookings WHERE id=$1", [payBookingId]);
+          if (b3 && b3.status === "cancelled") pass("Verify-refund cancels booking", "booking=cancelled");
+          else fail("Verify-refund cancels booking", `expected cancelled, got ${b3 && b3.status}`, 0);
+          const rf2 = await q1("SELECT status FROM refunds WHERE payment_id=$1 ORDER BY created_at DESC LIMIT 1", [paymentId]);
+          if (rf2 && rf2.status === "processed") pass("Refund status updated to processed", "status=processed");
+          else fail("Refund status updated to processed", `expected processed, got ${rf2 && rf2.status}`, 0);
+        } else fail("POST /api/payments/:id/verify-refund (mock gateway)", `expected 200, got ${statusName(rv.status)} ${JSON.stringify(rv.json)}`, rv.status);
+      } catch (e) { fail("POST /api/payments/:id/verify-refund (mock gateway)", e.message, 0); }
+
+      try {
+        const rv2 = await req(S, "POST", `/api/payments/${paymentId}/verify-refund`, { auth: adminToken });
+        if (rv2.status === 400) pass("POST /api/payments/:id/verify-refund (already processed)", "400 — idempotent");
+        else fail("POST /api/payments/:id/verify-refund (already processed)", `expected 400, got ${statusName(rv2.status)} ${JSON.stringify(rv2.json)}`, rv2.status);
+      } catch (e) { fail("POST /api/payments/:id/verify-refund (already processed)", e.message, 0); }
+
+      try {
+        const rv3 = await req(S, "POST", `/api/payments/${paymentId}/verify-refund`, { auth: vedikaToken });
+        if (rv3.status === 403) pass("POST /api/payments/:id/verify-refund (non-admin)", "403 — admin only");
+        else fail("POST /api/payments/:id/verify-refund (non-admin)", `expected 403, got ${statusName(rv3.status)} ${JSON.stringify(rv3.json)}`, rv3.status);
+      } catch (e) { fail("POST /api/payments/:id/verify-refund (non-admin)", e.message, 0); }
+
+      try {
+        const rv4 = await req(S, "POST", `/api/payments/999999/verify-refund`, { auth: adminToken });
+        if (rv4.status === 404) pass("POST /api/payments/:id/verify-refund (not found)", "404 — payment not found");
+        else fail("POST /api/payments/:id/verify-refund (not found)", `expected 404, got ${statusName(rv4.status)} ${JSON.stringify(rv4.json)}`, rv4.status);
+      } catch (e) { fail("POST /api/payments/:id/verify-refund (not found)", e.message, 0); }
 
       // Negative refund eligibility (white-box: mark payment success via SQL)
       const negDate = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
