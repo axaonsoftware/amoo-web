@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS admins (
   refresh_jti   VARCHAR(64),
   failed_attempts INTEGER NOT NULL DEFAULT 0,
   locked_until    TIMESTAMP,
+  deleted_at    TIMESTAMP,
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -151,10 +152,11 @@ CREATE TABLE IF NOT EXISTS bookings (
   payment     VARCHAR(20) NOT NULL DEFAULT 'Pending' CHECK (payment IN ('Paid','Pending')),
   status      VARCHAR(20) NOT NULL DEFAULT 'upcoming' CHECK (status IN ('upcoming','completed','cancelled','pending-payment')),
   notes       TEXT,
-  -- Client-supplied idempotency key (retries of POST /api/bookings). NULL keys
-  -- are allowed and never conflict; UNIQUE(user_id, idempotency_key) makes a
-  -- concurrent double-submit resolve to a single booking.
-  idempotency_key VARCHAR(64),
+  -- Client-supplied idempotency key (retries of POST /api/bookings).
+  -- Server generates a deterministic key from request params when none is
+  -- provided, so concurrent/retried identical requests collide on the UNIQUE
+  -- constraint instead of silently creating duplicates.
+  idempotency_key VARCHAR(64) NOT NULL,
   created_at  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT uq_bookings_idempotency UNIQUE (user_id, idempotency_key)
 );
