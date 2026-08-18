@@ -22,6 +22,23 @@ function getRazorpay() {
   return razorpayInstance;
 }
 
+async function revertToSuccess(paymentId) {
+  const c = await pool.connect();
+  try {
+    await c.query("BEGIN");
+    await c.query(
+      "UPDATE payments SET status = 'success' WHERE id = $1 AND status = 'refund_pending'",
+      [paymentId]
+    );
+    await c.query("COMMIT");
+  } catch (err) {
+    await c.query("ROLLBACK");
+    throw err;
+  } finally {
+    c.release();
+  }
+}
+
 // GET /api/payments (admin: all, user: own) with filters
 router.get(
   "/",
@@ -216,8 +233,19 @@ router.post(
       .createHmac("sha256", secret)
       .update(`${razorpay_order_id}|${razorpay_payment_id}`)
       .digest("hex");
-    if (expected !== razorpay_signature) {
-      return fail(res, 400, "Invalid payment signature");
+    let isValid = false;
+    try {
+      isValid = crypto.timingSafeEqual(
+        Buffer.from(expected),
+        Buffer.from(razorpay_signature)
+      );
+    } catch (e) {
+      isValid = false;
+    }
+
+    if (!isValid) {
+      logger.warn(`HMAC verification failed: expected_len=${expected.length}, received_len=${razorpay_signature.length}, ip=${req.ip}`);
+      return fail(res, 401, "Invalid signature");
     }
 
     // Everything below runs in ONE transaction. Previously the payment row was
@@ -289,94 +317,240 @@ router.post(
 // POST /api/payments/:id/refund
 // SECURITY: admin-only. This calls the real gateway refund API and moves real
 // money, so it must never be reachable by the payment's owner.
+//
+// Concurrency safety: the payment row is locked with SELECT … FOR UPDATE and
+// atomically moved to 'refund_pending' *before* the (slow) gateway call.
+// A second concurrent request will see 'refund_pending' and be rejected.
 router.post(
   "/:id/refund",
   adminRequired,
   validate("refund"),
   asyncHandler(async (req, res) => {
     const { reason } = req.body;
-    const { rows: payments } = await pool.query("SELECT * FROM payments WHERE id = $1", [req.params.id]);
-    if (assertFound(res, payments[0])) return;
-    const p = payments[0];
-    if (req.user.kind !== "admin" && p.user_id !== req.user.id) {
-      return fail(res, 403, "Forbidden");
-    }
-    if (p.status === "refunded") {
-      return fail(res, 400, "Payment already refunded");
-    }
-    if (p.status !== "success") {
-      return fail(res, 400, "Only successful payments can be refunded");
-    }
 
-    // Eligibility: booking must not be completed, and the session must be at
-    // least 24h away. Only applies to booking payments — subscription payments
-    // (no booking) are not constrained by a session window.
-    if (p.booking_id) {
-      const { rows: b } = await pool.query(
-        "SELECT id, status, date, time FROM bookings WHERE id = $1",
-        [p.booking_id]
-      );
-      const booking = b[0];
-      if (booking) {
-        if (booking.status === "completed") {
-          return fail(res, 400, "Cannot refund completed consultation");
-        }
-        const { rows: soon } = await pool.query(
-          "SELECT 1 FROM bookings WHERE id = $1 AND (date + time) < NOW() + INTERVAL '24 hours'",
-          [p.booking_id]
-        );
-        if (soon.length) {
-          return fail(res, 400, "Cannot refund within 24 hours of session");
-        }
-      }
-    }
-
+    // Phase 1 — Lock the payment row and atomically reserve it for refund.
     const client = await pool.connect();
+    let p;
     try {
       await client.query("BEGIN");
 
-      // 1. Call the gateway API to actually reverse the charge
-      let gatewayRefundId = null;
-      if (p.gateway === "razorpay" && p.txn_id) {
-        try {
-          const rzp = getRazorpay();
-          if (rzp) {
-            const refundRes = await rzp.payments.refund(p.txn_id, {
-              amount: Math.round(p.amount * 100), // Razorpay expects paise
-              notes: { reason: reason || "", refunded_by: req.user.kind },
-            });
-            gatewayRefundId = refundRes.id;
+      const { rows } = await client.query(
+        "SELECT * FROM payments WHERE id = $1 FOR UPDATE",
+        [req.params.id]
+      );
+      p = rows[0];
+      if (!p) {
+        await client.query("ROLLBACK");
+        return fail(res, 404, "Payment not found");
+      }
+
+      if (req.user.kind !== "admin" && p.user_id !== req.user.id) {
+        await client.query("ROLLBACK");
+        return fail(res, 403, "Forbidden");
+      }
+
+      if (p.status === "refund_pending") {
+        await client.query("ROLLBACK");
+        return fail(res, 400, "Payment is already being refunded");
+      }
+      if (p.status === "refunded") {
+        await client.query("ROLLBACK");
+        return fail(res, 400, "Payment already refunded");
+      }
+      if (p.status !== "success") {
+        await client.query("ROLLBACK");
+        return fail(res, 400, "Only successful payments can be refunded");
+      }
+
+      // Eligibility: booking must not be completed, and the session must be at
+      // least 24h away. Only applies to booking payments — subscription payments
+      // (no booking) are not constrained by a session window.
+      if (p.booking_id) {
+        const { rows: b } = await client.query(
+          "SELECT id, status, date, time FROM bookings WHERE id = $1",
+          [p.booking_id]
+        );
+        const booking = b[0];
+        if (booking) {
+          if (booking.status === "completed") {
+            await client.query("ROLLBACK");
+            return fail(res, 400, "Cannot refund completed consultation");
           }
-        } catch (gatewayErr) {
-          // Log the error but don't rollback — mark as refunded in DB
-          // and let the admin reconcile manually.
-          logger.error("[payments] Gateway refund failed for payment", p.id, gatewayErr.message);
+          const { rows: soon } = await client.query(
+            "SELECT 1 FROM bookings WHERE id = $1 AND (date + time) < NOW() + INTERVAL '24 hours'",
+            [p.booking_id]
+          );
+          if (soon.length) {
+            await client.query("ROLLBACK");
+            return fail(res, 400, "Cannot refund within 24 hours of session");
+          }
         }
       }
 
-      // 2. Update payment record
+      // Atomically mark as refund_pending — prevents concurrent refund attempts.
       await client.query(
+        "UPDATE payments SET status = 'refund_pending' WHERE id = $1",
+        [p.id]
+      );
+
+      await client.query("COMMIT");
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+
+    // Phase 2 — Call the gateway API AFTER the transaction commits.
+    // The row lock is released, but 'refund_pending' blocks any concurrent refund.
+    let gatewayRefundId = null;
+    let gatewayRefundStatus = null;
+    if (p.gateway === "razorpay" && p.txn_id) {
+      const rzp = getRazorpay();
+      if (rzp) {
+        try {
+          const refundRes = await rzp.payments.refund(p.txn_id, {
+            amount: Math.round(p.amount * 100), // Razorpay expects paise
+            notes: { reason: reason || "", refunded_by: req.user.kind },
+          });
+          gatewayRefundId = refundRes.id;
+          gatewayRefundStatus = refundRes.status;
+        } catch (gatewayErr) {
+          await revertToSuccess(p.id);
+          logger.error("[payments] Gateway refund failed for payment", p.id, gatewayErr.message);
+          return fail(res, 402, "Refund failed — please contact support");
+        }
+
+        if (gatewayRefundStatus === "failed") {
+          await revertToSuccess(p.id);
+          logger.error("[payments] Gateway returned failed status for refund on payment", p.id);
+          return fail(res, 402, "Refund failed — please contact support");
+        }
+      }
+    }
+
+    // Phase 3 — Finalize: mark as refunded and record the refund.
+    const finClient = await pool.connect();
+    try {
+      await finClient.query("BEGIN");
+
+      await finClient.query(
         "UPDATE payments SET status = 'refunded', refund_id = $1, refunded_at = NOW() WHERE id = $2",
         [gatewayRefundId || null, p.id]
       );
 
-      // 3. Cancel the associated booking
+      await finClient.query(
+        "INSERT INTO refunds (payment_id, user_id, amount, reason, status) VALUES ($1, $2, $3, $4, 'pending')",
+        [p.id, p.user_id, p.amount, reason || null]
+      );
+
+      await finClient.query("COMMIT");
+      req.audit("refund", "payment", p.id, { reason, gatewayRefundId, booking_id: p.booking_id });
+      ok(res, { id: p.id, refunded: true, amount: p.amount, gateway_refund_id: gatewayRefundId, booking_cancelled: false, message: "Refund initiated — admin must verify before booking is cancelled" });
+    } catch (err) {
+      await finClient.query("ROLLBACK");
+      throw err;
+    } finally {
+      finClient.release();
+    }
+  })
+);
+
+// POST /api/payments/:id/verify-refund
+// Admin-only. Checks with Razorpay whether the refund actually settled, then
+// cancels the booking and releases the slot only after confirmation.
+router.post(
+  "/:id/verify-refund",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { rows: payments } = await pool.query("SELECT * FROM payments WHERE id = $1", [req.params.id]);
+    if (assertFound(res, payments[0])) return;
+    const p = payments[0];
+
+    if (p.status !== "refunded") {
+      return fail(res, 400, "Payment is not in refunded state");
+    }
+
+    const { rows: refundRows } = await pool.query(
+      "SELECT * FROM refunds WHERE payment_id = $1 ORDER BY created_at DESC LIMIT 1",
+      [p.id]
+    );
+    const refund = refundRows[0];
+    if (!refund) {
+      return fail(res, 404, "No refund record found for this payment");
+    }
+    if (refund.status === "processed") {
+      return fail(res, 400, "Refund already verified and processed");
+    }
+
+    // Check live status from Razorpay
+    let liveStatus = "processed"; // mock gateway — assume success
+    if (p.gateway === "razorpay" && p.txn_id) {
+      const rzp = getRazorpay();
+      if (rzp && p.refund_id) {
+        try {
+          const razorpayRefund = await rzp.payments.fetchRefund(p.txn_id, p.refund_id);
+          liveStatus = razorpayRefund.status;
+        } catch (err) {
+          logger.error("[payments] verify-refund: failed to fetch refund status", p.id, err.message);
+          return fail(res, 502, "Could not verify refund status with gateway — try again later");
+        }
+      }
+    }
+
+    if (liveStatus === "pending") {
+      return ok(res, { refund_id: refund.id, status: "pending", message: "Refund still processing at gateway" });
+    }
+
+    if (liveStatus === "failed") {
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        await client.query("UPDATE refunds SET status = 'failed' WHERE id = $1", [refund.id]);
+        await client.query("UPDATE payments SET status = 'success', refund_id = NULL, refunded_at = NULL WHERE id = $1", [p.id]);
+        await client.query("COMMIT");
+        req.audit("verify-refund-failed", "payment", p.id, { refund_id: refund.id });
+        ok(res, { refund_id: refund.id, status: "failed", message: "Refund failed at gateway — payment status restored to success" });
+      } catch (err) {
+        await client.query("ROLLBACK");
+        throw err;
+      } finally {
+        client.release();
+      }
+      return;
+    }
+
+    // Refund confirmed — cancel booking and release slot
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+
+      await client.query("UPDATE refunds SET status = 'processed' WHERE id = $1", [refund.id]);
+
       if (p.booking_id) {
+        const { rows: bk } = await client.query(
+          "SELECT slot_id FROM bookings WHERE id = $1 FOR UPDATE",
+          [p.booking_id]
+        );
+        const slotId = bk[0] && bk[0].slot_id;
+
         await client.query(
           "UPDATE bookings SET payment = 'Pending', status = 'cancelled' WHERE id = $1",
           [p.booking_id]
         );
+
+        if (slotId) {
+          await client.query(
+            "UPDATE slots SET status = 'available' WHERE id = $1 AND status = 'booked'",
+            [slotId]
+          );
+          logger.info(`Verify-refund: booking ${p.booking_id} cancelled, slot ${slotId} released`);
+        }
       }
 
-      // 4. Record in refunds table
-      await client.query(
-        "INSERT INTO refunds (payment_id, user_id, amount, reason, status) VALUES ($1, $2, $3, $4, 'processed')",
-        [p.id, p.user_id, p.amount, reason || null]
-      );
-
       await client.query("COMMIT");
-      req.audit("refund", "payment", p.id, { reason, gatewayRefundId });
-      ok(res, { id: p.id, refunded: true, amount: p.amount, gateway_refund_id: gatewayRefundId });
+      req.audit("verify-refund", "payment", p.id, { refund_id: refund.id, booking_id: p.booking_id, slot_released: !!p.booking_id });
+      ok(res, { refund_id: refund.id, status: "processed", booking_cancelled: !!p.booking_id, message: "Refund verified — booking cancelled and slot released" });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
