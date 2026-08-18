@@ -24,6 +24,7 @@ export type ConsultationData = {
   mode?: string;
   date?: string;
   time?: string;
+  slot_id?: number;
   fullName?: string;
   email?: string;
   phone?: string;
