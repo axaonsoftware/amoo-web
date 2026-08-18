@@ -157,14 +157,16 @@ export default function DateTimeCard({
 
   useEffect(() => {
     api
-      .getSlots()
+      .getSlots("?status=available")
       .then(
         (
           res:
-            | { data?: { id?: number; period?: string; time?: string; label?: string; start_time?: string }[] }
-            | { id?: number; period?: string; time?: string; label?: string; start_time?: string }[],
+            | { data?: { id?: number; period?: string; time?: string; label?: string; start_time?: string; status?: string }[] }
+            | { id?: number; period?: string; time?: string; label?: string; start_time?: string; status?: string }[],
         ) => {
-          const list = Array.isArray(res) ? res : (res?.data ?? []);
+          const list = (Array.isArray(res) ? res : (res?.data ?? [])).filter(
+            (s: { status?: string }) => !s.status || s.status === "available",
+          );
           if (list.length) {
             // Backend rows carry start_time ("HH:mm:ss"); server defaults to
             // "HH:mm AM/PM" for the label used on the button and the summary.
