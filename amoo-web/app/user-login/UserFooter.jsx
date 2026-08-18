@@ -82,7 +82,7 @@ export default function UserFooter() {
       </div>
 
       <div className="max-w-6xl mx-auto border-t border-white/10 mt-10 pt-5 text-center text-xs text-white/40">
-        © 2025 {SITE_NAME}. All Rights Reserved.
+        © {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
       </div>
     </footer>
   );
