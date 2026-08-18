@@ -27,6 +27,7 @@ export default function BottomActionBar({
   mode,
   date,
   time,
+  slot_id,
   svc,
   coupon,
   total,
@@ -35,6 +36,7 @@ export default function BottomActionBar({
   mode: string;
   date: string;
   time: string;
+  slot_id?: number;
   svc: ConsultationService | null;
   coupon: AppliedCoupon | null;
   total: number;
@@ -64,6 +66,7 @@ export default function BottomActionBar({
       const note = modeNote(mode);
       const booking = await api.createBooking({
         service_id: svc.id,
+        ...(slot_id ? { slot_id } : {}),
         date: parseDisplayDate(date),
         time: parseDisplayTime(time),
         mode: toApiMode(mode),
