@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import StartChatButton from "../chat/StartChatButton";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -29,6 +30,7 @@ type Booking = {
   id: number;
   booking_ref: string;
   service_name: string;
+  expert_id: number | null;
   expert_name: string | null;
   date: string;
   time: string;
@@ -167,6 +169,9 @@ export default function UpcomingConsultations() {
                         />{" "}
                         Reschedule
                       </button>
+                    )}
+                    {c.expert_id && (
+                      <StartChatButton variant="secondary" className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]" />
                     )}
                     <button
                       type="button"
