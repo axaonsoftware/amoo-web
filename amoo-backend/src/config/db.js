@@ -21,10 +21,16 @@ const pool = new Pool({
   // Managed databases (RDS etc.) typically require TLS. pg will also honour an
   // sslmode=require in DATABASE_URL; DB_SSL=true covers the component-vars path.
   ...(env.db.ssl ? { ssl: { rejectUnauthorized: false } } : {}),
-  // All timestamps, NOW() and the (date + time) comparisons used by booking
-  // refund windows are computed in the app's market timezone. Without this the
-  // container default (UTC) made booking-date comparisons ~5.5h off for IST.
-  options: "-c TimeZone=Asia/Kolkata",
+});
+
+// Set the session timezone on every new connection. The `options` libpq param
+// is silently ignored by the pure-JS pg driver used on Alpine, so we set it
+// via SQL instead. All timestamp comparisons (booking dates, subscription
+// expiry, refund windows) rely on IST being the session timezone.
+pool.on("connect", (client) => {
+  client.query("SET TIME ZONE 'Asia/Kolkata'").catch((err) => {
+    logger.warn("[db] failed to set timezone:", err.message);
+  });
 });
 
 // Retry connection a few times on boot (handles Postgres not-yet-ready in containers).
