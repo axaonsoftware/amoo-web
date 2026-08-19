@@ -1,16 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import {
   Search,
   ChevronDown,
   SlidersHorizontal,
   Pencil,
   Trash2,
+  Power,
   ChevronLeft,
   ChevronRight,
   Loader2,
+  DollarSign,
 } from "lucide-react";
 import { categoryTone, typeTone, type ServiceRow } from "./data";
 import { api } from "../../../lib/api";
@@ -29,11 +31,17 @@ const tabs = [
   { label: "Recently Added" },
 ];
 
-const selects = [
-  { label: "All Categories", w: "w-[145px]" },
-  { label: "All Status", w: "w-[132px]" },
-  { label: "All Service Types", w: "w-[162px]" },
+const categoryOptions = [
+  "Numerology",
+  "Tarot",
+  "Astrology",
+  "Healing",
+  "Vastu",
+  "AI Services",
+  "Spiritual",
 ];
+
+const statusOptions = ["Active", "Inactive"];
 
 interface ServiceRowData {
   id: number;
@@ -73,6 +81,46 @@ export default function ServicesPanel() {
     msg: string;
     kind: "success" | "error";
   } | null>(null);
+
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
+  const [pricingService, setPricingService] = useState<ServiceRowData | null>(
+    null,
+  );
+  const [pricingList, setPricingList] = useState<
+    {
+      id: number;
+      expert_id: number;
+      expert_name: string;
+      price: number;
+    }[]
+  >([]);
+  const [pricingLoading, setPricingLoading] = useState(false);
+  const [allExperts, setAllExperts] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [newPricingExpert, setNewPricingExpert] = useState<string>("");
+  const [newPricingPrice, setNewPricingPrice] = useState<string>("");
+  const [pricingSaving, setPricingSaving] = useState(false);
+
+  const [searchInput, setSearchInput] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
+
+  const onSearchChange = useCallback((value: string) => {
+    setSearchInput(value);
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    debounceTimer.current = setTimeout(() => {
+      setDebouncedSearch(value);
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, []);
 
   const load = useCallback(() => {
     api.admin
@@ -117,7 +165,89 @@ export default function ServicesPanel() {
 
   const reload = load;
 
-  const list = rows || [];
+  const openPricingModal = async (service: ServiceRowData) => {
+    setPricingService(service);
+    setPricingModalOpen(true);
+    setPricingLoading(true);
+    try {
+      const [pricingRes, expertsRes] = await Promise.all([
+        api.admin.getServicePricing(service.id),
+        api.admin.getExperts(),
+      ]);
+      const pricingData =
+        pricingRes && typeof pricingRes === "object"
+          ? (pricingRes as { data?: unknown[] }).data ?? pricingRes
+          : [];
+      setPricingList(Array.isArray(pricingData) ? (pricingData as typeof pricingList) : []);
+      const expertsData =
+        expertsRes && typeof expertsRes === "object"
+          ? (expertsRes as { data?: unknown[] }).data ?? expertsRes
+          : [];
+      setAllExperts(
+        Array.isArray(expertsData)
+          ? (expertsData as { id: number; name: string }[]).map((e) => ({
+              id: e.id,
+              name: e.name,
+            }))
+          : [],
+      );
+      setNewPricingExpert("");
+      setNewPricingPrice("");
+    } catch {
+      showToast("Failed to load pricing data", "error");
+    } finally {
+      setPricingLoading(false);
+    }
+  };
+
+  const addExpertPrice = async () => {
+    if (!pricingService || !newPricingExpert || !newPricingPrice) return;
+    setPricingSaving(true);
+    try {
+      await api.admin.setServicePricing(pricingService.id, {
+        expert_id: Number(newPricingExpert),
+        price: Number(newPricingPrice),
+      });
+      const updated = await api.admin.getServicePricing(pricingService.id);
+      const updatedData =
+        updated && typeof updated === "object"
+          ? (updated as { data?: unknown[] }).data ?? updated
+          : [];
+      setPricingList(Array.isArray(updatedData) ? (updatedData as typeof pricingList) : []);
+      setNewPricingExpert("");
+      setNewPricingPrice("");
+      showToast("Expert price saved");
+    } catch {
+      showToast("Failed to save expert price", "error");
+    } finally {
+      setPricingSaving(false);
+    }
+  };
+
+  const removeExpertPrice = async (expertId: number) => {
+    if (!pricingService) return;
+    try {
+      await api.admin.deleteServicePricing(pricingService.id, expertId);
+      setPricingList((prev) => prev.filter((p) => p.expert_id !== expertId));
+      showToast("Expert price removed");
+    } catch {
+      showToast("Failed to remove expert price", "error");
+    }
+  };
+
+  const list = useMemo(() => {
+    const rows_ = rows || [];
+    return rows_.filter((r) => {
+      if (
+        debouncedSearch &&
+        !r.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+      )
+        return false;
+      if (categoryFilter && r.category !== categoryFilter) return false;
+      if (statusFilter && r.status !== statusFilter) return false;
+      return true;
+    });
+  }, [rows, debouncedSearch, categoryFilter, statusFilter]);
 
   if (loading)
     return (
@@ -157,21 +287,50 @@ export default function ServicesPanel() {
           <input
             type="text"
             placeholder="Search service by name..."
+            value={searchInput}
+            onChange={(e) => onSearchChange(e.target.value)}
             className="h-full w-full bg-transparent text-[11px] text-[#2E2A3B] outline-none placeholder:text-[#A5A2B5]"
           />
           <Search size={14} className="shrink-0 text-[#6B6480]" />
         </div>
 
-        {selects.map((s) => (
-          <button
-            key={s.label}
-            type="button"
-            className={`flex h-[36px] ${s.w} items-center justify-between rounded-[8px] border border-[#E7E5EF] px-3 text-[11px] text-[#3D3752]`}
+        <div className="relative">
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-[36px] w-[145px] appearance-none rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[9px] text-[11px] text-[#3D3752]"
           >
-            {s.label}
-            <ChevronDown size={14} className="text-[#8B879C]" />
-          </button>
-        ))}
+            <option value="">All Categories</option>
+            {categoryOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-[9px] top-1/2 -translate-y-1/2 text-[#8B879C]"
+          />
+        </div>
+
+        <div className="relative">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-[36px] w-[132px] appearance-none rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[9px] text-[11px] text-[#3D3752]"
+          >
+            <option value="">All Status</option>
+            {statusOptions.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <ChevronDown
+            size={14}
+            className="pointer-events-none absolute right-[9px] top-1/2 -translate-y-1/2 text-[#8B879C]"
+          />
+        </div>
 
         <button
           type="button"
@@ -274,6 +433,14 @@ export default function ServicesPanel() {
                   <div className="flex items-center gap-[8px]">
                     <button
                       type="button"
+                      aria-label="Pricing Tiers"
+                      onClick={() => openPricingModal(r)}
+                      className="grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[#7C3AED] hover:bg-[#F1EAFE]"
+                    >
+                      <DollarSign size={14} />
+                    </button>
+                    <button
+                      type="button"
                       aria-label="Edit"
                       onClick={() => {
                         setEditingService(r);
@@ -291,6 +458,36 @@ export default function ServicesPanel() {
                       className="grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[#8B879C] hover:bg-[#F7F6FB]"
                     >
                       <Pencil size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Toggle Status"
+                      title={r.status === "Active" ? "Deactivate" : "Activate"}
+                      onClick={async () => {
+                        try {
+                          await api.admin.updateService(r.id, {
+                            status: r.status === "Active" ? "inactive" : "active",
+                          });
+                          showToast(
+                            r.status === "Active"
+                              ? "Service deactivated"
+                              : "Service activated",
+                          );
+                          reload();
+                        } catch (e: unknown) {
+                          showToast(
+                            errorMessage(e, "Failed to update status"),
+                            "error",
+                          );
+                        }
+                      }}
+                      className={`grid h-[26px] w-[26px] place-items-center rounded-[6px] hover:bg-[#F7F6FB] ${
+                        r.status === "Active"
+                          ? "text-[#16A34A] hover:bg-[#E6F7EE]"
+                          : "text-[#EF4444] hover:bg-[#FEE2E2]"
+                      }`}
+                    >
+                      <Power size={14} />
                     </button>
                     <button
                       type="button"
@@ -313,8 +510,8 @@ export default function ServicesPanel() {
       {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-[16px] pt-[16px]">
         <p className="text-[10.5px] text-[#8B879C]">
-          Showing 1 to 8 of {(total || list.length).toLocaleString("en-IN")}{" "}
-          services
+          Showing {list.length.toLocaleString("en-IN")} of{" "}
+          {(total || (rows || []).length).toLocaleString("en-IN")} services
         </p>
 
         <div className="flex flex-wrap items-center justify-end gap-3 sm:gap-4">
@@ -482,6 +679,114 @@ export default function ServicesPanel() {
           className={`fixed right-4 top-4 z-[999] rounded-[8px] px-4 py-3 text-[12px] font-medium text-white shadow-lg ${toast.kind === "success" ? "bg-[#16A34A]" : "bg-[#EF4444]"}`}
         >
           {toast.msg}
+        </div>
+      )}
+
+      {pricingModalOpen && pricingService && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setPricingModalOpen(false)}
+          />
+          <div className="relative z-10 w-full max-w-[520px] max-h-[85vh] overflow-y-auto rounded-[14px] border border-[#EEEDF4] bg-white shadow-[0_20px_60px_rgba(20,16,40,.18)]">
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#EEEDF4] bg-white px-6 py-4">
+              <h3 className="text-[16px] font-bold text-[#1F1836]">
+                Expert Pricing — {pricingService.name}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setPricingModalOpen(false)}
+                className="grid h-[28px] w-[28px] place-items-center rounded-[6px] text-[#8B879C] hover:bg-[#F7F6FB]"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="px-6 py-5">
+              {pricingLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
+                </div>
+              ) : (
+                <>
+                  {pricingList.length > 0 && (
+                    <div className="mb-5 space-y-2">
+                      {pricingList.map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center justify-between rounded-[8px] border border-[#E7E5EF] px-3 py-2"
+                        >
+                          <span className="text-[12px] font-medium text-[#3D3752]">
+                            {p.expert_name}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[12px] font-semibold text-[#16A34A]">
+                              ₹{Number(p.price).toLocaleString("en-IN")}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => removeExpertPrice(p.expert_id)}
+                              className="grid h-[22px] w-[22px] place-items-center rounded-[4px] text-[#EF4444] hover:bg-[#FEE2E2]"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_100px_auto]">
+                    <select
+                      value={newPricingExpert}
+                      onChange={(e) => setNewPricingExpert(e.target.value)}
+                      className="h-[38px] w-full appearance-none rounded-[8px] border border-[#E7E5EF] px-3 text-[12px] text-[#1F1836] outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30"
+                    >
+                      <option value="">Select expert...</option>
+                      {allExperts.map((e) => (
+                        <option key={e.id} value={e.id}>
+                          {e.name}
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min={0}
+                      placeholder="Price (₹)"
+                      value={newPricingPrice}
+                      onChange={(e) => setNewPricingPrice(e.target.value)}
+                      className="h-[38px] w-full rounded-[8px] border border-[#E7E5EF] px-3 text-[12px] text-[#1F1836] outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED]/30"
+                    />
+                    <button
+                      type="button"
+                      onClick={addExpertPrice}
+                      disabled={
+                        pricingSaving || !newPricingExpert || !newPricingPrice
+                      }
+                      className="inline-flex h-[38px] items-center gap-1 rounded-[8px] bg-gradient-to-r from-[#5B21B6] to-[#7C3AED] px-4 text-[12px] font-medium text-white shadow-sm disabled:opacity-60"
+                    >
+                      {pricingSaving ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        "+"
+                      )}
+                      Add
+                    </button>
+                  </div>
+
+                  {pricingList.length === 0 && !pricingLoading && (
+                    <p className="mt-4 text-center text-[11px] text-[#8B879C]">
+                      No expert-specific prices set. Add one above.
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </section>
