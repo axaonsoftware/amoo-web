@@ -13,6 +13,7 @@ import {
   AlertCircle,
   RotateCcw,
   X,
+  Download,
 } from "lucide-react";
 import api, { unwrapList, unwrapMeta } from "../../../lib/api";
 import { errorMessage } from "../../../lib/errors";
@@ -69,6 +70,8 @@ export default function RecentTransactions() {
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const itemsPerPage = 8;
 
   // Refund modal state
@@ -82,8 +85,13 @@ export default function RecentTransactions() {
 
   const load = () => {
     setLoading(true);
+    const params = new URLSearchParams();
+    params.set("page", String(page));
+    params.set("pageSize", String(itemsPerPage));
+    if (dateFrom) params.set("date_from", dateFrom);
+    if (dateTo) params.set("date_to", dateTo);
     api.admin
-      .getPayments(`?page=${page}&pageSize=${itemsPerPage}`)
+      .getPayments(`?${params.toString()}`)
       .then((res) => {
         const data = unwrapList<Payment>(res);
         const meta = unwrapMeta(res);
@@ -102,7 +110,11 @@ export default function RecentTransactions() {
   useEffect(() => {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, dateFrom, dateTo]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [dateFrom, dateTo]);
 
   const openRefund = (p: Payment) => {
     setRefundTarget(p);
@@ -128,6 +140,27 @@ export default function RecentTransactions() {
     } finally {
       setRefunding(false);
     }
+  };
+
+  const handleExport = () => {
+    if (!rows.length) return;
+    const headers = ["ID", "User", "Amount", "Method", "Status", "Date"];
+    const r = rows.map((t) => [
+      t.id,
+      t.user_name,
+      t.amount,
+      t.payment_method,
+      t.status,
+      t.created_at,
+    ]);
+    const csv = [headers.join(","), ...r.map((row) => row.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transactions.csv";
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   if (error) {
@@ -162,6 +195,44 @@ export default function RecentTransactions() {
             className="h-[28px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] font-medium text-[#4A3B63] hover:bg-[#FAF9FC]"
           >
             Refresh
+          </button>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-1.5 text-[11px] text-[#8B879C]">
+            From
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-[28px] rounded-[7px] border border-[#E7E5EF] bg-white px-2 text-[11px] text-[#3D3752] outline-none"
+            />
+          </label>
+          <label className="flex items-center gap-1.5 text-[11px] text-[#8B879C]">
+            To
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-[28px] rounded-[7px] border border-[#E7E5EF] bg-white px-2 text-[11px] text-[#3D3752] outline-none"
+            />
+          </label>
+          {(dateFrom || dateTo) && (
+            <button
+              type="button"
+              onClick={() => { setDateFrom(""); setDateTo(""); }}
+              className="h-[28px] rounded-[7px] border border-[#E7E5EF] bg-white px-2 text-[11px] text-[#8B879C] hover:bg-[#FAF9FC]"
+            >
+              Clear
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={handleExport}
+            className="inline-flex h-[28px] items-center gap-1.5 rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] font-medium text-[#4A3B63] hover:bg-[#FAF9FC]"
+          >
+            <Download size={12} />
+            Export CSV
           </button>
         </div>
 

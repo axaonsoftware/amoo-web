@@ -22,11 +22,12 @@ export default function RevenueOverview() {
   const [labels, setLabels] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [period, setPeriod] = useState("daily");
 
   useEffect(() => {
     let cancelled = false;
     api.admin
-      .getRevenue("daily")
+      .getRevenue(period)
       .then((res) => {
         if (cancelled) return;
         const data = res?.data || res;
@@ -65,7 +66,7 @@ export default function RevenueOverview() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [period]);
 
   const maxVal = Math.max(...revenue, ...netEarnings, 1);
   const areaPath = `M0,${H} L${revenue.map((v, i) => `${x(i, revenue.length)},${y(v, maxVal)}`).join(" L")} L${W},${H} Z`;
@@ -76,13 +77,16 @@ export default function RevenueOverview() {
         <h2 className="text-[14px] font-semibold text-[#1B1630]">
           Revenue Overview
         </h2>
-        <button
-          type="button"
-          className="inline-flex h-[32px] items-center gap-[10px] rounded-[8px] border border-[#E7E5EF] bg-white pl-3 pr-2 text-[11.5px] font-medium text-[#2E2A3B]"
+        <select
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+          className="h-[32px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#3D3752] outline-none"
         >
-          Daily
-          <ChevronDown size={14} className="text-[#8B879C]" />
-        </button>
+          <option value="daily">Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
       </div>
 
       {error ? (
