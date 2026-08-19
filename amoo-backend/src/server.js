@@ -14,7 +14,7 @@ const morgan = require("morgan");
 const { testConnection } = require("./config/db");
 const env = require("./config/env");
 const logger = require("./utils/logger");
-const { helmetConfig, corsOptions, limiter, authLimiter, registerLimiter } = require("./middleware/security");
+const { helmetConfig, corsOptions, limiter, authLimiter, registerLimiter, chatLimiter } = require("./middleware/security");
 const { HttpError } = require("./utils/helpers");
 const { fail } = require("./utils/response");
 const { withAudit, authRequired } = require("./middleware/auth");
@@ -168,6 +168,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/chat/conversations/:id/messages", chatLimiter);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/activity", activityRoutes);
@@ -264,8 +265,9 @@ if (require.main === module) {
         },
       ]);
       // WebSocket server for real-time chat.
-      // Clients connect to ws://host:port/chat with the access token
-      // in a query parameter (?token=<jwt>) or via the access_token cookie.
+      // Clients connect to ws://host:port/chat and authenticate via
+      // Sec-WebSocket-Protocol header or the access_token cookie.
+      // JWT in URL query strings is rejected — they leak in logs and Referer.
       const { attachChat } = require("./websocket");
       attachChat(server);
     });
