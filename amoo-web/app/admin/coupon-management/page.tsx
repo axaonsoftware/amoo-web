@@ -33,6 +33,9 @@ type Coupon = {
   used_count: number;
   expires_at: string | null;
   active: boolean;
+  service_id: number | null;
+  expert_id: number | null;
+  max_per_user: number;
   created_at?: string;
 };
 
@@ -45,6 +48,9 @@ type FormState = {
   max_uses: string;
   expires_at: string;
   active: boolean;
+  service_id: string;
+  expert_id: string;
+  max_per_user: string;
 };
 
 const EMPTY_FORM: FormState = {
@@ -56,6 +62,9 @@ const EMPTY_FORM: FormState = {
   max_uses: "",
   expires_at: "",
   active: true,
+  service_id: "",
+  expert_id: "",
+  max_per_user: "0",
 };
 
 function isExpired(c: Coupon): boolean {
@@ -169,6 +178,8 @@ export default function CouponManagementPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<Coupon | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [services, setServices] = useState<{ id: number; name: string }[]>([]);
+  const [experts, setExperts] = useState<{ id: number; name: string }[]>([]);
   const { showToast, Toast } = useToast();
 
   const load = useCallback(() => {
@@ -192,6 +203,17 @@ export default function CouponManagementPage() {
     return () => clearTimeout(t);
   }, [load, search]);
 
+  useEffect(() => {
+    api.admin.getServices().then((res: unknown) => {
+      const list = unwrapList<{ id: number; name: string }>(res);
+      setServices(list);
+    }).catch(() => {});
+    api.admin.getExperts().then((res: unknown) => {
+      const list = unwrapList<{ id: number; name: string }>(res);
+      setExperts(list);
+    }).catch(() => {});
+  }, []);
+
   const openCreate = () => {
     setEditing(null);
     setForm(EMPTY_FORM);
@@ -211,6 +233,9 @@ export default function CouponManagementPage() {
       // <input type="date"> needs YYYY-MM-DD; the API returns a full datetime.
       expires_at: c.expires_at ? String(c.expires_at).slice(0, 10) : "",
       active: !!c.active,
+      service_id: c.service_id != null ? String(c.service_id) : "",
+      expert_id: c.expert_id != null ? String(c.expert_id) : "",
+      max_per_user: String(c.max_per_user ?? "0"),
     });
     setFormError(null);
     setShowForm(true);
@@ -264,6 +289,9 @@ export default function CouponManagementPage() {
       max_uses: form.max_uses ? Number(form.max_uses) : null,
       expires_at: form.expires_at || null,
       active: form.active,
+      service_id: form.service_id ? Number(form.service_id) : null,
+      expert_id: form.expert_id ? Number(form.expert_id) : null,
+      max_per_user: Number(form.max_per_user) || 0,
     };
 
     setSaving(true);
@@ -601,6 +629,77 @@ export default function CouponManagementPage() {
                   }
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
                 />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="c-max-per-user"
+                  className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                >
+                  Limit Per User{" "}
+                  <span className="text-[#8B879C]">(0 = unlimited)</span>
+                </label>
+                <input
+                  id="c-max-per-user"
+                  type="number"
+                  min={0}
+                  value={form.max_per_user}
+                  onChange={(e) =>
+                    setForm({ ...form, max_per_user: e.target.value })
+                  }
+                  className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="c-service"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Assign to Service{" "}
+                    <span className="text-[#8B879C]">(optional)</span>
+                  </label>
+                  <select
+                    id="c-service"
+                    value={form.service_id}
+                    onChange={(e) =>
+                      setForm({ ...form, service_id: e.target.value })
+                    }
+                    className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                  >
+                    <option value="">All Services</option>
+                    {services.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label
+                    htmlFor="c-expert"
+                    className="mb-1 block text-[11px] font-medium text-[#3D3752]"
+                  >
+                    Assign to Expert{" "}
+                    <span className="text-[#8B879C]">(optional)</span>
+                  </label>
+                  <select
+                    id="c-expert"
+                    value={form.expert_id}
+                    onChange={(e) =>
+                      setForm({ ...form, expert_id: e.target.value })
+                    }
+                    className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                  >
+                    <option value="">All Experts</option>
+                    {experts.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="flex items-center gap-2">
