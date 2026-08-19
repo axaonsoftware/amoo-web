@@ -1,12 +1,15 @@
 "use client";
 import {  memo,  useState,  useEffect,  useCallback,  useRef  } from "react";
+import Link from "next/link";
 import { 
   Search, 
   Filter, 
   Pencil, 
   Trash2, 
   KeyRound, 
-  Loader2 } from "lucide-react";
+  Loader2,
+  Eye,
+  ToggleLeft } from "lucide-react";
 import {  api  } from "../../../lib/api";
 import AdminModal, {  type ModalField  } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
@@ -34,7 +37,7 @@ const expertFields: ModalField[] = [
   },
   { name: "phone", label: "Phone", placeholder: "+91 phone number" },
   {
-    name: "specialization",
+    name: "specialties",
     label: "Specialization",
     type: "select",
     required: true,
@@ -109,7 +112,7 @@ type PanelFns = {
 };
 
 type AdminExpert = Expert & {
-  specialization?: string | null;
+  specialties?: string | null;
   experience?: string | number | null;
   hourly_rate?: string | number | null;
   sessions?: number | null;
@@ -121,12 +124,14 @@ const ExpertRow = memo(function ExpertRow({
   onEdit,
   onSetPassword,
   onDelete,
+  onToggleStatus,
 }: {
   expert: AdminExpert;
   idx: number;
   onEdit: (e: AdminExpert) => void;
   onSetPassword: (e: AdminExpert) => void;
   onDelete: (e: AdminExpert) => void;
+  onToggleStatus: (e: AdminExpert) => void;
 }) {
   return (
     <tr
@@ -152,9 +157,9 @@ const ExpertRow = memo(function ExpertRow({
       </td>
       <td className="px-[14px] py-[11px]">
         <span
-          className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialization ?? ""] || "bg-[#F5F4F9] text-[#6B6480]"}`}
+          className={`inline-block rounded-full px-[10px] py-[3px] text-[10px] font-medium ${specializationTone[expert.specialties ?? ""] || "bg-[#F5F4F9] text-[#6B6480]"}`}
         >
-          {expert.specialization || "—"}
+          {expert.specialties || "—"}
         </span>
       </td>
       <td className="px-[14px] py-[11px] text-[11px] text-[#6B6480]">
@@ -178,6 +183,21 @@ const ExpertRow = memo(function ExpertRow({
       </td>
       <td className="px-[14px] py-[11px]">
         <div className="flex items-center gap-2">
+          <Link
+            href={`/admin/expert-management/${expert.id}`}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#3B82F6] hover:bg-[#EFF6FF]"
+            title="View details"
+          >
+            <Eye size={13} strokeWidth={2} />
+          </Link>
+          <button
+            onClick={() => onToggleStatus(expert)}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#F59E0B] hover:bg-[#FEF3C7]"
+            title={expert.status === "active" ? "Deactivate" : "Activate"}
+            aria-label={`Toggle status for ${sanitize(expert.name) || "expert"}`}
+          >
+            <ToggleLeft size={13} strokeWidth={2} />
+          </button>
           <button
             onClick={() => onEdit(expert)}
             className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#7C3AED] hover:bg-[#FAF7FF]"
@@ -263,7 +283,7 @@ export default function ExpertPanel({
       name: expert.name || "",
       email: expert.email || "",
       phone: expert.phone || "",
-      specialization: expert.specialization || "",
+      specialties: expert.specialties || "",
       experience: String(expert.experience || ""),
       hourly_rate: String(expert.hourly_rate || ""),
       bio: expert.bio || "",
@@ -373,6 +393,21 @@ export default function ExpertPanel({
     setConfirmOpen(true);
   }, []);
 
+  const handleToggleStatus = useCallback(
+    async (e: AdminExpert) => {
+      try {
+        await api.admin.updateExpert(e.id, {
+          status: e.status === "active" ? "inactive" : "active",
+        });
+        showToast(`Expert ${e.status === "active" ? "deactivated" : "activated"}`);
+        loadExperts();
+      } catch (err: unknown) {
+        showToast(errorMessage(err, "Failed to update status"), "error");
+      }
+    },
+    [loadExperts, showToast],
+  );
+
   return (
     <>
       {/* Search and filter bar */}
@@ -475,6 +510,7 @@ export default function ExpertPanel({
                   onEdit={handleEditExpert}
                   onSetPassword={handleSetPassword}
                   onDelete={handleDeleteExpert}
+                  onToggleStatus={handleToggleStatus}
                 />
               ))
             )}
