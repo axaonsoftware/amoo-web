@@ -11,6 +11,7 @@ import {
   Calendar,
   CheckCircle2,
   XCircle,
+  Eye,
   Grid2x2,
   Layers,
   Hash,
@@ -19,6 +20,8 @@ import {
   Briefcase,
   SpellCheck,
   Loader2,
+  Plus,
+  X,
 } from "lucide-react";
 import { serviceStyles, statusStyles, type ServiceKey } from "./data";
 import { api, type PageMeta } from "../../../lib/api";
@@ -71,12 +74,20 @@ function buildQuery(params: {
   limit: number;
   search: string;
   status: string;
+  expert_id?: string;
+  service_id?: string;
+  date_from?: string;
+  date_to?: string;
 }) {
   const q = new URLSearchParams();
   q.set("page", String(params.page));
   q.set("pageSize", String(params.limit));
   if (params.search) q.set("search", params.search);
   if (params.status) q.set("status", params.status);
+  if (params.expert_id) q.set("expert_id", params.expert_id);
+  if (params.service_id) q.set("service_id", params.service_id);
+  if (params.date_from) q.set("date_from", params.date_from);
+  if (params.date_to) q.set("date_to", params.date_to);
   return q.toString();
 }
 
@@ -99,12 +110,38 @@ interface BookingRow {
   status: Booking["status"];
 }
 
+function DetailRow({
+  label,
+  value,
+  valueClass,
+}: {
+  label: string;
+  value: React.ReactNode;
+  valueClass?: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4">
+      <span className="text-[11px] font-medium text-[#8B879C]">{label}</span>
+      <span className={`text-[12px] font-medium text-[#221C33] ${valueClass ?? ""}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 export default function BookingsPanel() {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [status, setStatus] = useState("");
+  const [expertFilter, setExpertFilter] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [experts, setExperts] = useState<{ id: number; name: string }[]>([]);
+  const [services, setServices] = useState<{ id: number; name: string }[]>([]);
+  const [detailBooking, setDetailBooking] = useState<BookingRow | null>(null);
 
   const [list, setList] = useState<BookingRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,15 +158,95 @@ export default function BookingsPanel() {
     kind: "success" | "error";
   } | null>(null);
 
+  const [manualModal, setManualModal] = useState(false);
+  const [manualValues, setManualValues] = useState<Record<string, string>>({});
+  const [manualSaving, setManualSaving] = useState(false);
+  const [manualExperts, setManualExperts] = useState<
+    { id: number; name: string }[]
+  >([]);
+  const [manualServices, setManualServices] = useState<
+    { id: number; name: string; price: number }[]
+  >([]);
+
   const showToast = (msg: string, kind: "success" | "error" = "success") => {
     setToast({ msg, kind });
     setTimeout(() => setToast(null), 3000);
   };
 
+  const openManualCreate = () => {
+    setManualValues({
+      date: "",
+      time: "",
+      user_id: "",
+      service_id: "",
+      expert_id: "",
+      payment_status: "Pending",
+      notes: "",
+      amount: "",
+    });
+    setManualModal(true);
+    api.admin
+      .getExperts()
+      .then((res) => {
+        const list = Array.isArray(res) ? res : [];
+        setManualExperts(
+          list.map((e: any) => ({ id: e.id, name: e.name })),
+        );
+      })
+      .catch(() => {});
+    api.admin
+      .getServices()
+      .then((res: any) => {
+        const list = res?.data ?? (Array.isArray(res) ? res : []);
+        setManualServices(
+          list.map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            price: Number(s.price),
+          })),
+        );
+      })
+      .catch(() => {});
+  };
+
+  const handleManualCreate = async () => {
+    setManualSaving(true);
+    try {
+      await api.admin.createManualBooking({
+        user_id: Number(manualValues.user_id),
+        service_id: Number(manualValues.service_id),
+        expert_id: manualValues.expert_id
+          ? Number(manualValues.expert_id)
+          : undefined,
+        date: manualValues.date,
+        time: manualValues.time,
+        payment_status: manualValues.payment_status,
+        amount: manualValues.amount ? Number(manualValues.amount) : undefined,
+        notes: manualValues.notes || undefined,
+      });
+      setManualModal(false);
+      showToast("Booking created successfully");
+      reload();
+    } catch (e: unknown) {
+      showToast(errorMessage(e, "Failed to create booking"), "error");
+    } finally {
+      setManualSaving(false);
+    }
+  };
+
   const reload = () => {
     setLoading(true);
     setError("");
-    const query = buildQuery({ page, limit, search: debouncedSearch, status });
+    const query = buildQuery({
+      page,
+      limit,
+      search: debouncedSearch,
+      status,
+      expert_id: expertFilter,
+      service_id: serviceFilter,
+      date_from: dateFrom,
+      date_to: dateTo,
+    });
     api.admin
       .getBookings(`?${query}`)
       .then((res: ListResponse<AdminBooking>) => {
@@ -189,11 +306,37 @@ export default function BookingsPanel() {
   }, []);
 
   useEffect(() => {
+    api.admin
+      .getExperts()
+      .then((res: any) => {
+        const list = Array.isArray(res) ? res : [];
+        setExperts(list.map((e: any) => ({ id: e.id, name: e.name })));
+      })
+      .catch(() => {});
+    api.admin
+      .getServices()
+      .then((res: any) => {
+        const list = res?.data ?? (Array.isArray(res) ? res : []);
+        setServices(list.map((s: any) => ({ id: s.id, name: s.name })));
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError("");
 
-    const query = buildQuery({ page, limit, search: debouncedSearch, status });
+    const query = buildQuery({
+      page,
+      limit,
+      search: debouncedSearch,
+      status,
+      expert_id: expertFilter,
+      service_id: serviceFilter,
+      date_from: dateFrom,
+      date_to: dateTo,
+    });
 
     api.admin
       .getBookings(`?${query}`)
@@ -237,7 +380,7 @@ export default function BookingsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [page, limit, debouncedSearch, status]);
+  }, [page, limit, debouncedSearch, status, expertFilter, serviceFilter, dateFrom, dateTo]);
 
   const totalPages = meta.totalPages || 1;
   const from = meta.total === 0 ? 0 : (page - 1) * limit + 1;
@@ -333,11 +476,80 @@ export default function BookingsPanel() {
 
           <button
             type="button"
-            className="ml-auto inline-flex h-[38px] items-center gap-[8px] whitespace-nowrap rounded-[8px] border border-[#E7E5EF] bg-white pl-[12px] pr-[10px] text-[11px] text-[#2E2A3B]"
+            onClick={openManualCreate}
+            className="inline-flex h-[38px] items-center gap-[6px] rounded-[8px] bg-[#6D28D9] px-[14px] text-[11px] font-medium text-white hover:bg-[#5B21B6]"
           >
-            01 May 2025&nbsp;&nbsp;-&nbsp;&nbsp;18 May 2025
-            <Calendar size={14} className="shrink-0 text-[#8B879C]" />
+            <Plus size={14} />
+            New Booking
           </button>
+
+          <div className="relative">
+            <select
+              value={expertFilter}
+              onChange={(e) => {
+                setExpertFilter(e.target.value);
+                setPage(1);
+              }}
+              className="h-[38px] w-[140px] appearance-none rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[9px] text-[11px] text-[#2E2A3B]"
+            >
+              <option value="">All Experts</option>
+              {experts.map((e) => (
+                <option key={e.id} value={String(e.id)}>
+                  {e.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-[9px] top-1/2 -translate-y-1/2 text-[#8B879C]"
+            />
+          </div>
+
+          <div className="relative">
+            <select
+              value={serviceFilter}
+              onChange={(e) => {
+                setServiceFilter(e.target.value);
+                setPage(1);
+              }}
+              className="h-[38px] w-[140px] appearance-none rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[9px] text-[11px] text-[#2E2A3B]"
+            >
+              <option value="">All Services</option>
+              {services.map((s) => (
+                <option key={s.id} value={String(s.id)}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+            <ChevronDown
+              size={14}
+              className="pointer-events-none absolute right-[9px] top-1/2 -translate-y-1/2 text-[#8B879C]"
+            />
+          </div>
+
+          <div className="relative">
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => {
+                setDateFrom(e.target.value);
+                setPage(1);
+              }}
+              className="h-[38px] w-[130px] appearance-none rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[9px] text-[11px] text-[#2E2A3B]"
+            />
+          </div>
+
+          <div className="relative">
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => {
+                setDateTo(e.target.value);
+                setPage(1);
+              }}
+              className="h-[38px] w-[130px] appearance-none rounded-[8px] border border-[#E7E5EF] bg-white pl-[11px] pr-[9px] text-[11px] text-[#2E2A3B]"
+            />
+          </div>
         </div>
 
         {/* Table */}
@@ -493,6 +705,15 @@ export default function BookingsPanel() {
 
                       <td className="py-[13px] pr-5">
                         <div className="flex items-center gap-[6px]">
+                          <button
+                            type="button"
+                            aria-label="View Details"
+                            onClick={() => setDetailBooking(b)}
+                            title="View Details"
+                            className="grid h-[28px] w-[28px] place-items-center rounded-[8px] border border-[#E7E5EF] bg-white text-[#6D28D9] hover:bg-[#EDE9FE]"
+                          >
+                            <Eye size={14} />
+                          </button>
                           {b.status !== "completed" &&
                             b.status !== "cancelled" && (
                               <button
@@ -664,6 +885,275 @@ export default function BookingsPanel() {
         }
         saving={confirmSaving}
       />
+
+      {manualModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="manual-booking-title"
+        >
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[16px] bg-white p-6 shadow-xl">
+            <div className="flex items-center justify-between">
+              <h2
+                id="manual-booking-title"
+                className="text-[16px] font-bold text-[#231640]"
+              >
+                Create Manual Booking
+              </h2>
+              <button
+                type="button"
+                onClick={() => setManualModal(false)}
+                aria-label="Close"
+                className="rounded-md p-1 hover:bg-gray-100"
+              >
+                <X size={18} className="text-[#8B879C]" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div>
+                <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                  User ID
+                </label>
+                <input
+                  type="number"
+                  value={manualValues.user_id ?? ""}
+                  onChange={(e) =>
+                    setManualValues({ ...manualValues, user_id: e.target.value })
+                  }
+                  placeholder="Enter user ID"
+                  className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                  Service
+                </label>
+                <select
+                  value={manualValues.service_id ?? ""}
+                  onChange={(e) => {
+                    const sid = e.target.value;
+                    const svc = manualServices.find(
+                      (s) => String(s.id) === sid,
+                    );
+                    setManualValues({
+                      ...manualValues,
+                      service_id: sid,
+                      amount: svc ? String(svc.price) : manualValues.amount,
+                    });
+                  }}
+                  className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                >
+                  <option value="">Select service</option>
+                  {manualServices.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                  Expert (optional)
+                </label>
+                <select
+                  value={manualValues.expert_id ?? ""}
+                  onChange={(e) =>
+                    setManualValues({
+                      ...manualValues,
+                      expert_id: e.target.value,
+                    })
+                  }
+                  className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                >
+                  <option value="">Select expert</option>
+                  {manualExperts.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    value={manualValues.date ?? ""}
+                    onChange={(e) =>
+                      setManualValues({ ...manualValues, date: e.target.value })
+                    }
+                    className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                    Time
+                  </label>
+                  <input
+                    type="time"
+                    value={manualValues.time ?? ""}
+                    onChange={(e) =>
+                      setManualValues({ ...manualValues, time: e.target.value })
+                    }
+                    className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                    Payment Status
+                  </label>
+                  <select
+                    value={manualValues.payment_status ?? "Pending"}
+                    onChange={(e) =>
+                      setManualValues({
+                        ...manualValues,
+                        payment_status: e.target.value,
+                      })
+                    }
+                    className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                  >
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                    Amount
+                  </label>
+                  <input
+                    type="number"
+                    value={manualValues.amount ?? ""}
+                    onChange={(e) =>
+                      setManualValues({
+                        ...manualValues,
+                        amount: e.target.value,
+                      })
+                    }
+                    placeholder="Auto-filled from service"
+                    className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1 block text-[11px] font-medium text-[#3D3752]">
+                  Notes
+                </label>
+                <textarea
+                  value={manualValues.notes ?? ""}
+                  onChange={(e) =>
+                    setManualValues({ ...manualValues, notes: e.target.value })
+                  }
+                  placeholder="Optional notes..."
+                  rows={3}
+                  className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setManualModal(false)}
+                className="rounded-[8px] border border-[#E5E1F0] px-4 py-2 text-[12px] font-medium text-[#3D3752] hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleManualCreate}
+                disabled={
+                  manualSaving ||
+                  !manualValues.user_id ||
+                  !manualValues.service_id ||
+                  !manualValues.date ||
+                  !manualValues.time
+                }
+                className="inline-flex items-center gap-2 rounded-[8px] bg-[#6D28D9] px-4 py-2 text-[12px] font-medium text-white hover:bg-[#5B21B6] disabled:opacity-50"
+              >
+                {manualSaving && (
+                  <Loader2 size={14} className="animate-spin" />
+                )}
+                {manualSaving ? "Saving..." : "Create Booking"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {detailBooking && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setDetailBooking(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-[16px] bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-[16px] font-bold text-[#231640]">
+                Booking Details
+              </h2>
+              <button
+                type="button"
+                onClick={() => setDetailBooking(null)}
+                aria-label="Close"
+                className="rounded-md p-1 hover:bg-gray-100"
+              >
+                <X size={18} className="text-[#8B879C]" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <DetailRow label="Booking ID" value={detailBooking.id} />
+              <DetailRow label="User" value={detailBooking.user.name} />
+              <DetailRow
+                label="Expert"
+                value={detailBooking.expert.name}
+              />
+              <DetailRow
+                label="Service"
+                value={serviceStyles[detailBooking.service]?.label ?? detailBooking.service}
+              />
+              <DetailRow label="Date" value={detailBooking.date} />
+              <DetailRow label="Time" value={detailBooking.time} />
+              <DetailRow label="Amount" value={detailBooking.amount} />
+              <DetailRow
+                label="Payment"
+                value={detailBooking.payment}
+                valueClass={
+                  detailBooking.payment === "Paid"
+                    ? "text-[#16A34A]"
+                    : "text-[#EA580C]"
+                }
+              />
+              <DetailRow label="Status" value={detailBooking.status} />
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setDetailBooking(null)}
+                className="rounded-[8px] border border-[#E7E5EF] px-4 py-2 text-[12px] font-medium text-[#4A4658] hover:bg-[#F7F6FB]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {toast && (
         <div
