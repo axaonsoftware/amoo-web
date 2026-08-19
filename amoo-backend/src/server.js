@@ -42,6 +42,8 @@ const auditRoutes = require("./routes/audit");
 const activityRoutes = require("./routes/activity");
 const blogRoutes = require("./routes/blogs");
 const faqRoutes = require("./routes/faqs");
+const settingsRoutes = require("./routes/settings");
+const contentRoutes = require("./routes/content");
 const { setupSwagger } = require("./config/swagger");
 
 const app = express();
@@ -174,6 +176,8 @@ app.use("/api/audit", auditRoutes);
 app.use("/api/activity", activityRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/faqs", faqRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/content", contentRoutes);
 
 // 404
 app.use((req, res) => fail(res, 404, "Not found"));
