@@ -177,6 +177,47 @@ router.post(
   })
 );
 
+// POST /api/bookings/manual — admin creates a booking on behalf of a user
+router.post(
+  "/manual",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { user_id, expert_id, service_id, slot_id, date, time, mode, payment_status, amount, notes } = req.body;
+    if (!user_id || !service_id || !date || !time) {
+      return fail(res, 400, "user_id, service_id, date, and time are required");
+    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const { rows: [svc] } = await client.query("SELECT id, price FROM services WHERE id = $1 AND deleted_at IS NULL", [service_id]);
+      if (!svc) throw new HttpError(404, "Service not found");
+      const bookingAmount = Number(amount) || Number(svc.price);
+      if (slot_id) {
+        const { rows: slots } = await client.query("SELECT * FROM slots WHERE id = $1 FOR UPDATE", [slot_id]);
+        if (slots.length && slots[0].status === "available") {
+          await client.query("UPDATE slots SET status = 'booked' WHERE id = $1", [slot_id]);
+        }
+      }
+      const ref = genBookingRef();
+      const payStatus = payment_status === "Paid" ? "Paid" : "Pending";
+      const status = payStatus === "Paid" ? "upcoming" : "pending-payment";
+      const result = await client.query(
+        `INSERT INTO bookings (booking_ref, user_id, expert_id, service_id, slot_id, date, time, mode, amount, payment, status, notes)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+        [ref, user_id, expert_id || null, service_id, slot_id || null, date, time, mode || null, bookingAmount, payStatus, status, notes || null]
+      );
+      await client.query("COMMIT");
+      req.audit("manual-create", "booking", result.rows[0].id, { booking_ref: ref, user_id });
+      created(res, result.rows[0]);
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  })
+);
+
 // admin update status/payment
 router.patch(
   "/:id",
