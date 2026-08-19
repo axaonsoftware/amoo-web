@@ -56,4 +56,14 @@ const registerLimiter = rateLimit({
   message: { success: false, error: "Too many registrations from this address, please try later." },
 });
 
-module.exports = { corsOptions, helmetConfig, limiter, authLimiter, registerLimiter };
+// Stricter limit for chat message sending via HTTP fallback (should be rare;
+// most messages flow through WebSocket which has its own rate limiter).
+const chatLimiter = rateLimit({
+  windowMs: 60_000, // 1 minute
+  max: 30, // 30 messages per minute per IP
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "Too many messages, please slow down." },
+});
+
+module.exports = { corsOptions, helmetConfig, limiter, authLimiter, registerLimiter, chatLimiter };
