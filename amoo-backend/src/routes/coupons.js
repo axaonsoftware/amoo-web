@@ -1,6 +1,14 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
+
+(async () => {
+  try {
+    await pool.query("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS service_id INTEGER REFERENCES services(id)");
+    await pool.query("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS expert_id INTEGER REFERENCES experts(id)");
+    await pool.query("ALTER TABLE coupons ADD COLUMN IF NOT EXISTS max_per_user INTEGER DEFAULT 0");
+  } catch (_) { /* columns already exist */ }
+})();
 const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
@@ -16,6 +24,9 @@ const couponSchema = joi.object({
   max_uses: joi.number().integer().min(1).allow(null),
   expires_at: joi.string().allow("").allow(null),
   active: joi.boolean().default(true),
+  service_id: joi.number().integer().allow(null),
+  expert_id: joi.number().integer().allow(null),
+  max_per_user: joi.number().integer().min(0).default(0),
 });
 const couponUpdateSchema = joi.object({
   code: joi.string().uppercase().min(3).max(30),
@@ -26,8 +37,11 @@ const couponUpdateSchema = joi.object({
   max_uses: joi.number().integer().min(1).allow(null),
   expires_at: joi.string().allow("").allow(null),
   active: joi.boolean(),
+  service_id: joi.number().integer().allow(null),
+  expert_id: joi.number().integer().allow(null),
+  max_per_user: joi.number().integer().min(0),
 });
-const COUPON_UPDATE_ALLOWED = ["code", "description", "discount_type", "discount_value", "min_amount", "max_uses", "expires_at", "active"];
+const COUPON_UPDATE_ALLOWED = ["code", "description", "discount_type", "discount_value", "min_amount", "max_uses", "expires_at", "active", "service_id", "expert_id", "max_per_user"];
 
 // GET /api/coupons (admin list + filters)
 router.get(
@@ -59,13 +73,14 @@ router.post(
   asyncHandler(async (req, res) => {
     const {
       code, description, discount_type, discount_value, min_amount, max_uses, expires_at, active,
+      service_id, expert_id, max_per_user,
     } = req.body;
     const { rows: existing } = await pool.query("SELECT id FROM coupons WHERE code = $1", [code]);
     if (existing.length) throw new HttpError(409, "Coupon code already exists");
     const result = await pool.query(
-      `INSERT INTO coupons (code, description, discount_type, discount_value, min_amount, max_uses, expires_at, active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-      [code, description || null, discount_type, discount_value, min_amount, max_uses || null, expires_at || null, active]
+      `INSERT INTO coupons (code, description, discount_type, discount_value, min_amount, max_uses, expires_at, active, service_id, expert_id, max_per_user)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+      [code, description || null, discount_type, discount_value, min_amount, max_uses || null, expires_at || null, active, service_id || null, expert_id || null, max_per_user || 0]
     );
     req.audit("create", "coupon", result.rows[0].id, { code });
     created(res, { id: result.rows[0].id });
@@ -84,6 +99,13 @@ router.post(
     if (!c.active) throw new HttpError(400, "Coupon inactive");
     if (c.expires_at && new Date(c.expires_at) < new Date()) throw new HttpError(400, "Coupon expired");
     if (c.max_uses && c.used_count >= c.max_uses) throw new HttpError(400, "Coupon exhausted");
+    if (c.max_per_user > 0 && req.user) {
+      const { rows: [{ count }] } = await pool.query(
+        "SELECT COUNT(*) AS count FROM coupon_usages WHERE coupon_id = $1 AND user_id = $2",
+        [c.id, req.user.id]
+      );
+      if (Number(count) >= c.max_per_user) throw new HttpError(400, "Per-user usage limit reached");
+    }
     if (amount && Number(amount) < Number(c.min_amount)) {
       throw new HttpError(400, `Minimum order ${c.min_amount}`);
     }
@@ -150,6 +172,13 @@ router.post(
       if (!c.active) throw new HttpError(400, "Coupon inactive");
       if (c.expires_at && new Date(c.expires_at) < new Date()) throw new HttpError(400, "Coupon expired");
       if (c.max_uses && c.used_count >= c.max_uses) throw new HttpError(400, "Coupon exhausted");
+      if (c.max_per_user > 0) {
+        const { rows: [{ count }] } = await client.query(
+          "SELECT COUNT(*) AS count FROM coupon_usages WHERE coupon_id = $1 AND user_id = $2",
+          [c.id, req.user.id]
+        );
+        if (Number(count) >= c.max_per_user) throw new HttpError(400, "Per-user usage limit reached");
+      }
 
       const amountBefore = Number(booking.amount);
       if (amountBefore < Number(c.min_amount)) throw new HttpError(400, `Minimum order ${c.min_amount}`);
