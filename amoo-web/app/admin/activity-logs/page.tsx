@@ -10,6 +10,8 @@ import {
   RefreshCw, 
   X } from "lucide-react";
 import {  api  } from "@/lib/api";
+import { useAutoRefresh } from "@/lib/useAutoRefresh";
+import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
 type ActivityItem = {
   id: number;
@@ -17,6 +19,7 @@ type ActivityItem = {
   actor_type: string;
   action: string;
   entity: string | null;
+  entity_id: number | null;
   action_details: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
@@ -37,6 +40,8 @@ export default function AdminActivityLogsPage() {
   const [filterAction, setFilterAction] = useState("");
   const [filterActorType, setFilterActorType] = useState("");
   const [filterActorId, setFilterActorId] = useState("");
+  const [filterEntity, setFilterEntity] = useState("");
+  const [filterEntityId, setFilterEntityId] = useState("");
   const [filterDateFrom, setFilterDateFrom] = useState("");
   const [filterDateTo, setFilterDateTo] = useState("");
 
@@ -47,6 +52,8 @@ export default function AdminActivityLogsPage() {
     if (filterAction) params.set("action", filterAction);
     if (filterActorType) params.set("actor_type", filterActorType);
     if (filterActorId) params.set("actor_id", filterActorId);
+    if (filterEntity) params.set("entity", filterEntity);
+    if (filterEntityId) params.set("entity_id", filterEntityId);
     if (filterDateFrom) params.set("date_from", filterDateFrom);
     if (filterDateTo) params.set("date_to", filterDateTo);
     return `?${params.toString()}`;
@@ -55,6 +62,8 @@ export default function AdminActivityLogsPage() {
     filterAction,
     filterActorType,
     filterActorId,
+    filterEntity,
+    filterEntityId,
     filterDateFrom,
     filterDateTo,
   ]);
@@ -85,10 +94,18 @@ export default function AdminActivityLogsPage() {
     fetchLogs();
   }, [fetchLogs]);
 
+  const { isRefreshing } = useAutoRefresh(fetchLogs);
+  const { start, stop } = useAutoRefreshTracking();
+  useEffect(() => {
+    if (isRefreshing) start(); else stop();
+  }, [isRefreshing, start, stop]);
+
   function clearFilters() {
     setFilterAction("");
     setFilterActorType("");
     setFilterActorId("");
+    setFilterEntity("");
+    setFilterEntityId("");
     setFilterDateFrom("");
     setFilterDateTo("");
     setPage(1);
@@ -98,6 +115,8 @@ export default function AdminActivityLogsPage() {
     filterAction ||
     filterActorType ||
     filterActorId ||
+    filterEntity ||
+    filterEntityId ||
     filterDateFrom ||
     filterDateTo;
 
@@ -106,11 +125,33 @@ export default function AdminActivityLogsPage() {
       page_view: "bg-blue-100 text-blue-700",
       login: "bg-green-100 text-green-700",
       logout: "bg-gray-100 text-gray-700",
+      "logout-all": "bg-gray-100 text-gray-700",
       "user.login": "bg-green-100 text-green-700",
       "admin.login": "bg-purple-100 text-purple-700",
       signup: "bg-purple-100 text-purple-700",
-      booking: "bg-amber-100 text-amber-700",
-      payment: "bg-emerald-100 text-emerald-700",
+      create: "bg-emerald-100 text-emerald-700",
+      update: "bg-amber-100 text-amber-700",
+      delete: "bg-red-100 text-red-700",
+      cancel: "bg-orange-100 text-orange-700",
+      complete: "bg-green-100 text-green-700",
+      "change-password": "bg-yellow-100 text-yellow-700",
+      "verify-email": "bg-teal-100 text-teal-700",
+      "reset-password": "bg-pink-100 text-pink-700",
+      "set-password": "bg-pink-100 text-pink-700",
+      "attach-file": "bg-cyan-100 text-cyan-700",
+      "chat-message": "bg-indigo-100 text-indigo-700",
+      "create-order": "bg-emerald-100 text-emerald-700",
+      "verify-payment": "bg-green-100 text-green-700",
+      refund: "bg-red-100 text-red-700",
+      "verify-refund": "bg-orange-100 text-orange-700",
+      "verify-refund-failed": "bg-red-100 text-red-700",
+      "webhook-received": "bg-slate-100 text-slate-700",
+      apply: "bg-violet-100 text-violet-700",
+      "wallet-admin-credit": "bg-green-100 text-green-700",
+      "wallet-debit": "bg-orange-100 text-orange-700",
+      "wallet-transfer": "bg-blue-100 text-blue-700",
+      "wallet-admin-adjust": "bg-amber-100 text-amber-700",
+      "expire-job": "bg-gray-100 text-gray-700",
       "profile.update": "bg-indigo-100 text-indigo-700",
       profile_update: "bg-indigo-100 text-indigo-700",
       download: "bg-cyan-100 text-cyan-700",
@@ -129,6 +170,7 @@ export default function AdminActivityLogsPage() {
     const colors: Record<string, string> = {
       admin: "bg-red-100 text-red-700",
       user: "bg-blue-100 text-blue-700",
+      expert: "bg-violet-100 text-violet-700",
       system: "bg-gray-100 text-gray-700",
     };
     return (
@@ -166,6 +208,7 @@ export default function AdminActivityLogsPage() {
         <option value="">All types</option>
         <option value="user">User</option>
         <option value="admin">Admin</option>
+        <option value="expert">Expert</option>
         <option value="system">System</option>
       </select>
       <input
@@ -177,6 +220,26 @@ export default function AdminActivityLogsPage() {
           setPage(1);
         }}
         className="h-[38px] w-[160px] rounded-lg border border-[#ece4f6] px-3 text-[12px] outline-none"
+      />
+      <input
+        type="text"
+        placeholder="Entity (e.g. booking)"
+        value={filterEntity}
+        onChange={(e) => {
+          setFilterEntity(e.target.value);
+          setPage(1);
+        }}
+        className="h-[38px] w-[120px] rounded-lg border border-[#ece4f6] px-3 text-[12px] outline-none"
+      />
+      <input
+        type="text"
+        placeholder="Entity ID"
+        value={filterEntityId}
+        onChange={(e) => {
+          setFilterEntityId(e.target.value);
+          setPage(1);
+        }}
+        className="h-[38px] w-[90px] rounded-lg border border-[#ece4f6] px-3 text-[12px] outline-none"
       />
       <input
         type="date"
@@ -285,11 +348,16 @@ export default function AdminActivityLogsPage() {
                     </td>
                     <td className="px-4 py-3 hidden sm:table-cell text-[#6b5b83]">
                       {item.entity ? (
-                        <span className="font-medium">{item.entity}</span>
+                        <span className="font-medium">
+                          {item.entity}
+                          {item.entity_id ? (
+                            <span className="ml-1 text-[11px] text-[#a49bb1]">#{item.entity_id}</span>
+                          ) : null}
+                        </span>
                       ) : (
                         "\u2014"
                       )}
-                      {item.entity && item.action_details && (
+                      {!item.entity && item.action_details && (
                         <div className="mt-0.5 text-[11px] text-[#a49bb1] truncate max-w-[140px]">
                           {JSON.stringify(item.action_details).slice(0, 50)}
                         </div>
