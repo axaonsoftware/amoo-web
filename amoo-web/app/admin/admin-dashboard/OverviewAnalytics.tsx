@@ -1,6 +1,6 @@
 "use client";
 
-import {  useState  } from "react";
+import {  useState, useEffect  } from "react";
 import { 
   Users, 
   CalendarDays, 
@@ -73,6 +73,15 @@ export default function OverviewAnalytics() {
   const bookings = useAutoRefreshApi(() => api.admin.getBookingsTrends(period), [], 30_000);
   const users = useAutoRefreshApi(() => api.admin.getUsersGrowth(period), [], 30_000);
   const revenue = useAutoRefreshApi(() => api.admin.getRevenue(period), [], 30_000);
+
+  const [serviceRevenue, setServiceRevenue] = useState<{name: string; revenue: number}[]>([]);
+
+  useEffect(() => {
+    api.admin.getRevenueByService().then((data) => {
+      const items = Array.isArray(data) ? data : [];
+      setServiceRevenue(items.map((s: any) => ({ name: s.name, revenue: Number(s.revenue) })));
+    }).catch(() => {});
+  }, []);
 
   const loading = bookings.loading || users.loading || revenue.loading;
   const error = bookings.error || users.error || revenue.error;
@@ -325,6 +334,29 @@ export default function OverviewAnalytics() {
           </svg>
         )}
       </div>
+
+      {serviceRevenue.length > 0 && (
+        <div className="mt-6 rounded-xl border border-[#EEEDF4] bg-white p-5">
+          <h3 className="mb-4 text-sm font-semibold text-[#1F1836]">Revenue by Service</h3>
+          <div className="space-y-3">
+            {serviceRevenue.slice(0, 6).map((s) => {
+              const max = Math.max(...serviceRevenue.map(x => x.revenue));
+              const pct = max > 0 ? (s.revenue / max) * 100 : 0;
+              return (
+                <div key={s.name}>
+                  <div className="mb-1 flex justify-between text-xs">
+                    <span className="text-[#4A4658]">{s.name}</span>
+                    <span className="font-medium text-[#1F1836]">₹{s.revenue.toLocaleString("en-IN")}</span>
+                  </div>
+                  <div className="h-2 rounded-full bg-[#F0EAFB]">
+                    <div className="h-2 rounded-full bg-gradient-to-r from-[#7C3AED] to-[#A78BFA]" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-2 grid grid-cols-1 gap-3 border-t border-[#f2ecf9] pt-4 sm:grid-cols-2 md:grid-cols-4">
         {metrics.map(({ label, value, Icon, bg, fg }) => (

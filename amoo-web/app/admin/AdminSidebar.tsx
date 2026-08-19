@@ -112,10 +112,8 @@ const nav: {
     href: "/admin/notification-management",
   },
   { label: "Activity Logs", Icon: ScrollText, href: "/admin/activity-logs" },
-  // "Courses", "Content Management" and "Settings" were removed: all three
-  // pointed at /admin/admin-dashboard, so they looked like features and
-  // silently dumped the admin back on the dashboard. Re-add them when the
-  // pages exist.
+  { label: "Content Management", Icon: Flower2, href: "/admin/content-management" },
+  { label: "Settings", Icon: ShieldCheck, href: "/admin/settings" },
 ];
 
 export default function AdminSidebar() {
