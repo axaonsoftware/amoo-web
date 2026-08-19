@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AlertCircle } from "lucide-react";
 import { saveConsultationData, loadConsultationData } from "../lib/consultation-storage";
+import { api } from "../../../lib/api";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
 import { ArrowRightIcon } from "../../components/home-icons";
@@ -64,6 +65,23 @@ function SelectDateTimeInner() {
     "November",
     "December",
   ];
+
+  const handleSlotSelect = async (slot: string, slotId?: number) => {
+    setSelectedSlot(slot);
+    setSelectedSlotId(slotId);
+    
+    // Reserve the slot immediately to prevent double-booking if slotId present
+    if (slotId) {
+      try {
+        await api.reserveSlot(slotId);
+      } catch (err) {
+        // If reservation fails (e.g., slot already booked), clear selection
+        setSelectedSlot("");
+        setSelectedSlotId(undefined);
+        setValidationError("Sorry, this slot is no longer available. Please select a different time.");
+      }
+    }
+  };
 
   const handleContinue = () => {
     setValidationError("");
@@ -150,10 +168,7 @@ function SelectDateTimeInner() {
               selectedPeriod={selectedPeriod}
               selectedSlot={selectedSlot}
               onSelectPeriod={setSelectedPeriod}
-              onSelectSlot={(slot, slotId) => {
-                setSelectedSlot(slot);
-                setSelectedSlotId(slotId);
-              }}
+              onSelectSlot={handleSlotSelect}
             />
             <SummaryCard
               service={service}
