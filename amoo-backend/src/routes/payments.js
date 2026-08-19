@@ -80,13 +80,20 @@ router.post(
       let amount = 0;
       if (booking_id) {
         const { rows: b } = await client.query(
-          "SELECT id, user_id, amount, payment FROM bookings WHERE id = $1",
+          "SELECT id, user_id, amount, payment, status FROM bookings WHERE id = $1",
           [booking_id]
         );
         if (!b.length) throw new HttpError(404, "Booking not found");
         if (req.user.kind !== "admin" && b[0].user_id !== req.user.id) {
           throw new HttpError(403, "Forbidden");
         }
+        if (b[0].payment === "Paid") throw new HttpError(400, "Booking is already paid");
+        if (b[0].status === "cancelled") throw new HttpError(400, "Booking is cancelled");
+        const { rows: existing } = await client.query(
+          "SELECT id FROM payments WHERE booking_id = $1 AND status IN ('success','pending') LIMIT 1",
+          [booking_id]
+        );
+        if (existing.length) throw new HttpError(409, "A payment already exists for this booking");
         amount = Number(b[0].amount);
       } else if (subscription_id) {
         const { rows: s } = await client.query(
@@ -146,13 +153,15 @@ router.post(
       let amount = 0;
       if (booking_id) {
         const { rows: b } = await client.query(
-          "SELECT id, user_id, amount, payment FROM bookings WHERE id = $1",
+          "SELECT id, user_id, amount, payment, status FROM bookings WHERE id = $1",
           [booking_id]
         );
         if (!b.length) throw new HttpError(404, "Booking not found");
         if (req.user.kind !== "admin" && b[0].user_id !== req.user.id) {
           throw new HttpError(403, "Forbidden");
         }
+        if (b[0].payment === "Paid") throw new HttpError(400, "Booking is already paid");
+        if (b[0].status === "cancelled") throw new HttpError(400, "Booking is cancelled");
         amount = Number(b[0].amount);
       } else {
         const { rows: s } = await client.query(
@@ -175,27 +184,56 @@ router.post(
         return fail(res, 400, "Amount must be greater than 0");
       }
 
-      // Create a pending payment record
+      // Prevent duplicate orders: if a pending Razorpay payment already exists
+      // for this booking, return it instead of creating a new one.
+      if (booking_id) {
+        const { rows: existingPay } = await client.query(
+          "SELECT id, gateway_order_id FROM payments WHERE booking_id = $1 AND status = 'pending' AND gateway = 'razorpay' ORDER BY created_at DESC LIMIT 1",
+          [booking_id]
+        );
+        if (existingPay.length && existingPay[0].gateway_order_id) {
+          await client.query("ROLLBACK");
+          try {
+            const rpOrder = await rp.orders.fetch(existingPay[0].gateway_order_id);
+            return ok(res, {
+              order_id: rpOrder.id,
+              amount: rpOrder.amount,
+              currency: rpOrder.currency,
+              key_id: env.payments.razorpayKeyId,
+              payment_id: existingPay[0].id,
+            });
+          } catch (_) {
+            return fail(res, 502, "Could not retrieve existing order from gateway");
+          }
+        }
+      }
+
+      // Create Razorpay order first (outside DB transaction) — if this fails,
+      // no payment record is left behind.
+      const receipt = `ord_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      let order;
+      try {
+        order = await rp.orders.create({
+          amount: Math.round(amount * 100),
+          currency: "INR",
+          receipt,
+          notes: {
+            booking_id: booking_id ? String(booking_id) : "",
+            subscription_id: subscription_id ? String(subscription_id) : "",
+          },
+        });
+      } catch (gwErr) {
+        await client.query("ROLLBACK");
+        logger.error("[payments] Razorpay order creation failed", gwErr.message);
+        return fail(res, 502, "Payment gateway order creation failed");
+      }
+
+      // Only now create the payment record and link the order
       const result = await client.query(
-        "INSERT INTO payments (booking_id, subscription_id, user_id, amount, method, gateway, status) VALUES ($1, $2, $3, $4, 'razorpay', 'razorpay', 'pending') RETURNING id",
-        [booking_id || null, subscription_id || null, req.user.id, amount]
+        "INSERT INTO payments (booking_id, subscription_id, user_id, amount, method, gateway, status, gateway_order_id) VALUES ($1, $2, $3, $4, 'razorpay', 'razorpay', 'pending', $5) RETURNING id",
+        [booking_id || null, subscription_id || null, req.user.id, amount, order.id]
       );
       const paymentId = result.rows[0].id;
-
-      // Create Razorpay order (amount in paise)
-      const order = await rp.orders.create({
-        amount: Math.round(amount * 100),
-        currency: "INR",
-        receipt: `pay_${paymentId}`,
-        notes: {
-          booking_id: booking_id ? String(booking_id) : "",
-          subscription_id: subscription_id ? String(subscription_id) : "",
-          payment_id: String(paymentId),
-        },
-      });
-
-      // Store the gateway order ID on the payment record
-      await client.query("UPDATE payments SET gateway_order_id = $1 WHERE id = $2", [order.id, paymentId]);
 
       await client.query("COMMIT");
       req.audit("create-order", "payment", paymentId, { razorpay_order_id: order.id, amount });
@@ -350,6 +388,35 @@ router.post(
       }
 
       if (p.status === "refund_pending") {
+        // Possible recovery: a prior request set refund_pending but crashed
+        // before finalizing. Try to re-finalize by checking the gateway.
+        if (p.gateway === "razorpay" && p.txn_id && p.refund_id) {
+          const rzp = getRazorpay();
+          if (rzp) {
+            try {
+              const rzpRefund = await rzp.payments.fetchRefund(p.txn_id, p.refund_id);
+              if (rzpRefund.status === "processed" || rzpRefund.status === "processed_at_source") {
+                const rc = await pool.connect();
+                try {
+                  await rc.query("BEGIN");
+                  await rc.query("UPDATE payments SET status = 'refunded' WHERE id = $1 AND status = 'refund_pending'", [p.id]);
+                  const { rows: rfRows } = await rc.query("SELECT id, status FROM refunds WHERE payment_id = $1 ORDER BY created_at DESC LIMIT 1", [p.id]);
+                  if (rfRows.length && rfRows[0].status !== "processed") {
+                    await rc.query("UPDATE refunds SET status = 'processed' WHERE id = $1", [rfRows[0].id]);
+                  }
+                  await rc.query("COMMIT");
+                  await client.query("ROLLBACK");
+                  return ok(res, { id: p.id, refunded: true, amount: p.amount, gateway_refund_id: p.refund_id, recovered: true, message: "Recovered stuck refund — payment finalized" });
+                } catch (recErr) {
+                  await rc.query("ROLLBACK");
+                  throw recErr;
+                } finally {
+                  rc.release();
+                }
+              }
+            } catch (_) { /* gateway check failed — fall through to rejection */ }
+          }
+        }
         await client.query("ROLLBACK");
         return fail(res, 400, "Payment is already being refunded");
       }
@@ -529,10 +596,16 @@ router.post(
 
       if (p.booking_id) {
         const { rows: bk } = await client.query(
-          "SELECT slot_id FROM bookings WHERE id = $1 FOR UPDATE",
+          "SELECT slot_id, status FROM bookings WHERE id = $1 FOR UPDATE",
           [p.booking_id]
         );
-        const slotId = bk[0] && bk[0].slot_id;
+        const booking = bk[0];
+        const slotId = booking && booking.slot_id;
+
+        if (booking && booking.status === "completed") {
+          await client.query("COMMIT");
+          return fail(res, 409, "Booking was completed after refund was initiated — cannot auto-cancel");
+        }
 
         await client.query(
           "UPDATE bookings SET payment = 'Pending', status = 'cancelled' WHERE id = $1",
@@ -548,9 +621,34 @@ router.post(
         }
       }
 
+      // Cancel subscription if this was a subscription payment
+      if (p.subscription_id) {
+        await client.query(
+          "UPDATE subscriptions SET status = 'cancelled' WHERE id = $1 AND status = 'active'",
+          [p.subscription_id]
+        );
+        const { rows: [sub] } = await client.query(
+          "SELECT user_id FROM subscriptions WHERE id = $1", [p.subscription_id]
+        );
+        if (sub && sub.user_id) {
+          // Downgrade user role if no other active subscription exists
+          const { rows: otherActive } = await client.query(
+            "SELECT 1 FROM subscriptions WHERE user_id = $1 AND status = 'active' AND id != $2 LIMIT 1",
+            [sub.user_id, p.subscription_id]
+          );
+          if (!otherActive.length) {
+            await client.query(
+              "UPDATE users SET role = 'free' WHERE id = $1 AND role = 'premium'",
+              [sub.user_id]
+            );
+          }
+        }
+        logger.info(`Verify-refund: subscription ${p.subscription_id} cancelled for payment ${p.id}`);
+      }
+
       await client.query("COMMIT");
-      req.audit("verify-refund", "payment", p.id, { refund_id: refund.id, booking_id: p.booking_id, slot_released: !!p.booking_id });
-      ok(res, { refund_id: refund.id, status: "processed", booking_cancelled: !!p.booking_id, message: "Refund verified — booking cancelled and slot released" });
+      req.audit("verify-refund", "payment", p.id, { refund_id: refund.id, booking_id: p.booking_id, subscription_id: p.subscription_id, slot_released: !!p.booking_id });
+      ok(res, { refund_id: refund.id, status: "processed", booking_cancelled: !!p.booking_id, subscription_cancelled: !!p.subscription_id, message: "Refund verified — booking cancelled and slot released" });
     } catch (err) {
       await client.query("ROLLBACK");
       throw err;
