@@ -147,6 +147,88 @@ router.delete(
   })
 );
 
+// GET /api/experts/:id/earnings (admin — financial summary for an expert)
+router.get(
+  "/:id/earnings",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { rows: expert } = await pool.query("SELECT id, name, email FROM experts WHERE id = $1 AND deleted_at IS NULL", [req.params.id]);
+    if (assertFound(res, expert[0])) return;
+    const [{ rows: [summary] }, { rows: monthly }] = await Promise.all([
+      pool.query(
+        `SELECT
+           COUNT(*) AS total_bookings,
+           SUM(CASE WHEN b.status = 'completed' THEN 1 ELSE 0 END) AS completed_bookings,
+           SUM(CASE WHEN b.status = 'cancelled' THEN 1 ELSE 0 END) AS cancelled_bookings,
+           COALESCE(SUM(CASE WHEN b.payment = 'Paid' THEN b.amount ELSE 0 END), 0) AS total_revenue,
+           COALESCE(SUM(CASE WHEN b.payment = 'Paid' AND b.status = 'completed' THEN b.amount ELSE 0 END), 0) AS earned_revenue,
+           AVG(CASE WHEN b.status = 'completed' THEN b.amount ELSE NULL END) AS avg_booking_value
+         FROM bookings b WHERE b.expert_id = $1`,
+        [req.params.id]
+      ),
+      pool.query(
+        `SELECT TO_CHAR(b.date, 'YYYY-MM') AS month,
+                COUNT(*) AS bookings,
+                COALESCE(SUM(CASE WHEN b.payment = 'Paid' AND b.status = 'completed' THEN b.amount ELSE 0 END), 0) AS revenue
+         FROM bookings b
+         WHERE b.expert_id = $1 AND b.status != 'cancelled'
+         GROUP BY 1 ORDER BY 1 DESC LIMIT 12`,
+        [req.params.id]
+      ),
+    ]);
+    ok(res, {
+      expert: expert[0],
+      summary: {
+        total_bookings: Number(summary.total_bookings),
+        completed_bookings: Number(summary.completed_bookings),
+        cancelled_bookings: Number(summary.cancelled_bookings),
+        total_revenue: Number(summary.total_revenue),
+        earned_revenue: Number(summary.earned_revenue),
+        avg_booking_value: Number(summary.avg_booking_value) || 0,
+      },
+      monthly,
+    });
+  })
+);
+
+// GET /api/experts/:id/bookings (admin — bookings for a specific expert)
+router.get(
+  "/:id/bookings",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { page, pageSize, offset } = parsePagination(req.query);
+    const params = [req.params.id];
+    let where = "WHERE b.expert_id = $1";
+    if (req.query.status) {
+      params.push(req.query.status);
+      where += ` AND b.status = $${params.length}`;
+    }
+    const { rows: [{ total }] } = await pool.query(
+      `SELECT COUNT(*) AS total FROM bookings b ${where}`, params
+    );
+    const { rows } = await pool.query(
+      `SELECT b.*, u.name AS user_name, s.name AS service_name
+       FROM bookings b JOIN users u ON u.id = b.user_id JOIN services s ON s.id = b.service_id
+       ${where} ORDER BY b.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, pageSize, offset]
+    );
+    paginated(res, rows, { page, pageSize, total });
+  })
+);
+
+// GET /api/experts/:id/availability (admin — availability slots for an expert)
+router.get(
+  "/:id/availability",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { rows } = await pool.query(
+      "SELECT * FROM slots WHERE expert_id = $1 ORDER BY date ASC, time ASC LIMIT 200",
+      [req.params.id]
+    );
+    ok(res, rows);
+  })
+);
+
 // POST /api/experts/:id/set-password (admin sets or resets an expert's password)
 router.post(
   "/:id/set-password",
