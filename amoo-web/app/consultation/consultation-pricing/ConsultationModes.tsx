@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   Phone,
   Video,
@@ -5,11 +8,25 @@ import {
   CheckCircle2,
   ShieldCheck,
 } from "lucide-react";
+import { api } from "../../../lib/api";
+import type { Service } from "../../../lib/types";
 
 const durations = ["15 Min", "30 Min", "45 Min", "60 Min"];
 
-const modes = [
+interface BaseMode {
+  key: string;
+  icon: typeof Phone;
+  title: string;
+  desc: string;
+  features: string[];
+  defaultPrices: string[];
+  cta: string;
+  popular: boolean;
+}
+
+const baseModes: BaseMode[] = [
   {
+    key: "Audio",
     icon: Phone,
     title: "AUDIO CALL CONSULTATION",
     desc: "Speak directly with Reiki Grand Master Surinder Kaur Sehgal and get powerful guidance.",
@@ -19,11 +36,12 @@ const modes = [
       "Personalized Remedies",
       "Secure & Private Session",
     ],
-    prices: ["₹499", "₹799", "₹1,099", "₹1,499"],
+    defaultPrices: ["₹499", "₹799", "₹1,099", "₹1,499"],
     cta: "Book Audio Call",
     popular: false,
   },
   {
+    key: "Video",
     icon: Video,
     title: "VIDEO CALL CONSULTATION",
     desc: "Face-to-face spiritual guidance for deeper connection and better understanding.",
@@ -33,11 +51,12 @@ const modes = [
       "Screen Share Support",
       "Personalized Guidance",
     ],
-    prices: ["₹799", "₹1,199", "₹1,699", "₹2,299"],
+    defaultPrices: ["₹799", "₹1,199", "₹1,699", "₹2,299"],
     cta: "Book Video Call",
     popular: true,
   },
   {
+    key: "Chat",
     icon: MessageSquare,
     title: "CHAT CONSULTATION",
     desc: "Connect in a private chat and get written guidance at your convenience.",
@@ -47,13 +66,51 @@ const modes = [
       "Share Documents & Images",
       "Perfect for Quick Questions",
     ],
-    prices: ["₹349", "₹549", "₹749", "₹999"],
+    defaultPrices: ["₹349", "₹549", "₹749", "₹999"],
     cta: "Book Chat",
     popular: false,
   },
 ];
 
 export default function ConsultationModes() {
+  const [modePrices, setModePrices] = useState<Record<string, string[]>>({
+    Audio: ["₹499", "₹799", "₹1,099", "₹1,499"],
+    Video: ["₹799", "₹1,199", "₹1,699", "₹2,299"],
+    Chat: ["₹349", "₹549", "₹749", "₹999"],
+  });
+
+  useEffect(() => {
+    api
+      .getServices()
+      .then((res: unknown) => {
+        const payload = res as { data?: Service[] } | Service[];
+        const items = Array.isArray(payload)
+          ? (payload as Service[])
+          : (payload?.data ?? []);
+        if (items.length) {
+          const updated: Record<string, string[]> = { ...modePrices };
+          baseModes.forEach((m) => {
+            const match = items.find(
+              (s) =>
+                s.type === m.key ||
+                s.name.toLowerCase().includes(m.key.toLowerCase()),
+            );
+            if (match && match.price) {
+              const base = Number(match.price);
+              updated[m.key] = [
+                `₹${Math.round(base).toLocaleString("en-IN")}`,
+                `₹${Math.round(base * 1.6).toLocaleString("en-IN")}`,
+                `₹${Math.round(base * 2.2).toLocaleString("en-IN")}`,
+                `₹${Math.round(base * 3.0).toLocaleString("en-IN")}`,
+              ];
+            }
+          });
+          setModePrices(updated);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="w-full bg-[#FCF9F3] px-6 md:px-10 py-14">
       <div className="max-w-6xl mx-auto">
@@ -66,8 +123,9 @@ export default function ConsultationModes() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {modes.map((mode) => {
+          {baseModes.map((mode) => {
             const Icon = mode.icon;
+            const currentPrices = modePrices[mode.key] || mode.defaultPrices;
             return (
               <div
                 key={mode.title}
@@ -119,7 +177,7 @@ export default function ConsultationModes() {
                       <div key={d}>
                         <p className="text-white/50 text-[11px]">{d}</p>
                         <p className="text-white font-semibold text-sm mt-0.5">
-                          {mode.prices[i]}
+                          {currentPrices[i]}
                         </p>
                       </div>
                     ))}

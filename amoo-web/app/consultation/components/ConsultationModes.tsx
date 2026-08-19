@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   CircleCheck,
   Clock,
@@ -9,18 +12,22 @@ import {
 } from "lucide-react";
 
 import { Ornament } from "../../components/ornament";
+import { api } from "../../../lib/api";
+import type { Service } from "../../../lib/types";
 
 type Mode = {
+  key: string;
   Icon: LucideIcon;
   title: string;
   desc: string;
   features: string[];
-  price: string;
+  defaultPrice: number;
   cta: string;
 };
 
-const MODES: Mode[] = [
+const BASE_MODES: Mode[] = [
   {
+    key: "Audio",
     Icon: Phone,
     title: "Audio Call Consultation",
     desc: "Speak directly and receive powerful guidance.",
@@ -30,10 +37,11 @@ const MODES: Mode[] = [
       "Perfect for instant clarity",
       "Secure & private session",
     ],
-    price: "₹499",
+    defaultPrice: 499,
     cta: "Book Audio Consultation",
   },
   {
+    key: "Video",
     Icon: Video,
     title: "Video Call Consultation",
     desc: "Face-to-face guidance for a deeper connection.",
@@ -43,10 +51,11 @@ const MODES: Mode[] = [
       "Ideal for detailed consultation",
       "Screen share & visual support",
     ],
-    price: "₹999",
+    defaultPrice: 999,
     cta: "Book Video Consultation",
   },
   {
+    key: "Chat",
     Icon: MessageSquare,
     title: "Chat Consultation",
     desc: "Chat privately and get written guidance.",
@@ -56,12 +65,44 @@ const MODES: Mode[] = [
       "Comfortable & convenient",
       "Detailed written guidance",
     ],
-    price: "₹349",
+    defaultPrice: 349,
     cta: "Book Chat Consultation",
   },
 ];
 
 export default function ConsultationModes() {
+  const [prices, setPrices] = useState<Record<string, string>>({
+    Audio: "₹499",
+    Video: "₹999",
+    Chat: "₹349",
+  });
+
+  useEffect(() => {
+    api
+      .getServices()
+      .then((res: unknown) => {
+        const payload = res as { data?: Service[] } | Service[];
+        const items = Array.isArray(payload)
+          ? (payload as Service[])
+          : (payload?.data ?? []);
+        if (items.length) {
+          const updated: Record<string, string> = { ...prices };
+          BASE_MODES.forEach((m) => {
+            const match = items.find(
+              (s) =>
+                s.type === m.key ||
+                s.name.toLowerCase().includes(m.key.toLowerCase()),
+            );
+            if (match && match.price) {
+              updated[m.key] = `₹${Number(match.price).toLocaleString("en-IN")}`;
+            }
+          });
+          setPrices(updated);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="bg-white mt-15">
       <div className="mx-auto w-full max-w-[1440px] px-[22px] pb-[10px]">
@@ -83,7 +124,7 @@ export default function ConsultationModes() {
             </p>
 
             <div className="mt-[26px] grid grid-cols-1 gap-[24px] md:grid-cols-3">
-              {MODES.map(({ Icon, title, desc, features, price, cta }) => (
+              {BASE_MODES.map(({ key, Icon, title, desc, features, cta }) => (
                 <article
                   key={title}
                   className="flex flex-col rounded-[14px] border border-gold/20 bg-[linear-gradient(180deg,#251038_0%,#1b0b2f_100%)] p-[22px]"
@@ -127,7 +168,7 @@ export default function ConsultationModes() {
                     <div className="text-right">
                       <p className="text-[11px] text-gold/90">Starting From</p>
                       <p className="mt-[1px] text-[22px] leading-none font-bold text-gold">
-                        {price}
+                        {prices[key]}
                       </p>
                     </div>
                   </div>
