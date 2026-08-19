@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
-const { authRequired, adminRequired } = require("../middleware/auth");
+const { authRequired, adminRequired, verifiedRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, assertFound, parsePagination } = require("../utils/response");
@@ -120,7 +120,7 @@ router.post(
 // admin book/block/unblock slot
 router.patch(
   "/:id",
-  adminRequired,
+  verifiedRequired,
   validate("slotUpdate"),
   asyncHandler(async (req, res) => {
     const { status } = req.body;
