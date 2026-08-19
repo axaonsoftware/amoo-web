@@ -1,7 +1,11 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { X, Copy, CircleCheck, Trash2 } from "lucide-react";
-import { CONTACT_PHONE } from "../../../lib/constants";
+import { api } from "../../../lib/api";
+import type { User } from "../../../lib/types";
 
 type AccountRow = {
   label: string;
@@ -9,43 +13,57 @@ type AccountRow = {
   kind: "semibold" | "medium" | "chip" | "check";
 };
 
-const accountRows: AccountRow[] = [
-  { label: "Role", value: "Premium User", kind: "semibold" },
-  { label: "Status", value: "Active", kind: "chip" },
-  { label: "Joined On", value: "15 Apr 2025, 10:30 AM", kind: "medium" },
-  { label: "Last Login", value: "18 May 2025, 09:15 PM", kind: "medium" },
-  { label: "Email Verified", value: "", kind: "check" },
-  { label: "Phone Verified", value: "", kind: "check" },
-];
+export default function RightRail({ userId }: { userId?: number }) {
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
-const activitySummary: { caption: string; value: string }[] = [
-  { caption: "Total Bookings", value: "28" },
-  { caption: "Total Consultations", value: "24" },
-  { caption: "Reports Generated", value: "36" },
-  { caption: "Total Spent", value: "₹18,750.00" },
-  { caption: "Wallet Balance", value: "₹2,450.00" },
-  { caption: "Reward Points", value: "1,250" },
-];
+  useEffect(() => {
+    api.admin
+      .getUsers("?limit=1")
+      .then((res: unknown) => {
+        const payload = res as { data?: User[] } | User[];
+        const items = Array.isArray(payload)
+          ? (payload as User[])
+          : (payload?.data ?? []);
+        if (items.length) {
+          setSelectedUser(items[0]);
+        }
+      })
+      .catch(() => {});
+  }, [userId]);
 
-const recentActivity: { dot: string; title: string; sub: string }[] = [
-  {
-    dot: "bg-[#22C55E]",
-    title: "Consultation Booked",
-    sub: "18 May 2025, 08:45 PM",
-  },
-  {
-    dot: "bg-[#2563EB]",
-    title: "Payment Successful",
-    sub: "18 May 2025, 07:30 PM",
-  },
-  {
-    dot: "bg-[#7C3AED]",
-    title: "Report Generated",
-    sub: "18 May 2025, 06:20 PM",
-  },
-];
+  const userName = selectedUser?.name || "Select User";
+  const userEmail = selectedUser?.email || "No email available";
+  const userRole = selectedUser?.role ? selectedUser.role.toUpperCase() : "User";
+  const userStatus = selectedUser?.status || "Active";
+  const userCreated = selectedUser?.created_at
+    ? new Date(selectedUser.created_at).toLocaleDateString("en-IN")
+    : "—";
 
-export default function RightRail() {
+  const accountRows: AccountRow[] = [
+    { label: "Role", value: userRole, kind: "semibold" },
+    { label: "Status", value: userStatus, kind: "chip" },
+    { label: "Joined On", value: userCreated, kind: "medium" },
+    { label: "Email Verified", value: "", kind: "check" },
+  ];
+
+  const activitySummary = [
+    { caption: "Total Bookings", value: String((selectedUser as { bookings_count?: number })?.bookings_count ?? (selectedUser ? 1 : 0)) },
+    { caption: "Status", value: userStatus },
+    { caption: "User ID", value: selectedUser?.id ? `#USR${selectedUser.id}` : "—" },
+  ];
+
+  const recentActivity: { dot: string; title: string; sub: string }[] = [
+    {
+      dot: "bg-[#22C55E]",
+      title: "Account Registered",
+      sub: userCreated,
+    },
+    {
+      dot: "bg-[#2563EB]",
+      title: "Status Active",
+      sub: "Verified User",
+    },
+  ];
   return (
     <section className="rounded-[14px] border border-[#EDECF3] bg-white p-[16px] shadow-[0_1px_2px_rgba(24,20,40,.04)]">
       {/* Header */}
@@ -61,8 +79,8 @@ export default function RightRail() {
       {/* Identity */}
       <div className="mt-[14px] flex items-start gap-[10px]">
         <Image
-          src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80"
-          alt="Vedika Desai"
+          src={selectedUser?.avatar || "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&q=80"}
+          alt={userName}
           width={52}
           height={52}
           className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"
@@ -71,20 +89,22 @@ export default function RightRail() {
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-[6px]">
             <p className="text-[12.5px] font-semibold text-[#221C33]">
-              Vedika Desai
+              {userName}
             </p>
-            <span className="inline-flex h-[17px] items-center rounded-[5px] bg-[#EDE7FB] px-[6px] text-[9px] font-medium text-[#6D28D9]">
-              Verified
-            </span>
+            {selectedUser?.verified && (
+              <span className="inline-flex h-[17px] items-center rounded-[5px] bg-[#EDE7FB] px-[6px] text-[9px] font-medium text-[#6D28D9]">
+                Verified
+              </span>
+            )}
           </div>
           <p className="mt-[4px] text-[10px] text-[#8B879C]">
-            vedika.desai@gmail.com
+            {userEmail}
           </p>
-          <p className="mt-[2px] text-[10px] text-[#8B879C]">{CONTACT_PHONE}</p>
+          <p className="mt-[2px] text-[10px] text-[#8B879C]">{selectedUser?.phone || "—"}</p>
           <div className="mt-[6px] flex items-center gap-[4px]">
             <span className="text-[9.5px] text-[#8B879C]">User ID:</span>
             <span className="text-[9.5px] font-semibold text-[#2E2A3B]">
-              #USR001
+              {selectedUser?.id ? `#USR${selectedUser.id}` : "—"}
             </span>
             <Copy size={11} className="text-[#8B879C]" />
           </div>

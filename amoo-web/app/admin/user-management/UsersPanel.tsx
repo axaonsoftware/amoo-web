@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import {  memo,  useCallback,  useEffect,  useRef,  useState  } from "react";
 import { 
   Search, 
@@ -12,7 +13,8 @@ import {
   Loader2, 
   Pencil, 
   Trash2, 
-  Ban } from "lucide-react";
+  Ban,
+  Eye } from "lucide-react";
 import {  roleStyles,  statusStyles,  type RoleKey,  type StatusKey  } from "./data";
 import {  api,  qs,  unwrapList,  unwrapMeta  } from "../../../lib/api";
 import { useAutoRefresh } from "../../../lib/useAutoRefresh";
@@ -226,6 +228,13 @@ const UserRow = memo(function UserRow({
 
       <td className="py-[11px] pr-5">
         <div className="flex items-center gap-[6px]">
+          <Link
+            href={`/admin/user-management/${u.id}`}
+            className="grid h-[28px] w-[28px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#3B82F6] hover:bg-[#EFF6FF]"
+            title="View details"
+          >
+            <Eye size={13} strokeWidth={2} />
+          </Link>
           <button
             type="button"
             aria-label="Edit"
