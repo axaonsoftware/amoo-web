@@ -122,6 +122,57 @@ router.patch(
   })
 );
 
+// GET /api/users/:id/wallet — wallet balance + transactions (admin)
+router.get(
+  "/:id/wallet",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { rows: user } = await pool.query("SELECT id, name, email FROM users WHERE id = $1 AND deleted_at IS NULL", [req.params.id]);
+    if (assertFound(res, user[0])) return;
+    const [balanceResult, txResult] = await Promise.all([
+      pool.query("SELECT COALESCE(SUM(amount), 0) AS balance FROM wallet_transactions WHERE user_id = $1", [req.params.id]),
+      pool.query(
+        `SELECT id, amount, type, reference_type, reference_id, created_at
+         FROM wallet_transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100`,
+        [req.params.id]
+      ),
+    ]);
+    ok(res, {
+      user: user[0],
+      balance: Number(balanceResult.rows[0].balance),
+      transactions: txResult.rows,
+    });
+  })
+);
+
+// POST /api/users/:id/credit — admin credits wallet (top-up or refund)
+router.post(
+  "/:id/credit",
+  adminRequired,
+  asyncHandler(async (req, res) => {
+    const { amount, reason } = req.body;
+    if (!amount || Number(amount) === 0) return fail(res, 400, "Amount is required and must be non-zero");
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const { rows: user } = await client.query("SELECT id, name FROM users WHERE id = $1 AND deleted_at IS NULL FOR UPDATE", [req.params.id]);
+      if (!user.length) { await client.query("ROLLBACK"); return fail(res, 404, "User not found"); }
+      await client.query(
+        "INSERT INTO wallet_transactions (user_id, amount, type, reference_type, reference_id) VALUES ($1, $2, $3, 'admin', NULL)",
+        [req.params.id, Number(amount), Number(amount) > 0 ? "credit" : "refund"]
+      );
+      await client.query("COMMIT");
+      req.audit("wallet-credit", "user", Number(req.params.id), { amount, reason });
+      ok(res, { id: Number(req.params.id), credited: true, amount: Number(amount) });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  })
+);
+
 // Soft-delete /api/users/:id (admin)
 router.delete(
   "/:id",
