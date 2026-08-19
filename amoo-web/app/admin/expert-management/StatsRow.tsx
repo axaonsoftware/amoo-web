@@ -36,7 +36,7 @@ const statDefs: {
     iconColor: "text-[#16A34A]",
   },
   {
-    label: "Inactive Experts",
+    label: "Pending Review",
     field: "inactive",
     Icon: CirclePause,
     iconBg: "bg-[#FEF1E1]",
@@ -57,7 +57,7 @@ const statDefs: {
     iconColor: "text-[#3B82F6]",
   },
   {
-    label: "Total Revenue",
+    label: "Total Earnings",
     field: "revenue",
     Icon: IndianRupee,
     iconBg: "bg-[#EAE9FB]",

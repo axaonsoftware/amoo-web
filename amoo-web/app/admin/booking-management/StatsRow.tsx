@@ -6,6 +6,8 @@ import {
   CalendarCheck2,
   CircleCheckBig,
   CircleX,
+  Clock,
+  IndianRupee,
   Loader2,
 } from "lucide-react";
 import { api } from "../../../lib/api";
@@ -55,6 +57,20 @@ const statDefs: {
     iconBg: "bg-[#FDEAEA]",
     iconColor: "text-[#EF4444]",
   },
+  {
+    label: "Pending Bookings",
+    field: "pendingBookings",
+    Icon: Clock,
+    iconBg: "bg-[#FEF1E1]",
+    iconColor: "text-[#F59E0B]",
+  },
+  {
+    label: "Revenue Today",
+    field: "todayRevenue",
+    Icon: IndianRupee,
+    iconBg: "bg-[#EAE9FB]",
+    iconColor: "text-[#4F46E5]",
+  },
 ];
 
 export default function StatsRow() {
@@ -100,7 +116,7 @@ export default function StatsRow() {
   }
 
   return (
-    <div className="mt-5 grid grid-cols-1 gap-[12px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div className="mt-5 grid grid-cols-1 gap-[12px] sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7">
       {statDefs.map(({ label, field, Icon, iconBg, iconColor }) => {
         const raw = stats ? stats[field] : undefined;
         const value = raw != null ? raw.toLocaleString() : "—";

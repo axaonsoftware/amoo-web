@@ -35,7 +35,7 @@ const statDefs: {
     iconColor: "text-[#22C55E]",
   },
   {
-    label: "New Users",
+    label: "New This Month",
     field: "newUsers",
     Icon: UserPlus,
     iconBg: "bg-[#FEF1E1]",

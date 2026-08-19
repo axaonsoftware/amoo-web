@@ -12,7 +12,7 @@ import {
 import { useAutoRefreshApi } from "@/lib/useAutoRefreshApi";
 import { api } from "@/lib/api";
 
-const fmt = (n: number) => n.toLocaleString("en-IN");
+const fmt = (n: number | undefined | null) => (n == null ? "—" : n.toLocaleString("en-IN"));
 
 export default function StatsRow() {
   const { data, loading, error } = useAutoRefreshApi(() => api.admin.getOverview(), [], 30_000);
@@ -30,27 +30,27 @@ export default function StatsRow() {
   const items = [
     {
       label: "Total Users",
-      value: stats ? fmt(stats.users) : "—",
+      value: stats?.users != null ? fmt(stats.users) : "—",
       Icon: Users,
     },
     {
       label: "Active Astrologers",
-      value: stats ? fmt(stats.experts) : "—",
+      value: stats?.experts != null ? fmt(stats.experts) : "—",
       Icon: UserCog,
     },
     {
       label: "Total Bookings",
-      value: stats ? fmt(stats.bookings) : "—",
+      value: stats?.bookings != null ? fmt(stats.bookings) : "—",
       Icon: CalendarDays,
     },
     {
       label: "Total Revenue",
-      value: stats ? "₹" + fmt(stats.revenue) : "—",
+      value: stats?.revenue != null ? "₹" + fmt(stats.revenue) : "—",
       Icon: IndianRupee,
     },
     {
       label: "Pending Payments",
-      value: stats ? "₹" + fmt(stats.pendingPayments) : "—",
+      value: stats?.pendingPayments != null ? "₹" + fmt(stats.pendingPayments) : "—",
       Icon: Star,
     },
   ];
