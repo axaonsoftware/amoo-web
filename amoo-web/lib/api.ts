@@ -279,6 +279,12 @@ export const api = {
     updateService: (id: number, body: unknown) =>
       request("PATCH", `/api/services/${id}`, body),
     deleteService: (id: number) => request("DELETE", `/api/services/${id}`),
+    getServicePricing: (id: number) =>
+      request("GET", `/api/services/${id}/pricing`),
+    setServicePricing: (id: number, body: unknown) =>
+      request("POST", `/api/services/${id}/pricing`, body),
+    deleteServicePricing: (serviceId: number, expertId: number) =>
+      request("DELETE", `/api/services/${serviceId}/pricing/${expertId}`),
 
     getUsers: (query = "") => request("GET", `/api/users${query}`),
     getUser: (id: number) => request("GET", `/api/users/${id}`),
@@ -333,6 +339,8 @@ export const api = {
     updateSlot: (id: number, body: unknown) =>
       request("PATCH", `/api/slots/${id}`, body),
     deleteSlot: (id: number) => request("DELETE", `/api/slots/${id}`),
+    reserveSlot: (slotId: number) =>
+      request("PATCH", `/api/slots/${slotId}`, { status: "booked" }),
 
     getContacts: (query = "") => request("GET", `/api/contact${query}`),
     getContact: (id: number) => request("GET", `/api/contact/${id}`),
@@ -370,6 +378,36 @@ export const api = {
     // /astrologer-login existed but no expert could ever obtain a password.
     setExpertPassword: (id: number, password: string) =>
       request("POST", `/api/experts/${id}/set-password`, { password }),
+    getExpertEarnings: (id: number) =>
+      request("GET", `/api/experts/${id}/earnings`),
+    getExpertBookings: (id: number, query = "") =>
+      request("GET", `/api/experts/${id}/bookings${query}`),
+    getExpertAvailability: (id: number) =>
+      request("GET", `/api/experts/${id}/availability`),
+
+    getSettings: () => request("GET", "/api/settings"),
+    updateSettings: (body: Record<string, string>) =>
+      request("PUT", "/api/settings", body),
+
+    getHoroscopes: (query = "") =>
+      request("GET", `/api/content/horoscopes${query}`),
+    createHoroscope: (body: unknown) =>
+      request("POST", "/api/content/horoscopes", body),
+    updateHoroscope: (id: number, body: unknown) =>
+      request("PUT", `/api/content/horoscopes/${id}`, body),
+    deleteHoroscope: (id: number) =>
+      request("DELETE", `/api/content/horoscopes/${id}`),
+    getZodiacSigns: () => request("GET", "/api/content/zodiac-signs/all"),
+    updateZodiacSign: (id: number, body: unknown) =>
+      request("PUT", `/api/content/zodiac-signs/${id}`, body),
+
+    getUserWallet: (id: number) =>
+      request("GET", `/api/users/${id}/wallet`),
+    creditUser: (id: number, body: { amount: number; reason?: string }) =>
+      request("POST", `/api/users/${id}/credit`, body),
+
+    createManualBooking: (body: unknown) =>
+      request("POST", "/api/bookings/manual", body),
 
     getOverview: () => request("GET", "/api/dashboard/overview"),
     getTopExperts: (limit = 5) =>
@@ -433,6 +471,8 @@ export const api = {
   getTestimonials: () => request("GET", "/api/testimonials"),
   getPackages: () => request("GET", "/api/packages"),
   getSlots: (query = "") => request("GET", `/api/slots${query}`),
+  reserveSlot: (slotId: number) =>
+    request("PATCH", `/api/slots/${slotId}`, { status: "booked" }),
 
   // blogs (public)
   getBlogs: (query = "") => request("GET", `/api/blogs${query}`),
