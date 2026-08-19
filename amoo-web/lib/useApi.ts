@@ -19,8 +19,8 @@ export interface UseApiResult<T> {
  * Generic data-fetching hook backed by the backend API.
  *
  * `pollInterval` (ms) auto-refreshes on an interval — used by the notification
- * bell and the activity feed, which are the app's only near-real-time surfaces
- * (the backend exposes no websocket; see chat.js, which is REST + polling).
+ * bell and the activity feed for near-real-time updates (chat uses WebSocket
+ * via `connectChatWebSocket` in `lib/ws.ts`).
  */
 export function useApi<T>(
   fn: () => Promise<T>,

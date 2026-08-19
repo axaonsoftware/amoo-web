@@ -5,20 +5,9 @@ import Image from "next/image";
 import { Search, MessageSquare } from "lucide-react";
 import { api } from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
+import type { Conversation } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/app/components/states";
 import StartChatButton from "./StartChatButton";
-
-type Conversation = {
-  id: number;
-  user_id: number;
-  expert_id: number;
-  user_name: string;
-  user_avatar: string | null;
-  expert_name: string;
-  expert_avatar: string | null;
-  last_message_at: string | null;
-  unread_count: number;
-};
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "";

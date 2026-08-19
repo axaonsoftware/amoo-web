@@ -448,6 +448,47 @@ export interface TopExpert {
   clients: number;
 }
 
+// ---------------------------------------------------------------------------
+// Chat
+// ---------------------------------------------------------------------------
+
+export type MessageStatus = "pending" | "sent" | "delivered" | "failed";
+
+/** `conversations` table joined with user/expert names. */
+export interface Conversation {
+  id: number;
+  user_id: number;
+  expert_id: number;
+  user_name: string;
+  user_avatar: string | null;
+  expert_name: string;
+  expert_avatar: string | null;
+  last_message_at: DateString | null;
+  unread_count: number;
+}
+
+/** Lightweight conversation reference passed to the message thread. */
+export interface ConversationMeta {
+  id: number;
+  expert_name: string;
+  expert_avatar: string | null;
+  user_name: string;
+  user_avatar: string | null;
+}
+
+/** `messages` table row. */
+export interface ChatMessage {
+  id: number | string;
+  conversation_id: number;
+  sender_type: string;
+  sender_id: number;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  client_id?: string;
+  status?: MessageStatus;
+}
+
 /** `GET /api/dashboard/bookings/patterns`. DAYOFWEEK(): 1=Sunday .. 7=Saturday. */
 export interface BookingPatterns {
   total: number;

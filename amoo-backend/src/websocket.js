@@ -171,6 +171,22 @@ function attachChat(server) {
         } catch (e) {
           logger.warn("[ws] read receipt failed:", e.message);
         }
+      } else if (msg.type === "typing") {
+        const { conversationId } = msg;
+        if (!conversationId) return;
+        const conv = await loadConversation(conversationId);
+        if (!conv || !isParticipant(ws, conv)) return;
+        broadcastToConversation(
+          clients,
+          conv,
+          JSON.stringify({
+            type: "typing",
+            conversationId,
+            userId: ws._userId,
+            userKind: ws._kind,
+          }),
+          ws
+        );
       } else if (msg.type === "ping") {
         ws.send(JSON.stringify({ type: "pong" }));
       }

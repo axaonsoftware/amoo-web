@@ -545,7 +545,7 @@ describe("POST /api/auth/reset-password", () => {
     await api("POST", "/api/auth/reset-password", {
       body: { email: "test@test.com", otp: "000000", password: "NewPass123!" },
     });
-    const updateLog = queryLog.filter((q) => /UPDATE.*users.*reset_otp_attempts/i.test(q));
+    const updateLog = queryLog.filter((q) => /UPDATE[\s\S]*users[\s\S]*reset_otp_attempts/i.test(q));
     assert.ok(updateLog.length > 0, "must increment reset_otp_attempts on failure");
   });
 
@@ -559,7 +559,7 @@ describe("POST /api/auth/reset-password", () => {
     assert.strictEqual(res.status, 400);
     // OTP should be nulled after last attempt (check query log)
     const clearOtp = queryLog.find((q) =>
-      /reset_otp = NULL.*reset_otp_expires = NULL.*reset_otp_attempts/i.test(q)
+      /UPDATE[\s\S]*reset_otp\s*=\s*CASE[\s\S]*THEN\s+NULL[\s\S]*reset_otp_expires\s*=\s*CASE[\s\S]*THEN\s+NULL/i.test(q)
     );
     assert.ok(clearOtp, "OTP must be nulled after max attempts");
   });
@@ -740,7 +740,11 @@ describe("Admin-only routes reject regular users", () => {
   beforeEach(resetMocks);
 
   it("POST /api/bookings/:id/complete returns 403 for user token", async () => {
-    mockResolvedValue([{ token_version: 0 }]);                     // adminRequired
+    mockResolvedValue([{ token_version: 0 }]);                     // 0: checkTokenVersion
+    mockResolvedValue([{                                           // 1: SELECT booking
+      id: 1, expert_id: 10, user_id: 1, status: "upcoming",
+      slot_id: null, date: "2020-01-01", time: "00:00",
+    }]);
 
     const res = await api("POST", "/api/bookings/1/complete", {
       headers: { Authorization: `Bearer ${userToken}` },
@@ -749,9 +753,14 @@ describe("Admin-only routes reject regular users", () => {
   });
 
   it("admin can complete a booking", async () => {
-    mockResolvedValue([{ token_version: 0 }]);                     // adminRequired
-    mockResolvedValue([{ id: 1 }]);                                // booking exists
-    mockResolvedValue([]);                                          // UPDATE status
+    mockResolvedValue([{ token_version: 0 }]);                     // 0: checkTokenVersion
+    mockResolvedValue([{                                           // 1: SELECT booking
+      id: 1, expert_id: 10, user_id: 1, status: "upcoming",
+      slot_id: null, date: "2020-01-01", time: "00:00",
+    }]);                                                           // 2: UPDATE status (uses pool.connect -> client.query)
+    mockResolvedValue(undefined);                                  // BEGIN
+    mockResolvedValue(undefined);                                  // UPDATE bookings
+    mockResolvedValue(undefined);                                  // COMMIT
 
     const res = await api("POST", "/api/bookings/1/complete", {
       headers: { Authorization: `Bearer ${adminToken}` },

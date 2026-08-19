@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SidebarShell } from "@/app/components/sidebar-shell";
+import { api } from "@/lib/api";
 import {
   Home,
   CircleDot,
@@ -20,6 +22,49 @@ import {
   ArrowRight,
   MessageSquare,
 } from "lucide-react";
+
+function ChatUnreadBadge() {
+  const [count, setCount] = useState(0);
+  const genRef = useRef(0);
+
+  const fetch_ = useCallback(() => {
+    const gen = ++genRef.current;
+    api.chat
+      .getUnreadCount()
+      .then((res: unknown) => {
+        if (gen !== genRef.current) return;
+        const data = res as { count?: number };
+        setCount(data?.count ?? 0);
+      })
+      .catch(() => {
+        if (gen !== genRef.current) return;
+      });
+  }, []);
+
+  useEffect(() => {
+    fetch_();
+    const gen = genRef;
+    return () => {
+      gen.current++;
+    };
+  }, [fetch_]);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      fetch_();
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [fetch_]);
+
+  if (count <= 0) return null;
+
+  return (
+    <span className="ml-auto flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[#e9b85c] px-1.5 text-[10px] font-bold text-[#2a1148]">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
 
 const primaryNav = [
   { label: "Dashboard", Icon: Home, href: "/user-dashboard" },
@@ -110,6 +155,7 @@ export default function Sidebar() {
             >
               <Icon className="h-[18px] w-[18px] shrink-0" strokeWidth={1.6} />
               <span>{label}</span>
+              {label === "Messages" && <ChatUnreadBadge />}
             </Link>
           );
         })}

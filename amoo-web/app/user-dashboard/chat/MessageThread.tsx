@@ -2,20 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { api } from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
 import type { WsHandle } from "@/lib/ws";
-import type { ChatMessage } from "./ChatApp";
-
-type ConversationMeta = {
-  id: number;
-  expert_name: string;
-  expert_avatar: string | null;
-  user_name: string;
-  user_avatar: string | null;
-};
+import type { ChatMessage, ConversationMeta } from "@/lib/types";
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -39,9 +31,9 @@ function isSameDay(a: string, b: string): boolean {
 
 function formatDate(iso: string): string {
   const d = new Date(iso);
-  const today = new Date();
-  if (isSameDay(iso, today.toISOString())) return "Today";
-  const yesterday = new Date(today);
+  const now = new Date();
+  if (isSameDay(iso, now.toISOString())) return "Today";
+  const yesterday = new Date(now);
   yesterday.setDate(yesterday.getDate() - 1);
   if (isSameDay(iso, yesterday.toISOString())) return "Yesterday";
   return d.toLocaleDateString("en-IN", {
@@ -55,24 +47,31 @@ function useMessages(conversationId: number) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const pageRef = useRef(1);
   const genRef = useRef(0);
+
+  const PAGE_SIZE = 50;
 
   const fetch_ = useCallback(() => {
     const gen = ++genRef.current;
+    pageRef.current = 1;
     setLoading(true);
     setError(null);
     setMessages([]);
     api.chat
-      .getMessages(conversationId)
+      .getMessages(conversationId, `?page=1&pageSize=${PAGE_SIZE}`)
       .then((res: unknown) => {
         if (gen !== genRef.current) return;
-        const d = res as { data?: ChatMessage[] };
+        const d = res as { data?: ChatMessage[]; meta?: { total?: number; page?: number; totalPages?: number } };
         const list = Array.isArray(d?.data)
           ? d.data
           : Array.isArray(res)
             ? (res as ChatMessage[])
             : [];
         setMessages(list);
+        setHasMore(d?.meta ? d.meta.page! < d.meta.totalPages! : list.length === PAGE_SIZE);
       })
       .catch((e: unknown) => {
         if (gen !== genRef.current) return;
@@ -84,6 +83,28 @@ function useMessages(conversationId: number) {
       });
   }, [conversationId]);
 
+  const loadOlder = useCallback(async () => {
+    if (loadingOlder || !hasMore) return;
+    setLoadingOlder(true);
+    try {
+      const nextPage = pageRef.current + 1;
+      const res = await api.chat.getMessages(conversationId, `?page=${nextPage}&pageSize=${PAGE_SIZE}`);
+      const d = res as { data?: ChatMessage[]; meta?: { total?: number; page?: number; totalPages?: number } };
+      const list = Array.isArray(d?.data)
+        ? d.data
+        : Array.isArray(res)
+          ? (res as ChatMessage[])
+          : [];
+      pageRef.current = nextPage;
+      setMessages((prev) => [...list, ...prev]);
+      setHasMore(d?.meta ? nextPage < d.meta.totalPages! : list.length === PAGE_SIZE);
+    } catch {
+      // silently fail for older messages
+    } finally {
+      setLoadingOlder(false);
+    }
+  }, [conversationId, loadingOlder, hasMore]);
+
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetch_();
@@ -93,7 +114,7 @@ function useMessages(conversationId: number) {
     };
   }, [fetch_]);
 
-  return { messages, setMessages, loading, setLoading, error, setError, refetch: fetch_ };
+  return { messages, setMessages, loading, setLoading, error, setError, refetch: fetch_, hasMore, loadingOlder, loadOlder };
 }
 
 export default function MessageThread({
@@ -105,6 +126,7 @@ export default function MessageThread({
   ws,
   onRegisterHandlers,
   onRegisterReadHandler,
+  onRegisterTyping,
 }: {
   conversationId: number;
   conversation: ConversationMeta;
@@ -114,14 +136,17 @@ export default function MessageThread({
   ws: WsHandle | null;
   onRegisterHandlers: (handler: (msg: ChatMessage) => void) => void;
   onRegisterReadHandler: (handler: (convId: number) => void) => void;
+  onRegisterTyping: (handler: (convId: number, userId: number, userKind: string) => void) => void;
 }) {
-  const { messages, setMessages, loading, error, refetch } =
+  const { messages, setMessages, loading, error, refetch, hasMore, loadingOlder, loadOlder } =
     useMessages(conversationId);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const shouldAutoScroll = useRef(true);
+  const [otherTyping, setOtherTyping] = useState(false);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mark as read via WS when conversation opens
   useEffect(() => {
@@ -136,13 +161,30 @@ export default function MessageThread({
     }
   }, [messages]);
 
-  // Track scroll position
+  // Track scroll position and load older messages on scroll to top
   const handleScroll = useCallback(() => {
     const el = document.getElementById("chat-scroll-container");
     if (!el) return;
     const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
     shouldAutoScroll.current = atBottom;
-  }, []);
+    if (el.scrollTop < 60 && hasMore && !loadingOlder) {
+      loadOlder();
+    }
+  }, [hasMore, loadingOlder, loadOlder]);
+
+  // Typing indicator: register handler
+  useEffect(() => {
+    onRegisterTyping((convId: number, userId: number, userKind: string) => {
+      if (convId !== conversationId) return;
+      if (userId === myId && userKind === myKind) return;
+      setOtherTyping(true);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => setOtherTyping(false), 3000);
+    });
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    };
+  }, [conversationId, myId, myKind, onRegisterTyping]);
 
   // Textarea auto-resize
   const handleInput = useCallback(
@@ -153,8 +195,12 @@ export default function MessageThread({
         ta.style.height = "auto";
         ta.style.height = Math.min(ta.scrollHeight, 120) + "px";
       }
+      // Send typing event (debounced)
+      if (ws) {
+        ws.send({ type: "typing", conversationId });
+      }
     },
-    [],
+    [ws, conversationId],
   );
 
   const handleSend = useCallback(async () => {
@@ -205,7 +251,7 @@ export default function MessageThread({
         setMessages((prev) =>
           prev.map((msg) =>
             msg.client_id === clientId
-              ? { ...msg, status: "sent" }
+              ? { ...msg, status: "failed" }
               : msg,
           ),
         );
@@ -223,6 +269,57 @@ export default function MessageThread({
       }
     },
     [handleSend],
+  );
+
+  const handleRetry = useCallback(
+    async (failedClientId: string) => {
+      const failed = messages.find(
+        (m) => m.client_id === failedClientId && m.status === "failed",
+      );
+      if (!failed) return;
+
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.client_id === failedClientId ? { ...m, status: "pending" } : m,
+        ),
+      );
+
+      if (ws) {
+        ws.send({
+          type: "message",
+          conversationId,
+          content: failed.content,
+          client_id: failedClientId,
+        });
+      } else {
+        try {
+          const res = (await api.chat.sendMessage(
+            conversationId,
+            failed.content,
+            failedClientId,
+          )) as { id?: number } | undefined;
+          const serverId = res?.id;
+          if (serverId != null) {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.client_id === failedClientId
+                  ? { ...msg, id: serverId, status: "sent" }
+                  : msg,
+              ),
+            );
+          }
+        } catch {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.client_id === failedClientId
+                ? { ...msg, status: "failed" }
+                : msg,
+            ),
+          );
+        }
+      }
+    },
+    [messages, conversationId, ws],
   );
 
   // Register message handler with parent (ChatApp) via ref-based callback
@@ -270,8 +367,9 @@ export default function MessageThread({
     });
   }, [conversationId, myId, myKind, setMessages, onRegisterReadHandler]);
 
-  const expertName = conversation.expert_name;
-  const expertInitial = expertName?.charAt(0)?.toUpperCase() || "E";
+  const counterpartyName = myKind === "expert" ? conversation.user_name : conversation.expert_name;
+  const counterpartyAvatar = myKind === "expert" ? conversation.user_avatar : conversation.expert_avatar;
+  const counterpartyInitial = counterpartyName?.charAt(0)?.toUpperCase() || "U";
 
   // Compute date separators without mutating during render
   const dateSeparators = new Map<number | string, string>();
@@ -299,24 +397,24 @@ export default function MessageThread({
         </button>
 
         <span className="relative h-9 w-9 shrink-0 overflow-hidden rounded-full">
-          {conversation.expert_avatar ? (
+          {counterpartyAvatar ? (
             <Image
-              src={conversation.expert_avatar}
-              alt={expertName}
+              src={counterpartyAvatar}
+              alt={counterpartyName}
               fill
               sizes="36px"
               className="object-cover"
             />
           ) : (
             <span className="flex h-full w-full items-center justify-center rounded-full bg-[#4a1c7d] text-[13px] font-bold text-white">
-              {expertInitial}
+              {counterpartyInitial}
             </span>
           )}
         </span>
 
         <div className="min-w-0">
           <p className="truncate text-[14px] font-semibold text-[#2b0f47]">
-            {sanitize(expertName)}
+            {sanitize(counterpartyName)}
           </p>
         </div>
       </div>
@@ -353,6 +451,11 @@ export default function MessageThread({
           </div>
         ) : (
           <div className="space-y-3">
+            {loadingOlder && (
+              <div className="flex items-center justify-center py-2">
+                <Loader2 className="h-4 w-4 animate-spin text-[#6d28d9]" />
+              </div>
+            )}
             {messages.map((msg) => {
               const isMine =
                 msg.sender_type === myKind && msg.sender_id === myId;
@@ -372,28 +475,64 @@ export default function MessageThread({
                   <div
                     className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                   >
+                  <div
+                    className={`max-w-[75%] rounded-[14px] px-4 py-2.5 text-[13px] leading-[1.5] ${
+                      isMine
+                        ? "rounded-br-[4px] bg-[#4a1c7d] text-white"
+                        : "rounded-bl-[4px] bg-[#f2f1f6] text-[#2e2a46]"
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap break-words">
+                      {sanitize(msg.content)}
+                    </p>
                     <div
-                      className={`max-w-[75%] rounded-[14px] px-4 py-2.5 text-[13px] leading-[1.5] ${
-                        isMine
-                          ? "rounded-br-[4px] bg-[#4a1c7d] text-white"
-                          : "rounded-bl-[4px] bg-[#f2f1f6] text-[#2e2a46]"
+                      className={`mt-1 flex items-center gap-1.5 ${
+                        isMine ? "justify-end" : ""
                       }`}
                     >
-                      <p className="whitespace-pre-wrap break-words">
-                        {sanitize(msg.content)}
-                      </p>
                       <p
-                        className={`mt-1 text-[10px] ${
+                        className={`text-[10px] ${
                           isMine ? "text-white/60" : "text-[#a09aab]"
                         }`}
                       >
                         {formatTime(msg.created_at)}
                       </p>
+                      {isMine && msg.status === "pending" && (
+                        <Loader2
+                          className="h-3 w-3 animate-spin text-white/50"
+                          strokeWidth={2}
+                        />
+                      )}
+                      {isMine && msg.status === "failed" && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRetry(msg.client_id as string)
+                          }
+                          className="inline-flex items-center gap-0.5 text-[10px] font-medium text-red-300 transition-colors hover:text-red-200"
+                          title="Failed to send. Tap to retry."
+                        >
+                          <AlertCircle className="h-3 w-3" strokeWidth={2} />
+                          <RefreshCw className="h-2.5 w-2.5" strokeWidth={2.5} />
+                        </button>
+                      )}
                     </div>
+                  </div>
                   </div>
                 </div>
               );
             })}
+            {otherTyping && (
+              <div className="flex justify-start">
+                <div className="rounded-[14px] rounded-bl-[4px] bg-[#f2f1f6] px-4 py-2.5">
+                  <div className="flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#a09aab]" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#a09aab]" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-[#a09aab]" style={{ animationDelay: "300ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={bottomRef} />
           </div>
         )}

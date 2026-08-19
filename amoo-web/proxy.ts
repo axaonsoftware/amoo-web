@@ -19,6 +19,7 @@ const key = JWT_SECRET ? new TextEncoder().encode(JWT_SECRET) : null;
 const PROTECTED_PREFIXES = [
   "/admin",
   "/user-dashboard",
+  "/astrologer-dashboard",
   "/consultation/consultation-payment",
   "/consultation/booking-confirmation",
   "/consultation/booking-summary",
@@ -30,6 +31,7 @@ const PROTECTED_PREFIXES = [
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const RAZORPAY =
   "https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com";
+const WS_URL = (API_URL || "").replace(/^http/, "ws");
 function cspWithNonce(nonce: string) {
   return [
     "default-src 'self'",
@@ -37,7 +39,7 @@ function cspWithNonce(nonce: string) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob: https://images.unsplash.com https://upload.wikimedia.org https://res.cloudinary.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    `connect-src 'self' ${API_URL} ${RAZORPAY} https://sentry.io https://browser.sentry-cdn.com https://*.ingest.sentry.io`,
+    `connect-src 'self' ${API_URL} ${WS_URL} ${RAZORPAY} https://sentry.io https://browser.sentry-cdn.com https://*.ingest.sentry.io ws: wss:`,
     "frame-src https://api.razorpay.com https://checkout.razorpay.com https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",
@@ -65,6 +67,8 @@ function redirectToLogin(requestUrl: string, pathname: string): NextResponse {
   let loginPath: string;
   if (pathname.startsWith("/admin")) {
     loginPath = "/admin-login";
+  } else if (pathname.startsWith("/astrologer-dashboard")) {
+    loginPath = "/astrologer-login";
   } else if (
     pathname.startsWith("/user-dashboard") ||
     pathname.startsWith("/consultation")
@@ -113,6 +117,8 @@ export async function proxy(req: NextRequest) {
     try {
       const { payload } = await jwtVerify(token, key);
       if (pathname.startsWith("/admin") && payload.kind !== "admin")
+        return redirectToLogin(req.url, pathname);
+      if (pathname.startsWith("/astrologer-dashboard") && payload.kind !== "expert" && payload.kind !== "admin")
         return redirectToLogin(req.url, pathname);
       if (pathname.startsWith("/user-dashboard") && payload.kind !== "user" && payload.kind !== "expert")
         return redirectToLogin(req.url, pathname);

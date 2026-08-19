@@ -3,43 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { connectChatWebSocket, type WsHandle } from "@/lib/ws";
+import type { Conversation, ConversationMeta, ChatMessage } from "@/lib/types";
 import ConversationList from "./ConversationList";
 import MessageThread from "./MessageThread";
 
-type Conversation = {
-  id: number;
-  user_id: number;
-  expert_id: number;
-  user_name: string;
-  user_avatar: string | null;
-  expert_name: string;
-  expert_avatar: string | null;
-  last_message_at: string | null;
-  unread_count: number;
-};
-
-type ConversationMeta = {
-  id: number;
-  expert_name: string;
-  expert_avatar: string | null;
-  user_name: string;
-  user_avatar: string | null;
-};
-
-export type ChatMessage = {
-  id: number | string;
-  conversation_id: number;
-  sender_type: string;
-  sender_id: number;
-  content: string;
-  is_read: boolean;
-  created_at: string;
-  client_id?: string;
-  status?: "pending" | "sent" | "delivered" | "failed";
-};
-
 type AddMessageHandler = (msg: ChatMessage) => void;
 type UpdateReadHandler = (convId: number) => void;
+type TypingHandler = (convId: number, userId: number, userKind: string) => void;
 
 export default function ChatApp() {
   const { user } = useAuth();
@@ -54,6 +24,7 @@ export default function ChatApp() {
 
   const addMessageRef = useRef<AddMessageHandler | null>(null);
   const updateReadRef = useRef<UpdateReadHandler | null>(null);
+  const typingRef = useRef<TypingHandler | null>(null);
 
   const registerAddMessage = useCallback((handler: AddMessageHandler) => {
     addMessageRef.current = handler;
@@ -61,6 +32,10 @@ export default function ChatApp() {
 
   const registerUpdateRead = useCallback((handler: UpdateReadHandler) => {
     updateReadRef.current = handler;
+  }, []);
+
+  const registerTyping = useCallback((handler: TypingHandler) => {
+    typingRef.current = handler;
   }, []);
 
   const startWs = useCallback(() => {
@@ -95,6 +70,14 @@ export default function ChatApp() {
         const msg = data as { conversationId: number };
         updateReadRef.current?.(msg.conversationId);
         setUnreadRefresh((n) => n + 1);
+      },
+      typing: (data: unknown) => {
+        const msg = data as {
+          conversationId: number;
+          userId: number;
+          userKind: string;
+        };
+        typingRef.current?.(msg.conversationId, msg.userId, msg.userKind);
       },
       error: (data: unknown) => {
         console.warn("[chat ws] server error:", data);
@@ -180,6 +163,7 @@ export default function ChatApp() {
             ws={ws}
             onRegisterHandlers={registerAddMessage}
             onRegisterReadHandler={registerUpdateRead}
+            onRegisterTyping={registerTyping}
           />
         ) : (
           <div className="flex flex-1 flex-col items-center justify-center text-center">

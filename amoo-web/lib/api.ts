@@ -193,6 +193,7 @@ async function request(method: string, path: string, body?: unknown) {
         const isProtected =
           pathname.startsWith("/admin") ||
           pathname.startsWith("/user-dashboard") ||
+          pathname.startsWith("/astrologer-dashboard") ||
           pathname === "/consultation/consultation-payment" ||
           pathname.startsWith("/consultation/consultation-payment/") ||
           pathname === "/consultation/booking-confirmation" ||
@@ -204,7 +205,9 @@ async function request(method: string, path: string, body?: unknown) {
         if (isProtected) {
           const loginPath = pathname.startsWith("/admin")
             ? "/admin-login"
-            : "/user-login";
+            : pathname.startsWith("/astrologer-dashboard")
+              ? "/astrologer-login"
+              : "/user-login";
           window.location.href = loginPath;
         }
       }
