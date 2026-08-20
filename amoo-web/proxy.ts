@@ -26,6 +26,21 @@ const PROTECTED_PREFIXES = [
   "/consultation/consultation-booking",
 ];
 
+/* ── Environment detection ────────────────────────────────────────────── */
+
+// Fail-safe: only treat as dev when NODE_ENV is explicitly "development".
+// Any other value (including undefined, "", "production", or typos) defaults
+// to the strict production policy so that a misconfigured environment never
+// ships unsafe directives.
+const isDev = process.env.NODE_ENV?.toLowerCase() === "development";
+
+if (isDev) {
+  console.warn(
+    "CSP: relaxed for development (unsafe-eval enabled). " +
+      "This must never appear in production.",
+  );
+}
+
 /* ── CSP helpers ──────────────────────────────────────────────────────── */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
@@ -35,8 +50,8 @@ const WS_URL = (API_URL || "").replace(/^http/, "ws");
 function cspWithNonce(nonce: string) {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://checkout.razorpay.com ${process.env.NODE_ENV === "development" ? "'unsafe-eval'" : ""}`,
-    "style-src 'self' 'unsafe-inline'",
+    `script-src 'self' 'nonce-${nonce}' https://checkout.razorpay.com${isDev ? " 'unsafe-eval'" : ""}`,
+    `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' data: blob: https://images.unsplash.com https://upload.wikimedia.org https://res.cloudinary.com",
     "font-src 'self' data: https://fonts.gstatic.com",
     `connect-src 'self' ${API_URL} ${WS_URL} ${RAZORPAY} https://sentry.io https://browser.sentry-cdn.com https://*.ingest.sentry.io ws: wss:`,
