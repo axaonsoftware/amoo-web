@@ -71,7 +71,7 @@ function useMessages(conversationId: number) {
             ? (res as ChatMessage[])
             : [];
         setMessages(list);
-        setHasMore(d?.meta ? d.meta.page! < d.meta.totalPages! : list.length === PAGE_SIZE);
+        setHasMore(d?.meta ? (d.meta.page ?? 0) < (d.meta.totalPages ?? 0) : list.length === PAGE_SIZE);
       })
       .catch((e: unknown) => {
         if (gen !== genRef.current) return;
@@ -97,7 +97,7 @@ function useMessages(conversationId: number) {
           : [];
       pageRef.current = nextPage;
       setMessages((prev) => [...list, ...prev]);
-      setHasMore(d?.meta ? nextPage < d.meta.totalPages! : list.length === PAGE_SIZE);
+      setHasMore(d?.meta ? nextPage < (d.meta.totalPages ?? 0) : list.length === PAGE_SIZE);
     } catch {
       // silently fail for older messages
     } finally {
@@ -319,7 +319,7 @@ export default function MessageThread({
         }
       }
     },
-    [messages, conversationId, ws],
+    [messages, conversationId, ws, setMessages],
   );
 
   // Register message handler with parent (ChatApp) via ref-based callback
