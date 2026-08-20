@@ -229,8 +229,10 @@ const ExpertRow = memo(function ExpertRow({
 
 export default function ExpertPanel({
   onReady,
+  onChanged,
 }: {
   onReady?: (fns: PanelFns) => void;
+  onChanged?: (experts: AdminExpert[]) => void;
 }) {
   const [experts, setExperts] = useState<AdminExpert[]>([]);
   const [loading, setLoading] = useState(true);
@@ -259,13 +261,20 @@ export default function ExpertPanel({
     setLoading(true);
     try {
       const res = await api.admin.getExperts();
-      if (!cancelled.current) setExperts(Array.isArray(res) ? res : []);
+      const list = Array.isArray(res) ? res : [];
+      if (!cancelled.current) {
+        setExperts(list);
+        onChanged?.(list);
+      }
     } catch {
-      if (!cancelled.current) setExperts([]);
+      if (!cancelled.current) {
+        setExperts([]);
+        onChanged?.([]);
+      }
     } finally {
       if (!cancelled.current) setLoading(false);
     }
-  }, []);
+  }, [onChanged]);
 
   useEffect(() => {
     loadExperts();

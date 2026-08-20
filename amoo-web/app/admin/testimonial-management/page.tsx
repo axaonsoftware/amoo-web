@@ -208,7 +208,7 @@ export default function TestimonialManagementPage() {
     if (isRefreshing) start(); else stop();
   }, [isRefreshing, start, stop]);
 
-  const setStatusFor = async (t: Testimonial, next: "Active" | "Inactive") => {
+  const setStatusFor = useCallback(async (t: Testimonial, next: "Active" | "Inactive") => {
     setBusyId(t.id);
     try {
       await api.admin.updateTestimonial(t.id, { status: next });
@@ -221,7 +221,7 @@ export default function TestimonialManagementPage() {
     } finally {
       setBusyId(null);
     }
-  };
+  }, [load, showToast]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -240,11 +240,11 @@ export default function TestimonialManagementPage() {
 
   const handlePublishTestimonial = useCallback(
     (t: Testimonial) => setStatusFor(t, "Active"),
-    [],
+    [setStatusFor],
   );
   const handleHideTestimonial = useCallback(
     (t: Testimonial) => setStatusFor(t, "Inactive"),
-    [],
+    [setStatusFor],
   );
   const handleDeleteTestimonial = useCallback(
     (t: Testimonial) => setDeleteTarget(t),

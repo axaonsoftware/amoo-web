@@ -8,21 +8,12 @@ import { api } from "../../../lib/api";
 import type { Expert } from "../../../lib/types";
 
 export default function ExpertManagementPage() {
-  const [experts, setExperts] = useState<Expert[]>([]);
   const panelRef = useRef<{
     openCreate: () => void;
     exportData: () => void;
   } | null>(null);
 
-  const loadExperts = async () => {
-    try {
-      const res = await api.admin.getExperts();
-      const list = Array.isArray(res) ? res : [];
-      setExperts(list);
-    } catch {
-      setExperts([]);
-    }
-  };
+  const [experts, setExperts] = useState<Expert[]>([]);
 
   return (
     <div className="flex flex-1 gap-5 bg-[#F8F7FC] px-6 pb-6">
@@ -34,8 +25,8 @@ export default function ExpertManagementPage() {
         <ExpertPanel
           onReady={(fns) => {
             panelRef.current = fns;
-            loadExperts();
           }}
+          onChanged={setExperts}
         />
       </div>
       <RightRail />
