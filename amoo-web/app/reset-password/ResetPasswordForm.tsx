@@ -16,6 +16,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { api } from "../../lib/api";
+import { useRateLimit } from "../../lib/use-rate-limit";
+import RateLimitAlert from "../components/RateLimitAlert";
 
 function ResetFormInner() {
   const router = useRouter();
@@ -37,6 +39,7 @@ function ResetFormInner() {
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const { isCoolingDown, remainingSeconds } = useRateLimit();
 
   function validate(): boolean {
     const newErrors: typeof errors = {};
@@ -149,6 +152,8 @@ function ResetFormInner() {
             {apiError}
           </div>
         )}
+
+        <RateLimitAlert remainingSeconds={remainingSeconds} />
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -305,7 +310,7 @@ function ResetFormInner() {
 
           <button
             type="submit"
-            disabled={isLoading || success}
+            disabled={isLoading || success || isCoolingDown}
             className="w-full flex items-center justify-center gap-2 rounded-lg py-3.5 text-white font-medium text-[0.95rem] transition disabled:opacity-60 active:scale-[0.99]"
             style={{
               background: "linear-gradient(90deg,#3E1E7A 0%,#6B2FA0 100%)",

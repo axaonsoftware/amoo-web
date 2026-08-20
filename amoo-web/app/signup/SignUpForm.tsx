@@ -18,6 +18,8 @@ import {
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { trackEvent } from "../../lib/tracking";
+import { useRateLimit } from "../../lib/use-rate-limit";
+import RateLimitAlert from "../components/RateLimitAlert";
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -32,6 +34,7 @@ export default function SignUpForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [signupSuccess, setSignupSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const { isCoolingDown, remainingSeconds } = useRateLimit();
 
   function validate(): boolean {
     const newErrors: Record<string, string> = {};
@@ -122,6 +125,8 @@ export default function SignUpForm() {
             {apiError}
           </div>
         )}
+
+        <RateLimitAlert remainingSeconds={remainingSeconds} />
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -304,7 +309,7 @@ export default function SignUpForm() {
 
           <button
             type="submit"
-            disabled={isLoading || signupSuccess}
+            disabled={isLoading || signupSuccess || isCoolingDown}
             className="w-full flex items-center justify-center gap-2 rounded-lg py-3.5 text-white font-medium text-[0.95rem] transition disabled:opacity-60 active:scale-[0.99]"
             style={{
               background: "linear-gradient(90deg,#3E1E7A 0%,#6B2FA0 100%)",

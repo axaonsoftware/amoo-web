@@ -16,6 +16,8 @@ import {
 import { api } from "../../lib/api";
 import { useAuth } from "../../lib/auth-context";
 import { trackEvent } from "../../lib/tracking";
+import { useRateLimit } from "../../lib/use-rate-limit";
+import RateLimitAlert from "../components/RateLimitAlert";
 
 export default function AstrologerRightPanel() {
   const router = useRouter();
@@ -29,6 +31,7 @@ export default function AstrologerRightPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const { isCoolingDown, remainingSeconds } = useRateLimit();
 
   // Read callbackUrl from the query string (set by middleware when redirecting
   // an unauthenticated expert to login). After login we redirect there instead
@@ -108,6 +111,8 @@ export default function AstrologerRightPanel() {
             {apiError}
           </div>
         )}
+
+        <RateLimitAlert remainingSeconds={remainingSeconds} />
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
@@ -207,7 +212,7 @@ export default function AstrologerRightPanel() {
 
           <button
             type="submit"
-            disabled={isLoading || loginSuccess}
+            disabled={isLoading || loginSuccess || isCoolingDown}
             className="w-full flex items-center justify-center gap-2 rounded-lg py-3.5 text-white font-medium text-[0.95rem] transition disabled:opacity-60 active:scale-[0.99]"
             style={{
               background: "linear-gradient(90deg,#3E1E7A 0%,#6B2FA0 100%)",

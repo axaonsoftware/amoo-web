@@ -9,6 +9,8 @@ import { useAuth } from "../../lib/auth-context";
 import { SITE_NAME } from "../../lib/constants";
 import { trackEvent } from "../../lib/tracking";
 import { errorMessage } from "../../lib/errors";
+import { useRateLimit } from "../../lib/use-rate-limit";
+import RateLimitAlert from "../components/RateLimitAlert";
 import {
   Mail,
   Lock,
@@ -34,6 +36,7 @@ export default function RightPanel() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const { isCoolingDown, remainingSeconds } = useRateLimit();
 
   // Read callbackUrl from the query string (set by middleware when redirecting
   // an unauthenticated admin to login). After login we redirect there instead
@@ -144,6 +147,8 @@ export default function RightPanel() {
           </div>
         )}
 
+        <RateLimitAlert remainingSeconds={remainingSeconds} />
+
         <form onSubmit={handleSubmit}>
           <div className="mt-8 sm:mt-14">
             <label
@@ -241,7 +246,7 @@ export default function RightPanel() {
 
           <button
             type="submit"
-            disabled={isLoading || loginSuccess}
+            disabled={isLoading || loginSuccess || isCoolingDown}
             className="mt-8 sm:mt-12 flex h-16 sm:h-[82px] w-full items-center justify-center gap-4 sm:gap-5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#4B0CA3] via-[#7C1BE5] to-[#5A0FC6] text-lg sm:text-2xl lg:text-[28px] font-semibold text-white shadow-[0_20px_35px_rgba(109,40,217,.35)] transition hover:scale-[1.01] disabled:opacity-60 disabled:hover:scale-100"
           >
             {isLoading ? (
