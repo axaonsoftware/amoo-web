@@ -44,7 +44,14 @@ const blogRoutes = require("./routes/blogs");
 const faqRoutes = require("./routes/faqs");
 const settingsRoutes = require("./routes/settings");
 const contentRoutes = require("./routes/content");
-const { setupSwagger } = require("./config/swagger");
+let setupSwagger;
+try {
+  ({ setupSwagger } = require("./config/swagger"));
+} catch {
+  // swagger-jsdoc or swagger-ui-express missing — skip API docs setup.
+  // In production this is fine (Swagger is disabled by default).
+  setupSwagger = null;
+}
 
 const app = express();
 const PORT = env.port;
@@ -94,7 +101,7 @@ app.use(cookieParser());
 // --- Swagger API Docs (before CSRF — static assets need no token) ---
 // Off by default in production (ENABLE_SWAGGER=true to expose); API docs are
 // an information-leak surface that production traffic does not need.
-if (!env.isProd || env.enableSwagger) {
+if (setupSwagger && (!env.isProd || env.enableSwagger)) {
   setupSwagger(app);
 }
 
@@ -169,8 +176,8 @@ app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/uploads", uploadRoutes);
-app.use("/api/chat", chatRoutes);
 app.use("/api/chat/conversations/:id/messages", chatLimiter);
+app.use("/api/chat", chatRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/audit", auditRoutes);
 app.use("/api/activity", activityRoutes);
@@ -224,6 +231,9 @@ process.on("uncaughtException", (err) => {
 });
 process.on("unhandledRejection", (reason) => {
   logger.error("UNHANDLED_REJECTION:", typeof reason === "object" ? reason.message : reason, reason?.stack ?? "");
+  // Exit uncleanly — process is in unknown state (same as uncaughtException)
+  // eslint-disable-next-line no-process-exit
+  process.exit(1);
 });
 
 // Graceful shutdown: stop accepting requests, drain in-flight, then close DB
@@ -231,7 +241,14 @@ if (require.main === module) {
   let server;
   function shutdown(signal) {
     logger.info(`Received ${signal}, shutting down...`);
-    if (!server) process.exit(0);
+    if (!server) {
+      // Server never started (DB retry still in progress) — close pool and exit.
+      shutdownTelemetry().then(() => sentry.flush()).then(() => {
+        const { pool } = require("./config/db");
+        return pool.end().catch(() => {});
+      }).finally(() => process.exit(0));
+      return;
+    }
     server.close(async () => {
       logger.info("HTTP server closed, flushing telemetry and closing DB pool...");
       // Flush buffered spans before exit, or the traces for the last requests

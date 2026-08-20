@@ -119,7 +119,7 @@ async function installSingleAdminTrigger(client) {
     DO $$
     BEGIN
       IF NOT EXISTS (
-        SELECT 1 FROM pg_trigger WHERE tgname = ' trg_single_admin'
+        SELECT 1 FROM pg_trigger WHERE tgname = 'trg_single_admin'
       ) THEN
         CREATE TRIGGER trg_single_admin
           BEFORE INSERT ON admins
