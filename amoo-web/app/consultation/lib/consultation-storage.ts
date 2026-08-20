@@ -12,7 +12,9 @@ const STORAGE_KEY = "amoo_consultation";
  * long after the booking completed.
  *
  * It is now sessionStorage only — scoped to the tab, dropped when it closes —
- * and `clearConsultationData()` is called once checkout succeeds.
+ * and `clearConsultationData()` is called once checkout succeeds. A
+ * `beforeunload` handler also clears data when the tab is closed or refreshed,
+ * so PII never lingers on shared devices even if the user abandons the flow.
  *
  * The in-memory mirror exists because sessionStorage throws in Safari private
  * mode and when the quota is exceeded; the flow must not break in either case.
@@ -104,3 +106,24 @@ export function clearConsultationData(): void {
     /* ditto */
   }
 }
+
+/**
+ * Best-effort cleanup when the user closes or refreshes the tab. The handler
+ * is registered once per page load and removed on unload to avoid leaks.
+ *
+ * sessionStorage itself is scoped to the tab and is cleared by the browser
+ * when the tab closes, but this catches refreshes and explicit tab-closes
+ * where the session may persist (e.g. "reopen tabs" browser setting).
+ */
+function installBeforeUnloadHandler(): void {
+  if (typeof window === "undefined") return;
+
+  const handler = () => clearConsultationData();
+  window.addEventListener("beforeunload", handler);
+  // Clean up on actual unload to avoid stale listeners.
+  window.addEventListener("pagehide", () => {
+    window.removeEventListener("beforeunload", handler);
+  });
+}
+
+installBeforeUnloadHandler();

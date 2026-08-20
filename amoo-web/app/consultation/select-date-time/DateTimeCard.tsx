@@ -13,7 +13,6 @@ import {
   SunsetIcon,
 } from "./icons";
 import { api } from "../../../lib/api";
-import { useRouter } from "next/navigation";
 
 const UNAVAILABLE = [3, 4, 5];
 

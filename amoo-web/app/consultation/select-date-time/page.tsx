@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { saveConsultationData, loadConsultationData } from "../lib/consultation-storage";
 import { api } from "../../../lib/api";
 import { SiteFooter } from "../../components/site-footer";
@@ -43,6 +43,7 @@ function SelectDateTimeInner() {
   const [selectedPeriod, setSelectedPeriod] = useState("Morning");
   const [selectedSlot, setSelectedSlot] = useState("");
   const [selectedSlotId, setSelectedSlotId] = useState<number | undefined>();
+  const [reservingSlot, setReservingSlot] = useState(false);
   const [validationError, setValidationError] = useState("");
 
   const handleBack = () => {
@@ -69,16 +70,22 @@ function SelectDateTimeInner() {
   const handleSlotSelect = async (slot: string, slotId?: number) => {
     setSelectedSlot(slot);
     setSelectedSlotId(slotId);
+    setValidationError("");
     
-    // Reserve the slot immediately to prevent double-booking if slotId present
+    // Reserve the slot immediately to prevent double-booking if slotId present.
+    // Block the Continue button until reservation resolves so users can't
+    // navigate away with an unconfirmed slot.
     if (slotId) {
+      setReservingSlot(true);
       try {
         await api.reserveSlot(slotId);
-      } catch (err) {
+      } catch {
         // If reservation fails (e.g., slot already booked), clear selection
         setSelectedSlot("");
         setSelectedSlotId(undefined);
         setValidationError("Sorry, this slot is no longer available. Please select a different time.");
+      } finally {
+        setReservingSlot(false);
       }
     }
   };
@@ -213,10 +220,20 @@ function SelectDateTimeInner() {
             <button
               type="button"
               onClick={handleContinue}
-              className="order-1 flex h-[56px] w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-b from-gold-2 to-gold-3 px-8 text-[15px] font-semibold text-[#2f1a52] shadow-[0_6px_20px_rgba(208,155,56,0.32)] transition-shadow hover:shadow-[0_8px_24px_rgba(208,155,56,0.42)] md:order-3 md:w-auto"
+              disabled={reservingSlot}
+              className="order-1 flex h-[56px] w-full items-center justify-center gap-2.5 rounded-xl bg-gradient-to-b from-gold-2 to-gold-3 px-8 text-[15px] font-semibold text-[#2f1a52] shadow-[0_6px_20px_rgba(208,155,56,0.32)] transition-shadow hover:shadow-[0_8px_24px_rgba(208,155,56,0.42)] disabled:opacity-60 disabled:cursor-not-allowed md:order-3 md:w-auto"
             >
-              Continue to Details
-              <ArrowRightIcon className="h-[17px] w-[17px]" />
+              {reservingSlot ? (
+                <>
+                  <Loader2 className="h-[17px] w-[17px] animate-spin" />
+                  Reserving...
+                </>
+              ) : (
+                <>
+                  Continue to Details
+                  <ArrowRightIcon className="h-[17px] w-[17px]" />
+                </>
+              )}
             </button>
           </div>
         </div>

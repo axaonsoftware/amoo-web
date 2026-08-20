@@ -86,18 +86,20 @@ export default function ConsultationModes() {
           ? (payload as Service[])
           : (payload?.data ?? []);
         if (items.length) {
-          const updated: Record<string, string> = { ...prices };
-          BASE_MODES.forEach((m) => {
-            const match = items.find(
-              (s) =>
-                s.type === m.key ||
-                s.name.toLowerCase().includes(m.key.toLowerCase()),
-            );
-            if (match && match.price) {
-              updated[m.key] = `₹${Number(match.price).toLocaleString("en-IN")}`;
-            }
+          setPrices((prev) => {
+            const updated = { ...prev };
+            BASE_MODES.forEach((m) => {
+              const match = items.find(
+                (s) =>
+                  s.type === m.key ||
+                  s.name.toLowerCase().includes(m.key.toLowerCase()),
+              );
+              if (match && match.price) {
+                updated[m.key] = `₹${Number(match.price).toLocaleString("en-IN")}`;
+              }
+            });
+            return updated;
           });
-          setPrices(updated);
         }
       })
       .catch(() => {});

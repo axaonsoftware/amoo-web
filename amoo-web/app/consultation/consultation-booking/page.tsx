@@ -321,32 +321,19 @@ function BookingForm() {
     setSubmitting(true);
     setSubmitError("");
     try {
-      // POST /api/bookings takes service_id (required) — not a service name —
-      // and no name/email/phone: those already live on the authenticated user.
-      // amount 0 marks it unpaid; the API stores the real services.price and
-      // only /payments/verify may ever mark it Paid.
+      // Resolve the service to validate it exists and persist its details.
       const match = svcRow ?? (await resolveService(service));
       setSvcRow(match);
 
-      const notes = [modeNote(mode), concern.trim(), specialRequests.trim()]
-        .filter(Boolean)
-        .join("\n\n")
-        .slice(0, 2000);
-
-      await api.createBooking({
-        service_id: match.id,
-        ...(slot_id ? { slot_id } : {}),
-        date: parseDisplayDate(date),
-        time: parseDisplayTime(time),
-        mode: toApiMode(mode),
-        amount: 0,
-        ...(notes ? { notes } : {}),
-      });
+      // Save all form data for downstream steps. The booking itself is NOT
+      // created here — it is created during the payment step (BottomActionBar)
+      // so there is only one booking per checkout, not a double-booking.
       saveConsultationData({
         service,
         mode,
         date,
         time,
+        slot_id,
         fullName: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   ArrowLeft,
   Lock,
@@ -45,6 +45,8 @@ export default function BottomActionBar({
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const bookingIdRef = useRef<number | null>(null);
+  const [validatedAmount, setValidatedAmount] = useState<number | null>(null);
 
   const backQuery = new URLSearchParams({
     service,
@@ -59,21 +61,31 @@ export default function BottomActionBar({
     setError(null);
     setStatus("Creating booking...");
     try {
-      // 1. Create the booking. `amount: 0` means "let the server price it": the
-      //    API stores services.price and rejects any non-zero amount that
-      //    disagrees with it. `payment` is not an accepted field — only a
-      //    signature-verified /payments/verify may mark a booking paid.
-      const note = modeNote(mode);
-      const booking = await api.createBooking({
-        service_id: svc.id,
-        ...(slot_id ? { slot_id } : {}),
-        date: parseDisplayDate(date),
-        time: parseDisplayTime(time),
-        mode: toApiMode(mode),
-        amount: 0,
-        method: "razorpay",
-        ...(note ? { notes: note } : {}),
-      });
+      // Reuse an existing booking if the user is retrying after cancelling
+      // Razorpay. Without this, each retry creates a new orphaned unpaid
+      // booking and may double-reserve the slot.
+      let booking;
+      if (bookingIdRef.current) {
+        setStatus("Reusing existing booking...");
+        booking = { id: bookingIdRef.current };
+      } else {
+        // 1. Create the booking. `amount: 0` means "let the server price it": the
+        //    API stores services.price and rejects any non-zero amount that
+        //    disagrees with it. `payment` is not an accepted field — only a
+        //    signature-verified /payments/verify may mark a booking paid.
+        const note = modeNote(mode);
+        booking = await api.createBooking({
+          service_id: svc.id,
+          ...(slot_id ? { slot_id } : {}),
+          date: parseDisplayDate(date),
+          time: parseDisplayTime(time),
+          mode: toApiMode(mode),
+          amount: 0,
+          method: "razorpay",
+          ...(note ? { notes: note } : {}),
+        });
+        bookingIdRef.current = booking.id;
+      }
 
       // 2. Redeem the coupon BEFORE the order is created. /apply rewrites
       //    bookings.amount inside a transaction, and /create-order prices the
@@ -99,6 +111,24 @@ export default function BottomActionBar({
       setStatus("Loading payment gateway...");
       const order = await api.createPaymentOrder({ booking_id: booking.id });
 
+      // Validate the backend order before opening Razorpay. The backend
+      // computes the correct amount from services.price (minus any coupon);
+      // if the response is malformed or the amount is invalid, stop immediately
+      // rather than passing garbage to the payment gateway.
+      if (
+        !order ||
+        !Number.isFinite(order.amount) ||
+        order.amount <= 0 ||
+        !order.order_id ||
+        !order.key_id ||
+        !order.currency
+      ) {
+        throw new Error(
+          "Payment validation failed. Please refresh and try again.",
+        );
+      }
+
+      setValidatedAmount(order.amount);
       await loadRazorpayScript();
 
       setStatus("Opening payment window...");
@@ -188,9 +218,13 @@ export default function BottomActionBar({
             </>
           ) : (
             <>
-              {/* Shows the same total as the summary — both come from the page,
-                  which sourced it from services.price. */}
-              Pay {formatCurrency(total)} Securely
+              {/* Prefer the backend-validated amount; fall back to the
+                  client-side total while the order hasn't been created yet. */}
+              Pay{" "}
+              {formatCurrency(
+                validatedAmount ? validatedAmount / 100 : total,
+              )}{" "}
+              Securely
               <ArrowRight size={16} aria-hidden="true" />
               <Lock size={14} aria-hidden="true" />
             </>

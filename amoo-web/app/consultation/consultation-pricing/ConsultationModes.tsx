@@ -88,24 +88,26 @@ export default function ConsultationModes() {
           ? (payload as Service[])
           : (payload?.data ?? []);
         if (items.length) {
-          const updated: Record<string, string[]> = { ...modePrices };
-          baseModes.forEach((m) => {
-            const match = items.find(
-              (s) =>
-                s.type === m.key ||
-                s.name.toLowerCase().includes(m.key.toLowerCase()),
-            );
-            if (match && match.price) {
-              const base = Number(match.price);
-              updated[m.key] = [
-                `₹${Math.round(base).toLocaleString("en-IN")}`,
-                `₹${Math.round(base * 1.6).toLocaleString("en-IN")}`,
-                `₹${Math.round(base * 2.2).toLocaleString("en-IN")}`,
-                `₹${Math.round(base * 3.0).toLocaleString("en-IN")}`,
-              ];
-            }
+          setModePrices((prev) => {
+            const updated = { ...prev };
+            baseModes.forEach((m) => {
+              const match = items.find(
+                (s) =>
+                  s.type === m.key ||
+                  s.name.toLowerCase().includes(m.key.toLowerCase()),
+              );
+              if (match && match.price) {
+                const base = Number(match.price);
+                updated[m.key] = [
+                  `₹${Math.round(base).toLocaleString("en-IN")}`,
+                  `₹${Math.round(base * 1.6).toLocaleString("en-IN")}`,
+                  `₹${Math.round(base * 2.2).toLocaleString("en-IN")}`,
+                  `₹${Math.round(base * 3.0).toLocaleString("en-IN")}`,
+                ];
+              }
+            });
+            return updated;
           });
-          setModePrices(updated);
         }
       })
       .catch(() => {});

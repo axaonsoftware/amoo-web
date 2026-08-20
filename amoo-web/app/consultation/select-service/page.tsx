@@ -403,7 +403,7 @@ export default function SelectServicePage() {
     }
 
     return list;
-  }, [activeCategory, search, sort]);
+  }, [activeCategory, search, sort, allServices]);
 
   const handleContinue = () => {
     if (selectedService) {
