@@ -116,7 +116,8 @@ router.patch(
   validate("userUpdateAdmin"),
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, USER_UPDATE_ALLOWED);
-    await pool.query(`UPDATE users SET ${setClause} WHERE id = $${values.length + 1}`, [...values, req.params.id]);
+    const result = await pool.query(`UPDATE users SET ${setClause} WHERE id = $${values.length + 1}`, [...values, req.params.id]);
+    if (result.rowCount === 0) throw new HttpError(404, "User not found");
     req.audit("update", "user", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })
@@ -129,17 +130,24 @@ router.get(
   asyncHandler(async (req, res) => {
     const { rows: user } = await pool.query("SELECT id, name, email FROM users WHERE id = $1 AND deleted_at IS NULL", [req.params.id]);
     if (assertFound(res, user[0])) return;
-    const [balanceResult, txResult] = await Promise.all([
-      pool.query("SELECT COALESCE(SUM(amount), 0) AS balance FROM wallet_transactions WHERE user_id = $1", [req.params.id]),
-      pool.query(
-        `SELECT id, amount, type, reference_type, reference_id, created_at
-         FROM wallet_transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100`,
-        [req.params.id]
-      ),
-    ]);
+    // Get the user's wallet and its transactions. The wallet system uses a
+    // `wallets` table (keyed by user_id) and `wallet_transactions` (keyed by
+    // wallet_id), with balance stored on the wallets row. The old query summed
+    // wallet_transactions.amount without distinguishing credits from debits and
+    // used the wrong join column (user_id instead of wallet_id).
+    const { rows: wallets } = await pool.query(
+      "SELECT id, balance FROM wallets WHERE user_id = $1",
+      [req.params.id]
+    );
+    const wallet = wallets[0] || { id: 0, balance: 0 };
+    const { rows: txResult } = await pool.query(
+      `SELECT id, amount, type, reason, ref, created_at
+       FROM wallet_transactions WHERE wallet_id = $1 ORDER BY created_at DESC LIMIT 100`,
+      [wallet.id]
+    );
     ok(res, {
       user: user[0],
-      balance: Number(balanceResult.rows[0].balance),
+      balance: Number(wallet.balance) || 0,
       transactions: txResult.rows,
     });
   })

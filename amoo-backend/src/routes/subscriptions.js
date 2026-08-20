@@ -97,9 +97,30 @@ router.post(
     if (req.user.kind !== "admin" && rows[0].user_id !== req.user.id) {
       return fail(res, 403, "Forbidden");
     }
-    await pool.query("UPDATE subscriptions SET status = 'cancelled', auto_renew = false WHERE id = $1", [req.params.id]);
-    req.audit("cancel", "subscription", Number(req.params.id));
-    ok(res, { id: Number(req.params.id), cancelled: true });
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("UPDATE subscriptions SET status = 'cancelled', auto_renew = false WHERE id = $1", [req.params.id]);
+      // Downgrade the user's role if this was their only active subscription.
+      const { rows: remaining } = await client.query(
+        "SELECT COUNT(*)::int AS cnt FROM subscriptions WHERE user_id = $1 AND status = 'active' AND id != $2",
+        [rows[0].user_id, req.params.id]
+      );
+      if (remaining[0].cnt === 0) {
+        await client.query(
+          "UPDATE users SET role = 'free' WHERE id = $1 AND role = 'premium'",
+          [rows[0].user_id]
+        );
+      }
+      await client.query("COMMIT");
+      req.audit("cancel", "subscription", Number(req.params.id));
+      ok(res, { id: Number(req.params.id), cancelled: true });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
   })
 );
 

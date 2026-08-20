@@ -222,7 +222,7 @@ router.get(
   adminRequired,
   asyncHandler(async (req, res) => {
     const { rows } = await pool.query(
-      "SELECT * FROM slots WHERE expert_id = $1 ORDER BY date ASC, time ASC LIMIT 200",
+      "SELECT * FROM slots WHERE expert_id = $1 ORDER BY date ASC, start_time ASC LIMIT 200",
       [req.params.id]
     );
     ok(res, rows);

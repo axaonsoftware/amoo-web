@@ -73,7 +73,8 @@ router.patch(
     const { setClause, values } = buildUpdate(req.body, ["status", "reply"], [req.params.id]);
     let paramIdx = 0;
     const pgSetClause = setClause.replace(/\?/g, () => `$${++paramIdx}`);
-    await pool.query(`UPDATE contacts SET ${pgSetClause} WHERE id = $${values.length}`, values);
+    const result = await pool.query(`UPDATE contacts SET ${pgSetClause} WHERE id = $${values.length}`, values);
+    if (result.rowCount === 0) throw new HttpError(404, "Contact not found");
     req.audit("update", "contact", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })

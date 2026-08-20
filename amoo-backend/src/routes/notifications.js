@@ -46,7 +46,8 @@ router.post(
   authRequired,
   asyncHandler(async (req, res) => {
     const { rows } = await pool.query("SELECT * FROM notifications WHERE id = $1", [req.params.id]);
-    if (rows.length && rows[0].user_id && rows[0].user_id !== req.user.id) {
+    if (!rows.length) return fail(res, 404, "Notification not found");
+    if (rows[0].user_id && rows[0].user_id !== req.user.id) {
       return fail(res, 403, "Forbidden");
     }
     await pool.query("UPDATE notifications SET is_read = true WHERE id = $1", [req.params.id]);

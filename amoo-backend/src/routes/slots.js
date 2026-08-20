@@ -97,7 +97,8 @@ router.post(
   validate("slot"),
   asyncHandler(async (req, res) => {
     const { expert_id, date, start_time, end_time, status } = req.body;
-    const effectiveEnd = end_time || `${String(Number(start_time.slice(0, 2)) + 1).padStart(2, "0")}${start_time.slice(2)}`;
+    const startHour = Number(start_time.slice(0, 2));
+    const effectiveEnd = end_time || `${String(Math.min(startHour + 1, 23)).padStart(2, "0")}${start_time.slice(2)}`;
     const { rows: [{ count }] } = await pool.query(
       `SELECT COUNT(*)::int AS count FROM slots
         WHERE expert_id = $1 AND date = $2
@@ -120,7 +121,7 @@ router.post(
 // admin book/block/unblock slot
 router.patch(
   "/:id",
-  verifiedRequired,
+  adminRequired,
   validate("slotUpdate"),
   asyncHandler(async (req, res) => {
     const { status } = req.body;

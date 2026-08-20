@@ -218,7 +218,8 @@ router.patch(
   asyncHandler(async (req, res) => {
     const { setClause, values } = buildUpdate(req.body, REPORT_UPDATE_ALLOWED);
     values.push(req.params.id);
-    await pool.query(`UPDATE reports SET ${setClause} WHERE id = $${values.length}`, values);
+    const result = await pool.query(`UPDATE reports SET ${setClause} WHERE id = $${values.length}`, values);
+    if (result.rowCount === 0) throw new HttpError(404, "Report not found");
     req.audit("update", "report", Number(req.params.id), req.body);
     ok(res, { id: Number(req.params.id), updated: true });
   })
