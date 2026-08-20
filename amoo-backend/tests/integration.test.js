@@ -46,6 +46,28 @@ db.pool = mockPool;
 db.testConnection = () => Promise.resolve(true);
 
 // ---------------------------------------------------------------------------
+// Pre-seed mocks for queries that fire at module load time.
+// Several route files run CREATE TABLE / ALTER TABLE / seed IIFEs when first
+// required by server.js. Queue enough empty-result handlers so the mock
+// queue doesn't throw before the actual test suite begins.
+// ---------------------------------------------------------------------------
+// services.js — CREATE TABLE service_expert_pricing
+mockResolvedValue([]);
+// coupons.js — 3 ALTER TABLE migrations (same try/catch block)
+mockResolvedValue([]);
+mockResolvedValue([]);
+mockResolvedValue([]);
+// settings.js — CREATE TABLE platform_settings
+mockResolvedValue([]);
+// settings.js — SELECT COUNT (count > 0 skips inserts)
+mockResolvedValue([{ count: 1 }]);
+// content.js — CREATE TABLE horoscopes + zodiac_signs (bare, .catch)
+mockResolvedValue([]);
+mockResolvedValue([]);
+// content.js — SELECT COUNT (count > 0 skips inserts)
+mockResolvedValue([{ count: 12 }]);
+
+// ---------------------------------------------------------------------------
 // Load the app
 // ---------------------------------------------------------------------------
 const app = require("../src/server");
