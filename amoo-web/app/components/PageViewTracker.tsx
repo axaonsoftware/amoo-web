@@ -16,7 +16,7 @@ export function PageViewTracker({
 }) {
   useEffect(() => {
     trackEvent("page_view", meta, page);
-  }, [page]);
+  }, [page, meta]);
   return null;
 }
 
@@ -26,5 +26,5 @@ export function PageViewTracker({
 export function usePageView(page?: string, meta?: Record<string, unknown>) {
   useEffect(() => {
     trackEvent("page_view", meta, page);
-  }, []);
+  }, [page, meta]);
 }
