@@ -97,6 +97,9 @@ jobs:
     # Only deploy from the branch CI just ran on, and only when CI succeeded.
     # Manual workflow_dispatch has no workflow_run event -> gate is skipped.
     if: (github.event.workflow_run == null || github.event.workflow_run.conclusion == 'success')
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Deploy via SSH
@@ -116,3 +119,29 @@ jobs:
             docker compose pull
             docker compose up -d --remove-orphans
             docker image prune -f
+
+      - name: Verify services are healthy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/amoo-web
+            echo "Waiting for services to become healthy..."
+            UNHEALTHY=""
+            for i in $(seq 1 40); do
+              UNHEALTHY=$(docker compose ps --format json 2>/dev/null | grep -c '"Healthy":false' || true)
+              RUNNING=$(docker compose ps --format json 2>/dev/null | grep -c '"State":"running"' || true)
+              if [ "$UNHEALTHY" = "0" ] && [ "$RUNNING" -ge 3 ]; then
+                echo "All services are healthy."
+                docker compose ps
+                exit 0
+              fi
+              echo "  attempt $i/40 — waiting 5s... (unhealthy: $UNHEALTHY, running: $RUNNING)"
+              sleep 5
+            done
+            echo "ERROR: Services did not become healthy within 200 seconds."
+            docker compose ps
+            docker compose logs --tail=30 backend
+            exit 1

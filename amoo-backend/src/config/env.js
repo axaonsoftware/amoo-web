@@ -200,6 +200,15 @@ if (env.isProd && !env.payments.webhookSecret) {
   throw new Error("PAYMENT_WEBHOOK_SECRET is required in production");
 }
 
+// APP_URL is used for Razorpay webhook callbacks and absolute asset URLs.
+// A localhost value in production means payment webhooks silently fail.
+if (env.isProd && /localhost|127\.0\.0\.1/.test(env.appUrl)) {
+  throw new Error(
+    "APP_URL must be the public API origin in production, not localhost. " +
+    "Razorpay webhook callbacks use this URL."
+  );
+}
+
 if (env.isProd && env.devDebugTokens) {
   throw new Error(
     "DEV_DEBUG_TOKENS must be disabled in production — it returns OTPs and verification tokens in API responses."

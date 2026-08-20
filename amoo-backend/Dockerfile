@@ -47,4 +47,29 @@ ENTRYPOINT ["/sbin/tini", "--"]
 # so it always failed, and `|| true` hid that. Running it here means a real
 # migration failure stops the deploy instead of starting a server against a
 # schema that was never applied.
-CMD ["sh", "-c", "node src/migrate.js && node src/server.js"]
+#
+# Retry policy: attempt migration up to 3 times with a 5s delay. If all attempts
+# fail, write a sentinel and start the server anyway (degraded — health check
+# will report "degraded"). This prevents an infinite restart loop when the DB is
+# unreachable or a migration permanently fails, while still giving transient
+# failures (DB not yet ready) a chance to recover. The sentinel is in /tmp and
+# is cleared on container recreation (next deploy).
+CMD ["sh", "-c", "\
+  if [ -f /tmp/migration_failed ]; then \
+    echo '[startup] Previous migration failed — starting in degraded mode (no DB).' ; \
+    node src/server.js ; \
+  else \
+    ATTEMPTS=0; \
+    until node src/migrate.js; do \
+      ATTEMPTS=$((ATTEMPTS+1)); \
+      if [ $ATTEMPTS -ge 3 ]; then \
+        echo '[startup] Migration failed after 3 attempts — starting in degraded mode.' ; \
+        touch /tmp/migration_failed ; \
+        node src/server.js ; \
+        exit 0 ; \
+      fi ; \
+      echo \"[startup] Migration attempt $ATTEMPTS failed, retrying in 5s...\" ; \
+      sleep 5 ; \
+    done ; \
+    node src/server.js ; \
+  fi"]

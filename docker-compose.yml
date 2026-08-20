@@ -13,6 +13,7 @@
 #   JWT_REFRESH_SECRET=...
 #   CLIENT_ORIGIN=https://your-domain
 #   CLIENT_URL=https://your-domain        (public frontend origin, used in email links)
+#   APP_URL=https://your-domain           (public API origin, used in Razorpay webhook callbacks)
 #   PAYMENT_GATEWAY=razorpay
 #   PAYMENT_WEBHOOK_SECRET=...
 #   RAZORPAY_KEY_ID=... / RAZORPAY_KEY_SECRET=...
@@ -136,7 +137,7 @@ services:
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET is required}
       CLIENT_ORIGIN: ${CLIENT_ORIGIN:?CLIENT_ORIGIN is required}
       CLIENT_URL: ${CLIENT_URL:?CLIENT_URL is required}
-      APP_URL: ${APP_URL:-http://localhost:4000}
+      APP_URL: ${APP_URL:?APP_URL is required (public API origin, used in Razorpay webhook callbacks)}
       PAYMENT_GATEWAY: ${PAYMENT_GATEWAY:?PAYMENT_GATEWAY is required}
       PAYMENT_KEY: ${PAYMENT_KEY:-}
       PAYMENT_SECRET: ${PAYMENT_SECRET:-}
