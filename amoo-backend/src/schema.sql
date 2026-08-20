@@ -75,6 +75,32 @@ CREATE TABLE IF NOT EXISTS admins (
   created_at    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Single-admin enforcement: a trigger prevents more than one active admin row.
+-- Installed by production-init.js and kept in schema.sql so fresh databases
+-- get the guard from the start.
+CREATE OR REPLACE FUNCTION prevent_multi_admin()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (SELECT COUNT(*) FROM admins WHERE deleted_at IS NULL) >= 1 THEN
+    RAISE EXCEPTION 'Only one admin account is allowed in production';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_single_admin'
+  ) THEN
+    CREATE TRIGGER trg_single_admin
+      BEFORE INSERT ON admins
+      FOR EACH ROW
+      EXECUTE FUNCTION prevent_multi_admin();
+  END IF;
+END
+$$;
+
 -- --------------------------------------------------------
 -- Experts
 -- --------------------------------------------------------

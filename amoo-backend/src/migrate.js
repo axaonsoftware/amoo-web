@@ -304,6 +304,30 @@ const { insertContentData } = require("./seed-content");
       await client.query(`CREATE INDEX ${name} ON ${table} (${cols})`);
     }
 
+    // ── Single-admin trigger (idempotent) ─────────────────────────────
+    await client.query(`
+      CREATE OR REPLACE FUNCTION prevent_multi_admin()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        IF (SELECT COUNT(*) FROM admins WHERE deleted_at IS NULL) >= 1 THEN
+          RAISE EXCEPTION 'Only one admin account is allowed in production';
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+    const { rows: trigExists } = await client.query(
+      "SELECT 1 FROM pg_trigger WHERE tgname = 'trg_single_admin' LIMIT 1"
+    );
+    if (!trigExists.length) {
+      await client.query(`
+        CREATE TRIGGER trg_single_admin
+          BEFORE INSERT ON admins
+          FOR EACH ROW
+          EXECUTE FUNCTION prevent_multi_admin();
+      `);
+    }
+
     // ── Site content (idempotent default rows) ────────────────────────
     // Services, packages, coupons, testimonials, blogs and faqs are seeded
     // here so they exist in EVERY environment including production. Only

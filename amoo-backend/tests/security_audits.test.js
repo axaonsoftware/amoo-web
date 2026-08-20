@@ -74,3 +74,39 @@ describe("Security Issue 4: Production refusal for PAYMENT_GATEWAY === 'mock'", 
     assert.ok(code.includes("!canVerify && env.isProd"), "payments.js webhook must return 503 if verification not configured in prod");
   });
 });
+
+describe("Security Issue 5: Single-admin enforcement in production", () => {
+  it("production-init.js requires ADMIN_EMAIL", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/production-init.js"), "utf8");
+    assert.ok(code.includes("ADMIN_EMAIL"), "production-init.js must read ADMIN_EMAIL from env");
+    assert.ok(code.includes("ADMIN_PASSWORD"), "production-init.js must read ADMIN_PASSWORD from env");
+  });
+
+  it("production-init.js checks for existing admin before creating", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/production-init.js"), "utf8");
+    assert.ok(code.includes("deleted_at IS NULL"), "production-init.js must check for existing non-deleted admin");
+    assert.ok(code.includes("Skipping creation"), "production-init.js must skip if admin already exists");
+  });
+
+  it("production-init.js installs a DB trigger to prevent multiple admins", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/production-init.js"), "utf8");
+    assert.ok(code.includes("prevent_multi_admin"), "production-init.js must install the single-admin trigger function");
+    assert.ok(code.includes("trg_single_admin"), "production-init.js must create the trigger");
+  });
+
+  it("schema.sql includes the single-admin trigger", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/schema.sql"), "utf8");
+    assert.ok(code.includes("prevent_multi_admin"), "schema.sql must define the single-admin trigger function");
+    assert.ok(code.includes("trg_single_admin"), "schema.sql must create the trigger");
+  });
+
+  it("seed.js password is never weaker than 12 chars", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/seed.js"), "utf8");
+    assert.ok(code.includes('bcrypt.hash("admin123", 12)'), "seed.js must use bcrypt with cost 12");
+  });
+
+  it("production-init.js rejects passwords shorter than 12 characters", () => {
+    const code = fs.readFileSync(path.join(__dirname, "../src/production-init.js"), "utf8");
+    assert.ok(code.includes("password.length < 12"), "production-init.js must enforce minimum password length");
+  });
+});
