@@ -5,12 +5,57 @@
 // same-origin so cookies (sameSite: lax) are sent.
 const API_URL = "";
 const REQUEST_TIMEOUT_MS = 30000;
+const MAX_AUTH_RETRIES = 5;
 
 type Headers = Record<string, string>;
 
 interface ApiError extends Error {
   status?: number;
   details?: unknown;
+}
+
+interface RateLimitInfo {
+  retryAfter: number;
+  attempt: number;
+}
+
+type RateLimitHandler = (info: RateLimitInfo) => void;
+
+let rateLimitHandler: RateLimitHandler | null = null;
+
+export function setRateLimitHandler(handler: RateLimitHandler | null): void {
+  rateLimitHandler = handler;
+}
+
+function exponentialBackoff(attempt: number): number {
+  const base = Math.pow(2, attempt) * 1000;
+  const jitter = Math.random() * 500;
+  return base + jitter;
+}
+
+function parseRetryAfter(header: string | null): number | null {
+  if (!header) return null;
+  const seconds = parseInt(header, 10);
+  return isNaN(seconds) ? null : seconds * 1000;
+}
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+const AUTH_ENDPOINTS = new Set([
+  "/api/auth/register",
+  "/api/auth/login",
+  "/api/auth/admin/login",
+  "/api/auth/expert/login",
+  "/api/auth/verify-email/send",
+  "/api/auth/verify-email",
+  "/api/auth/forgot-password",
+  "/api/auth/reset-password",
+]);
+
+function isAuthEndpoint(path: string): boolean {
+  return AUTH_ENDPOINTS.has(path.split("?")[0]);
 }
 
 // The API sets a `csrf_token` cookie and requires it echoed back in the
@@ -38,24 +83,46 @@ function readCsrfCookie(): string | null {
 // A mutating call can be the first request of the session, before any response
 // has handed us a token. One cheap GET makes the API issue one.
 // Deduplication: concurrent callers share the same in-flight promise.
-let csrfPromise: Promise<string | null> | null = null;
-async function ensureCsrfToken(): Promise<string | null> {
+let csrfPromise: Promise<string> | null = null;
+async function ensureCsrfToken(): Promise<string> {
+  // Fast path: token already cached from a previous response or cookie.
   const known = csrfToken || readCsrfCookie();
   if (known) return known;
+
+  // Dedup: concurrent callers share the same fetch.
   if (csrfPromise) return csrfPromise;
+
   csrfPromise = (async () => {
     try {
+      // First attempt.
       const res = await fetch(`${API_URL}/api/health`, {
         credentials: "include",
       });
       rememberCsrfToken(res);
-    } catch {
-      return null;
+      if (csrfToken) return csrfToken;
+
+      // If the response didn't include the header, try the cookie.
+      const cookie = readCsrfCookie();
+      if (cookie) return cookie;
+
+      // Retry once — the first fetch may have been a cold start where the
+      // backend hadn't set the cookie yet.
+      const retry = await fetch(`${API_URL}/api/health`, {
+        credentials: "include",
+      });
+      rememberCsrfToken(retry);
+      if (csrfToken) return csrfToken;
+      const retryCookie = readCsrfCookie();
+      if (retryCookie) return retryCookie;
+
+      throw new Error(
+        "Unable to initialize secure session. Please refresh and try again.",
+      );
     } finally {
       csrfPromise = null;
     }
-    return csrfToken || readCsrfCookie();
   })();
+
   return csrfPromise;
 }
 
@@ -64,8 +131,8 @@ async function buildHeaders(
   base: Headers = {},
 ): Promise<Headers> {
   if (!MUTATING_METHODS.has(method.toUpperCase())) return base;
-  const token = await ensureCsrfToken();
-  return token ? { ...base, "X-CSRF-Token": token } : base;
+  const token = await ensureCsrfToken(); // throws on failure
+  return { ...base, "X-CSRF-Token": token };
 }
 
 let refreshPromise: Promise<boolean> | null = null;
@@ -133,88 +200,107 @@ function fetchWithTimeout(
 }
 
 async function request(method: string, path: string, body?: unknown) {
+  const isAuth = isAuthEndpoint(path);
+  let rateLimitAttempt = 0;
+
   // Idempotency: generated once per logical request so the 401-refresh retry
   // below re-sends the SAME key. The backend dedupes on it (POST /api/bookings),
   // so a flaky refresh can never double-reserve a slot or double-insert.
   const isMutating = MUTATING_METHODS.has(method.toUpperCase());
   const idempotencyKey = isMutating ? crypto.randomUUID() : undefined;
-  const headers = await buildHeaders(
-    method,
-    idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
-  );
 
-  // Same-origin path; nginx (production) or the Next.js rewrite (local dev)
-  // forwards it to the backend.
-  const res = await fetchWithTimeout(`${API_URL}${path}`, {
-    method,
-    headers,
-    credentials: "include",
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  rememberCsrfToken(res);
+  while (true) {
+    const headers = await buildHeaders(
+      method,
+      idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
+    );
 
-  // /api/auth/me is expected to 401 for unauthenticated visitors — don't
-  // redirect them to login just because they loaded a public page.
-  if (
-    res.status === 401 &&
-    path !== "/api/auth/refresh" &&
-    path !== "/api/auth/me"
-  ) {
-    const refreshed = await refreshAccessToken();
-    if (refreshed) {
-      // Retry budget: up to 2 attempts so a single flaky 401 after a successful
-      // refresh doesn't immediately redirect the user to login.
-      for (let attempt = 0; attempt < 2; attempt++) {
-        const retryRes = await fetchWithTimeout(`${API_URL}${path}`, {
-          method,
-          headers: await buildHeaders(
+    const res = await fetchWithTimeout(`${API_URL}${path}`, {
+      method,
+      headers,
+      credentials: "include",
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    rememberCsrfToken(res);
+
+    // Handle 429 rate limiting on auth endpoints
+    if (res.status === 429 && isAuth && rateLimitAttempt < MAX_AUTH_RETRIES) {
+      const retryAfterHeader = res.headers.get("Retry-After");
+      const retryAfter = parseRetryAfter(retryAfterHeader);
+      const waitMs = retryAfter ?? exponentialBackoff(rateLimitAttempt);
+
+      if (rateLimitHandler) {
+        rateLimitHandler({ retryAfter: waitMs, attempt: rateLimitAttempt });
+      }
+
+      await sleep(waitMs);
+      rateLimitAttempt++;
+      continue;
+    }
+
+    // /api/auth/me is expected to 401 for unauthenticated visitors — don't
+    // redirect them to login just because they loaded a public page.
+    if (
+      res.status === 401 &&
+      path !== "/api/auth/refresh" &&
+      path !== "/api/auth/me"
+    ) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        // Retry budget: up to 2 attempts so a single flaky 401 after a successful
+        // refresh doesn't immediately redirect the user to login.
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const retryRes = await fetchWithTimeout(`${API_URL}${path}`, {
             method,
-            idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
-          ),
-          credentials: "include",
-          body: body ? JSON.stringify(body) : undefined,
-        });
-        rememberCsrfToken(retryRes);
-        if (retryRes.status === 401 && attempt === 0) {
-          continue; // try once more
-        }
-        return handleResponse(retryRes);
-      }
-    }
-    // Admin pages have their own login; sending an admin to /user-login would
-    // log them into the wrong realm (the backend keeps admins in a separate
-    // table and issues kind:"admin" tokens).
-    // Only redirect when the current page is a protected route — public pages
-    // (home, blog, services, etc.) should never redirect on 401.
-    if (typeof window !== "undefined") {
-      const { pathname } = window.location;
-      const loginPaths = ["/user-login", "/admin-login", "/astrologer-login"];
-      if (!loginPaths.includes(pathname)) {
-        const isProtected =
-          pathname.startsWith("/admin") ||
-          pathname.startsWith("/user-dashboard") ||
-          pathname.startsWith("/astrologer-dashboard") ||
-          pathname === "/consultation/consultation-payment" ||
-          pathname.startsWith("/consultation/consultation-payment/") ||
-          pathname === "/consultation/booking-confirmation" ||
-          pathname.startsWith("/consultation/booking-confirmation/") ||
-          pathname === "/consultation/booking-summary" ||
-          pathname.startsWith("/consultation/booking-summary/") ||
-          pathname === "/consultation/consultation-booking" ||
-          pathname.startsWith("/consultation/consultation-booking/");
-        if (isProtected) {
-          const loginPath = pathname.startsWith("/admin")
-            ? "/admin-login"
-            : pathname.startsWith("/astrologer-dashboard")
-              ? "/astrologer-login"
-              : "/user-login";
-          window.location.href = loginPath;
+            headers: await buildHeaders(
+              method,
+              idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
+            ),
+            credentials: "include",
+            body: body ? JSON.stringify(body) : undefined,
+          });
+          rememberCsrfToken(retryRes);
+          if (retryRes.status === 401 && attempt === 0) {
+            continue; // try once more
+          }
+          return handleResponse(retryRes);
         }
       }
+      // Admin pages have their own login; sending an admin to /user-login would
+      // log them into the wrong realm (the backend keeps admins in a separate
+      // table and issues kind:"admin" tokens).
+      // Only redirect when the current page is a protected route — public pages
+      // (home, blog, services, etc.) should never redirect on 401.
+      if (typeof window !== "undefined") {
+        const { pathname } = window.location;
+        const loginPaths = ["/user-login", "/admin-login", "/astrologer-login"];
+        if (!loginPaths.includes(pathname)) {
+          const isProtected =
+            pathname.startsWith("/admin") ||
+            pathname.startsWith("/user-dashboard") ||
+            pathname.startsWith("/astrologer-dashboard") ||
+            pathname === "/consultation/consultation-payment" ||
+            pathname.startsWith("/consultation/consultation-payment/") ||
+            pathname === "/consultation/booking-confirmation" ||
+            pathname.startsWith("/consultation/booking-confirmation/") ||
+            pathname === "/consultation/booking-summary" ||
+            pathname.startsWith("/consultation/booking-summary/") ||
+            pathname === "/consultation/consultation-booking" ||
+            pathname.startsWith("/consultation/consultation-booking/");
+          if (isProtected) {
+            const loginPath = pathname.startsWith("/admin")
+              ? "/admin-login"
+              : pathname.startsWith("/astrologer-dashboard")
+                ? "/astrologer-login"
+                : "/user-login";
+            window.location.href = loginPath;
+          }
+        }
+      }
     }
-  }
 
-  return handleResponse(res);
+    return handleResponse(res);
+  }
 }
 
 export interface PageMeta {
@@ -440,8 +526,7 @@ export const api = {
 
     exportCSV: async (type: string) => {
       const csrf = await ensureCsrfToken();
-      const headers: Headers = {};
-      if (csrf) headers["X-CSRF-Token"] = csrf;
+      const headers: Headers = { "X-CSRF-Token": csrf };
       const res = await fetchWithTimeout(
         `${API_URL}/api/dashboard/export/${type}`,
         {
