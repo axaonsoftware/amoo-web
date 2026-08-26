@@ -11,6 +11,7 @@ import { trackEvent } from "../../lib/tracking";
 import { errorMessage } from "../../lib/errors";
 import { useRateLimit } from "../../lib/use-rate-limit";
 import RateLimitAlert from "../components/RateLimitAlert";
+
 import {
   Mail,
   Lock,
@@ -27,20 +28,22 @@ import {
 export default function RightPanel() {
   const router = useRouter();
   const { loginUser } = useAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
-    {},
-  );
+
+  const [errors, setErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
+
   const [isLoading, setIsLoading] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
   const { isCoolingDown, remainingSeconds } = useRateLimit();
 
-  // Read callbackUrl from the query string (set by middleware when redirecting
-  // an unauthenticated admin to login). After login we redirect there instead
-  // of the default admin dashboard.
   const callbackUrl =
     typeof window !== "undefined"
       ? new URLSearchParams(window.location.search).get("callbackUrl") ||
@@ -49,25 +52,32 @@ export default function RightPanel() {
 
   function validate(): boolean {
     const newErrors: { email?: string; password?: string } = {};
+
     if (!email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Enter a valid email address";
     }
+    //  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    //   newErrors.email = "Enter a valid email address";
+    // }
+
     if (!password) {
       newErrors.password = "Password is required";
     } else if (password.length < 6) {
       newErrors.password = "Password must be at least 6 characters";
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     if (!validate()) return;
+
     setIsLoading(true);
     setApiError(null);
+
     try {
       const data = (await api.adminLogin({ email, password })) as {
         admin?: {
@@ -79,10 +89,23 @@ export default function RightPanel() {
           verified?: boolean;
         };
       };
-      if (!data.admin) throw new Error("Invalid response from server");
-      loginUser({ ...data.admin, kind: "admin" });
+
+      if (!data.admin) {
+        throw new Error("Invalid response from server");
+      }
+
+      loginUser({
+        ...data.admin,
+        kind: "admin",
+      });
+
       setLoginSuccess(true);
-      trackEvent("login", { method: "email", role: "admin" });
+
+      trackEvent("login", {
+        method: "email",
+        role: "admin",
+      });
+
       setTimeout(() => router.push(callbackUrl), 1200);
     } catch (err: unknown) {
       setApiError(errorMessage(err, "Login failed. Please try again."));
@@ -92,193 +115,256 @@ export default function RightPanel() {
   }
 
   return (
-    <section className="relative flex w-full items-center justify-center overflow-hidden bg-[#FBF8FD] px-5 py-8 sm:px-8 sm:py-12 md:px-16 md:w-1/2">
+    <section
+      className="
+      relative
+      flex
+      h-auto
+      w-full
+      items-center
+      justify-center
+      overflow-hidden
+      bg-[#FBF8FD]
+      px-5
+      py-7
+      md:h-full
+      md:w-1/2
+      md:px-8
+      md:py-5
+      lg:px-10
+    "
+    >
       <Image
         src="https://images.unsplash.com/photo-1507400492013-162706c8c05e?w=1600&q=80"
         fill
         sizes="50vw"
         alt=""
-        className="object-cover opacity-[0.035]"
+        className="pointer-events-none object-cover opacity-[0.025]"
       />
 
-      <div className="absolute left-1/2 top-0 h-[550px] w-[550px] -translate-x-1/2 rounded-full bg-[#7E22CE]/10 blur-[120px]" />
+      <div className="pointer-events-none absolute left-1/2 top-0 h-[350px] w-[350px] -translate-x-1/2 rounded-full bg-[#7E22CE]/10 blur-[90px]" />
 
-      <div className="relative z-20 w-full max-w-[620px]">
-        <div className="mx-auto flex h-20 w-20 sm:h-28 sm:w-28 items-center justify-center rounded-full bg-[#F8F0FF] shadow-[0_10px_40px_rgba(124,58,237,.18)]">
-          <div className="flex h-14 w-14 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-[#4C158D] text-white shadow-xl">
-            <UserCircle2 size={32} className="sm:hidden" />
-            <UserCircle2 size={42} className="hidden sm:block" />
+      <div className="relative z-20 w-full max-w-[390px]">
+        {/* ICON */}
+        <div className="mx-auto flex h-[62px] w-[62px] items-center justify-center rounded-full bg-[#F8F0FF] shadow-[0_6px_25px_rgba(124,58,237,.16)]">
+          <div className="flex h-[44px] w-[44px] items-center justify-center rounded-full bg-[#4C158D] text-white shadow-lg">
+            <UserCircle2 size={25} />
           </div>
         </div>
 
-        <h1 className="mt-6 sm:mt-8 text-center font-serif text-4xl sm:text-5xl lg:text-[58px] font-bold leading-none text-[#2F0B57]">
+        {/* TITLE */}
+        <h1 className="mt-3 text-center font-serif text-[30px] font-bold leading-tight text-[#2F0B57] sm:text-[34px]">
           Welcome Admin!
         </h1>
 
-        <div className="mt-5 sm:mt-7 flex items-center justify-center gap-3 sm:gap-4">
-          <div className="h-px w-16 sm:w-28 lg:w-44 bg-[#E9B44C]" />
-          <div className="h-2 w-2 sm:h-3 sm:w-3 rotate-45 bg-[#E9B44C]" />
-          <div className="h-px w-16 sm:w-28 lg:w-44 bg-[#E9B44C]" />
+        {/* DIVIDER */}
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <div className="h-px w-12 bg-[#E9B44C] sm:w-16" />
+          <div className="h-2 w-2 rotate-45 bg-[#E9B44C]" />
+          <div className="h-px w-12 bg-[#E9B44C] sm:w-16" />
         </div>
 
-        <p className="mt-5 sm:mt-7 text-center text-lg sm:text-xl lg:text-[24px] text-[#4B4B4B]">
+        {/* SUBTITLE */}
+        <p className="mt-3 text-center text-[13px] leading-5 text-[#4B4B4B] sm:text-sm">
           Sign in to access the {SITE_NAME} Admin Panel
         </p>
 
+        {/* SUCCESS */}
         {loginSuccess && (
           <div
             role="alert"
-            className="mt-6 flex items-center gap-3 rounded-xl bg-green-50 border border-green-200 p-4 text-green-700"
+            className="mt-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-green-700"
           >
-            <CheckCircle2 size={20} />
-            <span className="text-sm sm:text-base font-medium">
+            <CheckCircle2 size={16} />
+            <span className="text-xs font-medium">
               Login successful! Redirecting...
             </span>
           </div>
         )}
 
+        {/* API ERROR */}
         {apiError && (
           <div
             role="alert"
-            className="mt-6 flex items-center gap-3 rounded-xl bg-red-50 border border-red-200 p-4 text-red-700"
+            className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700"
           >
-            <AlertCircle size={20} />
-            <span className="text-sm sm:text-base font-medium">{apiError}</span>
+            <AlertCircle size={16} />
+            <span className="text-xs font-medium">{apiError}</span>
           </div>
         )}
 
         <RateLimitAlert remainingSeconds={remainingSeconds} />
 
         <form onSubmit={handleSubmit}>
-          <div className="mt-8 sm:mt-14">
+          {/* EMAIL */}
+          <div className="mt-5">
             <label
               htmlFor="rightpanel-email-address"
-              className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]"
+              className="mb-1.5 block text-[13px] font-semibold text-[#231942]"
             >
               Email Address
             </label>
+
             <div
-              className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.email ? "border-red-400" : "border-[#DDD9EC]"}`}
+              className={`flex h-[46px] items-center rounded-lg border bg-white px-3 shadow-sm transition ${
+                errors.email ? "border-red-400" : "border-[#DDD9EC]"
+              }`}
             >
               <Mail
-                className={`shrink-0 ${errors.email ? "text-red-400" : "text-[#8B86A7]"}`}
-                size={24}
+                size={18}
+                className={
+                  errors.email
+                    ? "shrink-0 text-red-400"
+                    : "shrink-0 text-[#8B86A7]"
+                }
               />
+
               <input
                 id="rightpanel-email-address"
                 type="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (errors.email)
-                    setErrors((p) => ({ ...p, email: undefined }));
+
+                  if (errors.email) {
+                    setErrors((p) => ({
+                      ...p,
+                      email: undefined,
+                    }));
+                  }
                 }}
                 placeholder="Enter your admin email"
-                className="ml-4 sm:ml-5 h-full w-full bg-transparent text-base sm:text-lg lg:text-[21px] outline-none placeholder:text-[#9996AF]"
+                className="ml-2.5 h-full min-w-0 w-full bg-transparent text-[13px] outline-none placeholder:text-[#9996AF]"
               />
             </div>
+
             {errors.email && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-red-500">
-                <AlertCircle size={14} /> {errors.email}
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-red-500">
+                <AlertCircle size={12} />
+                {errors.email}
               </p>
             )}
           </div>
 
-          <div className="mt-6 sm:mt-10">
+          {/* PASSWORD */}
+          <div className="mt-3.5">
             <label
               htmlFor="rightpanel-password"
-              className="mb-3 sm:mb-4 block text-base sm:text-lg lg:text-[22px] font-semibold text-[#231942]"
+              className="mb-1.5 block text-[13px] font-semibold text-[#231942]"
             >
               Password
             </label>
+
             <div
-              className={`flex h-14 sm:h-[78px] items-center rounded-xl sm:rounded-2xl border bg-white px-4 sm:px-6 shadow-sm transition ${errors.password ? "border-red-400" : "border-[#DDD9EC]"}`}
+              className={`flex h-[46px] items-center rounded-lg border bg-white px-3 shadow-sm transition ${
+                errors.password ? "border-red-400" : "border-[#DDD9EC]"
+              }`}
             >
               <Lock
-                className={`shrink-0 ${errors.password ? "text-red-400" : "text-[#8B86A7]"}`}
-                size={24}
+                size={18}
+                className={
+                  errors.password
+                    ? "shrink-0 text-red-400"
+                    : "shrink-0 text-[#8B86A7]"
+                }
               />
+
               <input
                 id="rightpanel-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (errors.password)
-                    setErrors((p) => ({ ...p, password: undefined }));
+
+                  if (errors.password) {
+                    setErrors((p) => ({
+                      ...p,
+                      password: undefined,
+                    }));
+                  }
                 }}
                 placeholder="Enter your password"
-                className="ml-4 sm:ml-5 h-full w-full bg-transparent text-base sm:text-lg lg:text-[21px] outline-none placeholder:text-[#9996AF]"
+                className="ml-2.5 h-full min-w-0 w-full bg-transparent text-[13px] outline-none placeholder:text-[#9996AF]"
               />
+
               <button
                 type="button"
                 onClick={() => setShowPassword((v) => !v)}
-                className="shrink-0 text-[#8B86A7] hover:text-[#6A21C8] transition"
+                className="shrink-0 text-[#8B86A7] hover:text-[#6A21C8]"
               >
-                {showPassword ? <Eye size={24} /> : <EyeOff size={24} />}
+                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
               </button>
             </div>
+
             {errors.password && (
-              <p className="mt-1.5 flex items-center gap-1.5 text-sm text-red-500">
-                <AlertCircle size={14} /> {errors.password}
+              <p className="mt-1 flex items-center gap-1 text-[11px] text-red-500">
+                <AlertCircle size={12} />
+                {errors.password}
               </p>
             )}
           </div>
 
-          <div className="mt-6 sm:mt-9 flex items-center justify-end">
-            {/* "Remember Me" was removed here. Its state was captured and never
-                read: the backend issues a 30-day refresh token on every login
-                regardless (JWT_REFRESH_EXPIRES_IN), so unchecking it changed
-                nothing and the control promised a shorter session it could not
-                deliver. On an admin login a false session-scoping control is
-                worse than none. Reinstate it together with a backend option
-                that varies the refresh-token lifetime. */}
-            {/* Admins have no self-service reset route by design — accounts are
-                seeded/provisioned. /contact is intentional, not the bug that was
-                fixed on the user login page. */}
+          {/* FORGOT PASSWORD */}
+          <div className="mt-3 flex justify-end">
             <Link
               href="/contact"
-              className="text-base sm:text-lg lg:text-[21px] font-semibold text-[#5B1AC8] hover:underline"
+              className="text-xs font-semibold text-[#5B1AC8] hover:underline"
             >
               Forgot Password? Contact support
             </Link>
           </div>
 
+          {/* LOGIN */}
           <button
             type="submit"
             disabled={isLoading || loginSuccess || isCoolingDown}
-            className="mt-8 sm:mt-12 flex h-16 sm:h-[82px] w-full items-center justify-center gap-4 sm:gap-5 rounded-xl sm:rounded-2xl bg-gradient-to-r from-[#4B0CA3] via-[#7C1BE5] to-[#5A0FC6] text-lg sm:text-2xl lg:text-[28px] font-semibold text-white shadow-[0_20px_35px_rgba(109,40,217,.35)] transition hover:scale-[1.01] disabled:opacity-60 disabled:hover:scale-100"
+            className="
+            mt-4
+            flex
+            h-[48px]
+            w-full
+            items-center
+            justify-center
+            gap-2.5
+            rounded-lg
+            bg-gradient-to-r
+            from-[#4B0CA3]
+            via-[#7C1BE5]
+            to-[#5A0FC6]
+            text-sm
+            font-semibold
+            text-white
+            shadow-[0_12px_25px_rgba(109,40,217,.30)]
+            transition
+            hover:scale-[1.01]
+            disabled:opacity-60
+            disabled:hover:scale-100
+          "
           >
             {isLoading ? (
-              <Loader2 size={28} className="animate-spin" />
+              <Loader2 size={20} className="animate-spin" />
             ) : (
               <>
-                <UserCircle2 size={30} />
+                <UserCircle2 size={20} />
                 Login to Dashboard
-                <ArrowRight className="ml-3" size={30} />
+                <ArrowRight size={20} />
               </>
             )}
           </button>
         </form>
 
-        {/* "Continue with Google / Microsoft" buttons were removed here.
-            No SSO exists anywhere in the stack — no provider client id, no
-            /api/auth/{google,microsoft} route, no oauth columns on `admins`.
-            On an admin login screen a dead SSO button is worse than absent:
-            it implies a federated identity control that isn't there.
-            They also loaded their icons from upload.wikimedia.org, making the
-            admin login depend on a third-party CDN at render time.
-            Re-add together with the backend routes, not before. */}
-
-        <div className="mt-10 sm:mt-16 flex items-start gap-4 sm:gap-5 rounded-xl sm:rounded-2xl border border-[#EEE4FF] bg-[#F6EDFF] p-4 sm:p-6">
-          <div className="flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-full bg-white text-[#6A21C8] shadow">
-            <Shield size={28} />
+        {/* RESTRICTED AREA */}
+        <div className="mt-4 flex items-center gap-3 rounded-lg border border-[#EEE4FF] bg-[#F6EDFF] p-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-[#6A21C8] shadow">
+            <Shield size={19} />
           </div>
+
           <div>
-            <h3 className="text-lg sm:text-xl lg:text-[22px] font-semibold text-[#2D2045]">
+            <h3 className="text-xs font-semibold text-[#2D2045]">
               This is a restricted area.
             </h3>
-            <p className="mt-1 sm:mt-2 text-sm sm:text-base lg:text-[19px] leading-6 sm:leading-8 text-[#5C5872]">
+
+            <p className="mt-0.5 text-[11px] leading-4 text-[#5C5872]">
               Unauthorized access is strictly prohibited.
             </p>
           </div>

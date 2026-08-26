@@ -46,9 +46,10 @@ export default function AstrologerRightPanel() {
     const newErrors: { email?: string; password?: string } = {};
     if (!email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Enter a valid email address";
     }
+    // else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    //   newErrors.email = "Enter a valid email address";
+    // }
     if (!password) {
       newErrors.password = "Password is required";
     } else if (password.length < 6) {

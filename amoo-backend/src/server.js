@@ -245,7 +245,7 @@ if (require.main === module) {
       // Server never started (DB retry still in progress) — close pool and exit.
       shutdownTelemetry().then(() => sentry.flush()).then(() => {
         const { pool } = require("./config/db");
-        return pool.end().catch(() => {});
+        return pool.end().catch(() => { });
       }).finally(() => process.exit(0));
       return;
     }

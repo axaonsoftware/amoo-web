@@ -49,9 +49,10 @@ export default function UserRightPanel() {
     // just produce a 400 after the round-trip.
     if (!email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Enter a valid email address";
-    }
+    } 
+    // else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    //   newErrors.email = "Enter a valid email address";
+    // }
     if (!password) {
       newErrors.password = "Password is required";
     } else if (password.length < 6) {

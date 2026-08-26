@@ -8,16 +8,33 @@ export default function AdminLoginPage() {
     <>
       <OfferBar />
       <HomeHeader absolute={false} />
+
       <main
         id="main-content"
-        className="min-h-screen bg-[#12031f] flex flex-col items-center justify-start md:justify-center p-4 sm:p-5 lg:p-8"
+        className="min-h-[calc(100vh-80px)] bg-[#12031f] flex flex-col items-center justify-center px-3 py-4 sm:px-5 lg:px-6"
       >
-        <div className="w-full max-w-[1100px] flex flex-col overflow-hidden rounded-2xl lg:rounded-[32px] border border-[#7d5fa733] bg-[#12031f] shadow-[0_25px_70px_rgba(0,0,0,.45)] min-h-[auto] md:min-h-[700px] md:flex-row">
+        <div
+          className="
+    w-full
+    max-w-[1000px]
+    md:h-[540px]
+    flex
+    flex-col
+    md:flex-row
+    overflow-hidden
+    rounded-2xl
+    lg:rounded-[26px]
+    border
+    border-[#7d5fa733]
+    bg-[#12031f]
+    shadow-[0_20px_60px_rgba(0,0,0,.45)]
+  "
+        >
           <LeftPanel />
           <RightPanel />
         </div>
 
-        <p className="mt-7 text-center text-[18px] text-white/85">
+        <p className="mt-3 text-center text-xs text-white/75 sm:text-sm">
           © {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
         </p>
       </main>
