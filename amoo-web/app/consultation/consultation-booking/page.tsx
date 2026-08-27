@@ -1136,7 +1136,10 @@ function BookingForm() {
 
                   {/* WhatsApp Button */}
                   <div className="mt-4 flex flex-col gap-2">
-                    <StartChatButton variant="secondary" className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-lg border border-[#c9b3e6] bg-white px-4 text-[14px] font-semibold text-[#5b21a8] shadow-none hover:bg-[#f3ecfb] transition-colors" />
+                    <StartChatButton
+                      variant="secondary"
+                      className="inline-flex h-[42px] w-full items-center justify-center gap-2 rounded-lg border border-[#c9b3e6] bg-white px-4 text-[14px] font-semibold text-[#5b21a8] shadow-none hover:bg-[#f3ecfb] transition-colors"
+                    />
                     <a
                       href={WHATSAPP_URL}
                       target="_blank"

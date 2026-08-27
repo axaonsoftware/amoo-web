@@ -38,23 +38,36 @@ export async function resolveService(
   name: string,
 ): Promise<ConsultationService> {
   const wanted = (name || "").trim();
-  if (!wanted)
-    throw new Error("No service selected. Please go back and pick a service.");
+
+  if (!wanted) {
+    throw new Error(
+      "No service selected. Please go back and pick a service.",
+    );
+  }
 
   const rows = unwrapServices(
-    await api.getServices(`?search=${encodeURIComponent(wanted)}&limit=100`),
+    await api.getServices("?limit=100"),
   );
+
   const lower = wanted.toLowerCase();
+
   const match =
-    rows.find((s) => s.name.trim().toLowerCase() === lower) ||
-    rows.find((s) => s.name.trim().toLowerCase().includes(lower)) ||
-    rows.find((s) => lower.includes(s.name.trim().toLowerCase()));
+    rows.find(
+      (s) => s.name.trim().toLowerCase() === lower,
+    ) ||
+    rows.find(
+      (s) => s.name.trim().toLowerCase().includes(lower),
+    ) ||
+    rows.find(
+      (s) => lower.includes(s.name.trim().toLowerCase()),
+    );
 
   if (!match) {
     throw new Error(
       `We couldn't find "${wanted}" in our service list. Please go back and select your service again.`,
     );
   }
+
   return match;
 }
 

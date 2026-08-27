@@ -20,6 +20,10 @@ const NAV: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   {
+    label: "User Dashboard",
+    href: "/user-dashboard",
+  },
+  {
     label: "Services",
     href: "/services",
     dropdown: [
@@ -216,6 +220,14 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
             </span>
             <span className="hidden sm:inline">WhatsApp Us</span>
           </a>
+          {isAuthenticated && (
+            <Link
+              href="/user-dashboard"
+              className="text-[14px] font-normal text-white hover:text-gold"
+            >
+              User Dashboard
+            </Link>
+          )}
           {isAuthenticated ? (
             <button
               onClick={logout}
