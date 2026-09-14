@@ -32,22 +32,28 @@ import { errorMessage } from "../../../lib/errors";
 import { useAutoRefresh } from "../../../lib/useAutoRefresh";
 import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
+// const tabs = [
+//   { label: "All Sessions", active: true },
+//   { label: "Upcoming" },
+//   { label: "Ongoing" },
+//   { label: "Completed" },
+//   { label: "Distance Healing" },
+//   { label: "Cancelled" },
+// ];
+
 const tabs = [
-  { label: "All Sessions", active: true },
-  { label: "Upcoming" },
-  { label: "Ongoing" },
-  { label: "Completed" },
-  { label: "Distance Healing" },
-  { label: "Cancelled" },
+  { label: "All Sessions" },
+  { label: "Pending" },
+  { label: "Ready" },
+  { label: "Rejected" },
 ];
 
 const selects = ["All Reiki Masters", "All Session Types", "All Status"];
 
 const statusOptions = [
   { label: "Pending", value: "pending" },
-  { label: "Active", value: "active" },
-  { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
+  { label: "Ready", value: "ready" },
+  { label: "Rejected", value: "rejected" },
 ];
 
 function fmtRK(iso: string) {
@@ -105,10 +111,12 @@ type SessionView = {
 
 const SessionRow = memo(function SessionRow({
   s,
+  onView,
   onEdit,
   onDelete,
 }: {
   s: SessionView;
+  onView: (raw: RawReport) => void;
   onEdit: (raw: RawReport) => void;
   onDelete: (rawId: number) => void;
 }) {
@@ -205,6 +213,7 @@ const SessionRow = memo(function SessionRow({
           <button
             type="button"
             aria-label="View"
+            onClick={() => onView(s.raw)}
             className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#4A3B63] hover:bg-[#F7F6FB]"
           >
             <Eye size={13} />
@@ -254,6 +263,8 @@ export default function SessionsPanel({
 
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
+  const [activeTab, setActiveTab] = useState("All Sessions");
+  const [viewing, setViewing] = useState<RawReport | null>(null);
 
   const addToast = useCallback(
     (message: string, kind: Toast["kind"] = "success") => {
@@ -322,10 +333,16 @@ export default function SessionsPanel({
   const { isRefreshing } = useAutoRefresh(loadData);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
-  const sessionRows = list || [];
+  // const sessionRows = list || [];
+  const sessionRows = (list || []).filter((s) => {
+    if (activeTab === "All Sessions") return true;
+
+    return s.status.toLowerCase() === activeTab.toLowerCase();
+  });
 
   const addFields: ModalField[] = [
     {
@@ -407,6 +424,10 @@ export default function SessionsPanel({
       file_url: raw.file_url || "",
     });
     setModalOpen(true);
+  };
+
+  const handleView = (raw: RawReport) => {
+    setViewing(raw);
   };
 
   const handleFormChange = (name: string, value: string) => {
@@ -591,22 +612,28 @@ export default function SessionsPanel({
 
       {/* Tabs */}
       <div className="flex items-center gap-6 overflow-x-auto border-b border-[#EFEDF4] px-4">
-        {tabs.map((t) => (
-          <button
-            key={t.label}
-            type="button"
-            className={`relative flex shrink-0 items-center gap-[6px] whitespace-nowrap py-[14px] text-[12px] ${
-              t.active
-                ? "font-semibold text-[#5B21B6]"
-                : "font-medium text-[#8B879C]"
-            }`}
-          >
-            {t.label}
-            {t.active ? (
-              <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-[#5B21B6]" />
-            ) : null}
-          </button>
-        ))}
+        {tabs.map((t) => {
+          const isActive = activeTab === t.label;
+
+          return (
+            <button
+              key={t.label}
+              type="button"
+              onClick={() => setActiveTab(t.label)}
+              className={`relative flex shrink-0 items-center gap-[6px] whitespace-nowrap py-[14px] text-[12px] ${
+                isActive
+                  ? "font-semibold text-[#5B21B6]"
+                  : "font-medium text-[#8B879C]"
+              }`}
+            >
+              {t.label}
+
+              {isActive ? (
+                <span className="absolute inset-x-0 -bottom-px h-[2px] rounded-full bg-[#5B21B6]" />
+              ) : null}
+            </button>
+          );
+        })}
       </div>
 
       {/* Filters */}
@@ -675,6 +702,7 @@ export default function SessionsPanel({
               <SessionRow
                 key={s.id}
                 s={s}
+                onView={handleView}
                 onEdit={handleEditSession}
                 onDelete={handleDeleteSession}
               />
@@ -805,6 +833,91 @@ export default function SessionsPanel({
           </div>
         ))}
       </div>
+      {viewing && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-[520px] rounded-[12px] bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-[#E7E5EF] px-5 py-4">
+              <h2 className="text-[15px] font-semibold text-[#2F2540]">
+                Reiki Session Details
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setViewing(null)}
+                className="text-[20px] text-[#8B879C] hover:text-[#2F2540]"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4 p-5">
+              <div>
+                <p className="text-[11px] text-[#8B879C]">Session ID</p>
+                <p className="text-[13px] font-medium text-[#2F2540]">
+                  REIKI-{viewing.id}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#8B879C]">Client</p>
+                <p className="text-[13px] font-medium text-[#2F2540]">
+                  {viewing.user?.name || viewing.title || "Client"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#8B879C]">Email</p>
+                <p className="text-[13px] text-[#2F2540]">
+                  {viewing.user?.email || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#8B879C]">Status</p>
+                <p className="text-[13px] font-medium text-[#2F2540]">
+                  {capitalize(viewing.status)}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#8B879C]">Title</p>
+                <p className="text-[13px] text-[#2F2540]">
+                  {viewing.title || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#8B879C]">Content</p>
+                <p className="whitespace-pre-wrap text-[13px] text-[#2F2540]">
+                  {viewing.content || "—"}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] text-[#8B879C]">Created At</p>
+                <p className="text-[13px] text-[#2F2540]">
+                  {fmtRK(viewing.created_at).date}{" "}
+                  {fmtRK(viewing.created_at).time}
+                </p>
+              </div>
+
+              {viewing.file_url && (
+                <div>
+                  <p className="text-[11px] text-[#8B879C]">File</p>
+                  <a
+                    href={viewing.file_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[13px] font-medium text-[#5B21B6] hover:underline"
+                  >
+                    View File
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

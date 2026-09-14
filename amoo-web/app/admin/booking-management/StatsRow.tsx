@@ -81,22 +81,69 @@ export default function StatsRow() {
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
+
     api.admin
-      .getOverview()
-      .then((data: unknown) => {
-        const s = (data as { stats?: Record<string, number> } | null)?.stats;
-        setStats(s ?? (data as Record<string, number> | null));
+      .getBookings()
+      .then((response: any) => {
+        const bookings = response?.data ?? response;
+
+        const today = new Date().toISOString().split("T")[0];
+
+        const total = Array.isArray(bookings) ? bookings.length : 0;
+
+        const upcoming = Array.isArray(bookings)
+          ? bookings.filter((b: any) => b.status === "upcoming").length
+          : 0;
+
+        const todayBookings = Array.isArray(bookings)
+          ? bookings.filter((b: any) => b.date === today).length
+          : 0;
+
+        const completed = Array.isArray(bookings)
+          ? bookings.filter((b: any) => b.status === "completed").length
+          : 0;
+
+        const cancelled = Array.isArray(bookings)
+          ? bookings.filter((b: any) => b.status === "cancelled").length
+          : 0;
+
+        const pending = Array.isArray(bookings)
+          ? bookings.filter((b: any) => b.status === "pending").length
+          : 0;
+
+        const todayRevenue = Array.isArray(bookings)
+          ? bookings
+              .filter(
+                (b: any) =>
+                  b.date === today &&
+                  String(b.payment).toLowerCase() === "paid",
+              )
+              .reduce((sum: number, b: any) => sum + Number(b.amount || 0), 0)
+          : 0;
+
+        setStats({
+          bookings: total,
+          upcomingBookings: upcoming,
+          todaysBookings: todayBookings,
+          completedBookings: completed,
+          cancelledBookings: cancelled,
+          pendingBookings: pending,
+          todayRevenue,
+        });
       })
       .catch((e: unknown) => setError(errorMessage(e, "Failed to load stats")))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   if (loading) {

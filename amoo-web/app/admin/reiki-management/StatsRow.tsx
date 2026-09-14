@@ -74,21 +74,33 @@ export default function StatsRow() {
     setLoading(true);
     setError(null);
     api.admin
-      .getOverview()
-      .then((data: unknown) => {
-        const s = (data as { stats?: Record<string, number> } | null)?.stats;
-        setStats(s ?? (data as Record<string, number> | null));
+      .getReports("?type=reiki")
+      .then((response: any) => {
+        const reports = response?.data ?? response;
+        const total = response?.meta?.total ?? reports?.length ?? 0;
+
+        setStats({
+          reikiSessions: total,
+          upcomingSessions: 0,
+          completedSessions: 0,
+          distanceHealing: 0,
+          activePractitioners: 0,
+          healingHours: 0,
+        });
       })
       .catch((e: unknown) => setError(errorMessage(e, "Failed to load stats")))
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   const fmt = (n: number | undefined) =>

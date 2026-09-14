@@ -4,6 +4,9 @@
 const { shutdownTelemetry } = require("./config/telemetry");
 
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
+
 const sentry = require("./config/sentry");
 sentry.init();
 const path = require("path");
@@ -44,6 +47,7 @@ const blogRoutes = require("./routes/blogs");
 const faqRoutes = require("./routes/faqs");
 const settingsRoutes = require("./routes/settings");
 const contentRoutes = require("./routes/content");
+const agoraRoutes = require("./routes/agoraRoutes");
 let setupSwagger;
 try {
   ({ setupSwagger } = require("./config/swagger"));
@@ -186,6 +190,8 @@ app.use("/api/faqs", faqRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/content", contentRoutes);
 
+app.use("/api/agora", agoraRoutes);
+
 // 404
 app.use((req, res) => fail(res, 404, "Not found"));
 
@@ -274,8 +280,270 @@ if (require.main === module) {
   process.on("SIGTERM", () => shutdown("SIGTERM"));
   process.on("SIGINT", () => shutdown("SIGINT"));
 
+  const httpServer = http.createServer(app);
+
+  const io = new Server(httpServer, {
+    cors: {
+      origin: process.env.FRONTEND_URL || "http://localhost:3000",
+      credentials: true,
+    },
+  });
+
+  io.on("connection", (socket) => {
+    console.log("SOCKET CONNECTED:", socket.id);
+    socket.on("join:user", (userId) => {
+      if (!userId) return;
+      socket.join(`user:${userId}`);
+    });
+
+    socket.on("join:expert", (expertId) => {
+      if (!expertId) return;
+      socket.join(`expert:${expertId}`);
+    });
+
+    socket.on("call:start", async (data) => {
+      console.log("🔥 CALL START RECEIVED:", data);    
+      try {
+        const { pool } = require("./config/db");
+
+        const {
+          bookingId,
+          callerRole,
+          callerId,
+        } = data || {};
+
+        if (!bookingId || !callerRole || !callerId) {
+          socket.emit("call:error", {
+            message: "Invalid call details.",
+          });
+          return;
+        }
+
+        const result = await pool.query(
+          `
+          SELECT
+            id,
+            user_id,
+            expert_id,
+            mode,
+            payment,
+            status
+          FROM bookings
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [bookingId]
+        );
+
+        const booking = result.rows[0];
+
+        if (!booking) {
+          socket.emit("call:error", {
+            message: "Booking not found.",
+          });
+          return;
+        }
+
+        if (booking.payment !== "Paid") {
+          socket.emit("call:error", {
+            message: "Payment is not completed.",
+          });
+          return;
+        }
+
+        if (booking.status !== "upcoming") {
+          socket.emit("call:error", {
+            message: "This consultation is not available.",
+          });
+          return;
+        }
+
+        const callerIsUser =
+          callerRole === "user" &&
+          Number(callerId) === Number(booking.user_id);
+
+        const callerIsExpert =
+          callerRole === "expert" &&
+          Number(callerId) === Number(booking.expert_id);
+
+        if (!callerIsUser && !callerIsExpert) {
+          socket.emit("call:error", {
+            message: "You are not part of this consultation.",
+          });
+          return;
+        }
+
+        const targetRoom = callerIsUser
+          ? `expert:${booking.expert_id}`
+          : `user:${booking.user_id}`;
+
+        io.to(targetRoom).emit("incoming-call", {
+          bookingId: booking.id,
+          mode: booking.mode,
+          callerRole,
+          callerId,
+        });
+      } catch (error) {
+        console.error("call:start error:", error);
+
+        socket.emit("call:error", {
+          message: "Unable to start call.",
+        });
+      }
+    });
+
+    socket.on("call:accept", async (data) => {
+      try {
+        const { pool } = require("./config/db");
+
+        const {
+          bookingId,
+          receiverRole,
+          receiverId,
+        } = data || {};
+
+        const result = await pool.query(
+          `
+          SELECT
+            id,
+            user_id,
+            expert_id,
+            mode,
+            payment,
+            status
+          FROM bookings
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [bookingId]
+        );
+
+        const booking = result.rows[0];
+
+        if (!booking) {
+          socket.emit("call:error", {
+            message: "Booking not found.",
+          });
+          return;
+        }
+
+        const receiverIsUser =
+          receiverRole === "user" &&
+          Number(receiverId) === Number(booking.user_id);
+
+        const receiverIsExpert =
+          receiverRole === "expert" &&
+          Number(receiverId) === Number(booking.expert_id);
+
+        if (!receiverIsUser && !receiverIsExpert) {
+          socket.emit("call:error", {
+            message: "You are not part of this consultation.",
+          });
+          return;
+        }
+
+        const callerRoom = receiverIsUser
+          ? `expert:${booking.expert_id}`
+          : `user:${booking.user_id}`;
+
+        const callData = {
+          bookingId: booking.id,
+          mode: booking.mode,
+        };
+
+        io.to(callerRoom).emit("call:accepted", callData);
+        socket.emit("call:accepted", callData);
+      } catch (error) {
+        console.error("call:accept error:", error);
+
+        socket.emit("call:error", {
+          message: "Unable to accept call.",
+        });
+      }
+    });
+
+    socket.on("call:reject", async (data) => {
+      try {
+        const { pool } = require("./config/db");
+
+        const {
+          bookingId,
+          receiverRole,
+        } = data || {};
+
+        const result = await pool.query(
+          `
+          SELECT
+            id,
+            user_id,
+            expert_id
+          FROM bookings
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [bookingId]
+        );
+
+        const booking = result.rows[0];
+
+        if (!booking) return;
+
+        const callerRoom =
+          receiverRole === "user"
+            ? `expert:${booking.expert_id}`
+            : `user:${booking.user_id}`;
+
+        io.to(callerRoom).emit("call:rejected", {
+          bookingId: booking.id,
+        });
+      } catch (error) {
+        console.error("call:reject error:", error);
+      }
+    });
+
+    socket.on("call:end", async (data) => {
+      try {
+        const { pool } = require("./config/db");
+
+        const {
+          bookingId,
+          callerRole,
+        } = data || {};
+
+        const result = await pool.query(
+          `
+          SELECT
+            id,
+            user_id,
+            expert_id
+          FROM bookings
+          WHERE id = $1
+          LIMIT 1
+          `,
+          [bookingId]
+        );
+
+        const booking = result.rows[0];
+
+        if (!booking) return;
+
+        const targetRoom =
+          callerRole === "user"
+            ? `expert:${booking.expert_id}`
+            : `user:${booking.user_id}`;
+
+        io.to(targetRoom).emit("call:ended", {
+          bookingId: booking.id,
+        });
+      } catch (error) {
+        console.error("call:end error:", error);
+      }
+    });
+  });
+
   testConnection().then((okDb) => {
-    server = app.listen(PORT, () => {
+    // server = app.listen(PORT, () => {
+    server = httpServer.listen(PORT, () => {
       logger.info(`[server] API listening on http://localhost:${PORT} (db: ${okDb ? "connected" : "UNAVAILABLE"})`);
       const { startCron } = require("./cron/index");
       startCron([

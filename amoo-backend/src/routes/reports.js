@@ -24,8 +24,11 @@ router.get(
   asyncHandler(async (req, res) => {
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];
-    let where = req.user.kind === "admin" ? "WHERE 1=1" : "WHERE user_id = ? AND deleted_at IS NULL";
-    if (req.user.kind !== "admin") params.push(req.user.id);
+    let where = "WHERE deleted_at IS NULL";
+    if (req.user.kind !== "admin") {
+      where += " AND user_id = ?";
+      params.push(req.user.id);
+    }
     if (req.query.type) { where += " AND type = ?"; params.push(req.query.type); }
     if (req.query.status) { where += " AND status = ?"; params.push(req.query.status); }
     if (req.query.user_id && req.user.kind === "admin") { where += " AND user_id = ?"; params.push(req.query.user_id); }

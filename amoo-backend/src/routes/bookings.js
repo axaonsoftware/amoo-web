@@ -25,8 +25,11 @@ router.get(
     const { page, pageSize, offset } = parsePagination(req.query);
     const params = [];
     let where = "";
-    if (req.user.kind !== "admin") {
+    if (req.user.kind === "user") {
       where = "WHERE b.user_id = $1";
+      params.push(req.user.id);
+    } else if (req.user.kind === "expert") {
+      where = "WHERE b.expert_id = $1";
       params.push(req.user.id);
     }
     const add = (clause, val) => {
@@ -34,12 +37,12 @@ router.get(
       where += clause;
       params.push(val);
     };
-    if (req.query.status) add(` b.status = $${params.length}`, req.query.status);
-    if (req.query.expert_id) add(` b.expert_id = $${params.length}`, req.query.expert_id);
-    if (req.query.service_id) add(` b.service_id = $${params.length}`, req.query.service_id);
-    if (req.query.user_id && req.user.kind === "admin") add(` b.user_id = $${params.length}`, req.query.user_id);
-    if (req.query.date_from) add(` b.date >= $${params.length}`, req.query.date_from);
-    if (req.query.date_to) add(` b.date <= $${params.length}`, req.query.date_to);
+    if (req.query.status) add(` b.status = $${params.length + 1}`, req.query.status);
+    if (req.query.expert_id) add(` b.expert_id = $${params.length + 1}`, req.query.expert_id);
+    if (req.query.service_id) add(` b.service_id = $${params.length + 1}`, req.query.service_id);
+    if (req.query.user_id && req.user.kind === "admin") add(` b.user_id = $${params.length + 1}`, req.query.user_id);
+    if (req.query.date_from) add(` b.date >= $${params.length + 1}`, req.query.date_from);
+    if (req.query.date_to) add(` b.date <= $${params.length + 1}`, req.query.date_to);
     // The admin bookings table has a search box that sent `?search=` to an
     // endpoint that never parsed it, so it silently did nothing.
     if (req.query.search) {
@@ -100,9 +103,9 @@ router.post(
     // UNIQUE constraint instead of silently creating duplicates.
     const idemKey = (req.headers["idempotency-key"] || "").slice(0, 64)
       || crypto.createHash("sha256")
-          .update(`${req.user.id}:${service_id}:${slot_id || ""}:${date}:${time}`)
-          .digest("hex")
-          .slice(0, 64);
+        .update(`${req.user.id}:${service_id}:${slot_id || ""}:${date}:${time}`)
+        .digest("hex")
+        .slice(0, 64);
     const client = await pool.connect();
     try {
       await client.query("BEGIN");

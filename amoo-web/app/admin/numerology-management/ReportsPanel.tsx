@@ -1,25 +1,28 @@
 "use client";
 
-import {  useCallback,  useEffect,  useMemo,  useState  } from "react";
-import { 
-  Search, 
-  ChevronDown, 
-  SlidersHorizontal, 
-  Calendar, 
-  Eye, 
-  Download, 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
-  Pencil, 
-  Trash2 } from "lucide-react";
-import {  reportTypeStyles,  statusStyles  } from "./data";
-import {  api,  type PageMeta  } from "../../../lib/api";
-import AdminModal, {  type ModalField  } from "../shared/AdminModal";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  ChevronDown,
+  SlidersHorizontal,
+  Calendar,
+  Eye,
+  Download,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Pencil,
+  Trash2,
+  Video,
+  X,
+} from "lucide-react";
+import { reportTypeStyles, statusStyles } from "./data";
+import { api, type PageMeta } from "../../../lib/api";
+import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
-import {  exportCSV  } from "../shared/exportCSV";
-import {  sanitize  } from "../../../lib/sanitize";
-import {  errorMessage  } from "../../../lib/errors";
+import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 import { useAutoRefresh } from "../../../lib/useAutoRefresh";
 import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
@@ -98,7 +101,12 @@ function toRow(r: RawReport): DisplayRow {
   return {
     id: `RPT-${r.id}`,
     rawId: r.id,
-    client: { name: r.title || "Client", email: "", phone: "" },
+    // client: { name: r.title || "Client", email: "", phone: "" },
+    client: {
+      name: r.user?.name || r.title || "Client",
+      email: r.user?.email || "",
+      phone: "",
+    },
     subject: { name: r.type || "Numerology", birth: "" },
     master: { name: "System", role: "Auto-generated" },
     type: r.type ?? "full",
@@ -140,7 +148,13 @@ export default function ReportsPanel() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  const [serviceFilter, setServiceFilter] = useState("");
+  const [reportTypeFilter, setReportTypeFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [search, setSearch] = useState("");
+
   const [toast, setToast] = useState("");
+  const [detailReport, setDetailReport] = useState<RawReport | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
@@ -168,10 +182,36 @@ export default function ReportsPanel() {
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
-  const reportRows = list || [];
+  // const reportRows = list || [];
+  const reportRows = useMemo(() => {
+    const rows = list || [];
+
+    return rows.filter((row) => {
+      const raw = rawReports.find((r) => r.id === row.rawId);
+      const searchText = search.trim().toLowerCase();
+      const matchesSearch =
+        !searchText ||
+        row.client.name.toLowerCase().includes(searchText) ||
+        row.client.email.toLowerCase().includes(searchText) ||
+        row.client.phone.toLowerCase().includes(searchText);
+      const matchesType =
+        !reportTypeFilter ||
+        String(raw?.type ?? "").toLowerCase() ===
+          reportTypeFilter.toLowerCase();
+      const matchesStatus =
+        !statusFilter ||
+        String(raw?.status ?? "").toLowerCase() === statusFilter.toLowerCase();
+      const matchesService =
+        !serviceFilter ||
+        String(raw?.service ?? raw?.service_name ?? "").toLowerCase() ===
+          serviceFilter.toLowerCase();
+      return matchesSearch && matchesType && matchesStatus && matchesService;
+    });
+  }, [list, rawReports, search, serviceFilter, reportTypeFilter, statusFilter]);
 
   const addFields: ModalField[] = useMemo(
     () => [
@@ -264,6 +304,16 @@ export default function ReportsPanel() {
   const handleDelete = (row: DisplayRow) => {
     setDeletingId(row.rawId);
     setConfirmOpen(true);
+  };
+
+  const handleView = (row: DisplayRow) => {
+    const raw = rawReports.find((r) => r.id === row.rawId);
+    if (!raw) return;
+    if (!raw.file_url) {
+      setToast("Report file is not available");
+      return;
+    }
+    window.open(raw.file_url, "_blank", "noopener,noreferrer");
   };
 
   const handleExport = () => {
@@ -433,13 +483,15 @@ export default function ReportsPanel() {
           <div className="flex h-[36px] w-full max-w-[204px] items-center rounded-[8px] border border-[#E7E5EF] bg-white px-3">
             <input
               type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by name, email or phone..."
               className="h-full w-full bg-transparent text-[11px] text-[#2E2A3B] outline-none placeholder:text-[#A5A2B5]"
             />
             <Search size={14} className="shrink-0 text-[#4A3B63]" />
           </div>
 
-          {selects.map((s) => (
+          {/* {selects.map((s) => (
             <button
               key={s}
               type="button"
@@ -448,7 +500,43 @@ export default function ReportsPanel() {
               {s}
               <ChevronDown size={14} className="text-[#8B879C]" />
             </button>
-          ))}
+          ))} */}
+
+          <select
+            value={serviceFilter}
+            onChange={(e) => setServiceFilter(e.target.value)}
+            className="h-[36px] w-[112px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] font-medium text-[#4A4557] outline-none"
+          >
+            <option value="">All Services</option>
+            <option value="numerology">Numerology</option>
+            <option value="reiki">Reiki</option>
+            <option value="tarot">Tarot</option>
+            <option value="chakra">Chakra</option>
+            <option value="kundali">Kundali</option>
+            <option value="love">Love</option>
+          </select>
+
+          <select
+            value={reportTypeFilter}
+            onChange={(e) => setReportTypeFilter(e.target.value)}
+            className="h-[36px] w-[112px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] font-medium text-[#4A4557] outline-none"
+          >
+            <option value="">All Report Types</option>
+            <option value="full">Full</option>
+            <option value="numerology">Numerology</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-[36px] w-[112px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] font-medium text-[#4A4557] outline-none"
+          >
+            <option value="">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="active">Active</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
 
           <button
             type="button"
@@ -599,6 +687,17 @@ export default function ReportsPanel() {
                       <div className="flex items-center gap-[6px]">
                         <button
                           type="button"
+                          onClick={() => {
+                            const raw = rawReports.find(
+                              (report) => report.id === r.rawId,
+                            );
+
+                            if (raw) {
+                              setDetailReport(raw);
+                            }
+                          }}
+                          aria-label="View Details"
+                          title="View Details"
                           className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] bg-white text-[#4A3B63] hover:bg-[#F7F6FB]"
                         >
                           <Eye size={13} />
@@ -700,6 +799,103 @@ export default function ReportsPanel() {
         onClose={() => setModalOpen(false)}
         errors={formErrors}
       />
+
+      {detailReport && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setDetailReport(null)}
+        >
+          <div
+            className="w-full max-w-md rounded-[16px] bg-white p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="text-[16px] font-bold text-[#231640]">
+                Report Details
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setDetailReport(null)}
+                aria-label="Close"
+                className="rounded-md p-1 hover:bg-gray-100"
+              >
+                <X size={18} className="text-[#8B879C]" />
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-[11px] font-medium text-[#8B879C]">
+                  Report ID
+                </span>
+                <span className="text-[12px] font-medium text-[#221C33]">
+                  RPT-{detailReport.id}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-[11px] font-medium text-[#8B879C]">
+                  Title
+                </span>
+                <span className="text-right text-[12px] font-medium text-[#221C33]">
+                  {detailReport.title || "-"}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-[11px] font-medium text-[#8B879C]">
+                  Type
+                </span>
+                <span className="text-[12px] font-medium text-[#221C33]">
+                  {detailReport.type || "-"}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-[11px] font-medium text-[#8B879C]">
+                  Status
+                </span>
+                <span className="text-[12px] font-medium text-[#221C33]">
+                  {statusLabelMap[detailReport.status ?? ""] ||
+                    detailReport.status ||
+                    "-"}
+                </span>
+              </div>
+
+              <div className="flex items-start justify-between gap-4">
+                <span className="text-[11px] font-medium text-[#8B879C]">
+                  User
+                </span>
+                <span className="text-right text-[12px] font-medium text-[#221C33]">
+                  {detailReport.user?.name || "-"}
+                </span>
+              </div>
+
+              <div>
+                <span className="text-[11px] font-medium text-[#8B879C]">
+                  Content
+                </span>
+                <div className="mt-1 max-h-[180px] overflow-y-auto rounded-[8px] border border-[#E7E5EF] bg-[#FAF9FC] p-3 text-[12px] text-[#4A4658]">
+                  {detailReport.content || "No content available."}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setDetailReport(null)}
+                className="rounded-[8px] border border-[#E7E5EF] px-4 py-2 text-[12px] font-medium text-[#4A4658] hover:bg-[#F7F6FB]"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ConfirmDialog
         open={confirmOpen}

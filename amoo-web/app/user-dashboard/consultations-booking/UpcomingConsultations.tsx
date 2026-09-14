@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { socket } from "@/lib/socket";
+import { useAuth } from "@/lib/auth-context";
 import {
   Calendar,
   Clock,
@@ -14,6 +16,7 @@ import {
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
 import StartChatButton from "../chat/StartChatButton";
+import { useEffect } from "react";
 
 function fmtDate(iso: string) {
   const d = new Date(iso);
@@ -30,22 +33,58 @@ type Booking = {
   id: number;
   booking_ref: string;
   service_name: string;
+  user_id: number;
+  user_name: string | null;
   expert_id: number | null;
   expert_name: string | null;
   date: string;
   time: string;
+  mode: "audio" | "video" | "chat";
   status: string;
   payment: string;
   amount: number | string;
 };
 
 export default function UpcomingConsultations() {
+  const { user } = useAuth();
+  const role: "user" | "expert" = user?.kind === "expert" ? "expert" : "user";
+  const currentUserId = user?.id;
   const { data, loading, error } = useApi<{ data: Booking[] }>(() =>
     api.getBookings(),
   );
-  const rows: Booking[] = (data?.data ?? []).filter(
-    (b: Booking) => b.status === "upcoming" || b.status === "pending-payment",
+  const rows: Booking[] = Array.from(
+    new Map(
+      (data?.data ?? [])
+        .filter(
+          (b: Booking) =>
+            b.status === "upcoming" || b.status === "pending-payment",
+        )
+        .map((b) => [b.id, b]),
+    ).values(),
   );
+
+  // useEffect(() => {
+  //   const handleAccepted = (data: {
+  //     bookingId: number;
+  //     mode: "audio" | "video";
+  //   }) => {
+  //     window.location.href = `/user-dashboard/consultations-booking/meeting?bookingId=${data.bookingId}&mode=${data.mode}`;
+  //   };
+  //   const handleRejected = () => {
+  //     window.alert("Call rejected.");
+  //   };
+  //   const handleError = (data: { message: string }) => {
+  //     window.alert(data.message);
+  //   };
+  //   socket.on("call:accepted", handleAccepted);
+  //   socket.on("call:rejected", handleRejected);
+  //   socket.on("call:error", handleError);
+  //   return () => {
+  //     socket.off("call:accepted", handleAccepted);
+  //     socket.off("call:rejected", handleRejected);
+  //     socket.off("call:error", handleError);
+  //   };
+  // }, []);
 
   return (
     <section className="rounded-[16px] border border-[#efe6d6] bg-white px-[18px] pb-[18px] pt-[18px] shadow-[0_1px_2px_rgba(38,17,66,.04)]">
@@ -67,6 +106,10 @@ export default function UpcomingConsultations() {
       ) : (
         <div className="mt-3.5 flex flex-col gap-3.5">
           {rows.map((c) => {
+            const displayName =
+              role === "expert"
+                ? c.user_name || "User"
+                : c.expert_name || "Expert";
             const paid = c.payment === "Paid";
             const time = (c.time || "").slice(0, 5);
             return (
@@ -85,7 +128,7 @@ export default function UpcomingConsultations() {
                   <div className="relative h-[98px] w-[98px] shrink-0">
                     <span className="relative block h-full w-full overflow-hidden rounded-[12px] bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9]">
                       <span className="flex h-full w-full items-center justify-center text-[26px] font-bold text-white">
-                        {(c.expert_name || c.service_name || "C")
+                        {(displayName || c.service_name || "C")
                           .slice(0, 2)
                           .toUpperCase()}
                       </span>
@@ -98,7 +141,7 @@ export default function UpcomingConsultations() {
                       {c.service_name}
                     </h3>
                     <p className="mt-1 flex items-center gap-1.5 text-[13.5px] font-medium text-[#5c4a72]">
-                      with {c.expert_name || "Expert"}{" "}
+                      with {displayName}{" "}
                       <BadgeCheck
                         className="h-[15px] w-[15px] text-[#e0a63f]"
                         strokeWidth={2}
@@ -148,16 +191,29 @@ export default function UpcomingConsultations() {
 
                   <div className="flex w-full shrink-0 flex-col gap-2.5 md:w-[152px]">
                     {paid ? (
-                      <button
-                        type="button"
-                        className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]"
-                      >
-                        <Video
-                          className="h-[16px] w-[16px]"
-                          strokeWidth={1.9}
-                        />{" "}
-                        Join Meeting
-                      </button>
+                      c.mode === "audio" || c.mode === "video" ? (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!currentUserId) {
+                              window.alert("User session not available.");
+                              return;
+                            }
+                            socket.emit("call:start", {
+                              bookingId: c.id,
+                              callerRole: role,
+                              callerId: currentUserId,
+                            });
+                          }}
+                          className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]"
+                        >
+                          <Video
+                            className="h-[16px] w-[16px]"
+                            strokeWidth={1.9}
+                          />
+                          Join Meeting
+                        </button>
+                      ) : null
                     ) : (
                       <button
                         type="button"
@@ -171,7 +227,10 @@ export default function UpcomingConsultations() {
                       </button>
                     )}
                     {c.expert_id && (
-                      <StartChatButton variant="secondary" className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]" />
+                      <StartChatButton
+                        variant="secondary"
+                        className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]"
+                      />
                     )}
                     <button
                       type="button"

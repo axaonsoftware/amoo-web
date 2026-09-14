@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { ChevronRight, CalendarDays, Upload, Plus } from "lucide-react";
 
-export default function PageHeader() {
+interface PageHeaderProps {
+  onNewBooking: () => void;
+}
+
+export default function PageHeader({ onNewBooking }: PageHeaderProps) {
   return (
     <>
       {/* Breadcrumb */}
@@ -43,6 +47,7 @@ export default function PageHeader() {
 
           <button
             type="button"
+            onClick={onNewBooking}
             className="inline-flex h-[42px] items-center gap-2 rounded-[10px] bg-gradient-to-r from-[#4C1D95] to-[#6D28D9] px-[18px] text-[12.5px] font-semibold text-white shadow-[0_6px_16px_rgba(91,36,151,.25)]"
           >
             <Plus size={16} />

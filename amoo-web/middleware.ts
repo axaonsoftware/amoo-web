@@ -37,7 +37,7 @@ const isDev = process.env.NODE_ENV?.toLowerCase() === "development";
 if (isDev) {
   console.warn(
     "CSP: relaxed for development (unsafe-eval enabled). " +
-      "This must never appear in production.",
+    "This must never appear in production.",
   );
 }
 
@@ -54,7 +54,7 @@ function cspWithNonce(nonce: string) {
     `style-src 'self' 'unsafe-inline'`,
     "img-src 'self' data: blob: https://images.unsplash.com https://upload.wikimedia.org https://res.cloudinary.com",
     "font-src 'self' data: https://fonts.gstatic.com",
-    `connect-src 'self' ${API_URL} ${WS_URL} ${RAZORPAY} https://sentry.io https://browser.sentry-cdn.com https://*.ingest.sentry.io ws: wss:`,
+    `connect-src 'self' ${API_URL} ${WS_URL} ${RAZORPAY} https://sentry.io https://browser.sentry-cdn.com https://*.ingest.sentry.io https://*.agora.io wss://*.agora.io https://*.sd-rtn.com wss://*.sd-rtn.com ws: wss:`,
     "frame-src https://api.razorpay.com https://checkout.razorpay.com https://www.google.com",
     "object-src 'none'",
     "base-uri 'self'",

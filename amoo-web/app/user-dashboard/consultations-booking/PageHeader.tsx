@@ -4,8 +4,8 @@ import { CalendarDays, Plus } from "lucide-react";
 const tabs = [
   { label: "Upcoming", active: true },
   { label: "Requests", badge: "2" },
-  { label: "History" },
-  { label: "Cancelled" },
+  // { label: "History" },
+  // { label: "Cancelled" },
   { label: "Completed" },
 ];
 

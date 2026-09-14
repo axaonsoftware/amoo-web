@@ -19,7 +19,7 @@ const securityHeaders = [
   {
     key: "Permissions-Policy",
     value:
-      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()",
+      "camera=(self), microphone=(self), geolocation=(), payment=(), usb=(), interest-cohort=()",
   },
   // Only meaningful over HTTPS; harmless on plain-http localhost because
   // browsers ignore HSTS from non-secure origins.

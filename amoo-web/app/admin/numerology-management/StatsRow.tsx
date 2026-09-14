@@ -70,25 +70,86 @@ export default function StatsRow() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    api.admin
-      .getOverview()
-      .then((data: unknown) => {
-        const s = (data as { stats?: Record<string, number> } | null)?.stats;
-        setStats(s ?? (data as Record<string, number> | null));
-      })
-      .catch((e: unknown) => setError(errorMessage(e, "Failed to load stats")))
-      .finally(() => setLoading(false));
+
+    try {
+      const [overviewData, reportsData, packagesData] = await Promise.all([
+        api.admin.getOverview(),
+        api.admin.getReports(),
+        api.admin.getPackages(),
+      ]);
+
+      const overviewStats = (overviewData as any)?.stats ?? {};
+
+      const reports = Array.isArray(reportsData)
+        ? reportsData
+        : Array.isArray((reportsData as any)?.data)
+          ? (reportsData as any).data
+          : [];
+
+      const packages = Array.isArray(packagesData)
+        ? packagesData
+        : Array.isArray((packagesData as any)?.data)
+          ? (packagesData as any).data
+          : [];
+
+      const today = new Date().toISOString().split("T")[0];
+
+      const todaysReports = reports.filter((report: any) => {
+        const date = report.created_at ?? report.createdAt ?? report.date;
+        return date && new Date(date).toISOString().split("T")[0] === today;
+      }).length;
+
+      const nameCorrections = reports.filter((report: any) => {
+        const type = String(
+          report.type ?? report.report_type ?? report.reportType ?? "",
+        ).toLowerCase();
+
+        return type.includes("correction");
+      }).length;
+
+      const nameSuggestions = reports.filter((report: any) => {
+        const type = String(
+          report.type ?? report.report_type ?? report.reportType ?? "",
+        ).toLowerCase();
+
+        return type.includes("suggestion");
+      }).length;
+
+      const activePackages = packages.filter((pkg: any) => {
+        const status = String(pkg.status ?? "").toLowerCase();
+
+        return (
+          pkg.is_active === true || pkg.isActive === true || status === "active"
+        );
+      }).length;
+
+      setStats({
+        reports: reports.length,
+        todaysReports,
+        nameCorrections,
+        nameSuggestions,
+        activePackages,
+        revenue: Number(overviewStats.revenue ?? 0),
+      });
+    } catch (e: unknown) {
+      setError(errorMessage(e, "Failed to load stats"));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   const fmt = (n: number | undefined) =>

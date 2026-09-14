@@ -633,6 +633,11 @@ export const api = {
   applyCoupon: (code: string, bookingId: number) =>
     request("POST", "/api/coupons/apply", { code, booking_id: bookingId }),
 
+  getAgoraToken: (bookingId: number) =>
+    request("POST", "/api/agora/token", {
+      booking_id: bookingId,
+    }),
+
   // activity tracking
   getMyActivity: (query = "") => request("GET", `/api/activity/mine${query}`),
   logActivity: (body: {

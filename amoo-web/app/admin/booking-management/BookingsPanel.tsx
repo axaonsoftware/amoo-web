@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { RefObject, useCallback, useEffect, useRef, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -100,6 +100,7 @@ interface AdminBooking extends Booking {
 
 interface BookingRow {
   id: string;
+  bookingDbId: number;
   user: { name: string; email: string; phone: string };
   expert: { name: string; role: string; avatar: string };
   service: ServiceKey;
@@ -108,6 +109,10 @@ interface BookingRow {
   amount: string;
   payment: Booking["payment"];
   status: Booking["status"];
+}
+
+interface BookingsPanelProps {
+  openBookingRef: RefObject<(() => void) | null>;
 }
 
 function DetailRow({
@@ -122,14 +127,16 @@ function DetailRow({
   return (
     <div className="flex items-start justify-between gap-4">
       <span className="text-[11px] font-medium text-[#8B879C]">{label}</span>
-      <span className={`text-[12px] font-medium text-[#221C33] ${valueClass ?? ""}`}>
+      <span
+        className={`text-[12px] font-medium text-[#221C33] ${valueClass ?? ""}`}
+      >
         {value}
       </span>
     </div>
   );
 }
 
-export default function BookingsPanel() {
+export default function BookingsPanel({ openBookingRef }: BookingsPanelProps) {
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [searchInput, setSearchInput] = useState("");
@@ -149,7 +156,7 @@ export default function BookingsPanel() {
   const [meta, setMeta] = useState({ total: 0, totalPages: 1 });
   const [confirmDialog, setConfirmDialog] = useState<{
     open: boolean;
-    type: "complete" | "cancel";
+    type: "complete" | "cancel" | "upcoming";
     booking: BookingRow | null;
   }>({ open: false, type: "complete", booking: null });
   const [confirmSaving, setConfirmSaving] = useState(false);
@@ -189,9 +196,7 @@ export default function BookingsPanel() {
       .getExperts()
       .then((res) => {
         const list = Array.isArray(res) ? res : [];
-        setManualExperts(
-          list.map((e: any) => ({ id: e.id, name: e.name })),
-        );
+        setManualExperts(list.map((e: any) => ({ id: e.id, name: e.name })));
       })
       .catch(() => {});
     api.admin
@@ -208,6 +213,14 @@ export default function BookingsPanel() {
       })
       .catch(() => {});
   };
+
+  useEffect(() => {
+    openBookingRef.current = openManualCreate;
+
+    return () => {
+      openBookingRef.current = null;
+    };
+  }, [openBookingRef]);
 
   const handleManualCreate = async () => {
     setManualSaving(true);
@@ -261,21 +274,24 @@ export default function BookingsPanel() {
           totalPages: m?.totalPages ?? 1,
         });
         setList(
-          items.map((b: AdminBooking) => ({
-            id: b.booking_ref,
-            user: { name: b.user_name ?? "", email: "", phone: "" },
-            expert: {
-              name: b.expert_name || "Unassigned",
-              role: b.expert_role || "",
-              avatar: b.expert_avatar || "",
-            },
-            service: mapStatusToKey(b.service_name ?? ""),
-            date: b.date,
-            time: b.time,
-            amount: `₹ ${Number(b.amount).toLocaleString("en-IN")}`,
-            payment: b.payment,
-            status: b.status,
-          })),
+          items
+            .filter((b: AdminBooking) => !status || b.status === status)
+            .map((b: AdminBooking) => ({
+              id: b.booking_ref,
+              bookingDbId: b.id,
+              user: { name: b.user_name ?? "", email: "", phone: "" },
+              expert: {
+                name: b.expert_name || "Unassigned",
+                role: b.expert_role || "",
+                avatar: b.expert_avatar || "",
+              },
+              service: mapStatusToKey(b.service_name ?? ""),
+              date: b.date,
+              time: b.time,
+              amount: `₹ ${Number(b.amount).toLocaleString("en-IN")}`,
+              payment: b.payment,
+              status: b.status,
+            })),
         );
       })
       .catch(() => {})
@@ -285,7 +301,8 @@ export default function BookingsPanel() {
   const { isRefreshing } = useAutoRefresh(reload);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
@@ -353,21 +370,24 @@ export default function BookingsPanel() {
           totalPages: m?.totalPages ?? 1,
         });
         setList(
-          items.map((b: AdminBooking) => ({
-            id: b.booking_ref,
-            user: { name: b.user_name ?? "", email: "", phone: "" },
-            expert: {
-              name: b.expert_name || "Unassigned",
-              role: b.expert_role || "",
-              avatar: b.expert_avatar || "",
-            },
-            service: mapStatusToKey(b.service_name ?? ""),
-            date: b.date,
-            time: b.time,
-            amount: `₹ ${Number(b.amount).toLocaleString("en-IN")}`,
-            payment: b.payment,
-            status: b.status,
-          })),
+          items
+            .filter((b: AdminBooking) => !status || b.status === status)
+            .map((b: AdminBooking) => ({
+              id: b.booking_ref,
+              bookingDbId: b.id,
+              user: { name: b.user_name ?? "", email: "", phone: "" },
+              expert: {
+                name: b.expert_name || "Unassigned",
+                role: b.expert_role || "",
+                avatar: b.expert_avatar || "",
+              },
+              service: mapStatusToKey(b.service_name ?? ""),
+              date: b.date,
+              time: b.time,
+              amount: `₹ ${Number(b.amount).toLocaleString("en-IN")}`,
+              payment: b.payment,
+              status: b.status,
+            })),
         );
       })
       .catch((e) => {
@@ -380,7 +400,16 @@ export default function BookingsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [page, limit, debouncedSearch, status, expertFilter, serviceFilter, dateFrom, dateTo]);
+  }, [
+    page,
+    limit,
+    debouncedSearch,
+    status,
+    expertFilter,
+    serviceFilter,
+    dateFrom,
+    dateTo,
+  ]);
 
   const totalPages = meta.totalPages || 1;
   const from = meta.total === 0 ? 0 : (page - 1) * limit + 1;
@@ -406,18 +435,22 @@ export default function BookingsPanel() {
         {/* Tabs */}
         <div className="no-scrollbar flex items-center gap-6 overflow-x-auto border-b border-[#EFEEF4] px-5">
           {[
-            { label: "All Bookings", active: true },
-            { label: "Upcoming" },
-            { label: "Today" },
-            { label: "Pending Approval", badge: "7" },
-            { label: "Completed" },
-            { label: "Cancelled / Refunds" },
+            { label: "All Bookings", value: "" },
+            { label: "Upcoming", value: "upcoming" },
+            { label: "Today", value: "today" },
+            { label: "Pending Approval", value: "pending", badge: "7" },
+            { label: "Completed", value: "completed" },
+            { label: "Cancelled / Refunds", value: "cancelled" },
           ].map((t) => (
             <button
               key={t.label}
               type="button"
+              onClick={() => {
+                setStatus(t.value);
+                setPage(1);
+              }}
               className={`flex shrink-0 items-center gap-[6px] whitespace-nowrap border-b-2 py-[14px] text-[12.5px] ${
-                t.active
+                status === t.value
                   ? "border-[#6D28D9] font-semibold text-[#6D28D9]"
                   : "border-transparent font-normal text-[#7C7890] hover:text-[#2E2A3B]"
               }`}
@@ -863,13 +896,11 @@ export default function BookingsPanel() {
           try {
             if (confirmDialog.type === "complete") {
               await api.admin.completeBooking(
-                confirmDialog.booking.id as unknown as number,
+                confirmDialog.booking.bookingDbId,
               );
               showToast("Booking marked as completed");
             } else {
-              await api.admin.cancelBooking(
-                confirmDialog.booking.id as unknown as number,
-              );
+              await api.admin.cancelBooking(confirmDialog.booking.bookingDbId);
               showToast("Booking cancelled");
             }
             setConfirmDialog({ open: false, type: "complete", booking: null });
@@ -920,7 +951,10 @@ export default function BookingsPanel() {
                   type="number"
                   value={manualValues.user_id ?? ""}
                   onChange={(e) =>
-                    setManualValues({ ...manualValues, user_id: e.target.value })
+                    setManualValues({
+                      ...manualValues,
+                      user_id: e.target.value,
+                    })
                   }
                   placeholder="Enter user ID"
                   className="w-full rounded-[8px] border border-[#E5E1F0] px-3 py-2 text-[12px] text-[#3D3752] outline-none focus:border-[#7C3AED]"
@@ -1081,9 +1115,7 @@ export default function BookingsPanel() {
                 }
                 className="inline-flex items-center gap-2 rounded-[8px] bg-[#6D28D9] px-4 py-2 text-[12px] font-medium text-white hover:bg-[#5B21B6] disabled:opacity-50"
               >
-                {manualSaving && (
-                  <Loader2 size={14} className="animate-spin" />
-                )}
+                {manualSaving && <Loader2 size={14} className="animate-spin" />}
                 {manualSaving ? "Saving..." : "Create Booking"}
               </button>
             </div>
@@ -1119,13 +1151,13 @@ export default function BookingsPanel() {
             <div className="mt-5 space-y-3">
               <DetailRow label="Booking ID" value={detailBooking.id} />
               <DetailRow label="User" value={detailBooking.user.name} />
-              <DetailRow
-                label="Expert"
-                value={detailBooking.expert.name}
-              />
+              <DetailRow label="Expert" value={detailBooking.expert.name} />
               <DetailRow
                 label="Service"
-                value={serviceStyles[detailBooking.service]?.label ?? detailBooking.service}
+                value={
+                  serviceStyles[detailBooking.service]?.label ??
+                  detailBooking.service
+                }
               />
               <DetailRow label="Date" value={detailBooking.date} />
               <DetailRow label="Time" value={detailBooking.time} />

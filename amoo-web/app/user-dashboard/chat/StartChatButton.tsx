@@ -23,9 +23,11 @@ type ExpertApiResponse = {
 export default function StartChatButton({
   variant = "primary",
   className = "",
+  expertId,
 }: {
   variant?: "primary" | "secondary" | "icon";
   className?: string;
+  expertId?: number | null;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -80,6 +82,25 @@ export default function StartChatButton({
     );
   });
 
+  const handleButtonClick = async () => {
+    if (!expertId) {
+      setOpen(true);
+      return;
+    }
+
+    setStartingId(expertId);
+
+    try {
+      await api.chat.openConversation(expertId);
+      router.push("/user-dashboard/chat");
+    } catch (e: unknown) {
+      setError(
+        (e as Error)?.message || "Failed to start chat. Please try again.",
+      );
+      setStartingId(null);
+    }
+  };
+
   const handleStartChat = useCallback(
     async (expert: Expert) => {
       setStartingId(expert.id);
@@ -103,7 +124,10 @@ export default function StartChatButton({
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className={className || "flex h-10 w-10 items-center justify-center rounded-full bg-[#4a1c7d] text-white transition-colors hover:bg-[#3d1268]"}
+          className={
+            className ||
+            "flex h-10 w-10 items-center justify-center rounded-full bg-[#4a1c7d] text-white transition-colors hover:bg-[#3d1268]"
+          }
           title="Start new chat"
         >
           <MessageSquarePlus className="h-5 w-5" strokeWidth={2} />
@@ -201,7 +225,9 @@ export default function StartChatButton({
             ) : filtered.length === 0 ? (
               <div className="px-5 py-8 text-center">
                 <p className="text-[13px] text-[#8b8697]">
-                  {search ? "No experts match your search." : "No experts available."}
+                  {search
+                    ? "No experts match your search."
+                    : "No experts available."}
                 </p>
               </div>
             ) : (
