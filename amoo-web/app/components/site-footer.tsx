@@ -25,7 +25,7 @@ const QUICK_LINKS = [
   { label: "Services", href: "/services" },
   { label: "Consultation", href: "/consultation" },
   { label: "Pricing", href: "/consultation/consultation-pricing" },
-  { label: "Blog", href: "/blog" },
+  // { label: "Blog", href: "/blog" },
   { label: "Contact Us", href: "/contact" },
 ];
 

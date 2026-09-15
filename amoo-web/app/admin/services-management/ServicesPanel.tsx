@@ -95,9 +95,9 @@ export default function ServicesPanel() {
     }[]
   >([]);
   const [pricingLoading, setPricingLoading] = useState(false);
-  const [allExperts, setAllExperts] = useState<
-    { id: number; name: string }[]
-  >([]);
+  const [allExperts, setAllExperts] = useState<{ id: number; name: string }[]>(
+    [],
+  );
   const [newPricingExpert, setNewPricingExpert] = useState<string>("");
   const [newPricingPrice, setNewPricingPrice] = useState<string>("");
   const [pricingSaving, setPricingSaving] = useState(false);
@@ -106,6 +106,7 @@ export default function ServicesPanel() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [activeTab, setActiveTab] = useState("All Services");
   const debounceTimer = useRef<ReturnType<typeof setTimeout>>(null);
 
   const onSearchChange = useCallback((value: string) => {
@@ -123,39 +124,54 @@ export default function ServicesPanel() {
   }, []);
 
   const load = useCallback(() => {
+    setLoading(true);
+    setError("");
+
     api.admin
       .getServices()
       .then((data: ServicesResponse) => {
-        const items = data?.data ?? data;
-        if (data?.meta?.total) setTotal(data.meta.total);
-        if (Array.isArray(items) && items.length) {
-          setRows(
-            items.map((s: Service) => ({
-              id: s.id,
-              name: s.name,
-              sub: s.sub,
-              img: s.img,
-              category: s.category,
-              type: s.type,
-              price: `₹ ${Number(s.price).toLocaleString("en-IN")}`,
-              priceRaw: s.price,
-              duration: s.duration,
-              status: s.status,
-              bookings: s.bookings,
-            })),
-          );
+        const items = Array.isArray(data) ? data : (data?.data ?? []);
+
+        if (!Array.isArray(items)) {
+          setRows([]);
+          setTotal(0);
+          return;
         }
+
+        setTotal(data?.meta?.total ?? items.length);
+
+        setRows(
+          items.map((s: Service) => ({
+            id: s.id,
+            name: s.name,
+            sub: s.sub,
+            img: s.img,
+            category: s.category,
+            type: s.type,
+            price: `₹ ${Number(s.price).toLocaleString("en-IN")}`,
+            priceRaw: s.price,
+            duration: s.duration,
+            status: s.status,
+            bookings: s.bookings,
+          })),
+        );
       })
-      .catch((e) => setError(errorMessage(e)))
+      .catch((e) => {
+        setError(errorMessage(e));
+        setRows([]);
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   const showToast = (msg: string, kind: "success" | "error" = "success") => {
@@ -176,12 +192,14 @@ export default function ServicesPanel() {
       ]);
       const pricingData =
         pricingRes && typeof pricingRes === "object"
-          ? (pricingRes as { data?: unknown[] }).data ?? pricingRes
+          ? ((pricingRes as { data?: unknown[] }).data ?? pricingRes)
           : [];
-      setPricingList(Array.isArray(pricingData) ? (pricingData as typeof pricingList) : []);
+      setPricingList(
+        Array.isArray(pricingData) ? (pricingData as typeof pricingList) : [],
+      );
       const expertsData =
         expertsRes && typeof expertsRes === "object"
-          ? (expertsRes as { data?: unknown[] }).data ?? expertsRes
+          ? ((expertsRes as { data?: unknown[] }).data ?? expertsRes)
           : [];
       setAllExperts(
         Array.isArray(expertsData)
@@ -211,9 +229,11 @@ export default function ServicesPanel() {
       const updated = await api.admin.getServicePricing(pricingService.id);
       const updatedData =
         updated && typeof updated === "object"
-          ? (updated as { data?: unknown[] }).data ?? updated
+          ? ((updated as { data?: unknown[] }).data ?? updated)
           : [];
-      setPricingList(Array.isArray(updatedData) ? (updatedData as typeof pricingList) : []);
+      setPricingList(
+        Array.isArray(updatedData) ? (updatedData as typeof pricingList) : [],
+      );
       setNewPricingExpert("");
       setNewPricingPrice("");
       showToast("Expert price saved");
@@ -237,17 +257,38 @@ export default function ServicesPanel() {
 
   const list = useMemo(() => {
     const rows_ = rows || [];
+
     return rows_.filter((r) => {
       if (
         debouncedSearch &&
         !r.name.toLowerCase().includes(debouncedSearch.toLowerCase())
-      )
+      ) {
         return false;
-      if (categoryFilter && r.category !== categoryFilter) return false;
-      if (statusFilter && r.status !== statusFilter) return false;
+      }
+
+      if (categoryFilter && r.category !== categoryFilter) {
+        return false;
+      }
+
+      if (statusFilter && r.status !== statusFilter) {
+        return false;
+      }
+
+      if (activeTab === "Active Services" && r.status !== "Active") {
+        return false;
+      }
+
+      if (activeTab === "Inactive Services" && r.status !== "Inactive") {
+        return false;
+      }
+
+      if (activeTab === "Popular Services" && r.bookings <= 0) {
+        return false;
+      }
+
       return true;
     });
-  }, [rows, debouncedSearch, categoryFilter, statusFilter]);
+  }, [rows, debouncedSearch, categoryFilter, statusFilter, activeTab]);
 
   if (loading)
     return (
@@ -270,8 +311,9 @@ export default function ServicesPanel() {
           <button
             key={t.label}
             type="button"
+            onClick={() => setActiveTab(t.label)}
             className={`shrink-0 border-b-2 pb-[11px] pt-[13px] text-[12px] ${
-              t.active
+              activeTab === t.label
                 ? "border-[#7C3AED] font-medium text-[#7C3AED]"
                 : "border-transparent font-normal text-[#7C748C] hover:text-[#2E2A3B]"
             }`}
@@ -332,13 +374,13 @@ export default function ServicesPanel() {
           />
         </div>
 
-        <button
+        {/* <button
           type="button"
           className="flex h-[36px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] px-[14px] text-[11px] text-[#3D3752]"
         >
           <SlidersHorizontal size={13} className="text-[#6B6480]" />
           Filters
-        </button>
+        </button> */}
       </div>
 
       {/* Table */}
@@ -371,13 +413,19 @@ export default function ServicesPanel() {
               <tr key={r.id ?? r.name} className="border-b border-[#F2F1F7]">
                 <td className="py-[13px] pl-6 pr-2">
                   <div className="flex items-center gap-[10px]">
-                    <Image
-                      src={r.img ?? ""}
-                      alt=""
-                      width={34}
-                      height={34}
-                      className="h-[34px] w-[34px] shrink-0 rounded-full object-cover"
-                    />
+                    {r.img ? (
+                      <Image
+                        src={r.img}
+                        alt={r.name}
+                        width={34}
+                        height={34}
+                        className="h-[34px] w-[34px] shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-[#F1EAFE] text-[12px] font-semibold text-[#7C3AED]">
+                        {r.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="leading-tight">
                       <p className="text-[11.5px] font-semibold text-[#1F1836]">
                         {r.name}
@@ -466,7 +514,8 @@ export default function ServicesPanel() {
                       onClick={async () => {
                         try {
                           await api.admin.updateService(r.id, {
-                            status: r.status === "Active" ? "inactive" : "active",
+                            status:
+                              r.status === "Active" ? "inactive" : "active",
                           });
                           showToast(
                             r.status === "Active"

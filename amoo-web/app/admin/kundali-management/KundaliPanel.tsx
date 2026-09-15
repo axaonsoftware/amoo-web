@@ -25,15 +25,23 @@ import { errorMessage } from "../../../lib/errors";
 import { useAutoRefresh } from "../../../lib/useAutoRefresh";
 import { useAutoRefreshTracking } from "../AutoRefreshProvider";
 
+// const statusOptions = [
+//   { label: "Pending", value: "pending" },
+//   { label: "Active", value: "active" },
+//   { label: "Completed", value: "completed" },
+//   { label: "Cancelled", value: "cancelled" },
+// ];
+
 const statusOptions = [
   { label: "Pending", value: "pending" },
-  { label: "Active", value: "active" },
-  { label: "Completed", value: "completed" },
-  { label: "Cancelled", value: "cancelled" },
+  { label: "Ready", value: "ready" },
+  { label: "Rejected", value: "rejected" },
 ];
 
 function displayStatusKey(s: string) {
   if (s === "active") return "in-progress";
+  if (s === "ready") return "completed";
+  if (s === "rejected") return "cancelled";
   return s;
 }
 
@@ -122,7 +130,7 @@ interface DisplayRow {
   date: string;
   time: string;
   status: string;
-  dosha: null;
+  dosha: any;
   amount: string;
   payment: string;
 }
@@ -152,7 +160,13 @@ function toRow(r: RawReport): DisplayRow {
     date,
     time,
     status: r.status || "pending",
-    dosha: null,
+    // dosha: null,
+    dosha:
+      typeof r.dosha === "string"
+        ? r.dosha
+        : typeof r.dosha_type === "string"
+          ? r.dosha_type
+          : null,
     amount: "-",
     payment: "Paid",
   };
@@ -178,6 +192,14 @@ export default function KundaliPanel() {
 
   const [toast, setToast] = useState("");
 
+  const [activeTab, setActiveTab] = useState("All Kundali");
+  const [search, setSearch] = useState("");
+  const [astrologerFilter, setAstrologerFilter] = useState("All Astrologers");
+  const [kundaliTypeFilter, setKundaliTypeFilter] =
+    useState("All Kundali Types");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [viewingReport, setViewingReport] = useState<RawReport | null>(null);
+
   const load = useCallback(() => {
     setLoading(true);
     api.admin
@@ -193,7 +215,10 @@ export default function KundaliPanel() {
             (r.type || "").toLowerCase().includes("kundli") ||
             (r.type || "").toLowerCase().includes("kundali"),
         );
-        const src = filtered.length ? filtered : items;
+
+        const src = filtered;
+
+        setTotal(src.length);
         setRawReports(src);
         setList(src.map(toRow));
       })
@@ -208,10 +233,105 @@ export default function KundaliPanel() {
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
-  const kundaliRows = list || [];
+  // const kundaliRows = list || [];
+  const kundaliRows = useMemo(() => {
+    const rows = list || [];
+
+    return rows.filter((row) => {
+      const raw = rawReports.find((r) => r.id === row.rawId);
+
+      if (!raw) return false;
+
+      if (
+        search &&
+        !`${row.client.name} ${row.client.email} ${row.client.phone} ${row.id}`
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      ) {
+        return false;
+      }
+
+      if (
+        astrologerFilter !== "All Astrologers" &&
+        row.astrologer.name !== astrologerFilter
+      ) {
+        return false;
+      }
+
+      if (
+        kundaliTypeFilter !== "All Kundali Types" &&
+        row.type !== kundaliTypeFilter
+      ) {
+        return false;
+      }
+
+      if (statusFilter !== "All Status" && row.status !== statusFilter) {
+        return false;
+      }
+
+      if (activeTab === "Today's Kundali") {
+        const today = new Date().toDateString();
+        const rowDate = raw.created_at
+          ? new Date(raw.created_at).toDateString()
+          : "";
+
+        if (today !== rowDate) return false;
+      }
+
+      if (activeTab === "Pending") {
+        if (row.status !== "pending") return false;
+      }
+
+      if (activeTab === "Completed") {
+        if (row.status !== "ready" && row.status !== "completed") {
+          return false;
+        }
+      }
+
+      if (activeTab === "AI Interpretation") {
+        const content = (raw.content || "").toLowerCase();
+
+        if (
+          !content.includes("ai") &&
+          !content.includes("automated") &&
+          !content.includes("generated automatically")
+        ) {
+          return false;
+        }
+      }
+
+      if (activeTab === "Doshas") {
+        const content = (raw.content || "").toLowerCase();
+
+        if (
+          !row.dosha &&
+          !content.includes("dosha") &&
+          !content.includes("mangal dosha") &&
+          !content.includes("kaal sarp")
+        ) {
+          return false;
+        }
+      }
+
+      if (activeTab === "Archived") {
+        if (!raw.deleted_at) return false;
+      }
+
+      return true;
+    });
+  }, [
+    list,
+    rawReports,
+    search,
+    astrologerFilter,
+    kundaliTypeFilter,
+    statusFilter,
+    activeTab,
+  ]);
 
   const addFields: ModalField[] = useMemo(
     () => [
@@ -453,8 +573,9 @@ export default function KundaliPanel() {
             <button
               key={t.label}
               type="button"
+              onClick={() => setActiveTab(t.label)}
               className={`shrink-0 whitespace-nowrap border-b-[3px] px-[18px] pb-[11px] pt-[15px] text-[12px] leading-[18px] ${
-                t.active
+                activeTab === t.label
                   ? "border-[#4208D1] font-semibold text-[#3A0FD1]"
                   : "border-transparent font-medium text-[#2B2B55] hover:text-[#3A0FD1]"
               }`}
@@ -471,21 +592,48 @@ export default function KundaliPanel() {
               <input
                 type="text"
                 placeholder="Search by name, email or phone..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 className="h-full w-full bg-transparent text-[10px] text-[#2E2A3B] outline-none placeholder:text-[#9B9AAC]"
               />
               <Search size={15} className="shrink-0 text-[#1E1B5C]" />
             </div>
 
-            {selects.map((s) => (
-              <button
-                key={s.value}
-                type="button"
-                className={`flex h-[33px] ${s.w} shrink-0 items-center justify-between whitespace-nowrap rounded-[8px] border border-[#ECEEF3] bg-white pl-[11px] pr-[9px] text-[10px] font-semibold text-[#14134A]`}
-              >
-                {s.value}
-                <ChevronDown size={14} className="shrink-0 text-[#6E6A85]" />
-              </button>
-            ))}
+            <select
+              value={astrologerFilter}
+              onChange={(e) => setAstrologerFilter(e.target.value)}
+              className="h-[33px] w-[126px] shrink-0 rounded-[8px] border border-[#ECEEF3] bg-white px-[11px] text-[10px] font-semibold text-[#14134A]"
+            >
+              <option>All Astrologers</option>
+              <option>System</option>
+            </select>
+
+            <select
+              value={kundaliTypeFilter}
+              onChange={(e) => setKundaliTypeFilter(e.target.value)}
+              className="h-[33px] w-[122px] shrink-0 rounded-[8px] border border-[#ECEEF3] bg-white px-[11px] text-[10px] font-semibold text-[#14134A]"
+            >
+              <option>All Kundali Types</option>
+              <option value="janam">Janam</option>
+              <option value="match-making">Match Making</option>
+              <option value="dasha">Dasha</option>
+              <option value="varshphal">Varshphal</option>
+              <option value="child-birth">Child Birth</option>
+              <option value="prashna">Prashna</option>
+            </select>
+
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-[33px] w-[108px] shrink-0 rounded-[8px] border border-[#ECEEF3] bg-white px-[11px] text-[10px] font-semibold text-[#14134A]"
+            >
+              <option>All Status</option>
+              {statusOptions.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
+              ))}
+            </select>
 
             <button
               type="button"
@@ -495,13 +643,13 @@ export default function KundaliPanel() {
               <Calendar size={14} className="shrink-0 text-[#6D28D9]" />
             </button>
 
-            <button
+            {/* <button
               type="button"
               className="inline-flex h-[33px] w-[66px] shrink-0 items-center justify-center gap-[5px] rounded-[8px] border border-[#ECEEF3] bg-white text-[10px] font-semibold text-[#14134A]"
             >
               <SlidersHorizontal size={13} className="text-[#4A4869]" />
               Filters
-            </button>
+            </button> */}
 
             <div className="ml-auto flex shrink-0 items-center gap-[8px]">
               <button
@@ -681,6 +829,12 @@ export default function KundaliPanel() {
                           <button
                             type="button"
                             aria-label="View"
+                            onClick={() => {
+                              const raw = rawReports.find(
+                                (r) => r.id === k.rawId,
+                              );
+                              if (raw) setViewingReport(raw);
+                            }}
                             className="grid h-[22px] w-[24px] place-items-center rounded-[6px] border border-[#ECEEF3] bg-white text-[#4A5085] hover:bg-[#FAF9FC]"
                           >
                             <Eye size={13} />
@@ -721,7 +875,8 @@ export default function KundaliPanel() {
               <button
                 type="button"
                 aria-label="Previous"
-                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869]"
+                disabled
+                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869] disabled:opacity-40"
               >
                 <ChevronLeft size={15} />
               </button>
@@ -733,31 +888,11 @@ export default function KundaliPanel() {
                 1
               </button>
 
-              {["2", "3", "4", "5"].map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] font-medium text-[#14134A]"
-                >
-                  {p}
-                </button>
-              ))}
-
-              <span className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] text-[#8B879C]">
-                ...
-              </span>
-
-              <button
-                type="button"
-                className="grid h-[30px] w-[38px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[11.5px] font-medium text-[#14134A]"
-              >
-                569
-              </button>
-
               <button
                 type="button"
                 aria-label="Next"
-                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869]"
+                disabled
+                className="grid h-[30px] w-[30px] place-items-center rounded-[8px] border border-[#ECEEF3] bg-white text-[#4A4869] disabled:opacity-40"
               >
                 <ChevronRight size={15} />
               </button>
@@ -804,6 +939,97 @@ export default function KundaliPanel() {
         }}
         saving={saving}
       />
+      {viewingReport && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setViewingReport(null)}
+          />
+
+          <div className="relative z-10 max-h-[85vh] w-full max-w-[700px] overflow-y-auto rounded-[14px] bg-white shadow-[0_20px_60px_rgba(20,16,40,.18)]">
+            <div className="sticky top-0 flex items-center justify-between border-b border-[#ECEEF3] bg-white px-6 py-4">
+              <div>
+                <h3 className="text-[16px] font-bold text-[#14134A]">
+                  {viewingReport.title || "Kundali Details"}
+                </h3>
+                <p className="mt-1 text-[10px] text-[#8B879C]">
+                  KNDL-{viewingReport.id}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setViewingReport(null)}
+                className="grid h-[28px] w-[28px] place-items-center rounded-[6px] text-[18px] text-[#8B879C] hover:bg-[#F7F6FB]"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4 px-6 py-5">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-[8px] border border-[#ECEEF3] p-3">
+                  <p className="text-[10px] text-[#8B879C]">User ID</p>
+                  <p className="mt-1 text-[12px] font-semibold text-[#14134A]">
+                    {viewingReport.user_id}
+                  </p>
+                </div>
+
+                <div className="rounded-[8px] border border-[#ECEEF3] p-3">
+                  <p className="text-[10px] text-[#8B879C]">Type</p>
+                  <p className="mt-1 text-[12px] font-semibold text-[#14134A]">
+                    {viewingReport.type}
+                  </p>
+                </div>
+
+                <div className="rounded-[8px] border border-[#ECEEF3] p-3">
+                  <p className="text-[10px] text-[#8B879C]">Status</p>
+                  <p className="mt-1 text-[12px] font-semibold text-[#14134A]">
+                    {viewingReport.status}
+                  </p>
+                </div>
+
+                <div className="rounded-[8px] border border-[#ECEEF3] p-3">
+                  <p className="text-[10px] text-[#8B879C]">Created At</p>
+                  <p className="mt-1 text-[12px] font-semibold text-[#14134A]">
+                    {viewingReport.created_at
+                      ? new Date(viewingReport.created_at).toLocaleString(
+                          "en-IN",
+                        )
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-[8px] border border-[#ECEEF3] p-4">
+                <p className="mb-2 text-[10px] font-semibold text-[#8B879C]">
+                  Report Content
+                </p>
+
+                <pre className="whitespace-pre-wrap break-words font-sans text-[11px] leading-[18px] text-[#2E2A3B]">
+                  {viewingReport.content || "No report content available."}
+                </pre>
+              </div>
+
+              {viewingReport.file_url && (
+                <a
+                  href={viewingReport.file_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-2 rounded-[8px] bg-[#6D28D9] px-4 py-2 text-[11px] font-semibold text-white"
+                >
+                  <Download size={13} />
+                  Open Report File
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

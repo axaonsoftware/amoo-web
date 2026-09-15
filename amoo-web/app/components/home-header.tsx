@@ -52,20 +52,20 @@ const NAV: NavItem[] = [
       { label: "Confirmation", href: "/consultation/booking-confirmation" },
     ],
   },
-  {
-    label: "Software",
-    href: "/software-hub",
-    dropdown: [
-      { label: "Software Hub", href: "/software-hub" },
-      { label: "Basic Kundali", href: "/software-hub/basic-kundali-software" },
-      { label: "Tarot Software", href: "/software-hub/tarot-software" },
-      {
-        label: "Numerology Software",
-        href: "/software-hub/numerology-software",
-      },
-    ],
-  },
-  { label: "Blog", href: "/blog" },
+  // {
+  //   label: "Software",
+  //   href: "/software-hub",
+  //   dropdown: [
+  //     { label: "Software Hub", href: "/software-hub" },
+  //     { label: "Basic Kundali", href: "/software-hub/basic-kundali-software" },
+  //     { label: "Tarot Software", href: "/software-hub/tarot-software" },
+  //     {
+  //       label: "Numerology Software",
+  //       href: "/software-hub/numerology-software",
+  //     },
+  //   ],
+  // },
+  // { label: "Blog", href: "/blog" },
   { label: "Contact", href: "/contact" },
   {
     label: "Login",

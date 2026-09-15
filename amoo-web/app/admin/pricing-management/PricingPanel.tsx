@@ -1,19 +1,15 @@
 "use client";
 
-import {  memo,  useCallback,  useEffect,  useRef,  useState  } from "react";
-import { 
-  Search, 
-  SlidersHorizontal, 
-  Pencil, 
-  Trash2 } from "lucide-react";
-import {  serviceTone,  planTypeTone  } from "./data";
-import {  api,  type PageMeta  } from "../../../lib/api";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import { Search, SlidersHorizontal, Pencil, Trash2 } from "lucide-react";
+import { serviceTone, planTypeTone } from "./data";
+import { api, type PageMeta } from "../../../lib/api";
 import { useAutoRefresh } from "../../../lib/useAutoRefresh";
 import { useAutoRefreshTracking } from "../AutoRefreshProvider";
-import AdminModal, {  type ModalField  } from "../shared/AdminModal";
+import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
-import {  exportCSV  } from "../shared/exportCSV";
-import {  errorMessage  } from "../../../lib/errors";
+import { exportCSV } from "../shared/exportCSV";
+import { errorMessage } from "../../../lib/errors";
 
 type RawPackage = {
   id: number;
@@ -57,8 +53,6 @@ const allTabs = [
   { label: "Subscriptions" },
   { label: "Offers & Coupons" },
 ];
-
-
 
 const PAGE_SIZE = 10;
 
@@ -160,10 +154,14 @@ export default function PricingPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [, setTotal] = useState(0);
-  const [, setServices] = useState<string[]>([]);
+  const [services, setServices] = useState<string[]>([]);
 
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState(0);
+
+  const [serviceFilter, setServiceFilter] = useState("All");
+  const [planTypeFilter, setPlanTypeFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("All");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<RawPackage | null>(null);
@@ -256,19 +254,46 @@ export default function PricingPanel({
   const { isRefreshing } = useAutoRefresh(loadData);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   const rows = list || [];
 
+  const hasAppliedFilter =
+    serviceFilter !== "All" ||
+    planTypeFilter !== "All" ||
+    statusFilter !== "All";
+
   const filteredRows = rows.filter((r) => {
-    if (search) {
-      const q = search.toLowerCase();
-      if (!r.name.toLowerCase().includes(q) && !r.sub.toLowerCase().includes(q))
-        return false;
+    const q = search.trim().toLowerCase();
+
+    if (
+      q &&
+      ![
+        r.name,
+        r.sub,
+        r.service,
+        r.planType,
+        r.price,
+        r.duration,
+        r.status,
+      ].some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(q),
+      )
+    ) {
+      return false;
     }
+
     if (activeTab === 1 && r.planType !== "One-time") return false;
     if (activeTab === 2 && r.planType !== "Subscription") return false;
+
+    if (serviceFilter !== "All" && r.service !== serviceFilter) return false;
+    if (planTypeFilter !== "All" && r.planType !== planTypeFilter) return false;
+    if (statusFilter !== "All" && r.status !== statusFilter) return false;
+
     return true;
   });
 
@@ -509,7 +534,7 @@ export default function PricingPanel({
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-[18px] px-6 pb-[14px] pt-[16px]">
+        <div className="flex flex-wrap items-center gap-[10px] px-6 pb-[14px] pt-[16px]">
           <div className="flex h-[34px] w-full max-w-[200px] items-center rounded-[8px] border border-[#E7E5EF] pl-3 pr-2">
             <input
               type="text"
@@ -521,13 +546,60 @@ export default function PricingPanel({
             <Search size={14} className="shrink-0 text-[#6B6480]" />
           </div>
 
-          <button
+          <select
+            value={serviceFilter}
+            onChange={(e) => setServiceFilter(e.target.value)}
+            className="h-[34px] rounded-[8px] border border-[#E7E5EF] bg-white px-[10px] text-[11px] text-[#3D3752] outline-none"
+          >
+            <option value="All">All Services</option>
+            {services.map((service) => (
+              <option key={service} value={service}>
+                {service}
+              </option>
+            ))}
+          </select>
+
+          <select
+            value={planTypeFilter}
+            onChange={(e) => setPlanTypeFilter(e.target.value)}
+            className="h-[34px] rounded-[8px] border border-[#E7E5EF] bg-white px-[10px] text-[11px] text-[#3D3752] outline-none"
+          >
+            <option value="All">All Plan Types</option>
+            <option value="Subscription">Subscription</option>
+            <option value="One-time">One-time</option>
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-[34px] rounded-[8px] border border-[#E7E5EF] bg-white px-[10px] text-[11px] text-[#3D3752] outline-none"
+          >
+            <option value="All">All Status</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+
+          {hasAppliedFilter && (
+            <button
+              type="button"
+              onClick={() => {
+                setServiceFilter("All");
+                setPlanTypeFilter("All");
+                setStatusFilter("All");
+              }}
+              className="h-[34px]  rounded-[8px] border border-1 px-[10px] text-[11px] font-medium text-[#7C3AED] hover:bg-[#F7F6FB]"
+            >
+              Clear
+            </button>
+          )}
+
+          {/* <button
             type="button"
-            className="ml-auto flex h-[34px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] px-[14px] text-[11px] text-[#3D3752]"
+            className="ml-auto flex h-[34px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] bg-white px-[14px] text-[11px] text-[#3D3752] hover:bg-[#F7F6FB]"
           >
             <SlidersHorizontal size={13} className="text-[#6B6480]" />
             Filters
-          </button>
+          </button> */}
         </div>
 
         {/* Table */}

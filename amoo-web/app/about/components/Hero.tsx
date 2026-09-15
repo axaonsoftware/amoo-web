@@ -28,7 +28,7 @@ export default function Hero() {
           </div>
 
           <h1 className="mt-[10px] bg-gradient-to-b from-[#f7d489] to-[#dd9a3c] bg-clip-text font-display text-[28px] leading-[1.1] font-bold text-transparent sm:text-[42px] sm:whitespace-nowrap">
-            Surinder Kaur Sehgal
+            Dr. Surinder Kaur Sehgal
           </h1>
 
           <p className="mt-[10px] text-[16px] leading-[26px] font-normal text-white sm:text-[18px] sm:leading-[29px]">

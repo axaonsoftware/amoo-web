@@ -56,7 +56,7 @@ export default function MissionVision() {
           <p
             className={`${greatVibes.className} mt-[18px] text-[26px] leading-none text-[#c08a3e]`}
           >
-            Surinder Kaur Sehgal
+            Dr. Surinder Kaur Sehgal
           </p>
         </div>
       </div>

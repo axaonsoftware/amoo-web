@@ -30,11 +30,11 @@ import {
 export const metadata: Metadata = {
   title: `${SITE_NAME} — Numerology, Reiki Healing & Tarot Guidance`,
   description:
-    "Transform your life through Numerology, Reiki Healing, Tarot Guidance and Spiritual Consultation with Reiki Grand Master Surinder Kaur Sehgal.",
+    "Transform your life through Numerology, Reiki Healing, Tarot Guidance and Spiritual Consultation with Reiki Grand Master Dr. Surinder Kaur Sehgal.",
   openGraph: {
     title: `${SITE_NAME} — Numerology, Reiki Healing & Tarot Guidance`,
     description:
-      "Transform your life through Numerology, Reiki Healing, Tarot Guidance and Spiritual Consultation with Reiki Grand Master Surinder Kaur Sehgal.",
+      "Transform your life through Numerology, Reiki Healing, Tarot Guidance and Spiritual Consultation with Reiki Grand Master Dr. Surinder Kaur Sehgal.",
   },
 };
 
@@ -316,7 +316,7 @@ export default function Home() {
                 <br />
                 Tarot Guidance and Spiritual Consultation with
                 <br />
-                Reiki Grand Master Surinder Kaur Sehgal.
+                Reiki Grand Dr. Master Surinder Kaur Sehgal.
               </p>
 
               <ul className="mt-[26px] flex items-center">
@@ -519,7 +519,7 @@ export default function Home() {
               <h2 className="font-display mt-[12px] text-[24px] lg:text-[30px] leading-[1.25] font-bold text-[#2c0c47]">
                 Reiki Grand Master
                 <br />
-                Surinder Kaur Sehgal
+                Dr. Surinder Kaur Sehgal
               </h2>
 
               <p className="mt-[16px] w-full max-w-[400px] text-[13.5px] leading-[1.75] text-[#5f5e6b]">

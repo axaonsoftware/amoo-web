@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useEffect, useCallback } from "react";
 import {
   Tag,
@@ -69,34 +70,79 @@ const statDefs: {
   },
 ];
 
+type Item = {
+  status?: string;
+  price?: string | number;
+};
+
+type ApiResponse = {
+  success?: boolean;
+  data?: Item[];
+  meta?: {
+    total?: number;
+  };
+};
+
 export default function StatsRow() {
   const [stats, setStats] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    api.admin
-      .getOverview()
-      .then((data: unknown) => {
-        const s = (data as { stats?: Record<string, number> } | null)?.stats;
-        setStats(s ?? (data as Record<string, number> | null));
-      })
-      .catch((e: unknown) => setError(errorMessage(e, "Failed to load stats")))
-      .finally(() => setLoading(false));
+  const load = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await api.admin.getOverview();
+
+      const overview = response as {
+        stats?: Record<string, number>;
+      };
+
+      const packagesResponse = await fetch("/api/packages/all");
+      const packagesResult = await packagesResponse.json();
+
+      const packages = packagesResult?.data ?? [];
+
+      const totalPackages = packagesResult?.meta?.total ?? packages.length;
+
+      const activePackages = packages.filter(
+        (item: { status?: string }) => item.status?.toLowerCase() === "active",
+      ).length;
+
+      const inactivePackages = packages.filter(
+        (item: { status?: string }) =>
+          item.status?.toLowerCase() === "inactive",
+      ).length;
+
+      setStats({
+        ...(overview?.stats ?? {}),
+        packages: totalPackages,
+        activePlans: activePackages,
+        inactivePlans: inactivePackages,
+      });
+    } catch (e: unknown) {
+      setError(errorMessage(e, "Failed to load stats"));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
+
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   const fmt = (n: number | undefined) =>
     n != null ? n.toLocaleString("en-IN") : "—";
+
   const fmtCurrency = (n: number | undefined) =>
     n != null ? `₹ ${n.toLocaleString("en-IN")}` : "—";
 
@@ -110,7 +156,7 @@ export default function StatsRow() {
 
   if (error) {
     return (
-      <div className="mt-5 rounded-lg bg-red-50 border border-red-200 p-4 text-sm text-red-700">
+      <div className="mt-5 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
         {error}
       </div>
     );
@@ -119,8 +165,10 @@ export default function StatsRow() {
   return (
     <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
       {statDefs.map(({ label, field, Icon, iconBg, iconColor }) => {
-        const raw = stats ? stats[field] : undefined;
+        const raw = stats?.[field];
+
         const value = field === "revenue" ? fmtCurrency(raw) : fmt(raw);
+
         return (
           <div
             key={label}
@@ -132,10 +180,12 @@ export default function StatsRow() {
               >
                 <Icon size={17} strokeWidth={1.9} className={iconColor} />
               </span>
+
               <p className="text-[10px] leading-tight text-[#8B879C] [@media(min-width:1380px)]:whitespace-nowrap">
                 {label}
               </p>
             </div>
+
             <p className="mt-[10px] text-[19px] font-semibold leading-none text-[#1F1836]">
               {value}
             </p>
