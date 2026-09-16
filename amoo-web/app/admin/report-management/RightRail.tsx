@@ -7,16 +7,56 @@ import {
   BarChart3,
 } from "lucide-react";
 
-const quickStats = [
-  { label: "Total Reports", value: "—", Icon: FileText, color: "#7C3AED" },
-  { label: "Pending Generation", value: "—", Icon: Clock, color: "#F59E0B" },
-  { label: "Ready Reports", value: "—", Icon: CircleCheck, color: "#16A34A" },
-  { label: "Rejected", value: "—", Icon: Ban, color: "#EF4444" },
-  { label: "This Month", value: "—", Icon: TrendingUp, color: "#2563EB" },
-  { label: "Avg. Per Day", value: "—", Icon: BarChart3, color: "#059669" },
-];
+type RightRailProps = {
+  stats: {
+    total: number;
+    pending: number;
+    ready: number;
+    rejected: number;
+    thisMonth: number;
+    avgPerDay: number;
+  };
+};
 
-export default function RightRail() {
+export default function RightRail({ stats }: RightRailProps) {
+  const quickStats = [
+    {
+      label: "Total Reports",
+      value: stats.total,
+      Icon: FileText,
+      color: "#7C3AED",
+    },
+    {
+      label: "Pending Generation",
+      value: stats.pending,
+      Icon: Clock,
+      color: "#F59E0B",
+    },
+    {
+      label: "Ready Reports",
+      value: stats.ready,
+      Icon: CircleCheck,
+      color: "#16A34A",
+    },
+    {
+      label: "Rejected",
+      value: stats.rejected,
+      Icon: Ban,
+      color: "#EF4444",
+    },
+    {
+      label: "This Month",
+      value: stats.thisMonth,
+      Icon: TrendingUp,
+      color: "#2563EB",
+    },
+    {
+      label: "Avg. Per Day",
+      value: stats.avgPerDay,
+      Icon: BarChart3,
+      color: "#059669",
+    },
+  ];
   return (
     <aside className="w-[260px] shrink-0">
       <div className="flex flex-col gap-4">

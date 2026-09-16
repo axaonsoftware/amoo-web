@@ -2,29 +2,29 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import {  memo,  useCallback,  useEffect,  useRef,  useState  } from "react";
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight, 
-  SlidersHorizontal, 
-  Check, 
-  Loader2, 
-  Pencil, 
-  Trash2, 
+import { memo, useCallback, useEffect, useRef, useState } from "react";
+import {
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Check,
+  Loader2,
+  Pencil,
+  Trash2,
   Ban,
-  Eye } from "lucide-react";
-import {  roleStyles,  statusStyles,  type RoleKey,  type StatusKey  } from "./data";
-import {  api,  qs,  unwrapList,  unwrapMeta  } from "../../../lib/api";
+  Eye,
+} from "lucide-react";
+import { roleStyles, statusStyles, type RoleKey, type StatusKey } from "./data";
+import { api, qs, unwrapList, unwrapMeta } from "../../../lib/api";
 import { useAutoRefresh } from "../../../lib/useAutoRefresh";
 import { useAutoRefreshTracking } from "../AutoRefreshProvider";
-import {  EmptyRow,  ErrorRow,  TableSkeletonRows  } from "../../components/states";
-import {  useToast  } from "../shared/useToast";
+import { EmptyRow, ErrorRow, TableSkeletonRows } from "../../components/states";
+import { useToast } from "../shared/useToast";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import AdminModal from "../shared/AdminModal";
-import {  sanitize  } from "../../../lib/sanitize";
-import {  errorMessage  } from "../../../lib/errors";
+import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 import type { User } from "../../../lib/types";
 
 // Each tab is a preset over the filters `GET /api/users` actually parses:
@@ -356,7 +356,8 @@ export default function UsersPanel() {
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   useEffect(() => {
@@ -419,7 +420,9 @@ export default function UsersPanel() {
   const clearFilters = () => {
     setSearch("");
     setDebouncedSearch("");
-    applyTab(0);
+    setFilters(NO_FILTERS);
+    setActiveTab(0);
+    setPage(1);
   };
 
   return (
@@ -504,7 +507,17 @@ export default function UsersPanel() {
           </div>
         ))}
 
-        <button
+        {hasFilters && (
+          <button
+            type="button"
+            onClick={clearFilters}
+            className="h-[38px] rounded-[8px] border border-[#E7E5EF] bg-white px-[14px] text-[11px] font-medium text-[#4A4658] hover:bg-[#FAF9FC]"
+          >
+            Reset
+          </button>
+        )}
+
+        {/* <button
           type="button"
           onClick={clearFilters}
           disabled={!hasFilters}
@@ -512,7 +525,7 @@ export default function UsersPanel() {
         >
           <SlidersHorizontal size={14} className="text-[#6E6A80]" />
           Filters
-        </button>
+        </button> */}
       </div>
 
       {/* Table */}

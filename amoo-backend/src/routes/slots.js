@@ -50,7 +50,7 @@ router.get(
     let expertWhere = "WHERE e.deleted_at IS NULL";
     if (req.query.status) { expertWhere += " AND e.status = ?"; searchParams.push(req.query.status); }
     if (req.query.search) {
-      expertWhere += " AND (e.name LIKE ? OR e.specialties LIKE ?)";
+      expertWhere += " AND (e.name ILIKE ? OR e.specialties ILIKE ?)";
       searchParams.push(`%${req.query.search}%`, `%${req.query.search}%`);
     }
 
@@ -66,8 +66,14 @@ router.get(
            FROM experts e
            LEFT JOIN slots s ON s.expert_id = e.id ${slotWhere}
            ${expertWhere}
-          GROUP BY e.id
-          ORDER BY booked_slots DESC, e.name ASC`
+         GROUP BY
+  e.id,
+  e.name,
+  e.avatar,
+  e.specialties,
+  e.status,
+  e.rating
+ORDER BY booked_slots DESC, e.name ASC`
       ),
       [...params, ...searchParams]
     );
@@ -148,7 +154,7 @@ router.delete(
       req.audit("delete", "slot", Number(req.params.id));
       ok(res, { id: Number(req.params.id), deleted: true });
     } catch (err) {
-      await client.query("ROLLBACK").catch(() => {});
+      await client.query("ROLLBACK").catch(() => { });
       throw err;
     } finally {
       client.release();

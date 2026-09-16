@@ -495,6 +495,7 @@ export const api = {
     createManualBooking: (body: unknown) =>
       request("POST", "/api/bookings/manual", body),
 
+
     getOverview: () => request("GET", "/api/dashboard/overview"),
     getTopExperts: (limit = 5) =>
       request("GET", `/api/dashboard/experts/top?limit=${limit}`),
@@ -556,6 +557,8 @@ export const api = {
   getTestimonials: () => request("GET", "/api/testimonials"),
   getPackages: () => request("GET", "/api/packages"),
   getSlots: (query = "") => request("GET", `/api/slots${query}`),
+  updateSlot: (id: number, body: unknown) =>
+    request("PATCH", `/api/slots/${id}`, body),
   reserveSlot: (slotId: number) =>
     request("PATCH", `/api/slots/${slotId}`, { status: "booked" }),
 

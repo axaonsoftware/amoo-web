@@ -54,7 +54,7 @@ class TarotReportGenerator extends BaseReportGenerator {
         "Thank you for your tarot consultation. The cards reveal the following guidance.",
         "",
         `─── ${spreadLabel} ───`,
-        ...cardLines.map((l) => "  " + l),
+        ...cardLines.map((l) => "  " + l), 
         "",
         "─── OVERALL THEME ───",
         `The energy of this reading is shaped by ${drawn[0]?.name}, ${drawn[1]?.name}, and ${drawn[2]?.name}.`,

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Search,
   ChevronDown,
@@ -102,6 +102,16 @@ export default function PackagesPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("All Types");
+  const [serviceFilter, setServiceFilter] = useState("All Services");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [activeTab, setActiveTab] = useState("All Packages & Offers");
+  const [viewing, setViewing] = useState<Package | null>(null);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<Package | null>(null);
@@ -134,7 +144,10 @@ export default function PackagesPanel({
     try {
       const data = await api.admin.getPackages();
       const items = data?.data ?? data;
-      if (data?.meta?.total) setTotal(data.meta.total);
+      setTotal(data?.meta?.total ?? 0);
+      setTotalPages(data?.meta?.totalPages ?? 1);
+      setPage(data?.meta?.page ?? 1);
+      setPageSize(data?.meta?.pageSize ?? 20);
       if (Array.isArray(items) && items.length) {
         setList(
           items.map((p: Package) => ({
@@ -172,7 +185,7 @@ export default function PackagesPanel({
 
   useEffect(() => {
     loadData();
-  }, [loadData]);
+  }, [loadData, page, pageSize]);
 
   useEffect(() => {
     if (!onReady) return;
@@ -275,7 +288,55 @@ export default function PackagesPanel({
     }
   };
 
-  const rows = list;
+  const filteredRows = useMemo(() => {
+    const query = search.trim().toLowerCase();
+
+    return list.filter((row) => {
+      const matchesSearch =
+        !query ||
+        row.name.toLowerCase().includes(query) ||
+        row.sub.toLowerCase().includes(query);
+
+      const matchesType = typeFilter === "All Types" || row.type === typeFilter;
+
+      const matchesService =
+        serviceFilter === "All Services" ||
+        row.services.toLowerCase().includes(serviceFilter.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "All Status" || row.status === statusFilter;
+
+      const matchesTab =
+        activeTab === "All Packages & Offers" ||
+        (activeTab === "Service Packages" && row.type === "Package") ||
+        (activeTab === "Combo Packages" && row.type === "Combo") ||
+        (activeTab === "Offers & Discounts" && row.type === "Offer") ||
+        (activeTab === "Coupons" && row.type === "Coupon");
+
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesService &&
+        matchesStatus &&
+        matchesTab
+      );
+    });
+  }, [list, search, typeFilter, serviceFilter, statusFilter, activeTab]);
+
+  const rows = filteredRows;
+
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    typeFilter !== "All Types" ||
+    serviceFilter !== "All Services" ||
+    statusFilter !== "All Status";
+
+  const resetFilters = () => {
+    setSearch("");
+    setTypeFilter("All Types");
+    setServiceFilter("All Services");
+    setStatusFilter("All Status");
+  };
 
   if (loading)
     return (
@@ -304,68 +365,101 @@ export default function PackagesPanel({
       </div>
     );
 
+  const startItem = total === 0 ? 0 : (page - 1) * pageSize + 1;
+  const endItem = Math.min(page * pageSize, total);
+
   return (
     <section className="rounded-[14px] border border-[#EEEDF4] bg-white shadow-[0_1px_2px_rgba(20,16,40,.04)]">
       {/* Tabs */}
       <div className="flex items-center gap-6 overflow-x-auto no-scrollbar border-b border-[#EEEDF4] px-6">
         {[
-          { label: "All Packages & Offers", active: true },
-          { label: "Service Packages" },
-          { label: "Combo Packages" },
-          { label: "Offers & Discounts" },
-          { label: "Coupons" },
-        ].map((t) => (
+          "All Packages & Offers",
+          "Service Packages",
+          "Combo Packages",
+          "Offers & Discounts",
+          "Coupons",
+        ].map((tab) => (
           <button
-            key={t.label}
+            key={tab}
             type="button"
+            onClick={() => setActiveTab(tab)}
             className={`shrink-0 border-b-2 pb-[11px] pt-[13px] text-[12px] ${
-              t.active
+              activeTab === tab
                 ? "border-[#7C3AED] font-medium text-[#7C3AED]"
                 : "border-transparent font-normal text-[#7C748C] hover:text-[#2E2A3B]"
             }`}
           >
-            {t.label}
+            {tab}
           </button>
         ))}
       </div>
 
-      {/* Filters + Action Buttons */}
       <div className="flex flex-wrap items-center gap-[10px] px-6 pb-[14px] pt-[14px]">
         <div className="flex h-[34px] w-full max-w-[212px] items-center rounded-[8px] border border-[#E7E5EF] pl-3 pr-2">
           <input
             type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             placeholder="Search package or offer..."
             className="h-full w-full bg-transparent text-[11px] text-[#2E2A3B] outline-none placeholder:text-[#A5A2B5]"
           />
           <Search size={14} className="shrink-0 text-[#6B6480]" />
         </div>
 
-        {selects.map((s) => (
-          <button
-            key={s}
-            type="button"
-            className="flex h-[34px] w-[112px] items-center justify-between rounded-[8px] border border-[#E7E5EF] px-3 text-[11px] text-[#3D3752]"
-          >
-            {s}
-            <ChevronDown size={14} className="text-[#8B879C]" />
-          </button>
-        ))}
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="h-[34px] w-[112px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#3D3752] outline-none"
+        >
+          <option>All Types</option>
+          <option>Package</option>
+          <option>Combo</option>
+          <option>Offer</option>
+          <option>Coupon</option>
+        </select>
 
-        <button
+        <select
+          value={serviceFilter}
+          onChange={(e) => setServiceFilter(e.target.value)}
+          className="h-[34px] w-[112px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#3D3752] outline-none"
+        >
+          <option>All Services</option>
+          <option>Reiki</option>
+          <option>Tarot</option>
+          <option>Numerology</option>
+          <option>Chakra</option>
+          <option>Kundali</option>
+          <option>Love</option>
+        </select>
+
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="h-[34px] w-[112px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[11px] text-[#3D3752] outline-none"
+        >
+          <option>All Status</option>
+          <option>Active</option>
+          <option>Inactive</option>
+        </select>
+
+        {/* <button
           type="button"
           className="flex h-[34px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] px-3 text-[11px] text-[#3D3752]"
         >
           <SlidersHorizontal size={13} className="text-[#6B6480]" />
           Filters
-        </button>
+        </button> */}
 
-        <button
-          type="button"
-          className="flex h-[34px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] px-3 text-[11px] text-[#3D3752]"
-        >
-          <RotateCcw size={13} className="text-[#6B6480]" />
-          Reset
-        </button>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="flex h-[34px] items-center gap-[6px] rounded-[8px] border border-[#E7E5EF] px-3 text-[11px] text-[#3D3752]"
+          >
+            <RotateCcw size={13} className="text-[#6B6480]" />
+            Reset
+          </button>
+        )}
 
         <div className="ml-auto flex items-center gap-[10px]">
           <button
@@ -512,6 +606,7 @@ export default function PackagesPanel({
                   <div className="flex items-center gap-[6px]">
                     <button
                       type="button"
+                      onClick={() => setViewing(r._raw)}
                       className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#6B6480] hover:bg-[#F7F6FB]"
                       title="View"
                     >
@@ -566,62 +661,66 @@ export default function PackagesPanel({
         </table>
       </div>
 
-      {/* Footer */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-6 pb-[16px] pt-[14px]">
         <p className="text-[10.5px] text-[#8B879C]">
-          Showing {rows.length > 0 ? 1 : 0} to {rows.length} of{" "}
-          {(total || rows.length).toLocaleString("en-IN")} packages/offers
+          Showing {startItem} to {endItem} of {total.toLocaleString("en-IN")}{" "}
+          packages/offers
         </p>
 
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-[6px]">
             <button
               type="button"
-              className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#8B879C]"
+              disabled={page === 1}
+              onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+              className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#8B879C] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronLeft size={13} />
             </button>
 
-            {["1", "2", "3", "4"].map((p) => (
-              <button
-                key={p}
-                type="button"
-                className={`grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[10.5px] ${
-                  p === "1"
-                    ? "bg-[#6D28D9] font-medium text-white"
-                    : "border border-[#E7E5EF] text-[#3D3752] hover:bg-[#F7F6FB]"
-                }`}
-              >
-                {p}
-              </button>
-            ))}
+            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
+              (p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => setPage(p)}
+                  className={`grid h-[26px] w-[26px] place-items-center rounded-[6px] text-[10.5px] ${
+                    p === page
+                      ? "bg-[#6D28D9] font-medium text-white"
+                      : "border border-[#E7E5EF] text-[#3D3752] hover:bg-[#F7F6FB]"
+                  }`}
+                >
+                  {p}
+                </button>
+              ),
+            )}
 
             <button
               type="button"
-              className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[10.5px] text-[#3D3752]"
-            >
-              …
-            </button>
-
-            <button
-              type="button"
-              className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#8B879C]"
+              disabled={page === totalPages}
+              onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+              className="grid h-[26px] w-[26px] place-items-center rounded-[6px] border border-[#E7E5EF] text-[#8B879C] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ChevronRight size={13} />
             </button>
-          </div>
 
-          <button
-            type="button"
-            className="flex h-[28px] w-[110px] items-center justify-between rounded-[8px] border border-[#E7E5EF] px-3 text-[10.5px] text-[#3D3752]"
-          >
-            10 / page
-            <ChevronDown size={14} className="text-[#8B879C]" />
-          </button>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setPage(1);
+              }}
+              className="h-[28px] w-[110px] rounded-[8px] border border-[#E7E5EF] bg-white px-3 text-[10.5px] text-[#3D3752] outline-none"
+            >
+              <option value={10}>10 / page</option>
+              <option value={20}>20 / page</option>
+              <option value={50}>50 / page</option>
+              <option value={100}>100 / page</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      {/* Create / Edit Modal */}
       <AdminModal
         open={modalOpen}
         title={editing ? "Edit Package" : "Create New Package"}
@@ -637,7 +736,84 @@ export default function PackagesPanel({
         errors={formErrors}
       />
 
-      {/* Delete Confirm */}
+      {viewing && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-[520px] rounded-[14px] bg-white p-6 shadow-xl">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-[16px] font-semibold text-[#1F1836]">
+                Package Details
+              </h2>
+
+              <button
+                type="button"
+                onClick={() => setViewing(null)}
+                className="text-[20px] text-[#8B879C] hover:text-[#2E2A3B]"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="space-y-4 text-[12px]">
+              <div>
+                <p className="text-[#8B879C]">Package Name</p>
+                <p className="mt-1 font-medium text-[#1F1836]">
+                  {viewing.name}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[#8B879C]">Description</p>
+                <p className="mt-1 text-[#3D3752]">
+                  {viewing.description || "-"}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[#8B879C]">Price</p>
+                  <p className="mt-1 font-medium text-[#1F1836]">
+                    ₹ {Number(viewing.price).toLocaleString("en-IN")}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[#8B879C]">Duration</p>
+                  <p className="mt-1 font-medium text-[#1F1836]">
+                    {viewing.duration_days} days
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[#8B879C]">Status</p>
+                  <p className="mt-1 font-medium text-[#1F1836]">
+                    {viewing.status}
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-[#8B879C]">Created At</p>
+                  <p className="mt-1 font-medium text-[#1F1836]">
+                    {viewing.created_at
+                      ? new Date(viewing.created_at).toLocaleDateString("en-IN")
+                      : "-"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setViewing(null)}
+                className="rounded-[8px] bg-[#6D28D9] px-4 py-2 text-[11px] font-medium text-white"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ConfirmDialog
         open={confirmOpen}
         title="Delete Package"
@@ -650,7 +826,6 @@ export default function PackagesPanel({
         saving={deleting}
       />
 
-      {/* Toast */}
       {toast && (
         <div
           className={`fixed right-5 top-5 z-[100] flex items-center gap-2 rounded-[8px] px-4 py-3 text-[12px] font-medium text-white shadow-[0_8px_24px_rgba(0,0,0,.15)] transition-all ${

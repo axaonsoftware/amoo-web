@@ -1,20 +1,21 @@
 "use client";
-import {  useCallback,  useEffect,  useMemo,  useRef,  useState  } from "react";
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronLeft, 
-  ChevronRight, 
-  Trash2, 
-  Loader2, 
-  Pencil } from "lucide-react";
-import {  reportTypeStyles,  statusStyles  } from "./data";
-import {  api,  type PageMeta  } from "../../../lib/api";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Trash2,
+  Loader2,
+  Pencil,
+} from "lucide-react";
+import { reportTypeStyles, statusStyles } from "./data";
+import { api, type PageMeta } from "../../../lib/api";
 import ConfirmDialog from "../shared/ConfirmDialog";
-import AdminModal, {  type ModalField  } from "../shared/AdminModal";
-import {  exportCSV  } from "../shared/exportCSV";
-import {  sanitize  } from "../../../lib/sanitize";
-import {  errorMessage  } from "../../../lib/errors";
+import AdminModal, { type ModalField } from "../shared/AdminModal";
+import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
+import { errorMessage } from "../../../lib/errors";
 import type { Report, User } from "../../../lib/types";
 
 const typeOptions = [
@@ -58,7 +59,19 @@ function fmtDateTime(iso: string) {
   };
 }
 
-type PanelFns = { openCompose: () => void };
+type PanelStats = {
+  total: number;
+  pending: number;
+  ready: number;
+  rejected: number;
+  thisMonth: number;
+  avgPerDay: number;
+};
+
+type PanelFns = {
+  openCompose: () => void;
+  stats: PanelStats;
+};
 
 type ListResponse<T> = { data?: T[]; meta?: PageMeta };
 
@@ -144,6 +157,33 @@ export default function ReportsPanel({
       .finally(() => setLoading(false));
   }, [page, limit, typeFilter, statusFilter, search]);
 
+  const stats = useMemo<PanelStats>(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+
+    const pending = list.filter((r) => r.status === "pending").length;
+    const ready = list.filter((r) => r.status === "ready").length;
+    const rejected = list.filter((r) => r.status === "rejected").length;
+
+    const thisMonth = list.filter((r) => {
+      const date = new Date(r.created_at);
+      return date.getFullYear() === year && date.getMonth() === month;
+    }).length;
+
+    const daysPassed = now.getDate();
+
+    return {
+      total: meta.total,
+      pending,
+      ready,
+      rejected,
+      thisMonth,
+      avgPerDay:
+        daysPassed > 0 ? Number((thisMonth / daysPassed).toFixed(1)) : 0,
+    };
+  }, [list, meta.total]);
+
   useEffect(() => {
     loadReports();
   }, [loadReports]);
@@ -157,8 +197,6 @@ export default function ReportsPanel({
       })
       .catch(() => {});
   }, []);
-
-
 
   const openCreate = () => {
     setEditing(null);
@@ -290,10 +328,14 @@ export default function ReportsPanel({
   // Expose controls to parent
   useEffect(() => {
     if (onReady) {
-      onReady({ openCompose: openCreate });
+      // onReady({ openCompose: openCreate });
+      onReady({
+        openCompose: openCreate,
+        stats,
+      });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onReady, stats]);
 
   const modalFields: ModalField[] = useMemo(() => {
     const cols: ModalField[] = [];

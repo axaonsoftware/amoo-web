@@ -1,24 +1,25 @@
 "use client";
-import {  memo,  useState,  useEffect,  useCallback,  useRef  } from "react";
+import { memo, useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { 
-  Search, 
-  Filter, 
-  Pencil, 
-  Trash2, 
-  KeyRound, 
+import {
+  Search,
+  Filter,
+  Pencil,
+  Trash2,
+  KeyRound,
   Loader2,
   Eye,
-  ToggleLeft } from "lucide-react";
-import {  api  } from "../../../lib/api";
-import AdminModal, {  type ModalField  } from "../shared/AdminModal";
+  ToggleLeft,
+} from "lucide-react";
+import { api, unwrapList } from "../../../lib/api";
+import AdminModal, { type ModalField } from "../shared/AdminModal";
 import ConfirmDialog from "../shared/ConfirmDialog";
 import SetPasswordDialog from "./SetPasswordDialog";
-import {  useToast  } from "../shared/useToast";
-import {  exportCSV  } from "../shared/exportCSV";
-import {  sanitize  } from "../../../lib/sanitize";
-import {  specializationTone,  statusTone  } from "./data";
-import {  errorMessage  } from "../../../lib/errors";
+import { useToast } from "../shared/useToast";
+import { exportCSV } from "../shared/exportCSV";
+import { sanitize } from "../../../lib/sanitize";
+import { specializationTone, statusTone } from "./data";
+import { errorMessage } from "../../../lib/errors";
 import type { Expert } from "../../../lib/types";
 
 const expertFields: ModalField[] = [
@@ -261,7 +262,7 @@ export default function ExpertPanel({
     setLoading(true);
     try {
       const res = await api.admin.getExperts();
-      const list = Array.isArray(res) ? res : [];
+      const list = unwrapList<AdminExpert>(res);
       if (!cancelled.current) {
         setExperts(list);
         onChanged?.(list);
@@ -408,7 +409,9 @@ export default function ExpertPanel({
         await api.admin.updateExpert(e.id, {
           status: e.status === "active" ? "inactive" : "active",
         });
-        showToast(`Expert ${e.status === "active" ? "deactivated" : "activated"}`);
+        showToast(
+          `Expert ${e.status === "active" ? "deactivated" : "activated"}`,
+        );
         loadExperts();
       } catch (err: unknown) {
         showToast(errorMessage(err, "Failed to update status"), "error");

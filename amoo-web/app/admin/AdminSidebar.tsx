@@ -1,36 +1,37 @@
 "use client";
 
-import {  usePathname  } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import {  SidebarShell  } from "@/app/components/sidebar-shell";
-import { 
-  Home, 
-  User, 
-  UserCog, 
-  CalendarDays, 
-  CalendarCheck, 
-  CreditCard, 
-  BarChart3, 
-  LayoutGrid, 
-  HandHeart, 
-  FileText, 
-  Tag, 
-  Bell, 
-  ScrollText, 
-  ShieldCheck, 
-  HelpCircle, 
-  ChevronRight, 
-  Flower2, 
-  Gift, 
-  Orbit, 
-  Layers, 
-  Package, 
-  Ticket, 
-  Inbox, 
-  MessageSquareQuote, 
-  CalendarClock, 
-  LogOut } from "lucide-react";
+import { SidebarShell } from "@/app/components/sidebar-shell";
+import {
+  Home,
+  User,
+  UserCog,
+  CalendarDays,
+  CalendarCheck,
+  CreditCard,
+  BarChart3,
+  LayoutGrid,
+  HandHeart,
+  FileText,
+  Tag,
+  Bell,
+  ScrollText,
+  ShieldCheck,
+  HelpCircle,
+  ChevronRight,
+  Flower2,
+  Gift,
+  Orbit,
+  Layers,
+  Package,
+  Ticket,
+  Inbox,
+  MessageSquareQuote,
+  CalendarClock,
+  LogOut,
+} from "lucide-react";
 
 const nav: {
   label: string;
@@ -98,7 +99,7 @@ const nav: {
     Icon: UserCog,
     href: "/admin/expert-management",
   },
-  { label: "Blog Management", Icon: FileText, href: "/admin/blog-management" },
+  // { label: "Blog Management", Icon: FileText, href: "/admin/blog-management" },
   {
     label: "Testimonials",
     Icon: MessageSquareQuote,
@@ -112,7 +113,11 @@ const nav: {
     href: "/admin/notification-management",
   },
   { label: "Activity Logs", Icon: ScrollText, href: "/admin/activity-logs" },
-  { label: "Content Management", Icon: Flower2, href: "/admin/content-management" },
+  {
+    label: "Content Management",
+    Icon: Flower2,
+    href: "/admin/content-management",
+  },
   { label: "Settings", Icon: ShieldCheck, href: "/admin/settings" },
 ];
 

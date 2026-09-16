@@ -102,7 +102,8 @@ export default function AvailabilityTable() {
   const { isRefreshing } = useAutoRefresh(load);
   const { start, stop } = useAutoRefreshTracking();
   useEffect(() => {
-    if (isRefreshing) start(); else stop();
+    if (isRefreshing) start();
+    else stop();
   }, [isRefreshing, start, stop]);
 
   const COLS = 7;
@@ -345,7 +346,7 @@ export default function AvailabilityTable() {
                   <td className="py-3.5 pl-2">
                     <div className="flex items-center justify-center gap-1">
                       <Link
-                        href={`/admin/expert-management?expert=${r.id}`}
+                        href={`/admin/expert-management?expert=${r.id}&edit=1`}
                         aria-label={`View ${sanitize(r.name)}`}
                         className="flex h-[26px] w-[26px] items-center justify-center rounded-[6px] border border-[#e4e2ec] text-[#6f6b85] hover:bg-[#f7f6fb]"
                       >
