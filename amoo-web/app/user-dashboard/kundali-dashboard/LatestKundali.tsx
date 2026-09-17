@@ -123,7 +123,6 @@ export default function LatestKundali() {
   );
   return (
     <section className="rounded-[14px] border border-[#f0e7d8] bg-white px-5 py-[18px] shadow-[0_1px_3px_rgba(43,15,71,.04)]">
-      {/* Head */}
       <div className="flex items-center justify-between">
         <h2 className="font-display text-[19px] font-bold text-[#2b0f47]">
           Your Latest Kundali
@@ -151,7 +150,6 @@ export default function LatestKundali() {
         </p>
       ) : (
         <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-[1fr_262px_1fr]">
-          {/* Left: person + details */}
           <div>
             <div className="flex items-start gap-3">
               <span className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-full bg-[#f1e9fc] text-[#7a3fc0]">
@@ -209,12 +207,10 @@ export default function LatestKundali() {
             </button>
           </div>
 
-          {/* Middle: chart */}
           <div className="flex justify-center">
             <NorthChart />
           </div>
 
-          {/* Right: planetary positions */}
           <div>
             <h3 className="text-[13px] font-semibold text-[#2b0f47]">
               Planetary Positions
@@ -247,7 +243,6 @@ export default function LatestKundali() {
         </div>
       )}
 
-      {/* Note */}
       <div className="mt-4 flex items-center gap-2.5 rounded-[10px] border border-[#efe6d6] bg-[#faf7f2] px-4 py-[11px]">
         <Info
           className="h-[15px] w-[15px] shrink-0 text-[#a08cc0]"
@@ -255,7 +250,7 @@ export default function LatestKundali() {
         />
         <p className="text-[11.5px] text-[#6c6b78]">
           The positions of planets at the time of your birth influence your
-          personality, life path and future events.
+          personality, life path and future events. 
         </p>
       </div>
     </section>

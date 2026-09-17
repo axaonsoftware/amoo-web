@@ -1,13 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import { CalendarDays, Plus } from "lucide-react";
 
-const tabs = [
-  { label: "Upcoming", active: true },
-  { label: "Requests", badge: "2" },
-  // { label: "History" },
-  // { label: "Cancelled" },
-  { label: "Completed" },
-];
+type Tab =
+  | "All"
+  | "Upcoming"
+  | "Requests"
+  | "History"
+  | "Cancelled"
+  | "Completed";
+
+type PageHeaderProps = {
+  activeTab: Tab;
+  onTabChange: (tab: Tab) => void;
+  requestCount: number;
+};
 
 function Mandala({ className }: { className?: string }) {
   const outerPetals = Array.from({ length: 12 }, (_, i) => i * 30);
@@ -27,6 +35,7 @@ function Mandala({ className }: { className?: string }) {
         <circle r="86" strokeWidth="0.8" />
         <circle r="40" strokeWidth="0.8" />
         <circle r="18" />
+
         {outerPetals.map((a) => (
           <path
             key={`o-${a}`}
@@ -34,6 +43,7 @@ function Mandala({ className }: { className?: string }) {
             transform={`rotate(${a})`}
           />
         ))}
+
         {innerPetals.map((a) => (
           <path
             key={`i-${a}`}
@@ -47,10 +57,22 @@ function Mandala({ className }: { className?: string }) {
   );
 }
 
-export default function PageHeader() {
+export default function PageHeader({
+  activeTab,
+  onTabChange,
+  requestCount,
+}: PageHeaderProps) {
+  const tabs = [
+    { label: "All" as const },
+    { label: "Upcoming" as const },
+    { label: "Requests" as const, badge: requestCount },
+    { label: "History" as const },
+    { label: "Cancelled" as const },
+    { label: "Completed" as const },
+  ];
+
   return (
     <section className="relative overflow-hidden rounded-[16px] border border-[#efe6d6] bg-white shadow-[0_1px_2px_rgba(38,17,66,.04)]">
-      {/* Mandala decoration */}
       <Mandala className="pointer-events-none absolute -right-3 -top-9 h-[172px] w-[172px] text-[#d9a441] opacity-45" />
 
       <div className="relative flex flex-wrap items-center gap-4 px-6 pb-5 pt-6">
@@ -65,6 +87,7 @@ export default function PageHeader() {
           <h1 className="font-display text-[30px] font-bold leading-[1.15] text-[#4c1d95]">
             My Consultations
           </h1>
+
           <p className="mt-1 text-[13px] text-[#6c6b78]">
             Book, manage and join your consultations easily
           </p>
@@ -79,30 +102,36 @@ export default function PageHeader() {
         </Link>
       </div>
 
-      {/* Tabs */}
       <div className="relative border-b border-[#efe6d6]">
         <nav className="flex items-center gap-8 overflow-x-auto px-6">
-          {tabs.map(({ label, badge, active }) => (
-            <button
-              key={label}
-              type="button"
-              className={
-                active
-                  ? "relative flex items-center gap-2 py-[14px] text-[14px] font-semibold text-[#5b21a8]"
-                  : "relative flex items-center gap-2 py-[14px] text-[14px] font-normal text-[#7a7686] transition-colors hover:text-[#5b21a8]"
-              }
-            >
-              <span>{label}</span>
-              {badge ? (
-                <span className="flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[#e9b85c] px-1 text-[10px] font-bold text-[#2a1148]">
-                  {badge}
-                </span>
-              ) : null}
-              {active ? (
-                <span className="absolute inset-x-0 -bottom-px h-[3px] rounded-full bg-[#5b21a8]" />
-              ) : null}
-            </button>
-          ))}
+          {tabs.map(({ label, badge }) => {
+            const active = activeTab === label;
+
+            return (
+              <button
+                key={label}
+                type="button"
+                onClick={() => onTabChange(label)}
+                className={
+                  active
+                    ? "relative flex items-center gap-2 py-[14px] text-[14px] font-semibold text-[#5b21a8]"
+                    : "relative flex items-center gap-2 py-[14px] text-[14px] font-normal text-[#7a7686] transition-colors hover:text-[#5b21a8]"
+                }
+              >
+                <span>{label}</span>
+
+                {badge !== undefined && badge > 0 ? (
+                  <span className="flex h-[19px] min-w-[19px] items-center justify-center rounded-full bg-[#e9b85c] px-1 text-[10px] font-bold text-[#2a1148]">
+                    {badge}
+                  </span>
+                ) : null}
+
+                {active ? (
+                  <span className="absolute inset-x-0 -bottom-px h-[3px] rounded-full bg-[#5b21a8]" />
+                ) : null}
+              </button>
+            );
+          })}
         </nav>
       </div>
     </section>

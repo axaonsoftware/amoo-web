@@ -6,10 +6,6 @@ import { RequireExpert, useAuth } from "@/lib/auth-context";
 import CallSocketProvider from "../components/call/CallSocketProvider";
 import IncomingCall from "../components/call/IncomingCall";
 
-export const metadata = {
-  title: "Expert Dashboard | Amoo Guru",
-};
-
 export default function AstrologerDashboardLayout({
   children,
 }: {

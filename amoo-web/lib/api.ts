@@ -572,10 +572,14 @@ export const api = {
   // user (auth)
   getProfile: () => request("GET", "/api/users/me"),
   updateProfile: (body: unknown) => request("PATCH", "/api/users/me", body),
+
   getBookings: () => request("GET", "/api/bookings"),
   createBooking: (body: unknown) => request("POST", "/api/bookings", body),
   getReports: () => request("GET", "/api/reports"),
+  getReport: (id: number) => request("GET", `/api/reports/${id}`),
   getReportStats: () => request("GET", "/api/reports/stats"),
+  createReport: (body: unknown) => request("POST", "/api/reports", body),
+
   getWallet: () => request("GET", "/api/wallet"),
   getSubscriptions: () => request("GET", "/api/subscriptions"),
   subscribe: (body: unknown) => request("POST", "/api/subscriptions", body),
