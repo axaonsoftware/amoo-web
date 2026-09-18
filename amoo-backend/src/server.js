@@ -160,14 +160,14 @@ app.get("/api/health", async (req, res) => {
   res.json(body);
 });
 
-// Attach audit helper to every request
+// Attach audit helper to every request 
 app.use(withAudit);
 
 // --- Routes ---
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/experts", expertRoutes);
-app.use("/api/services", serviceRoutes);
+app.use("/api/services", serviceRoutes); 
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/slots", slotRoutes);

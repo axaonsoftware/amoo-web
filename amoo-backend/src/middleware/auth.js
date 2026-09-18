@@ -1,203 +1,203 @@
-const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const env = require("../config/env");
-const { HttpError } = require("../utils/helpers");
-const { logAudit } = require("../utils/audit");
-const { pool } = require("../config/db");
+  const jwt = require("jsonwebtoken");
+  const crypto = require("crypto");
+  const env = require("../config/env");
+  const { HttpError } = require("../utils/helpers");
+  const { logAudit } = require("../utils/audit");
+  const { pool } = require("../config/db");
 
-const USER_TABLES = { admin: "admins", user: "users", expert: "experts" };
+  const USER_TABLES = { admin: "admins", user: "users", expert: "experts" };
 
-function resolveTable(kind) {
-  const table = USER_TABLES[kind];
-  if (!table) throw new HttpError(500, "Invalid user kind");
-  return table;
-}
+  function resolveTable(kind) {
+    const table = USER_TABLES[kind];
+    if (!table) throw new HttpError(500, "Invalid user kind");
+    return table;
+  }
 
-function signAccessToken(payload) {
-  return jwt.sign(payload, env.jwt.secret, { expiresIn: env.jwt.expiresIn });
-}
+  function signAccessToken(payload) {
+    return jwt.sign(payload, env.jwt.secret, { expiresIn: env.jwt.expiresIn });
+  }
 
-function signRefreshToken(payload) {
-  return jwt.sign(payload, env.jwt.refreshSecret, { expiresIn: env.jwt.refreshExpiresIn });
-}
+  function signRefreshToken(payload) {
+    return jwt.sign(payload, env.jwt.refreshSecret, { expiresIn: env.jwt.refreshExpiresIn });
+  }
 
-function generateJti() {
-  return crypto.randomBytes(16).toString("hex");
-}
+  function generateJti() {
+    return crypto.randomBytes(16).toString("hex");
+  }
 
-function verifyAccessToken(token) {
-  return jwt.verify(token, env.jwt.secret, { algorithms: ["HS256"] });
-}
+  function verifyAccessToken(token) {
+    return jwt.verify(token, env.jwt.secret, { algorithms: ["HS256"] });
+  }
 
-function verifyRefreshToken(token) {
-  return jwt.verify(token, env.jwt.refreshSecret, { algorithms: ["HS256"] });
-}
+  function verifyRefreshToken(token) {
+    return jwt.verify(token, env.jwt.refreshSecret, { algorithms: ["HS256"] });
+  }
 
-// Browsers authenticate via the httpOnly `access_token` cookie; non-browser API
-// clients still send an Authorization header, which takes precedence so an
-// explicit header always wins over a stale cookie.
-function extractToken(req, fromCookie = false) {
-  if (fromCookie && req.cookies && req.cookies.refresh_token) return req.cookies.refresh_token;
-  const header = req.headers.authorization || "";
-  if (header.startsWith("Bearer ")) return header.slice(7);
-  if (req.cookies && req.cookies.access_token) return req.cookies.access_token;
-  return null;
-}
+  // Browsers authenticate via the httpOnly `access_token` cookie; non-browser API
+  // clients still send an Authorization header, which takes precedence so an
+  // explicit header always wins over a stale cookie.
+  function extractToken(req, fromCookie = false) {
+    if (fromCookie && req.cookies && req.cookies.refresh_token) return req.cookies.refresh_token;
+    const header = req.headers.authorization || "";
+    if (header.startsWith("Bearer ")) return header.slice(7);
+    if (req.cookies && req.cookies.access_token) return req.cookies.access_token;
+    return null;
+  }
 
-// In-memory cache for token_version to avoid a DB round-trip on every request.
-// TTL is intentionally short (10 s) so revocation is still near-real-time while
-// redundant reads under high traffic hit the cache instead of the pool.
-const tvCache = new Map();
-const TV_TTL_MS = 10_000;
-setInterval(() => {
-  const now = Date.now();
-  for (const [k, v] of tvCache) { if (now >= v.expires) tvCache.delete(k); }
-}, TV_TTL_MS).unref();
+  // In-memory cache for token_version to avoid a DB round-trip on every request.
+  // TTL is intentionally short (10 s) so revocation is still near-real-time while
+  // redundant reads under high traffic hit the cache instead of the pool.
+  const tvCache = new Map();
+  const TV_TTL_MS = 10_000;
+  setInterval(() => {
+    const now = Date.now();
+    for (const [k, v] of tvCache) { if (now >= v.expires) tvCache.delete(k); }
+  }, TV_TTL_MS).unref();
 
-function clearTokenVersionCache() { tvCache.clear(); }
+  function clearTokenVersionCache() { tvCache.clear(); }
 
-function invalidateTokenVersion(kind, id) { tvCache.delete(`${kind}:${id}`); }
+  function invalidateTokenVersion(kind, id) { tvCache.delete(`${kind}:${id}`); }
 
-// Verify the token's embedded tokenVersion still matches the DB (revocation).
-async function checkTokenVersion(user) {
-  if (user.tokenVersion === undefined) return true; // legacy tokens: trust
-  const cacheKey = `${user.kind}:${user.id}`;
-  const cached = tvCache.get(cacheKey);
-  if (cached !== undefined) {
-    if (cached.value !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
+  // Verify the token's embedded tokenVersion still matches the DB (revocation).
+  async function checkTokenVersion(user) {
+    if (user.tokenVersion === undefined) return true; // legacy tokens: trust
+    const cacheKey = `${user.kind}:${user.id}`;
+    const cached = tvCache.get(cacheKey);
+    if (cached !== undefined) {
+      if (cached.value !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
+      return true;
+    }
+    const table = resolveTable(user.kind);
+    const result = await pool.query(`SELECT token_version FROM ${table} WHERE id = $1`, [user.id]);
+    if (!result.rows.length) throw new HttpError(401, "Account no longer exists");
+    const dbVersion = result.rows[0].token_version;
+    tvCache.set(cacheKey, { value: dbVersion, expires: Date.now() + TV_TTL_MS });
+    setTimeout(() => tvCache.delete(cacheKey), TV_TTL_MS).unref();
+    if (dbVersion !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
     return true;
   }
-  const table = resolveTable(user.kind);
-  const result = await pool.query(`SELECT token_version FROM ${table} WHERE id = $1`, [user.id]);
-  if (!result.rows.length) throw new HttpError(401, "Account no longer exists");
-  const dbVersion = result.rows[0].token_version;
-  tvCache.set(cacheKey, { value: dbVersion, expires: Date.now() + TV_TTL_MS });
-  setTimeout(() => tvCache.delete(cacheKey), TV_TTL_MS).unref();
-  if (dbVersion !== user.tokenVersion) throw new HttpError(401, "Session revoked. Please login again.");
-  return true;
-}
 
-// Require that the authenticated user's email is verified.
-// Must be placed after authRequired so req.user exists.
-//
-// The lookup table is chosen from req.user.kind. It used to always read
-// `users`, so an expert's token (whose id indexes the `experts` table) was
-// checked against whichever unrelated user happened to share that id —
-// admitting or rejecting them at random.
-function verifiedRequired(req, res, next) {
-  if (req.user.kind === "admin") return next(); // admins always pass
+  // Require that the authenticated user's email is verified.
+  // Must be placed after authRequired so req.user exists.
+  //
+  // The lookup table is chosen from req.user.kind. It used to always read
+  // `users`, so an expert's token (whose id indexes the `experts` table) was
+  // checked against whichever unrelated user happened to share that id —
+  // admitting or rejecting them at random.
+  function verifiedRequired(req, res, next) {
+    if (req.user.kind === "admin") return next(); // admins always pass
 
-  const finish = (row) => {
-    if (!row || !row.verified) {
-      return next(new HttpError(403, "Email not verified. Please verify your email first."));
+    const finish = (row) => {
+      if (!row || !row.verified) {
+        return next(new HttpError(403, "Email not verified. Please verify your email first."));
+      }
+      next();
+    };
+    if (req._verifiedUser !== undefined) return finish(req._verifiedUser);
+
+    let table;
+    try {
+      table = resolveTable(req.user.kind);
+    } catch (e) {
+      return next(e);
     }
-    next();
-  };
-  if (req._verifiedUser !== undefined) return finish(req._verifiedUser);
 
-  let table;
-  try {
-    table = resolveTable(req.user.kind);
-  } catch (e) {
-    return next(e);
-  }
-
-  pool.query(`SELECT verified FROM ${table} WHERE id = $1`, [req.user.id])
-    .then((result) => {
-      req._verifiedUser = result.rows[0] || null;
-      finish(req._verifiedUser);
-    })
-    .catch((e) => next(e));
-}
-
-// Generic require-auth; sets req.user from a verified access token.
-function authRequired(req, res, next) {
-  const token = extractToken(req);
-  if (!token) return next(new HttpError(401, "No token provided"));
-  try {
-    const decoded = verifyAccessToken(token);
-    checkTokenVersion(decoded)
-      .then(() => { req.user = decoded; next(); })
+    pool.query(`SELECT verified FROM ${table} WHERE id = $1`, [req.user.id])
+      .then((result) => {
+        req._verifiedUser = result.rows[0] || null;
+        finish(req._verifiedUser);
+      })
       .catch((e) => next(e));
-  } catch (e) {
-    next(new HttpError(401, "Invalid or expired token"));
   }
-}
 
-// Require admin-kind token. Self-verifies if a previous authRequired didn't run.
-function adminRequired(req, res, next) {
-  const finish = (decoded) => {
-    if (decoded.kind !== "admin") return next(new HttpError(403, "Admin access required"));
-    req.user = decoded;
+  // Generic require-auth; sets req.user from a verified access token.
+  function authRequired(req, res, next) {
+    const token = extractToken(req);
+    if (!token) return next(new HttpError(401, "No token provided"));
+    try {
+      const decoded = verifyAccessToken(token);
+      checkTokenVersion(decoded)
+        .then(() => { req.user = decoded; next(); })
+        .catch((e) => next(e));
+    } catch (e) {
+      next(new HttpError(401, "Invalid or expired token"));
+    }
+  }
+
+  // Require admin-kind token. Self-verifies if a previous authRequired didn't run.
+  function adminRequired(req, res, next) {
+    const finish = (decoded) => {
+      if (decoded.kind !== "admin") return next(new HttpError(403, "Admin access required"));
+      req.user = decoded;
+      next();
+    };
+    if (req.user) return finish(req.user);
+    const token = extractToken(req);
+    if (!token) return next(new HttpError(401, "No token provided"));
+    try {
+      const decoded = verifyAccessToken(token);
+      checkTokenVersion(decoded)
+        .then(() => finish(decoded))
+        .catch((e) => next(e));
+    } catch (e) {
+      next(new HttpError(401, "Invalid or expired token"));
+    }
+  }
+
+  // Require expert-kind token. Self-verifies if a previous authRequired didn't run.
+  function expertRequired(req, res, next) {
+    const finish = (decoded) => {
+      if (decoded.kind !== "expert") return next(new HttpError(403, "Expert access required"));
+      req.user = decoded;
+      next();
+    };
+    if (req.user) return finish(req.user);
+    const token = extractToken(req);
+    if (!token) return next(new HttpError(401, "No token provided"));
+    try {
+      const decoded = verifyAccessToken(token);
+      checkTokenVersion(decoded)
+        .then(() => finish(decoded))
+        .catch((e) => next(e));
+    } catch (e) {
+      next(new HttpError(401, "Invalid or expired token"));
+    }
+  }
+
+  // Attaches a `req.audit(action, entity, entityId, meta)` helper so route
+  // handlers can record audit-log entries with the acting user and full
+  // request context (IP, user-agent, referer route) filled in automatically.
+  function withAudit(req, res, next) {
+    req.audit = (action, entity, entityId, meta) => {
+      const actor = req.user || {};
+      return logAudit({
+        actor_id: actor.id || null,
+        actor_type: actor.kind || "system",
+        action,
+        entity,
+        entity_id: entityId ?? null,
+        meta,
+        ip_address: req.ip || req.socket?.remoteAddress || null,
+        user_agent: req.headers["user-agent"] || null,
+        page_or_route: req.headers["referer"] || req.originalUrl || null,
+      });
+    };
     next();
-  };
-  if (req.user) return finish(req.user);
-  const token = extractToken(req);
-  if (!token) return next(new HttpError(401, "No token provided"));
-  try {
-    const decoded = verifyAccessToken(token);
-    checkTokenVersion(decoded)
-      .then(() => finish(decoded))
-      .catch((e) => next(e));
-  } catch (e) {
-    next(new HttpError(401, "Invalid or expired token"));
   }
-}
 
-// Require expert-kind token. Self-verifies if a previous authRequired didn't run.
-function expertRequired(req, res, next) {
-  const finish = (decoded) => {
-    if (decoded.kind !== "expert") return next(new HttpError(403, "Expert access required"));
-    req.user = decoded;
-    next();
+  module.exports = {
+    signAccessToken,
+    signRefreshToken,
+    generateJti,
+    verifyAccessToken,
+    verifyRefreshToken,
+    extractToken,
+    authRequired,
+    verifiedRequired,
+    adminRequired,
+    expertRequired,
+    withAudit,
+    checkTokenVersion,
+    clearTokenVersionCache,
+    invalidateTokenVersion,
   };
-  if (req.user) return finish(req.user);
-  const token = extractToken(req);
-  if (!token) return next(new HttpError(401, "No token provided"));
-  try {
-    const decoded = verifyAccessToken(token);
-    checkTokenVersion(decoded)
-      .then(() => finish(decoded))
-      .catch((e) => next(e));
-  } catch (e) {
-    next(new HttpError(401, "Invalid or expired token"));
-  }
-}
-
-// Attaches a `req.audit(action, entity, entityId, meta)` helper so route
-// handlers can record audit-log entries with the acting user and full
-// request context (IP, user-agent, referer route) filled in automatically.
-function withAudit(req, res, next) {
-  req.audit = (action, entity, entityId, meta) => {
-    const actor = req.user || {};
-    return logAudit({
-      actor_id: actor.id || null,
-      actor_type: actor.kind || "system",
-      action,
-      entity,
-      entity_id: entityId ?? null,
-      meta,
-      ip_address: req.ip || req.socket?.remoteAddress || null,
-      user_agent: req.headers["user-agent"] || null,
-      page_or_route: req.headers["referer"] || req.originalUrl || null,
-    });
-  };
-  next();
-}
-
-module.exports = {
-  signAccessToken,
-  signRefreshToken,
-  generateJti,
-  verifyAccessToken,
-  verifyRefreshToken,
-  extractToken,
-  authRequired,
-  verifiedRequired,
-  adminRequired,
-  expertRequired,
-  withAudit,
-  checkTokenVersion,
-  clearTokenVersionCache,
-  invalidateTokenVersion,
-};
