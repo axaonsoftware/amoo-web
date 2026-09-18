@@ -193,7 +193,7 @@ export default function SettingsPage() {
                 type="text"
                 value={settings.support_phone ?? ""}
                 onChange={(e) => handleChange("support_phone", e.target.value)}
-                placeholder="+91 98765 43210"
+                placeholder="+91 98765 xxxxx"
                 className="w-full rounded-lg border border-[#E5E1F0] px-3 py-2.5 text-sm text-[#3D3752] outline-none focus:ring-2 focus:ring-purple-500"
               />
             </div>

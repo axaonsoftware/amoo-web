@@ -6,9 +6,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Testimonial } from "../../lib/types";
 
-const FALLBACK_AVATAR =
-  "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png";
-
 function StarIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -74,48 +71,18 @@ function Heading({
 }
 
 export function TestimonialsSection() {
-  const { data: raw } = useApi<unknown>(() => api.getTestimonials(), []);
+  const { data: response } = useApi<unknown>(() => api.getTestimonials(), []);
 
-  const payload = raw as { data?: Testimonial[] } | Testimonial[] | null;
-  const items: Testimonial[] = Array.isArray(payload)
-    ? (payload as Testimonial[])
-    : Array.isArray(payload?.data)
-      ? (payload?.data as Testimonial[])
+  const items: Testimonial[] = Array.isArray(response)
+    ? response
+    : Array.isArray((response as { data?: Testimonial[] })?.data)
+      ? (response as { data: Testimonial[] }).data
       : [];
 
-  const testimonials =
-    items.length >= 4
-      ? items.slice(0, 4)
-      : [
-          {
-            avatar: FALLBACK_AVATAR,
-            comment:
-              "Surinder Ji's guidance changed my life completely. Her numerology reading was so accurate.",
-            name: "\u2013 Neha Sharma",
-            rating: 5,
-          },
-          {
-            avatar: FALLBACK_AVATAR,
-            comment:
-              "Reiki healing sessions helped me overcome anxiety and stress. Highly recommended!",
-            name: "\u2013 Rajeev Verma",
-            rating: 5,
-          },
-          {
-            avatar: FALLBACK_AVATAR,
-            comment:
-              "Tarot reading was very detailed and gave me clear direction in my career.",
-            name: "\u2013 Priya Malhotra",
-            rating: 5,
-          },
-          {
-            avatar: FALLBACK_AVATAR,
-            comment:
-              "Her predictions and remedies are 100% accurate. I am truly grateful.",
-            name: "\u2013 Ankit S.",
-            rating: 5,
-          },
-        ];
+  const testimonials = items.slice(0, 4);
+
+  const FALLBACK_AVATAR =
+    "https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/t-1.png";
 
   return (
     <section className="relative overflow-hidden rounded-[16px] bg-[radial-gradient(120%_150%_at_50%_40%,#3d1662_0%,#2c1049_50%,#200b36_100%)]">
@@ -145,13 +112,15 @@ export function TestimonialsSection() {
                 key={item.name}
                 className="flex items-start gap-[14px] rounded-[10px] border border-white/10 bg-white/[0.05] px-[16px] py-[18px]"
               >
-                <Image
-                  src={item.avatar || FALLBACK_AVATAR}
-                  alt=""
-                  width={168}
-                  height={168}
-                  className="h-[62px] w-[62px] shrink-0 rounded-full border-2 border-gold/70 object-cover"
-                />
+                <div className="h-[62px] w-[62px] shrink-0 overflow-hidden rounded-full">
+                  <img
+                    src={item.avatar || FALLBACK_AVATAR}
+                    alt={item.name || "Client"}
+                    width={62}
+                    height={62}
+                    className="h-[62px] w-[62px] shrink-0 rounded-full border-2 border-gold/70 object-cover"
+                  />
+                </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-[3px] text-gold">
                     {Array.from({ length: item.rating || 5 }).map((_, i) => (
@@ -169,7 +138,7 @@ export function TestimonialsSection() {
             ))}
           </div>
           <Link
-            href="/about"
+            href="/"
             className="absolute -bottom-[4px] left-1/2 flex h-[32px] w-auto -translate-x-1/2 items-center justify-center whitespace-nowrap rounded-[6px] bg-gradient-to-b from-gold-2 to-gold-3 px-5 text-[13px] font-semibold text-[#2b0a3d]"
           >
             View More Reviews

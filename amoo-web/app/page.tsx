@@ -664,8 +664,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Software */}
-          <div className="mx-auto w-full max-w-[1336px] px-5 pt-[10px] pb-[30px]">
+          {/* <div className="mx-auto w-full max-w-[1336px] px-5 pt-[10px] pb-[30px]">
             <div className="relative">
               <div className="relative z-10 flex justify-center pb-[14px]">
                 <span className="bg-sand-2 px-4">
@@ -702,7 +701,6 @@ export default function Home() {
                   </Link>
                 ))}
 
-                {/* Bundle promo */}
                 <article className="relative flex flex-col items-center overflow-hidden rounded-[12px] bg-[radial-gradient(120%_120%_at_50%_20%,#5a1a86_0%,#3d1060_45%,#2a0a45_100%)] px-5 pt-[18px] pb-[18px] text-center">
                   <p className="text-[13px] font-medium text-white">
                     Special Bundle Offer
@@ -729,7 +727,7 @@ export default function Home() {
                 </article>
               </div>
             </div>
-          </div>
+          </div> */}
         </section>
 
         <TestimonialsSection />

@@ -39,6 +39,10 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "upload.wikimedia.org" },
       { protocol: "https", hostname: "res.cloudinary.com" },
+      {
+        protocol: "https",
+        hostname: "randomuser.me",
+      },
     ],
   },
   // Dev-only proxy: in production nginx routes /api/* straight to the backend,
