@@ -1,9 +1,10 @@
 "use client";
 
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Search, MessageSquare } from "lucide-react";
-import { api } from "@/lib/api";
 import { sanitize } from "@/lib/sanitize";
 import type { Conversation } from "@/lib/types";
 import { EmptyState, ErrorState } from "@/app/components/states";
@@ -42,7 +43,12 @@ function useConversations(refreshKey: number) {
           : Array.isArray(res)
             ? (res as Conversation[])
             : [];
-        setConversations(list);
+        const unique = Array.from(
+          new Map(
+            list.map((conversation) => [conversation.id, conversation]),
+          ).values(),
+        );
+        setConversations(unique);
       })
       .catch((e: unknown) => {
         if (gen !== genRef.current) return;
@@ -76,17 +82,19 @@ export default function ConversationList({
   onSelect: (conv: Conversation) => void;
   unreadRefresh?: number;
 }) {
-  const { conversations, loading, error, refetch } =
-    useConversations(unreadRefresh ?? 0);
+  const { user } = useAuth();
+
+  const { conversations, loading, error, refetch } = useConversations(
+    unreadRefresh ?? 0,
+  );
   const [search, setSearch] = useState("");
 
   const filtered = conversations.filter((c) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    return (
-      c.expert_name.toLowerCase().includes(q) ||
-      c.user_name.toLowerCase().includes(q)
-    );
+    const participantName =
+      user?.kind === "expert" ? c.user_name : c.expert_name;
+    return participantName?.toLowerCase().includes(q);
   });
 
   if (loading) {
@@ -145,6 +153,10 @@ export default function ConversationList({
         ) : (
           filtered.map((conv) => {
             const isActive = conv.id === activeId;
+            const participantName =
+              user?.kind === "expert" ? conv.user_name : conv.expert_name;
+            const participantAvatar =
+              user?.kind === "expert" ? conv.user_avatar : conv.expert_avatar;
             return (
               <button
                 key={conv.id}
@@ -156,17 +168,17 @@ export default function ConversationList({
               >
                 {/* Expert avatar */}
                 <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-full">
-                  {conv.expert_avatar ? (
+                  {participantAvatar ? (
                     <Image
-                      src={conv.expert_avatar}
-                      alt={conv.expert_name}
+                      src={participantAvatar}
+                      alt={participantName}
                       fill
                       sizes="44px"
                       className="object-cover"
                     />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center rounded-full bg-[#4a1c7d] text-[14px] font-bold text-white">
-                      {conv.expert_name?.charAt(0)?.toUpperCase() || "E"}
+                      {participantName?.charAt(0)?.toUpperCase() || "U"}
                     </span>
                   )}
                 </span>
@@ -174,7 +186,7 @@ export default function ConversationList({
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-[13.5px] font-semibold text-[#2b0f47]">
-                      {sanitize(conv.expert_name)}
+                      {sanitize(participantName)}
                     </p>
                     <span className="shrink-0 text-[11px] text-[#a09aab]">
                       {timeAgo(conv.last_message_at)}
@@ -182,9 +194,7 @@ export default function ConversationList({
                   </div>
                   <div className="mt-0.5 flex items-center justify-between gap-2">
                     <p className="truncate text-[12px] text-[#8b8697]">
-                      {conv.last_message_at
-                        ? "Tap to open"
-                        : "No messages yet"}
+                      {conv.last_message_at ? "Tap to open" : "No messages yet"}
                     </p>
                     {conv.unread_count > 0 && (
                       <span className="flex h-5 min-w-[20px] shrink-0 items-center justify-center rounded-full bg-[#e9b85c] px-1.5 text-[10px] font-bold text-[#2a1148]">

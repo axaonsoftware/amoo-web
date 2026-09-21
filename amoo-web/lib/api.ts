@@ -210,16 +210,33 @@ async function request(method: string, path: string, body?: unknown) {
   const idempotencyKey = isMutating ? crypto.randomUUID() : undefined;
 
   while (true) {
+    const isFormData = body instanceof FormData;
+
     const headers = await buildHeaders(
       method,
-      idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
+      isFormData
+        ? idempotencyKey
+          ? { "Idempotency-Key": idempotencyKey }
+          : {}
+        : idempotencyKey
+          ? {
+            "Content-Type": "application/json",
+            "Idempotency-Key": idempotencyKey,
+          }
+          : {
+            "Content-Type": "application/json",
+          },
     );
 
     const res = await fetchWithTimeout(`${API_URL}${path}`, {
       method,
       headers,
       credentials: "include",
-      body: body ? JSON.stringify(body) : undefined,
+      body: isFormData
+        ? body
+        : body
+          ? JSON.stringify(body)
+          : undefined,
     });
     rememberCsrfToken(res);
 
@@ -254,10 +271,25 @@ async function request(method: string, path: string, body?: unknown) {
             method,
             headers: await buildHeaders(
               method,
-              idempotencyKey ? { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey } : { "Content-Type": "application/json" },
+              isFormData
+                ? idempotencyKey
+                  ? { "Idempotency-Key": idempotencyKey }
+                  : {}
+                : idempotencyKey
+                  ? {
+                    "Content-Type": "application/json",
+                    "Idempotency-Key": idempotencyKey,
+                  }
+                  : {
+                    "Content-Type": "application/json",
+                  }
             ),
             credentials: "include",
-            body: body ? JSON.stringify(body) : undefined,
+            body: isFormData
+              ? body
+              : body
+                ? JSON.stringify(body)
+                : undefined,
           });
           rememberCsrfToken(retryRes);
           if (retryRes.status === 401 && attempt === 0) {
@@ -570,8 +602,16 @@ export const api = {
   getFaqs: () => request("GET", "/api/faqs"),
 
   // user (auth)
+
   getProfile: () => request("GET", "/api/users/me"),
   updateProfile: (body: unknown) => request("PATCH", "/api/users/me", body),
+
+  getExpertProfile: () =>
+    request("GET", "/api/experts/me"),
+
+  updateExpertProfile: (body: unknown) =>
+    request("PATCH", "/api/experts/me", body),
+
 
   getBookings: () => request("GET", "/api/bookings"),
   createBooking: (body: unknown) => request("POST", "/api/bookings", body),

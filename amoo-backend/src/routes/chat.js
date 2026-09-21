@@ -17,14 +17,21 @@ const { ok, paginated, created, fail, assertFound, parsePagination } = require("
  * (kind "user") or the expert (kind "expert") named on it.
  */
 async function loadParticipantConversation(conn, id, user) {
-  const { rows } = await conn.query("SELECT * FROM conversations WHERE id = $1", [id]);
+  const { rows } = await conn.query(
+    `SELECT *
+     FROM conversations
+     WHERE id = $1
+       AND (
+         user_id = $2
+         OR expert_id = $2
+       )`,
+    [id, Number(user.id)]
+  );
   const conv = rows[0];
-  if (!conv) return { conv: null, allowed: false };
-  if (user.kind === "admin") return { conv, allowed: true };
-  const allowed =
-    (user.kind === "user" && conv.user_id === user.id) ||
-    (user.kind === "expert" && conv.expert_id === user.id);
-  return { conv, allowed };
+  if (!conv) {
+    return { conv: null, allowed: false };
+  }
+  return { conv, allowed: true };
 }
 
 // POST /api/chat/conversations  (start or resume a conversation)
@@ -79,14 +86,21 @@ router.get(
     // Each caller sees the counterparty's name/avatar, plus their own unread
     // count — resolved in SQL so the client does not issue one request per row.
     const base = `
-      SELECT c.*,
-             u.name   AS user_name,   u.avatar AS user_avatar,
-             e.name   AS expert_name, e.avatar AS expert_avatar,
-             COUNT(CASE WHEN m.is_read = false AND m.sender_type <> $1 THEN 1 END) AS unread_count
-      FROM conversations c
-      JOIN users   u ON u.id = c.user_id
-      JOIN experts e ON e.id = c.expert_id
-      LEFT JOIN messages m ON m.conversation_id = c.id`;
+  SELECT c.*,
+         u.name AS user_name,
+         u.avatar AS user_avatar,
+         e.name AS expert_name,
+         e.avatar AS expert_avatar,
+         COALESCE((
+           SELECT COUNT(*)
+           FROM messages m
+           WHERE m.conversation_id = c.id
+             AND m.is_read = false
+             AND m.sender_type <> $1
+         ), 0) AS unread_count
+  FROM conversations c
+  JOIN users u ON u.id = c.user_id
+  JOIN experts e ON e.id = c.expert_id`;
 
     const viewerType = req.user.kind === "expert" ? "expert" : "user";
 
@@ -111,7 +125,10 @@ router.get(
       countParams
     );
     const { rows } = await pool.query(
-      `${base} ${selectWhere} GROUP BY c.id, u.name, u.avatar, e.name, e.avatar ORDER BY c.last_message_at IS NULL, c.last_message_at DESC LIMIT $${selectParams.length + 1} OFFSET $${selectParams.length + 2}`,
+      `${base} ${selectWhere}
+   ORDER BY c.last_message_at IS NULL, c.last_message_at DESC
+   LIMIT $${selectParams.length + 1}
+   OFFSET $${selectParams.length + 2}`,
       [...selectParams, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
@@ -183,22 +200,24 @@ router.post(
       }
 
       const result = await client.query(
-        "INSERT INTO messages (conversation_id, sender_type, sender_id, content) VALUES ($1, $2, $3, $4) RETURNING id",
+        "INSERT INTO messages (conversation_id, sender_type, sender_id, content) VALUES ($1, $2, $3, $4) RETURNING id, conversation_id, sender_type, sender_id, content, is_read, created_at",
         [conv.id, req.user.kind, req.user.id, content]
       );
-      // Written in the same transaction as the insert so the ordering used by
-      // the conversation list can never disagree with the messages themselves.
-      await client.query("UPDATE conversations SET last_message_at = NOW() WHERE id = $1", [conv.id]);
-      await client.query('COMMIT');
-
-      req.audit("chat-message", "conversation", conv.id, { message_id: result.rows[0].id });
-      created(res, {
-        id: result.rows[0].id,
-        conversation_id: conv.id,
-        sender_type: req.user.kind,
-        sender_id: req.user.id,
-        content,
+      await client.query(
+        "UPDATE conversations SET last_message_at = NOW() WHERE id = $1",
+        [conv.id]
+      );
+      await client.query("COMMIT");
+      const message = result.rows[0];
+      const io = req.app.get("io");
+      if (io) {
+        io.to(`chat:${conv.id}`).emit("chat:message", message);
+      }
+      req.audit("chat-message", "conversation", conv.id, {
+        message_id: message.id,
       });
+
+      created(res, message);
     } catch (e) {
       await client.query('ROLLBACK');
       throw e;

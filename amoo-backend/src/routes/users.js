@@ -5,6 +5,9 @@ const { authRequired, adminRequired } = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, fail, assertFound, parsePagination } = require("../utils/response");
+const path = require("path");
+const { upload } = require("../middleware/upload");
+const { saveFile } = require("../config/storage");
 
 const USER_UPDATE_ALLOWED = ["name", "email", "phone", "role", "status", "verified"];
 // Fields a user may change on their own profile. `email` is excluded on
@@ -89,11 +92,51 @@ router.get(
 router.patch(
   "/me",
   authRequired,
+  upload.single("avatar"),
   validate("updateProfile"),
   asyncHandler(async (req, res) => {
-    const { setClause, values } = buildUpdate(req.body, SELF_UPDATE_ALLOWED);
-    await pool.query(`UPDATE users SET ${setClause} WHERE id = $${values.length + 1}`, [...values, req.user.id]);
-    const { rows } = await pool.query(`SELECT ${USER_SELECT} FROM users WHERE id = $1`, [req.user.id]);
+    const updateData = { ...req.body };
+
+    if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const unique =
+        Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
+
+      const saved = await saveFile(
+        req.file.buffer,
+        unique,
+        req.file.mimetype
+      );
+
+      updateData.avatar = saved.url;
+    }
+
+    console.log("USER FILE:", req.file);
+    console.log("USER UPDATE DATA:", updateData);
+
+    const { setClause, values } = buildUpdate(
+      updateData,
+      SELF_UPDATE_ALLOWED
+    );
+
+    if (!setClause) {
+      return fail(res, 400, "No valid fields to update");
+    }
+
+    await pool.query(
+      `UPDATE users
+       SET ${setClause}
+       WHERE id = $${values.length + 1}`,
+      [...values, req.user.id]
+    );
+
+    const { rows } = await pool.query(
+      `SELECT ${USER_SELECT}
+       FROM users
+       WHERE id = $1`,
+      [req.user.id]
+    );
+
     ok(res, rows[0]);
   })
 );

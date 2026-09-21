@@ -6,6 +6,8 @@ import { connectChatWebSocket, type WsHandle } from "@/lib/ws";
 import type { Conversation, ConversationMeta, ChatMessage } from "@/lib/types";
 import ConversationList from "./ConversationList";
 import MessageThread from "./MessageThread";
+import { useSearchParams } from "next/navigation";
+import api from "@/lib/api";
 
 type AddMessageHandler = (msg: ChatMessage) => void;
 type UpdateReadHandler = (convId: number) => void;
@@ -13,6 +15,8 @@ type TypingHandler = (convId: number, userId: number, userKind: string) => void;
 
 export default function ChatApp() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const conversationId = Number(searchParams.get("conversationId"));
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
   const [showThread, setShowThread] = useState(false);
   const [ws, setWs] = useState<WsHandle | null>(null);
@@ -64,7 +68,6 @@ export default function ChatApp() {
           created_at: msg.createdAt,
           client_id: msg.client_id,
         });
-        setUnreadRefresh((n) => n + 1);
       },
       read: (data: unknown) => {
         const msg = data as { conversationId: number };
@@ -126,6 +129,30 @@ export default function ChatApp() {
         user_avatar: activeConv.user_avatar,
       }
     : null;
+
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const loadSelectedConversation = async () => {
+      try {
+        const response = await api.chat.getConversations();
+        const conversations = Array.isArray(response)
+          ? response
+          : (response?.data ?? []);
+        const conversation = conversations.find(
+          (item: Conversation) => item.id === conversationId,
+        );
+        if (conversation) {
+          setActiveConv(conversation);
+          setShowThread(true);
+        }
+      } catch (error) {
+        console.error("Failed to open conversation:", error);
+      }
+    };
+
+    loadSelectedConversation();
+  }, [conversationId]);
 
   return (
     <main

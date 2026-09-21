@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useRef, useState } from "react";
 import {
   Camera,
   Crown,
@@ -18,9 +19,13 @@ import {
 } from "lucide-react";
 import { useApi, useApiList } from "@/lib/useApi";
 import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import type { Subscription, User } from "@/lib/types";
 
-type ProfilePayload = { user?: User } & Partial<User>;
+type ProfilePayload = {
+  user?: User;
+  expert?: User;
+} & Partial<User>;
 
 const settingsNav = [
   { label: "Account & Profile", Icon: UserRound, active: true },
@@ -33,17 +38,64 @@ const settingsNav = [
 ];
 
 export default function ProfileCard() {
+  const { isExpert } = useAuth();
+
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const {
     data: profile,
     loading,
     error,
-  } = useApi<ProfilePayload>(() => api.getProfile());
+    refetch,
+  } = useApi<ProfilePayload>(() =>
+    isExpert ? api.getExpertProfile() : api.getProfile(),
+  );
   // /api/subscriptions is paginated -> `{ data, meta }`, never a bare array.
   const { items: subs } = useApiList<Subscription>(() =>
     api.getSubscriptions(),
   );
-  const user = (profile?.user || profile || {}) as User;
+  const user = (profile?.expert || profile?.user || profile || {}) as User;
   const hasPremium = subs.some((s) => s.status === "active");
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      e.target.value = "";
+      return;
+    }
+
+    try {
+      setUploading(true);
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      if (isExpert) {
+        await api.updateExpertProfile(formData);
+      } else {
+        await api.updateProfile(formData);
+      }
+
+      await refetch();
+    } catch (err) {
+      console.error("Avatar update failed:", err);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
+  };
+
+  const avatarUrl = user.avatar
+    ? user.avatar.startsWith("http")
+      ? user.avatar
+      : `http://localhost:4000${user.avatar}`
+    : "";
+  console.log("AVATAR URL:", avatarUrl);
+
   return (
     <div className="overflow-hidden rounded-[16px] border border-[#efe6d6] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       {loading ? (
@@ -57,27 +109,55 @@ export default function ProfileCard() {
         <div className="px-5 pt-7 pb-5">
           {/* Avatar */}
           <div className="relative mx-auto h-[128px] w-[128px]">
-            <span className="block h-full w-full overflow-hidden rounded-full ring-[3px] ring-[#e9b85c] ring-offset-[3px] ring-offset-white">
-              <Image
-                src={
-                  user.avatar ||
-                  "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=256&q=80"
-                }
-                alt={user.name || "User"}
-                width={128}
-                height={128}
-                className="h-full w-full object-cover"
-              />
-            </span>
+            <button
+              type="button"
+              onClick={() => setProfileOpen(true)}
+              className="block h-full w-full overflow-hidden rounded-full ring-[3px] ring-[#e9b85c] ring-offset-[3px] ring-offset-white"
+              aria-label="View profile"
+            >
+              {user.avatar ? (
+                <img
+                  src={avatarUrl}
+                  alt={user.name || "User"}
+                  className="h-full w-full object-cover"
+                  onError={(e) => {
+                    console.error(
+                      "AVATAR LOAD FAILED:",
+                      avatarUrl,
+                      e.currentTarget.src,
+                    );
+                  }}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-[#f1e9fb] text-[40px] font-bold text-[#6b3fa0]">
+                  {(user.name || "U").charAt(0).toUpperCase()}
+                </div>
+              )}
+            </button>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleAvatarChange}
+            />
+
             <button
               type="button"
               aria-label="Change photo"
-              className="absolute bottom-[2px] right-[6px] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#6b3fa0] ring-[3px] ring-white"
+              disabled={uploading}
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute bottom-[2px] right-[6px] flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#6b3fa0] ring-[3px] ring-white disabled:opacity-60"
             >
-              <Camera
-                className="h-[16px] w-[16px] text-white"
-                strokeWidth={1.9}
-              />
+              {uploading ? (
+                <Loader2 className="h-[16px] w-[16px] animate-spin text-white" />
+              ) : (
+                <Camera
+                  className="h-[16px] w-[16px] text-white"
+                  strokeWidth={1.9}
+                />
+              )}
             </button>
           </div>
 
@@ -92,7 +172,11 @@ export default function ProfileCard() {
                 fill="#e9a11e"
                 strokeWidth={1.5}
               />
-              {hasPremium ? "Premium User" : "Free User"}
+              {isExpert
+                ? "Astrologer"
+                : hasPremium
+                  ? "Premium User"
+                  : "Free User"}
             </span>
           </div>
 
@@ -167,6 +251,82 @@ export default function ProfileCard() {
           </button>
         ))}
       </nav>
+
+      {profileOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setProfileOpen(false)}
+        >
+          <div
+            className="w-full max-w-[380px] rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center">
+              <div className="h-[120px] w-[120px] overflow-hidden rounded-full ring-[3px] ring-[#e9b85c] ring-offset-[3px]">
+                {user.avatar ? (
+                  <img
+                    src={avatarUrl}
+                    alt={user.name || "User"}
+                    className="h-full w-full object-cover"
+                    onError={(e) => {
+                      console.error(
+                        "AVATAR LOAD FAILED:",
+                        avatarUrl,
+                        e.currentTarget.src,
+                      );
+                    }}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-[#f1e9fb] text-[40px] font-bold text-[#6b3fa0]">
+                    {(user.name || "U").charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+
+              <h3 className="mt-4 text-[21px] font-bold text-[#2b0f47]">
+                {user.name || "User"}
+              </h3>
+
+              <span className="mt-2 rounded-full bg-[#f1e9fb] px-3 py-1 text-[12px] font-semibold text-[#6b3fa0]">
+                {isExpert
+                  ? "Astrologer"
+                  : hasPremium
+                    ? "Premium User"
+                    : "Free User"}
+              </span>
+
+              <div className="mt-5 w-full space-y-3">
+                <div className="flex items-center gap-3 text-[13px] text-[#2b0f47]">
+                  <Mail className="h-4 w-4 text-[#6b3fa0]" />
+                  <span>{user.email || "—"}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-[13px] text-[#2b0f47]">
+                  <Phone className="h-4 w-4 text-[#6b3fa0]" />
+                  <span>{user.phone || "—"}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-[13px] text-[#2b0f47]">
+                  <MapPin className="h-4 w-4 text-[#6b3fa0]" />
+                  <span>
+                    {[user.city, user.state, user.country]
+                      .filter(Boolean)
+                      .join(", ") || "—"}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setProfileOpen(false)}
+                className="mt-6 w-full rounded-lg bg-[#6b3fa0] py-2.5 text-sm font-semibold text-white"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

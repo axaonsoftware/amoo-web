@@ -147,6 +147,14 @@ if (env.nodeEnv !== "test") {
 // only via the authenticated /api/uploads/:id/download route (owner or admin),
 // which prevents unauthenticated access to (potentially private) user files.
 
+app.use(generateCsrfToken);
+app.use(csrfGuard);
+
+const { localDir } = require("./config/storage");
+app.use("/uploads", express.static(localDir));
+
+morgan.token("req-id", (req) => req.id || "-");
+
 // Health check (includes DB probe — only reports detail in non-production)
 app.get("/api/health", async (req, res) => {
   let db = "ok";
@@ -167,7 +175,7 @@ app.use(withAudit);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/experts", expertRoutes);
-app.use("/api/services", serviceRoutes); 
+app.use("/api/services", serviceRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/slots", slotRoutes);
@@ -289,6 +297,8 @@ if (require.main === module) {
     },
   });
 
+  app.set("io", io);
+
   io.on("connection", (socket) => {
     console.log("SOCKET CONNECTED:", socket.id);
     socket.on("join:user", (userId) => {
@@ -301,8 +311,19 @@ if (require.main === module) {
       socket.join(`expert:${expertId}`);
     });
 
+    socket.on("chat:join", async (data) => {
+      const conversationId = Number(data?.conversationId);
+      if (!conversationId) return;
+      socket.join(`chat:${conversationId}`);
+    });
+    socket.on("chat:leave", async (data) => {
+      const conversationId = Number(data?.conversationId);
+      if (!conversationId) return;
+      socket.leave(`chat:${conversationId}`);
+    });
+
     socket.on("call:start", async (data) => {
-      console.log("🔥 CALL START RECEIVED:", data);    
+      console.log("🔥 CALL START RECEIVED:", data);
       try {
         const { pool } = require("./config/db");
 

@@ -41,7 +41,7 @@ function attachChat(server) {
       const jwt = require("jsonwebtoken");
       const decoded = jwt.verify(token, env.jwt.secret, { algorithms: ["HS256"] });
       await checkTokenVersion(decoded);
-      ws._userId = decoded.id;
+      ws._userId = Number(decoded.id);
       ws._kind = decoded.kind;
     } catch {
       ws.close(4001, "Invalid or expired token");
@@ -69,6 +69,7 @@ function attachChat(server) {
     logger.info("[ws] client connected:", ws._id);
 
     ws.on("message", async (raw) => {
+      logger.info("[ws] RAW MESSAGE RECEIVED:", raw.toString());
       const now = Date.now();
       const timestamps = messageRateLimit.get(ws._id) || [];
       const recent = timestamps.filter((t) => now - t < 1000);
@@ -88,7 +89,7 @@ function attachChat(server) {
       }
 
       if (msg.type === "message") {
-        const { conversationId, content } = msg;
+        const { conversationId, content, client_id } = msg;
         if (!conversationId || !content) {
           ws.send(JSON.stringify({ type: "error", error: "conversationId and content are required" }));
           return;
@@ -133,6 +134,7 @@ function attachChat(server) {
             senderType: ws._kind,
             senderId: ws._userId,
             content,
+            client_id,
             isRead: false,
             createdAt: row.created_at.toISOString(),
           });
@@ -238,10 +240,30 @@ async function loadConversation(conversationId) {
 // Admins may observe any thread; a user only their own; an expert only their own.
 function isParticipant(ws, conv) {
   if (!ws || !conv) return false;
+
   if (ws._kind === "admin") return true;
-  if (ws._kind === "user") return conv.user_id === ws._userId;
-  if (ws._kind === "expert") return conv.expert_id === ws._userId;
-  return false;
+
+  const userId = Number(ws._userId);
+  const userKind = String(ws._kind);
+
+  const userIdMatch =
+    userKind === "user" && Number(conv.user_id) === userId;
+
+  const expertIdMatch =
+    userKind === "expert" && Number(conv.expert_id) === userId;
+
+  logger.info("[ws] participant check:", {
+    kind: userKind,
+    wsUserId: ws._userId,
+    normalizedUserId: userId,
+    conversationId: conv.id,
+    conversationUserId: conv.user_id,
+    conversationExpertId: conv.expert_id,
+    userIdMatch,
+    expertIdMatch,
+  });
+
+  return userIdMatch || expertIdMatch;
 }
 
 // Send a message to every connected client that belongs to THIS conversation,

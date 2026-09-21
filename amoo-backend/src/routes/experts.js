@@ -2,16 +2,39 @@ const express = require("express");
 const router = express.Router();
 const { pool } = require("../config/db");
 const bcrypt = require("bcryptjs");
-const { adminRequired, verifyAccessToken, extractToken, checkTokenVersion } = require("../middleware/auth");
+const {
+  adminRequired,
+  authRequired,
+  verifyAccessToken,
+  extractToken,
+  checkTokenVersion,
+} = require("../middleware/auth");
 const { asyncHandler, HttpError, buildUpdate } = require("../utils/helpers");
 const { validate, validateQuery } = require("../middleware/validate");
 const { ok, paginated, created, fail, assertFound, parsePagination } = require("../utils/response");
+const path = require("path");
+const { upload } = require("../middleware/upload");
+const { saveFile } = require("../config/storage");
 
 const EXPERT_UPDATE_ALLOWED = [
-  "name", "email", "phone", "avatar", "role_title", "bio", "specialties", "rating", "status",
+  // "name", "email", "phone", "avatar", "role_title", "bio", "specialties", "rating", "status",
+  "name",
+  "phone",
+  "avatar",
+  "dob",
+  "tob",
+  "birthplace",
+  "gender",
+  "language",
+  "country",
+  "state",
+  "city",
+  "address",
 ];
 const EXPERT_SELECT_PUBLIC = "id, name, avatar, role_title, bio, specialties, rating, status, created_at";
-const EXPERT_SELECT_FULL = "id, name, email, phone, avatar, role_title, bio, specialties, rating, status, created_at";
+// const EXPERT_SELECT_FULL = "id, name, email, phone, avatar, role_title, bio, specialties, rating, status, created_at";
+const EXPERT_SELECT_FULL =
+  "id, name, email, phone, avatar, role_title, bio, specialties, rating, status, dob, tob, birthplace, gender, language, country, state, city, address, created_at, updated_at";
 
 // GET /api/experts (public, active only) + admin sees all via ?all=1
 //
@@ -61,6 +84,80 @@ router.get(
       [...params, pageSize, offset]
     );
     paginated(res, rows, { page, pageSize, total });
+  })
+);
+
+router.get(
+  "/me",
+  authRequired,
+  asyncHandler(async (req, res) => {
+    if (req.user.kind !== "expert") {
+      return fail(res, 403, "Expert authentication required");
+    }
+
+    const { rows } = await pool.query(
+      `SELECT ${EXPERT_SELECT_FULL}
+       FROM experts
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [req.user.id]
+    );
+
+    if (assertFound(res, rows[0])) return;
+
+    ok(res, rows[0]);
+  })
+);
+
+router.patch(
+  "/me",
+  authRequired,
+  upload.single("avatar"),
+  asyncHandler(async (req, res) => {
+    if (req.user.kind !== "expert") {
+      return fail(res, 403, "Expert authentication required");
+    }
+
+    if (req.file) {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const unique =
+        Date.now() + "-" + Math.round(Math.random() * 1e9) + ext;
+
+      const saved = await saveFile(
+        req.file.buffer,
+        unique,
+        req.file.mimetype
+      );
+
+      req.body.avatar = saved.url;
+    }
+
+    const { setClause, values } = buildUpdate(
+      req.body,
+      EXPERT_UPDATE_ALLOWED
+    );
+
+    if (!setClause) {
+      return fail(res, 400, "No valid fields to update");
+    }
+
+    await pool.query(
+      `UPDATE experts
+       SET ${setClause}, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $${values.length + 1}
+       AND deleted_at IS NULL`,
+      [...values, req.user.id]
+    );
+
+    const { rows } = await pool.query(
+      `SELECT ${EXPERT_SELECT_FULL}
+       FROM experts
+       WHERE id = $1 AND deleted_at IS NULL`,
+      [req.user.id]
+    );
+
+    if (assertFound(res, rows[0])) return;
+
+    ok(res, rows[0]);
   })
 );
 

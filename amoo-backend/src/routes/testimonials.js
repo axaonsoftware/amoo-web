@@ -100,7 +100,7 @@ router.get("/avatar", asyncHandler(async (req, res) => {
   const { url } = req.query;
 
   if (!url || typeof url !== "string") {
-    return res.status(400).end();
+    return res.status(400).end(); 
   }
 
   const response = await fetch(url);

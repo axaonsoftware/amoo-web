@@ -304,6 +304,8 @@ export default function UpcomingConsultations({
                     )}
                     {c.expert_id && (
                       <StartChatButton
+                        expertId={c.expert_id ?? undefined}
+                        userId={c.user_id}
                         variant="secondary"
                         className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]"
                       />

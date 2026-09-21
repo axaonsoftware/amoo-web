@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/lib/auth-context";
 import {
   UserRound,
   Pencil,
@@ -207,13 +208,20 @@ function ReadonlyField({
 }
 
 export default function PersonalInformation() {
+  const { isExpert, loading: authLoading } = useAuth();
   const {
     data: profile,
     loading,
     error,
     refetch,
-  } = useApi<{ user?: Profile } & Partial<Profile>>(() => api.getProfile());
-  const user: Profile = profile?.user || profile || {};
+  } = useApi<
+    {
+      user?: Profile;
+      expert?: Profile;
+    } & Partial<Profile>
+  >(() => (isExpert ? api.getExpertProfile() : api.getProfile()));
+
+  const user: Profile = profile?.expert || profile?.user || profile || {};
 
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<Profile>({});
@@ -279,7 +287,10 @@ export default function PersonalInformation() {
       const tob = form.tob?.trim();
       if (tob) payload.tob = tob;
 
-      await api.updateProfile(payload);
+      // await api.updateProfile(payload);
+      await (isExpert
+        ? api.updateExpertProfile(payload)
+        : api.updateProfile(payload));
       setSaveMsg("success");
       setEditing(false);
       refetch();
