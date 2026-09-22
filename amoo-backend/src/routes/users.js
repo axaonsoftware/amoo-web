@@ -92,7 +92,7 @@ router.get(
 router.patch(
   "/me",
   authRequired,
-  upload.single("avatar"),
+  upload.single("avatar"), 
   validate("updateProfile"),
   asyncHandler(async (req, res) => {
     const updateData = { ...req.body };
