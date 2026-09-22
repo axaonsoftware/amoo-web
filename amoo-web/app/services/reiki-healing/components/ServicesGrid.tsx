@@ -62,7 +62,8 @@ export default function ServicesGrid() {
       .getServices()
       .then((res: unknown) => {
         const payload = res as
-          { data?: ReikiServiceCard[] } | ReikiServiceCard[];
+          | { data?: ReikiServiceCard[] }
+          | ReikiServiceCard[];
         const items = Array.isArray(payload)
           ? (payload as ReikiServiceCard[])
           : (payload?.data ?? []);
@@ -96,7 +97,7 @@ export default function ServicesGrid() {
   }
 
   return (
-    <section className="rounded-t-[16px] bg-white">
+    <section className="rounded-t-[12px] bg-white">
       <div className="mx-auto w-full max-w-[1336px] px-5 pt-[30px] pb-[26px]">
         <SectionHeading>Our Reiki Healing Services</SectionHeading>
 

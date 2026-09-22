@@ -154,10 +154,10 @@ export function SiteFooter() {
               Contact Us
             </h3>
             <ul className="space-y-[10px]">
-              {/* <li className="flex items-center gap-2.5 text-[11.5px] text-white/85">
+              <li className="flex items-center gap-2.5 text-[11.5px] text-white/85">
                 <PhoneIcon className="h-[14px] w-[14px] shrink-0 text-gold" />
                 {CONTACT_PHONE}
-              </li> */}
+              </li>
               <li className="flex items-center gap-2.5 text-[11.5px] text-white/85">
                 <MailIcon className="h-[14px] w-[14px] shrink-0 text-gold" />
                 {CONTACT_EMAIL}

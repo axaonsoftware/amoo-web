@@ -23,7 +23,7 @@ export default function Hero() {
   return (
     <section className="relative min-h-[420px] w-full overflow-hidden sm:min-h-[490px]">
       <Image
-        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/serviceHeroBg.png"
+        src="/reiki2.png"
         alt=""
         fill
         priority
@@ -31,9 +31,9 @@ export default function Hero() {
         className="object-cover object-center"
       />
 
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(23,4,38,0.7)_0%,rgba(23,4,38,0.4)_32%,rgba(23,4,38,0)_58%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(23,4,38,0)_0%,rgba(23,4,38,0.15)_42%,rgba(23,4,38,0.65)_72%,rgba(23,4,38,0.78)_100%)]" />
 
-      <div className="relative mx-auto h-full w-full max-w-[1336px] px-5">
+      <div className="relative mx-auto flex h-full w-full max-w-[1336px] justify-end px-5">
         <div className="w-full max-w-[560px] pt-[122px] pb-[70px]">
           <p className="flex items-center gap-2.5 text-[13px] font-semibold tracking-[0.16em] text-gold uppercase">
             <LotusIcon className="h-[16px] w-[16px]" />
@@ -75,6 +75,7 @@ export default function Hero() {
               <CalendarIcon className="h-[17px] w-[17px]" />
               Book Reiki Session
             </Link>
+
             <Link
               href="/services/reiki-healing"
               className="flex h-[48px] items-center gap-3 rounded-[8px] border border-white/50 px-[24px] text-[14px] font-medium text-white"

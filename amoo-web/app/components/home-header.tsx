@@ -19,10 +19,10 @@ type NavItem = {
 const NAV: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
-  {
-    label: "User Dashboard",
-    href: "/user-dashboard",
-  },
+  // {
+  //   label: "User Dashboard",
+  //   href: "/user-dashboard",
+  // },
   {
     label: "Services",
     href: "/services",
@@ -37,19 +37,19 @@ const NAV: NavItem[] = [
     label: "Consultation",
     href: "/consultation",
     dropdown: [
-      { label: "Overview", href: "/consultation" },
+      { label: "Consultation", href: "/consultation" },
       { label: "Pricing", href: "/consultation/consultation-pricing" },
-      { label: "select service", href: "/consultation/select-service" },
-      { label: "Consultation Mode", href: "/consultation/consultation-mode" },
-      { label: "Select Date/Time", href: "/consultation/select-date-time" },
+      // { label: "select service", href: "/consultation/select-service" },
+      // { label: "Consultation Mode", href: "/consultation/consultation-mode" },
+      // { label: "Select Date/Time", href: "/consultation/select-date-time" },
 
-      { label: "Booking", href: "/consultation/select-service" },
-      {
-        label: "Consultation Booking",
-        href: "/consultation/consultation-booking",
-      },
-      { label: "Payment", href: "/consultation/consultation-payment" },
-      { label: "Confirmation", href: "/consultation/booking-confirmation" },
+      // { label: "Booking", href: "/consultation/select-service" },
+      // {
+      //   label: "Consultation Booking",
+      //   href: "/consultation/consultation-booking",
+      // },
+      // { label: "Payment", href: "/consultation/consultation-payment" },
+      // { label: "Confirmation", href: "/consultation/booking-confirmation" },
     ],
   },
   // {
@@ -209,22 +209,27 @@ export function HomeHeader({ absolute = true }: { absolute?: boolean }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3.5">
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex h-[40px] items-center gap-2 rounded-full border border-gold/70 bg-black/35 pr-4 pl-1.5 text-[13px] font-medium text-white"
-          >
-            <span className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#25D366] text-white">
-              <WhatsAppIcon className="h-[18px] w-[18px]" />
-            </span>
-            <span className="hidden sm:inline">WhatsApp Us</span>
-          </a>
+          {!isAuthenticated && (
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex h-[40px] items-center gap-2 rounded-full border border-gold/70 bg-black/35 pr-4 pl-1.5 text-[13px] font-medium text-white"
+            >
+              <span className="flex h-[28px] w-[28px] items-center justify-center rounded-full bg-[#25D366] text-white">
+                <WhatsAppIcon className="h-[18px] w-[18px]" />
+              </span>
+              <span className="hidden sm:inline">WhatsApp Us</span>
+            </a>
+          )}
           {isAuthenticated && (
             <Link
               href="/user-dashboard"
-              className="text-[14px] font-normal text-white hover:text-gold"
+              className="flex h-[40px] items-center gap-2 rounded-[7px] border border-gold/70 bg-gradient-to-b from-[#3a1650] to-[#241035] px-5 text-[13px] font-semibold text-gold shadow-[0_4px_14px_rgba(212,175,55,0.15)] transition-all hover:border-gold hover:bg-[#3a1650] hover:shadow-[0_6px_20px_rgba(212,175,55,0.25)]"
             >
+              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-gold/15">
+                <span className="h-2 w-2 rounded-full bg-gold" />
+              </span>
               User Dashboard
             </Link>
           )}

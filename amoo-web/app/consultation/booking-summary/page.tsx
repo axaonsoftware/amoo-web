@@ -94,7 +94,7 @@ const FOOTER_COLS = [
       "Services",
       "Consultation",
       "Pricing",
-      "Blog",
+      // "Blog",
       "Contact Us",
     ],
   },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -10,6 +11,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { useRateLimit } from "../../lib/use-rate-limit";
@@ -17,29 +19,39 @@ import RateLimitAlert from "../components/RateLimitAlert";
 
 export default function ForgotPasswordForm() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const searchParams = useSearchParams();
+  const initialEmail = searchParams.get("email") || "";
+  const [email, setEmail] = useState(initialEmail);
   const [errors, setErrors] = useState<{ email?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const { isCoolingDown, remainingSeconds } = useRateLimit();
 
   function validate(): boolean {
     const newErrors: { email?: string } = {};
+
     if (!email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       newErrors.email = "Enter a valid email address";
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     if (!validate()) return;
+
     setIsLoading(true);
     setApiError(null);
+    setResendSuccess(false);
+
     try {
       await api.forgotPassword({ email });
       setSuccess(true);
@@ -50,6 +62,25 @@ export default function ForgotPasswordForm() {
       );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handleResendOtp() {
+    if (!email.trim() || resendLoading || isCoolingDown) return;
+
+    setResendLoading(true);
+    setApiError(null);
+    setResendSuccess(false);
+
+    try {
+      await api.forgotPassword({ email });
+      setResendSuccess(true);
+    } catch (err: unknown) {
+      setApiError(
+        (err as Error)?.message || "Failed to resend OTP. Please try again.",
+      );
+    } finally {
+      setResendLoading(false);
     }
   }
 
@@ -67,9 +98,19 @@ export default function ForgotPasswordForm() {
           <span className="text-amber-500 text-lg">⟝</span>
         </div>
 
+        {apiError && (
+          <div
+            role="alert"
+            className="mb-4 flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 p-3 text-red-700 text-sm w-full text-left"
+          >
+            <AlertCircle size={16} className="shrink-0" />
+            {apiError}
+          </div>
+        )}
+
         <div
           role="alert"
-          className="mb-6 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left"
+          className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left"
         >
           <CheckCircle2 size={18} className="shrink-0" />
           <span>
@@ -78,7 +119,13 @@ export default function ForgotPasswordForm() {
           </span>
         </div>
 
-        <p className="text-gray-500 text-sm mb-8">
+        {resendSuccess && (
+          <div className="mb-4 flex items-center gap-2 text-sm text-green-600">
+            <CheckCircle2 size={15} />A new OTP has been sent to your email.
+          </div>
+        )}
+
+        <p className="text-gray-500 text-sm mb-4">
           Enter the OTP on the next page to reset your password.
         </p>
 
@@ -93,6 +140,27 @@ export default function ForgotPasswordForm() {
         >
           Enter OTP <ArrowRight size={18} />
         </button>
+
+        <button
+          type="button"
+          onClick={handleResendOtp}
+          disabled={resendLoading || isCoolingDown}
+          className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-[#5B2A9D] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {resendLoading ? (
+            <>
+              <Loader2 size={15} className="animate-spin" />
+              Resending OTP...
+            </>
+          ) : (
+            <>
+              <RefreshCw size={15} />
+              Resend OTP
+            </>
+          )}
+        </button>
+
+        <RateLimitAlert remainingSeconds={remainingSeconds} />
 
         <Link
           href="/user-login"
@@ -118,6 +186,7 @@ export default function ForgotPasswordForm() {
             </h2>
             <span className="text-amber-500 text-lg">⟝</span>
           </div>
+
           <p className="text-gray-500 text-[0.9rem] mt-2">
             Enter your email and we&apos;ll send you a reset OTP
           </p>
@@ -143,26 +212,32 @@ export default function ForgotPasswordForm() {
             >
               Email Address
             </label>
+
             <div
-              className={`relative ${errors.email ? "ring-2 ring-red-300 rounded-lg" : ""}`}
+              className={`relative ${
+                errors.email ? "ring-2 ring-red-300 rounded-lg" : ""
+              }`}
             >
               <Mail
                 size={18}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-[#5B2A9D]"
               />
+
               <input
                 id="forgotpasswordform-email-address"
                 type="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (errors.email)
+                  if (errors.email) {
                     setErrors((p) => ({ ...p, email: undefined }));
+                  }
                 }}
                 placeholder="Enter your email address"
                 className="w-full pl-10 pr-3 py-3 rounded-lg border border-purple-200 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-300"
               />
             </div>
+
             {errors.email && (
               <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
                 <AlertCircle size={12} /> {errors.email}

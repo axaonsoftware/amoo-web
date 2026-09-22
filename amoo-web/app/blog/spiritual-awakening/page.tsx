@@ -280,9 +280,9 @@ export default function BlogArticlePage() {
                 Home
               </Link>
               <ChevronRightIcon className="h-[14px] w-[14px]" />
-              <Link href="/blog" className="hover:text-gold transition-colors">
+              {/* <Link href="/blog" className="hover:text-gold transition-colors">
                 Blog
-              </Link>
+              </Link> */}
               <ChevronRightIcon className="h-[14px] w-[14px]" />
               <Link href="/blog" className="hover:text-gold transition-colors">
                 Spirituality
@@ -855,8 +855,8 @@ export default function BlogArticlePage() {
                     { label: "About Us", href: "/about" },
                     { label: "Services", href: "/services" },
                     { label: "Consultations", href: "/consultation" },
-                    { label: "Software Hub", href: "/software-hub" },
-                    { label: "Blog", href: "/blog" },
+                    // { label: "Software Hub", href: "/software-hub" },
+                    // { label: "Blog", href: "/blog" },
                     { label: "Contact Us", href: "/contact" },
                   ].map((link) => (
                     <li key={link.label}>

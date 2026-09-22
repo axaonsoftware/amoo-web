@@ -697,7 +697,7 @@ export default function BlogPage() {
                     { label: "About Us", href: "/about" },
                     { label: "Services", href: "/services" },
                     { label: "Consultations", href: "/consultation" },
-                    { label: "Software Hub", href: "/software-hub" },
+                    // { label: "Software Hub", href: "/software-hub" },
                     { label: "Blog", href: "/blog" },
                     { label: "Contact Us", href: "/contact" },
                   ].map((link) => (
@@ -798,7 +798,8 @@ export default function BlogPage() {
           <div className="relative border-t border-white/10">
             <div className="mx-auto flex w-full max-w-[1336px] items-center justify-center px-5 py-[14px]">
               <p className="text-[12px] text-white/65">
-                &copy; {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
+                &copy; {new Date().getFullYear()} {SITE_NAME}. All Rights
+                Reserved.
               </p>
             </div>
           </div>

@@ -500,9 +500,9 @@ export default function Home() {
         {/* ---------------- ABOUT ---------------- */}
         <section className="rounded-[16px] bg-[#faf7f2]">
           <div className="mx-auto grid w-full max-w-[1336px] grid-cols-1 items-center gap-8 px-5 py-[26px] lg:grid-cols-[380px_1fr_400px] lg:gap-[38px]">
-            <div className="flex justify-center">
+            <div className="flex justify-center mr-20">
               <Image
-                src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooLadyP.png"
+                src="reiki.png"
                 alt="Surinder Kaur Sehgal"
                 width={890}
                 height={878}
@@ -510,7 +510,7 @@ export default function Home() {
               />
             </div>
 
-            <div>
+            <div className="ml-8">
               <p className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.12em] text-[#c08a2c] uppercase">
                 <DiamondIcon className="h-[9px] w-[9px] rotate-90" />
                 Meet Your Spiritual Guide

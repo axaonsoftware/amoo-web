@@ -49,7 +49,7 @@ export default function UserRightPanel() {
     // just produce a 400 after the round-trip.
     if (!email.trim()) {
       newErrors.email = "Email is required";
-    } 
+    }
     // else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     //   newErrors.email = "Enter a valid email address";
     // }
@@ -243,7 +243,7 @@ export default function UserRightPanel() {
                 fully implemented; this used to point at /contact, leaving a
                 working self-service reset flow completely unreachable. */}
             <Link
-              href="/forgot-password"
+              href={`/forgot-password?email=${encodeURIComponent(email)}`}
               className="text-xs font-medium text-[#5B2A9D] hover:underline"
             >
               Forgot Password?

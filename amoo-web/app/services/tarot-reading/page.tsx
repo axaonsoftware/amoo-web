@@ -204,7 +204,8 @@ export default function TarotReadingPage() {
       .getServices()
       .then((res: unknown) => {
         const payload = res as
-          { data?: TarotServiceCard[] } | TarotServiceCard[];
+          | { data?: TarotServiceCard[] }
+          | TarotServiceCard[];
         const items = Array.isArray(payload)
           ? (payload as TarotServiceCard[])
           : (payload?.data ?? []);
@@ -219,7 +220,8 @@ export default function TarotReadingPage() {
       .getTestimonials()
       .then((res: unknown) => {
         const payload = res as
-          { data?: TarotTestimonialCard[] } | TarotTestimonialCard[];
+          | { data?: TarotTestimonialCard[] }
+          | TarotTestimonialCard[];
         const list = Array.isArray(payload)
           ? (payload as TarotTestimonialCard[])
           : (payload?.data ?? []);
@@ -262,7 +264,7 @@ export default function TarotReadingPage() {
         {/* ── Hero Section ── */}
         <section className="relative min-h-[420px] w-full overflow-hidden sm:min-h-[490px]">
           <Image
-            src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/serviceHeroBg.png"
+            src="/tarro.png"
             alt=""
             fill
             priority
@@ -270,7 +272,7 @@ export default function TarotReadingPage() {
             className="object-cover object-center"
           />
 
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(23,4,38,0.7)_0%,rgba(23,4,38,0.4)_32%,rgba(23,4,38,0)_58%)]" />
+          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(23,4,38,0)_0%,rgba(23,4,38,0.12)_38%,rgba(23,4,38,0.5)_65%,rgba(23,4,38,0.78)_100%)]" />
 
           {/* Stats badge */}
           <div className="pointer-events-none absolute top-20 right-[8%] hidden lg:block">
@@ -286,7 +288,7 @@ export default function TarotReadingPage() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[1400px] px-5 lg:px-8">
+          <div className="relative mx-auto flex h-full w-full max-w-[1400px] justify-end px-5 lg:px-8">
             <div className="w-full max-w-[560px] pt-10 pb-20">
               {/* Badge */}
               <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-[6px] text-[12px] font-semibold tracking-[0.06em] text-gold uppercase">
@@ -302,7 +304,7 @@ export default function TarotReadingPage() {
               </h1>
 
               {/* Description */}
-              <p className="mt-5 w-full max-w-[460px] text-[15px] leading-[1.75] text-white/80">
+              <p className="mt-5 w-full max-w-[460px] text-[15px] leading-[1.75] text-white">
                 Tarot opens the door to clarity, insight and divine guidance.
                 Let the cards illuminate your journey and help you make
                 confident decisions for a better tomorrow.
@@ -324,11 +326,12 @@ export default function TarotReadingPage() {
                 ].map(({ icon: Icon, label }) => (
                   <li
                     key={label.join(" ")}
-                    className="w-1/3 sm:w-1/4 lg:w-[100px] text-center"
+                    className="w-1/3 text-center sm:w-1/4 lg:w-[100px]"
                   >
                     <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold/50 text-gold">
                       <Icon className="h-[22px] w-[22px]" />
                     </span>
+
                     <p className="mt-2.5 text-[11px] leading-[1.4] text-white/85">
                       {label[0]}
                       <br />
@@ -347,6 +350,7 @@ export default function TarotReadingPage() {
                   <CalendarIcon className="h-[18px] w-[18px]" />
                   Book Tarot Reading
                 </Link>
+
                 <Link
                   href="/services"
                   className="flex h-[50px] items-center gap-2.5 rounded-lg border border-white/35 px-6 text-[15px] font-medium text-white"

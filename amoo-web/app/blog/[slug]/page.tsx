@@ -347,8 +347,8 @@ export default function BlogPostPage({
                     { label: "About Us", href: "/about" },
                     { label: "Services", href: "/services" },
                     { label: "Consultations", href: "/consultation" },
-                    { label: "Software Hub", href: "/software-hub" },
-                    { label: "Blog", href: "/blog" },
+                    // { label: "Software Hub", href: "/software-hub" },
+                    // { label: "Blog", href: "/blog" },
                     { label: "Contact Us", href: "/contact" },
                   ].map((link) => (
                     <li key={link.label}>
@@ -399,7 +399,7 @@ export default function BlogPostPage({
                 </h3>
                 <ul className="space-y-[8px]">
                   {[
-                    { label: "Blogs", href: "/blog" },
+                    // { label: "Blogs", href: "/blog" },
                     { label: "FAQs", href: "/faq" },
                     { label: "Testimonials", href: "/about" },
                     { label: "Terms & Conditions", href: "/terms" },
