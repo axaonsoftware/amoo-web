@@ -5,23 +5,27 @@ import { AboutBadgeIcon, HeroDividerDiamond } from "./icons";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[500px] w-full overflow-hidden sm:min-h-[556px]">
+    <section className="relative w-full overflow-hidden bg-[#0d0616] sm:min-h-[556px]">
       <HomeHeader />
-      <Image
-        src="/about.jpeg"
-        alt=""
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-center"
-      />
 
-      {/* Left-side darkening so the copy stays legible over the artwork */}
+      <div className="relative h-[360px] w-full sm:absolute sm:inset-0 sm:h-full">
+        <Image
+          src="/about.jpeg"
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[20%_center] sm:object-center"
+        />
+      </div>
 
-      <div className="relative mx-auto h-full w-full max-w-[1336px] ">
-        <div className="flex flex-col items-center pt-[110px] text-center sm:absolute sm:top-[139px] sm:left-[64px] sm:w-[520px] sm:items-start sm:text-left">
+      <div className="absolute inset-y-0 right-0 hidden w-[60%] bg-gradient-to-l from-black/55 via-black/35 to-transparent sm:block" />
+
+      <div className="relative mx-auto w-full max-w-[1336px]">
+        <div className="flex flex-col items-center px-4 py-10 text-center sm:absolute sm:top-[139px] sm:right-[64px] sm:w-[520px] sm:items-end sm:px-0 sm:py-0 sm:text-right">
           <div className="flex items-center gap-2 text-gold">
             <AboutBadgeIcon className="h-[13px] w-[13px]" />
+
             <span className="text-[12px] font-medium tracking-[0.2em]">
               ABOUT
             </span>
@@ -39,7 +43,7 @@ export default function Hero() {
 
           <HeroDividerDiamond className="mt-[16px] h-[10px] w-[280px] text-gold sm:w-[380px]" />
 
-          <p className="mt-[16px] max-w-[480px] text-[13px] leading-[26px] text-white/85 px-4 sm:px-0">
+          <p className="mt-[16px] max-w-[480px] px-4 text-[13px] leading-[26px] text-white/85 sm:px-0">
             With over two decades of experience in spiritual sciences, Surinder
             Kaur Sehgal has guided thousands of souls towards healing, clarity,
             and a life of purpose. Her mission is simple – to help you connect
@@ -51,6 +55,7 @@ export default function Hero() {
           >
             Surinder Kaur Sehgal
           </p>
+
           <p className="mt-[12px] pb-8 text-[11px] text-white/85 sm:pl-[58px] sm:pb-0">
             Reiki Grand Master
           </p>

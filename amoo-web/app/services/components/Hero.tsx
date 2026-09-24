@@ -1,26 +1,29 @@
 import Image from "next/image";
+
 import { HomeHeader } from "../../components/home-header";
+
 import { BreadcrumbSlash, HeroLotusDivider } from "./icons";
 
 export default function Hero() {
   return (
-    <section className="relative min-h-[420px] w-full overflow-hidden sm:min-h-[490px]">
-      <Image
-        src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/serviceHeroBg.png"
-        alt="Reiki Grand Master Surinder Kaur Sehgal"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-center"
-      />
+    <section className="relative w-full overflow-hidden sm:min-h-[490px]">
+      <div className="relative h-[300px] w-full sm:absolute sm:inset-0 sm:h-full">
+        <Image
+          src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/serviceHeroBg.png"
+          alt="Reiki Grand Master Surinder Kaur Sehgal"
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-[90%_center] sm:object-center"
+        />
+      </div>
 
-      {/* Keeps the copy legible over the artwork */}
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(23,4,38,0.7)_0%,rgba(23,4,38,0.4)_32%,rgba(23,4,38,0)_58%)]" />
+      <div className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(23,4,38,0.7)_0%,rgba(23,4,38,0.4)_32%,rgba(23,4,38,0)_58%)] sm:block" />
 
       <HomeHeader />
 
-      <div className="relative mx-auto h-full w-full max-w-[1336px] px-5">
-        <div className="w-full max-w-[560px] pt-[128px] lg:pt-[145px] lg:pl-[145px]">
+      <div className="relative mx-auto w-full max-w-[1336px] px-5">
+        <div className="w-full max-w-[560px] bg-[#21102b] py-[35px] sm:bg-transparent sm:py-0 sm:pt-[128px] lg:pt-[145px] lg:pl-[145px]">
           <p className="flex items-center gap-[10px] text-[12px] font-medium tracking-[0.2em] text-gold uppercase lg:pl-[80px]">
             <BreadcrumbSlash className="h-[15px] w-[8px] shrink-0" />
             Services

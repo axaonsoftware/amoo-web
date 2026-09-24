@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -40,6 +40,27 @@ function ResetFormInner() {
   const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const { isCoolingDown, remainingSeconds } = useRateLimit();
+  const [otpRemainingSeconds, setOtpRemainingSeconds] = useState(0);
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const expiresAt = Number(
+        sessionStorage.getItem("reset_otp_expires_at") || 0,
+      );
+      if (!expiresAt) {
+        setOtpRemainingSeconds(0);
+        return;
+      }
+      const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+      setOtpRemainingSeconds(remaining);
+      if (remaining === 0) {
+        sessionStorage.removeItem("reset_otp_expires_at");
+      }
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   function validate(): boolean {
     const newErrors: typeof errors = {};
@@ -74,6 +95,7 @@ function ResetFormInner() {
     setApiError(null);
     try {
       await api.resetPassword({ email, otp, password });
+      sessionStorage.removeItem("reset_otp_expires_at");
       setSuccess(true);
     } catch (err: unknown) {
       setApiError(
@@ -222,6 +244,20 @@ function ResetFormInner() {
             {errors.otp && (
               <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
                 <AlertCircle size={12} /> {errors.otp}
+              </p>
+            )}
+
+            {otpRemainingSeconds > 0 ? (
+              <p className="mt-2 text-xs text-gray-500">
+                OTP valid for{" "}
+                <span className="font-semibold text-[#5B2A9D]">
+                  {Math.floor(otpRemainingSeconds / 60)}:
+                  {String(otpRemainingSeconds % 60).padStart(2, "0")}
+                </span>
+              </p>
+            ) : (
+              <p className="mt-2 text-xs text-red-500">
+                OTP has expired. Please request a new OTP.
               </p>
             )}
           </div>

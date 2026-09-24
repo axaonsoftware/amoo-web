@@ -28,13 +28,13 @@ export default function Expertise() {
   return (
     <section className="relative grid w-full grid-cols-1 bg-[#21102b] lg:grid-cols-[41.2%_1fr_18.5%]">
       {/* Portrait */}
-      <div className="relative min-h-[300px] w-full lg:min-h-[500px]">
+      <div className="relative h-[360px] w-full sm:h-[420px] lg:min-h-[500px] lg:h-auto">
         <Image
           src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/aboutLady2.png"
           alt="Surinder Kaur Sehgal writing"
           fill
           priority
-          sizes="(max-width: 1024px) 100vw, 41vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 41vw"
           className="object-cover object-center"
         />
       </div>

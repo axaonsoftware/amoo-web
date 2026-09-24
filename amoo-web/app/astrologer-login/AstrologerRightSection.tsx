@@ -197,10 +197,10 @@ export default function AstrologerRightPanel() {
                 destination here, made explicit so it does not look like the bug
                 that was fixed on the user login page. */}
             <Link
-              href="/contact"
+              href={`/astrologer-forgot-password?email=${encodeURIComponent(email)}`}
               className="text-xs font-medium text-[#5B2A9D] hover:underline"
             >
-              Forgot Password? Contact support
+              Forgot Password?
             </Link>
           </div>
 

@@ -528,4 +528,256 @@ router.get(
   })
 );
 
+router.post(
+  "/expert/forgot-password",
+  validate("forgotPassword"),
+  asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const { rows } = await pool.query(
+      "SELECT id, name, email FROM experts WHERE email = $1 AND deleted_at IS NULL",
+      [email]
+    );
+
+    if (rows.length) {
+      const otp = genOtp(env.otp.length || 6);
+      const expires = new Date(
+        Date.now() + env.jwt.resetExpiresMin * 60000
+      );
+
+      await pool.query(
+        `UPDATE experts
+         SET reset_otp = $1,
+             reset_otp_expires = $2,
+             reset_otp_attempts = 0
+         WHERE id = $3`,
+        [hashSecret(otp), expires, rows[0].id]
+      );
+
+      const mailResult = await sendMail({
+        to: rows[0].email,
+        subject: "Amoo Guru — Password reset OTP",
+        text: `Your password reset OTP is ${otp}. It expires in ${env.jwt.resetExpiresMin} minutes.`,
+      });
+
+      if (env.devDebugTokens) {
+        return ok(res, {
+          message: "OTP generated",
+          dev_otp: otp,
+        });
+      }
+
+      if (!mailResult.sent && env.isProd) {
+        throw new HttpError(
+          500,
+          "Password reset email service is not configured."
+        );
+      }
+    }
+
+    ok(res, {
+      message: "If the account exists, a reset OTP has been sent.",
+    });
+  })
+);
+
+router.post(
+  "/expert/reset-password",
+  validate("resetPassword"),
+  asyncHandler(async (req, res) => {
+    const { email, otp, password } = req.body;
+
+    const { rows } = await pool.query(
+      "SELECT * FROM experts WHERE email = $1 AND deleted_at IS NULL",
+      [email]
+    );
+
+    const expert = rows[0];
+
+    if (!expert || !expert.reset_otp) {
+      throw new HttpError(400, "Invalid OTP");
+    }
+
+    if ((expert.reset_otp_attempts || 0) >= env.otp.maxAttempts) {
+      throw new HttpError(400, "Invalid OTP");
+    }
+
+    if (!verifySecret(expert.reset_otp, otp)) {
+      await pool.query(
+        `UPDATE experts
+         SET reset_otp_attempts = reset_otp_attempts + 1,
+             reset_otp = CASE
+               WHEN reset_otp_attempts + 1 >= $2 THEN NULL
+               ELSE reset_otp
+             END,
+             reset_otp_expires = CASE
+               WHEN reset_otp_attempts + 1 >= $2 THEN NULL
+               ELSE reset_otp_expires
+             END
+         WHERE id = $1`,
+        [expert.id, env.otp.maxAttempts]
+      );
+
+      throw new HttpError(400, "Invalid OTP");
+    }
+
+    if (
+      !expert.reset_otp_expires ||
+      new Date(expert.reset_otp_expires) < new Date()
+    ) {
+      throw new HttpError(400, "OTP expired");
+    }
+
+    const hash = await bcrypt.hash(password, 12);
+
+    await pool.query(
+      `UPDATE experts
+       SET password_hash = $1,
+           reset_otp = NULL,
+           reset_otp_expires = NULL,
+           reset_otp_attempts = 0,
+           token_version = token_version + 1,
+           refresh_jti = NULL,
+           failed_attempts = 0,
+           locked_until = NULL
+       WHERE id = $2`,
+      [hash, expert.id]
+    );
+
+    clearAuthCookies(res);
+
+    req.audit("reset-password", "expert", expert.id);
+
+    ok(res, {
+      message: "Password updated. Please login again.",
+    });
+  })
+);
+
+router.post(
+  "/admin/forgot-password",
+  validate("forgotPassword"),
+  asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    const { rows } = await pool.query(
+      "SELECT id, name, email FROM admins WHERE email = $1 AND deleted_at IS NULL",
+      [email]
+    );
+
+    if (rows.length) {
+      const otp = genOtp(env.otp.length || 6);
+      const expires = new Date(
+        Date.now() + env.jwt.resetExpiresMin * 60000
+      );
+
+      await pool.query(
+        `UPDATE admins
+         SET reset_otp = $1,
+             reset_otp_expires = $2,
+             reset_otp_attempts = 0
+         WHERE id = $3`,
+        [hashSecret(otp), expires, rows[0].id]
+      );
+
+      const mailResult = await sendMail({
+        to: rows[0].email,
+        subject: "Amoo Guru — Admin Password Reset OTP",
+        text: `Your admin password reset OTP is ${otp}. It expires in ${env.jwt.resetExpiresMin} minutes.`,
+      });
+
+      if (env.devDebugTokens) {
+        return ok(res, {
+          message: "OTP generated",
+          dev_otp: otp,
+        });
+      }
+
+      if (!mailResult.sent && env.isProd) {
+        throw new HttpError(
+          500,
+          "Password reset email service is not configured."
+        );
+      }
+    }
+
+    ok(res, {
+      message: "If the admin account exists, a reset OTP has been sent.",
+    });
+  })
+);
+
+router.post(
+  "/admin/reset-password",
+  validate("resetPassword"),
+  asyncHandler(async (req, res) => {
+    const { email, otp, password } = req.body;
+
+    const { rows } = await pool.query(
+      "SELECT * FROM admins WHERE email = $1 AND deleted_at IS NULL",
+      [email]
+    );
+
+    const admin = rows[0];
+
+    if (!admin || !admin.reset_otp) {
+      throw new HttpError(400, "Invalid OTP");
+    }
+
+    if ((admin.reset_otp_attempts || 0) >= env.otp.maxAttempts) {
+      throw new HttpError(400, "Invalid OTP");
+    }
+
+    if (!verifySecret(admin.reset_otp, otp)) {
+      await pool.query(
+        `UPDATE admins
+         SET reset_otp_attempts = reset_otp_attempts + 1,
+             reset_otp = CASE
+               WHEN reset_otp_attempts + 1 >= $2 THEN NULL
+               ELSE reset_otp
+             END,
+             reset_otp_expires = CASE
+               WHEN reset_otp_attempts + 1 >= $2 THEN NULL
+               ELSE reset_otp_expires
+             END
+         WHERE id = $1`,
+        [admin.id, env.otp.maxAttempts]
+      );
+
+      throw new HttpError(400, "Invalid OTP");
+    }
+
+    if (
+      !admin.reset_otp_expires ||
+      new Date(admin.reset_otp_expires) < new Date()
+    ) {
+      throw new HttpError(400, "OTP expired");
+    }
+
+    const hash = await bcrypt.hash(password, 12);
+
+    await pool.query(
+      `UPDATE admins
+       SET password_hash = $1,
+           reset_otp = NULL,
+           reset_otp_expires = NULL,
+           reset_otp_attempts = 0,
+           token_version = token_version + 1,
+           refresh_jti = NULL,
+           failed_attempts = 0,
+           locked_until = NULL
+       WHERE id = $2`,
+      [hash, admin.id]
+    );
+
+    clearAuthCookies(res);
+
+    req.audit("reset-password", "admin", admin.id);
+
+    ok(res, {
+      message: "Password updated. Please login again.",
+    });
+  })
+);
+
 module.exports = router;

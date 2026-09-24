@@ -262,19 +262,20 @@ export default function TarotReadingPage() {
         {/* ── Top Promo Banner ── */}
 
         {/* ── Hero Section ── */}
-        <section className="relative min-h-[420px] w-full overflow-hidden sm:min-h-[490px]">
-          <Image
-            src="/tarro.png"
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center"
-          />
+        <section className="relative w-full overflow-hidden sm:min-h-[490px]">
+          <div className="relative h-[300px] w-full sm:absolute sm:inset-0 sm:h-full">
+            <Image
+              src="/tarro.png"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[35%_center] sm:object-center"
+            />
+          </div>
 
-          <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(23,4,38,0)_0%,rgba(23,4,38,0.12)_38%,rgba(23,4,38,0.5)_65%,rgba(23,4,38,0.78)_100%)]" />
+          <div className="pointer-events-none absolute inset-0 hidden bg-[linear-gradient(90deg,rgba(23,4,38,0)_0%,rgba(23,4,38,0.12)_38%,rgba(23,4,38,0.5)_65%,rgba(23,4,38,0.78)_100%)] sm:block" />
 
-          {/* Stats badge */}
           <div className="pointer-events-none absolute top-20 right-[8%] hidden lg:block">
             <div className="rounded-full border border-gold/40 bg-ink/60 px-5 py-3 text-center backdrop-blur-sm">
               <p className="font-display text-[28px] font-bold leading-none text-gold">
@@ -288,30 +289,26 @@ export default function TarotReadingPage() {
             </div>
           </div>
 
-          <div className="relative mx-auto flex h-full w-full max-w-[1400px] justify-end px-5 lg:px-8">
-            <div className="w-full max-w-[560px] pt-10 pb-20">
-              {/* Badge */}
+          <div className="relative mx-auto w-full max-w-[1400px] px-0 sm:px-5 lg:flex lg:h-full lg:justify-end lg:px-8">
+            <div className="w-full max-w-none bg-[#21102b] px-5 py-[35px] sm:max-w-[560px] sm:px-0 sm:py-10 lg:bg-transparent lg:py-0 lg:pt-10 lg:pb-20">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/10 px-4 py-[6px] text-[12px] font-semibold tracking-[0.06em] text-gold uppercase">
                 <StarOutlineIcon className="h-3.5 w-3.5" />
                 Tarot Reading
               </span>
 
-              {/* Heading */}
-              <h1 className="font-display mt-6 text-[38px] leading-[1.12] font-bold text-white sm:text-[44px] lg:text-[50px]">
+              <h1 className="font-display mt-6 text-[32px] leading-[1.12] font-bold text-white sm:text-[44px] lg:text-[50px]">
                 REVEAL THE CARDS.
                 <br />
                 DISCOVER YOUR PATH.
               </h1>
 
-              {/* Description */}
-              <p className="mt-5 w-full max-w-[460px] text-[15px] leading-[1.75] text-white">
+              <p className="mt-5 w-full max-w-[460px] text-[14px] leading-[1.7] text-white sm:text-[15px] sm:leading-[1.75]">
                 Tarot opens the door to clarity, insight and divine guidance.
                 Let the cards illuminate your journey and help you make
                 confident decisions for a better tomorrow.
               </p>
 
-              {/* Feature badges */}
-              <ul className="mt-8 flex flex-wrap gap-x-8 gap-y-5">
+              <ul className="mt-7 flex w-full flex-wrap gap-x-5 gap-y-5 sm:mt-8 sm:gap-x-8">
                 {[
                   { icon: EyeIcon, label: ["Accurate", "Insights"] },
                   { icon: ShieldStarIcon, label: ["Trusted", "Guidance"] },
@@ -326,13 +323,13 @@ export default function TarotReadingPage() {
                 ].map(({ icon: Icon, label }) => (
                   <li
                     key={label.join(" ")}
-                    className="w-1/3 text-center sm:w-1/4 lg:w-[100px]"
+                    className="w-[calc(50%-10px)] text-center sm:w-1/4 lg:w-[100px]"
                   >
                     <span className="mx-auto flex h-[42px] w-[42px] items-center justify-center rounded-full border border-gold/50 text-gold">
                       <Icon className="h-[22px] w-[22px]" />
                     </span>
 
-                    <p className="mt-2.5 text-[11px] leading-[1.4] text-white/85">
+                    <p className="mt-2.5 text-[10px] leading-[1.4] text-white/85 sm:text-[11px]">
                       {label[0]}
                       <br />
                       {label[1]}
@@ -341,11 +338,10 @@ export default function TarotReadingPage() {
                 ))}
               </ul>
 
-              {/* CTA buttons */}
-              <div className="mt-10 flex flex-wrap items-center gap-4">
+              <div className="mt-8 flex w-full flex-col gap-3 sm:mt-10 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                 <Link
                   href="/consultation/select-service"
-                  className="flex h-[50px] items-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 px-7 text-[15px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.25)]"
+                  className="flex h-[50px] w-full items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 px-5 text-[14px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.25)] sm:w-auto sm:px-7 sm:text-[15px]"
                 >
                   <CalendarIcon className="h-[18px] w-[18px]" />
                   Book Tarot Reading
@@ -353,7 +349,7 @@ export default function TarotReadingPage() {
 
                 <Link
                   href="/services"
-                  className="flex h-[50px] items-center gap-2.5 rounded-lg border border-white/35 px-6 text-[15px] font-medium text-white"
+                  className="flex h-[50px] w-full items-center justify-center gap-2.5 rounded-lg border border-white/35 px-5 text-[14px] font-medium text-white sm:w-auto sm:px-6 sm:text-[15px]"
                 >
                   Explore Tarot Services
                   <ArrowRightIcon className="h-[18px] w-[18px]" />
@@ -597,13 +593,13 @@ export default function TarotReadingPage() {
         </section>
 
         {/* ── Bottom CTA Banner ── */}
-        <section className="mx-auto w-full max-w-[1400px] px-5 py-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl bg-[radial-gradient(120%_160%_at_50%_50%,#2c1250_0%,#1b0c30_70%,#150826_100%)] px-8 py-10">
+        <section className="mx-auto w-full max-w-[1400px] px-3 py-4 sm:px-5 sm:py-6 lg:px-8">
+          <div className="relative overflow-hidden rounded-xl bg-[radial-gradient(120%_160%_at_50%_50%,#2c1250_0%,#1b0c30_70%,#150826_100%)] px-4 py-7 sm:rounded-2xl sm:px-8 sm:py-10">
             <div className="stars pointer-events-none absolute inset-0 opacity-60" />
 
-            <div className="relative flex flex-col items-center gap-7 lg:flex-row lg:gap-10">
+            <div className="relative flex w-full flex-col items-center gap-6 lg:flex-row lg:gap-10">
               {/* Left image */}
-              <div className="hidden lg:block">
+              <div className="hidden shrink-0 lg:block">
                 <Image
                   src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/trust-candles.png"
                   alt=""
@@ -614,34 +610,37 @@ export default function TarotReadingPage() {
               </div>
 
               {/* Text */}
-              <div className="flex-1 text-center lg:text-left">
-                <h2 className="font-display text-[28px] font-bold leading-tight text-white lg:text-[32px]">
+              <div className="w-full flex-1 text-center lg:text-left">
+                <h2 className="font-display text-[23px] leading-[1.2] font-bold text-white sm:text-[28px] lg:text-[32px]">
                   The Cards Have Answers.
                   <br />
                   Are You Ready to Discover Them?
                 </h2>
-                <p className="mt-3 text-[14px] text-white/75">
+
+                <p className="mt-3 text-[13px] leading-[1.5] text-white/75 sm:text-[14px]">
                   Book your tarot reading session with Reiki Grand Master
+                  <br className="hidden sm:block" />
                   Surinder Kaur Sehgal today.
                 </p>
               </div>
 
               {/* Buttons */}
-              <div className="flex flex-col items-center gap-3 sm:flex-row">
+              <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center">
                 <Link
                   href="/consultation/select-service"
-                  className="flex h-[50px] items-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 px-7 text-[15px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)]"
+                  className="flex h-[50px] w-full items-center justify-center gap-2.5 rounded-lg bg-gradient-to-b from-gold-2 to-gold-3 px-5 text-[14px] font-semibold text-ink shadow-[0_8px_24px_rgba(233,184,92,0.2)] sm:w-auto sm:px-7 sm:text-[15px]"
                 >
                   Book Tarot Reading Now
-                  <ArrowRightIcon className="h-[18px] w-[18px]" />
+                  <ArrowRightIcon className="h-[18px] w-[18px] shrink-0" />
                 </Link>
+
                 <Link
                   href={WHATSAPP_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex h-[50px] items-center gap-2 rounded-lg border border-white/30 px-6 text-[14px] font-medium text-white"
+                  className="flex h-[50px] w-full items-center justify-center gap-2 rounded-lg border border-white/30 px-5 text-[14px] font-medium text-white sm:w-auto sm:px-6"
                 >
-                  <WhatsAppIcon className="h-[20px] w-[20px]" />
+                  <WhatsAppIcon className="h-[20px] w-[20px] shrink-0" />
                   Chat on WhatsApp
                 </Link>
               </div>

@@ -17,10 +17,12 @@ import { api } from "../../lib/api";
 import { useRateLimit } from "../../lib/use-rate-limit";
 import RateLimitAlert from "../components/RateLimitAlert";
 
-export default function ForgotPasswordForm() {
+export default function AdminForgotPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const initialEmail = searchParams.get("email") || "";
+
   const [email, setEmail] = useState(initialEmail);
   const [errors, setErrors] = useState<{ email?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -28,26 +30,34 @@ export default function ForgotPasswordForm() {
   const [success, setSuccess] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [resendSuccess, setResendSuccess] = useState(false);
-  const { isCoolingDown, remainingSeconds } = useRateLimit();
   const [otpRemainingSeconds, setOtpRemainingSeconds] = useState(0);
+
+  const { isCoolingDown, remainingSeconds } = useRateLimit();
 
   useEffect(() => {
     const updateTimer = () => {
       const expiresAt = Number(
-        sessionStorage.getItem("reset_otp_expires_at") || 0,
+        sessionStorage.getItem("admin_reset_otp_expires_at") || 0,
       );
+
       if (!expiresAt) {
         setOtpRemainingSeconds(0);
         return;
       }
+
       const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+
       setOtpRemainingSeconds(remaining);
+
       if (remaining === 0) {
-        sessionStorage.removeItem("reset_otp_expires_at");
+        sessionStorage.removeItem("admin_reset_otp_expires_at");
       }
     };
+
     updateTimer();
+
     const interval = setInterval(updateTimer, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -61,6 +71,7 @@ export default function ForgotPasswordForm() {
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   }
 
@@ -74,9 +85,16 @@ export default function ForgotPasswordForm() {
     setResendSuccess(false);
 
     try {
-      await api.forgotPassword({ email });
+      await api.adminForgotPassword({
+        email: email.trim(),
+      });
+
       const expiresAt = Date.now() + 15 * 60 * 1000;
-      sessionStorage.setItem("reset_otp_expires_at", String(expiresAt));
+
+      sessionStorage.setItem("admin_reset_otp_expires_at", String(expiresAt));
+
+      sessionStorage.setItem("admin_reset_email", email.trim());
+
       setOtpRemainingSeconds(15 * 60);
       setSuccess(true);
     } catch (err: unknown) {
@@ -90,16 +108,30 @@ export default function ForgotPasswordForm() {
   }
 
   async function handleResendOtp() {
-    if (!email.trim() || resendLoading || isCoolingDown) return;
+    if (
+      !email.trim() ||
+      resendLoading ||
+      isCoolingDown ||
+      otpRemainingSeconds > 0
+    ) {
+      return;
+    }
 
     setResendLoading(true);
     setApiError(null);
     setResendSuccess(false);
 
     try {
-      await api.forgotPassword({ email });
+      await api.adminForgotPassword({
+        email: email.trim(),
+      });
+
       const expiresAt = Date.now() + 15 * 60 * 1000;
-      sessionStorage.setItem("reset_otp_expires_at", String(expiresAt));
+
+      sessionStorage.setItem("admin_reset_otp_expires_at", String(expiresAt));
+
+      sessionStorage.setItem("admin_reset_email", email.trim());
+
       setOtpRemainingSeconds(15 * 60);
       setResendSuccess(true);
     } catch (err: unknown) {
@@ -116,12 +148,14 @@ export default function ForgotPasswordForm() {
       <div className="flex flex-col items-center px-10 pt-12 pb-10 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
           <span className="text-amber-500 text-lg">⟜</span>
+
           <h2
             className="text-[1.4rem] lg:text-[1.9rem] leading-none font-serif font-bold"
             style={{ color: "#3E1E7A" }}
           >
             Check Your Email
           </h2>
+
           <span className="text-amber-500 text-lg">⟝</span>
         </div>
 
@@ -140,9 +174,10 @@ export default function ForgotPasswordForm() {
           className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left"
         >
           <CheckCircle2 size={18} className="shrink-0" />
+
           <span>
-            If an account exists for <strong>{email}</strong>, a 6-digit OTP has
-            been sent.
+            If an admin account exists for <strong>{email}</strong>, a 6-digit
+            OTP has been sent.
             {otpRemainingSeconds > 0 ? (
               <>
                 {" "}
@@ -170,21 +205,25 @@ export default function ForgotPasswordForm() {
         </p>
 
         <button
+          type="button"
           onClick={() =>
-            router.push(`/reset-password?email=${encodeURIComponent(email)}`)
+            router.push(
+              `/admin-reset-password?email=${encodeURIComponent(email)}`,
+            )
           }
           className="w-full flex items-center justify-center gap-2 rounded-lg py-3.5 text-white font-medium text-[0.95rem] transition active:scale-[0.99]"
           style={{
             background: "linear-gradient(90deg,#3E1E7A 0%,#6B2FA0 100%)",
           }}
         >
-          Enter OTP <ArrowRight size={18} />
+          Enter OTP
+          <ArrowRight size={18} />
         </button>
 
         <button
           type="button"
           onClick={handleResendOtp}
-          disabled={resendLoading || isCoolingDown}
+          disabled={otpRemainingSeconds > 0 || resendLoading || isCoolingDown}
           className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-[#5B2A9D] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
         >
           {resendLoading ? (
@@ -203,10 +242,11 @@ export default function ForgotPasswordForm() {
         <RateLimitAlert remainingSeconds={remainingSeconds} />
 
         <Link
-          href="/user-login"
+          href="/admin-login"
           className="mt-5 flex items-center gap-1.5 text-sm text-[#5B2A9D] font-medium hover:underline"
         >
-          <ArrowLeft size={14} /> Back to Login
+          <ArrowLeft size={14} />
+          Back to Login
         </Link>
       </div>
     );
@@ -218,12 +258,14 @@ export default function ForgotPasswordForm() {
         <div className="text-center mb-7">
           <div className="flex items-center justify-center gap-3 mb-1">
             <span className="text-amber-500 text-lg">⟜</span>
+
             <h2
               className="text-[1.4rem] lg:text-[1.9rem] leading-none font-serif font-bold"
               style={{ color: "#3E1E7A" }}
             >
-              Forgot Password?
+              Admin Forgot Password?
             </h2>
+
             <span className="text-amber-500 text-lg">⟝</span>
           </div>
 
@@ -247,7 +289,7 @@ export default function ForgotPasswordForm() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
-              htmlFor="forgotpasswordform-email-address"
+              htmlFor="admin-forgot-password-email"
               className="block text-sm font-medium text-gray-800 mb-1.5"
             >
               Email Address
@@ -264,13 +306,17 @@ export default function ForgotPasswordForm() {
               />
 
               <input
-                id="forgotpasswordform-email-address"
+                id="admin-forgot-password-email"
                 type="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+
                   if (errors.email) {
-                    setErrors((p) => ({ ...p, email: undefined }));
+                    setErrors((p) => ({
+                      ...p,
+                      email: undefined,
+                    }));
                   }
                 }}
                 placeholder="Enter your email address"
@@ -280,7 +326,8 @@ export default function ForgotPasswordForm() {
 
             {errors.email && (
               <p className="mt-1 flex items-center gap-1 text-xs text-red-500">
-                <AlertCircle size={12} /> {errors.email}
+                <AlertCircle size={12} />
+                {errors.email}
               </p>
             )}
           </div>
@@ -297,7 +344,8 @@ export default function ForgotPasswordForm() {
               <Loader2 size={18} className="animate-spin" />
             ) : (
               <>
-                Send OTP <ArrowRight size={18} />
+                Send OTP
+                <ArrowRight size={18} />
               </>
             )}
           </button>
@@ -310,10 +358,11 @@ export default function ForgotPasswordForm() {
         </div>
 
         <Link
-          href="/user-login"
+          href="/admin-login"
           className="flex items-center justify-center gap-1.5 text-sm text-[#5B2A9D] font-medium hover:underline"
         >
-          <ArrowLeft size={14} /> Back to Login
+          <ArrowLeft size={14} />
+          Back to Login
         </Link>
       </div>
     </div>

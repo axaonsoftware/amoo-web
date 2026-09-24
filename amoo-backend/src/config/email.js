@@ -20,6 +20,14 @@ function getTransporter() {
 
 // sendMail({ to, subject, text, html }) -> { sent, dev }
 async function sendMail({ to, subject, text, html }) {
+  console.log("[email] sendMail called", {
+    enabled: env.email.enabled,
+    host: env.email.host,
+    port: env.email.port,
+    user: env.email.user,
+    passLength: env.email.pass?.length,
+    from: env.email.from,
+  });
   if (!env.email.enabled) {
     if (env.isProd) {
       throw new Error(
@@ -34,12 +42,17 @@ async function sendMail({ to, subject, text, html }) {
   const t = getTransporter();
   try {
     await t.sendMail({ from: env.email.from, to, subject, text, html });
+    console.log("[email] SMTP config:", {
+      host: env.email.host,
+      port: env.email.port,
+      user: env.email.user,
+      passLength: env.email.pass?.length,
+      from: env.email.from,
+    });
     return { sent: true, dev: false };
   } catch (err) {
-    if (!env.isProd) {
-      return { sent: false, dev: true };
-    }
-    throw err;
+    console.error("[email] SMTP send failed:", err);
+    return { sent: false, dev: true, error: err.message };
   }
 }
 

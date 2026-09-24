@@ -307,10 +307,10 @@ export default function RightPanel() {
           {/* FORGOT PASSWORD */}
           <div className="mt-3 flex justify-end">
             <Link
-              href="/contact"
+              href={`/admin-forgot-password?email=${encodeURIComponent(email)}`}
               className="text-xs font-semibold text-[#5B1AC8] hover:underline"
             >
-              Forgot Password? Contact support
+              Forgot Password?
             </Link>
           </div>
 

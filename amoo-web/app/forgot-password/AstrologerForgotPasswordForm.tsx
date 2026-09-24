@@ -17,7 +17,7 @@ import { api } from "../../lib/api";
 import { useRateLimit } from "../../lib/use-rate-limit";
 import RateLimitAlert from "../components/RateLimitAlert";
 
-export default function ForgotPasswordForm() {
+export default function AstrologerForgotPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialEmail = searchParams.get("email") || "";
@@ -34,20 +34,27 @@ export default function ForgotPasswordForm() {
   useEffect(() => {
     const updateTimer = () => {
       const expiresAt = Number(
-        sessionStorage.getItem("reset_otp_expires_at") || 0,
+        sessionStorage.getItem("expert_reset_otp_expires_at") || 0,
       );
+
       if (!expiresAt) {
         setOtpRemainingSeconds(0);
         return;
       }
+
       const remaining = Math.max(0, Math.ceil((expiresAt - Date.now()) / 1000));
+
       setOtpRemainingSeconds(remaining);
+
       if (remaining === 0) {
-        sessionStorage.removeItem("reset_otp_expires_at");
+        sessionStorage.removeItem("expert_reset_otp_expires_at");
       }
     };
+
     updateTimer();
+
     const interval = setInterval(updateTimer, 1000);
+
     return () => clearInterval(interval);
   }, []);
 
@@ -61,6 +68,7 @@ export default function ForgotPasswordForm() {
     }
 
     setErrors(newErrors);
+
     return Object.keys(newErrors).length === 0;
   }
 
@@ -74,9 +82,12 @@ export default function ForgotPasswordForm() {
     setResendSuccess(false);
 
     try {
-      await api.forgotPassword({ email });
+      await api.expertForgotPassword({ email });
+
       const expiresAt = Date.now() + 15 * 60 * 1000;
-      sessionStorage.setItem("reset_otp_expires_at", String(expiresAt));
+
+      sessionStorage.setItem("expert_reset_otp_expires_at", String(expiresAt));
+
       setOtpRemainingSeconds(15 * 60);
       setSuccess(true);
     } catch (err: unknown) {
@@ -97,9 +108,12 @@ export default function ForgotPasswordForm() {
     setResendSuccess(false);
 
     try {
-      await api.forgotPassword({ email });
+      await api.expertForgotPassword({ email });
+
       const expiresAt = Date.now() + 15 * 60 * 1000;
-      sessionStorage.setItem("reset_otp_expires_at", String(expiresAt));
+
+      sessionStorage.setItem("expert_reset_otp_expires_at", String(expiresAt));
+
       setOtpRemainingSeconds(15 * 60);
       setResendSuccess(true);
     } catch (err: unknown) {
@@ -116,12 +130,14 @@ export default function ForgotPasswordForm() {
       <div className="flex flex-col items-center px-10 pt-12 pb-10 text-center">
         <div className="flex items-center justify-center gap-3 mb-4">
           <span className="text-amber-500 text-lg">⟜</span>
+
           <h2
             className="text-[1.4rem] lg:text-[1.9rem] leading-none font-serif font-bold"
             style={{ color: "#3E1E7A" }}
           >
             Check Your Email
           </h2>
+
           <span className="text-amber-500 text-lg">⟝</span>
         </div>
 
@@ -140,9 +156,10 @@ export default function ForgotPasswordForm() {
           className="mb-4 flex items-center gap-2 rounded-lg bg-green-50 border border-green-200 p-4 text-green-700 text-sm w-full text-left"
         >
           <CheckCircle2 size={18} className="shrink-0" />
+
           <span>
-            If an account exists for <strong>{email}</strong>, a 6-digit OTP has
-            been sent.
+            If an expert account exists for <strong>{email}</strong>, a 6-digit
+            OTP has been sent.
             {otpRemainingSeconds > 0 ? (
               <>
                 {" "}
@@ -171,7 +188,9 @@ export default function ForgotPasswordForm() {
 
         <button
           onClick={() =>
-            router.push(`/reset-password?email=${encodeURIComponent(email)}`)
+            router.push(
+              `/astrologer-reset-password?email=${encodeURIComponent(email)}`,
+            )
           }
           className="w-full flex items-center justify-center gap-2 rounded-lg py-3.5 text-white font-medium text-[0.95rem] transition active:scale-[0.99]"
           style={{
@@ -184,13 +203,20 @@ export default function ForgotPasswordForm() {
         <button
           type="button"
           onClick={handleResendOtp}
-          disabled={resendLoading || isCoolingDown}
+          disabled={otpRemainingSeconds > 0 || resendLoading || isCoolingDown}
           className="mt-4 flex items-center justify-center gap-2 text-sm font-medium text-[#5B2A9D] hover:underline disabled:cursor-not-allowed disabled:opacity-50"
         >
           {resendLoading ? (
             <>
               <Loader2 size={15} className="animate-spin" />
               Resending OTP...
+            </>
+          ) : otpRemainingSeconds > 0 ? (
+            <>
+              <RefreshCw size={15} />
+              Resend OTP
+              {/* ({Math.floor(otpRemainingSeconds / 60)}:
+              {String(otpRemainingSeconds % 60).padStart(2, "0")}) */}
             </>
           ) : (
             <>
@@ -203,7 +229,7 @@ export default function ForgotPasswordForm() {
         <RateLimitAlert remainingSeconds={remainingSeconds} />
 
         <Link
-          href="/user-login"
+          href="/astrologer-login"
           className="mt-5 flex items-center gap-1.5 text-sm text-[#5B2A9D] font-medium hover:underline"
         >
           <ArrowLeft size={14} /> Back to Login
@@ -218,12 +244,14 @@ export default function ForgotPasswordForm() {
         <div className="text-center mb-7">
           <div className="flex items-center justify-center gap-3 mb-1">
             <span className="text-amber-500 text-lg">⟜</span>
+
             <h2
               className="text-[1.4rem] lg:text-[1.9rem] leading-none font-serif font-bold"
               style={{ color: "#3E1E7A" }}
             >
-              Forgot Password?
+              Astrologer Forgot Password?
             </h2>
+
             <span className="text-amber-500 text-lg">⟝</span>
           </div>
 
@@ -247,7 +275,7 @@ export default function ForgotPasswordForm() {
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label
-              htmlFor="forgotpasswordform-email-address"
+              htmlFor="astrologer-forgot-password-email"
               className="block text-sm font-medium text-gray-800 mb-1.5"
             >
               Email Address
@@ -264,13 +292,17 @@ export default function ForgotPasswordForm() {
               />
 
               <input
-                id="forgotpasswordform-email-address"
+                id="astrologer-forgot-password-email"
                 type="email"
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
+
                   if (errors.email) {
-                    setErrors((p) => ({ ...p, email: undefined }));
+                    setErrors((p) => ({
+                      ...p,
+                      email: undefined,
+                    }));
                   }
                 }}
                 placeholder="Enter your email address"
@@ -310,7 +342,7 @@ export default function ForgotPasswordForm() {
         </div>
 
         <Link
-          href="/user-login"
+          href="/astrologer-login"
           className="flex items-center justify-center gap-1.5 text-sm text-[#5B2A9D] font-medium hover:underline"
         >
           <ArrowLeft size={14} /> Back to Login
