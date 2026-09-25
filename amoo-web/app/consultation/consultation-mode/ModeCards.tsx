@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { useState } from "react";
 import {
   CircleCheck,
   Clock,
@@ -13,6 +14,12 @@ import {
 } from "lucide-react";
 
 import { Ornament } from "../../components/ornament";
+import { saveConsultationData } from "../lib/consultation-storage";
+
+type Package = {
+  duration: number;
+  price: number;
+};
 
 type Mode = {
   Icon: LucideIcon;
@@ -21,15 +28,12 @@ type Mode = {
   features: string[];
   BestIcon: LucideIcon;
   bestFor: string;
-  price: string;
+  packages: Package[];
   cta: string;
   popular?: boolean;
   image: { src: string; width: number; height: number; className: string };
-  /* keeps the header + description clear of the mockup */
   pad: string;
 };
-
-const DURATIONS = ["15 Min", "30 Min", "45 Min", "60 Min"];
 
 const MODES: Mode[] = [
   {
@@ -44,7 +48,12 @@ const MODES: Mode[] = [
     ],
     BestIcon: Headphones,
     bestFor: "Quick answers, remedies & on the go guidance",
-    price: "₹499",
+    packages: [
+      { duration: 15, price: 499 },
+      { duration: 30, price: 899 },
+      { duration: 45, price: 1299 },
+      { duration: 60, price: 1599 },
+    ],
     cta: "Choose Audio Call",
     image: {
       src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&q=80",
@@ -67,7 +76,12 @@ const MODES: Mode[] = [
     ],
     BestIcon: Monitor,
     bestFor: "Detailed consultation, visual explanation & deep clarity",
-    price: "₹999",
+    packages: [
+      { duration: 15, price: 999 },
+      { duration: 30, price: 1799 },
+      { duration: 45, price: 2499 },
+      { duration: 60, price: 3199 },
+    ],
     cta: "Choose Video Call",
     popular: true,
     image: {
@@ -91,7 +105,12 @@ const MODES: Mode[] = [
     ],
     BestIcon: MessageSquare,
     bestFor: "Quick queries, written advice & detailed solutions",
-    price: "₹349",
+    packages: [
+      { duration: 15, price: 349 },
+      { duration: 30, price: 649 },
+      { duration: 45, price: 949 },
+      { duration: 60, price: 1199 },
+    ],
     cta: "Choose Chat",
     image: {
       src: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=300&q=80",
@@ -107,10 +126,22 @@ const MODES: Mode[] = [
 export default function ModeCards({
   selectedMode,
   onSelectMode,
+  onSelectPackage,
 }: {
   selectedMode: string | null;
   onSelectMode: (mode: string) => void;
+  onSelectPackage: (data: {
+    mode: "audio" | "video" | "chat";
+    duration_minutes: number;
+    amount: number;
+  }) => void;
 }) {
+  const [selectedPackage, setSelectedPackage] = useState<{
+    mode: "audio" | "video" | "chat";
+    duration_minutes: number;
+    amount: number;
+  } | null>(null);
+
   return (
     <section className="mx-auto w-full max-w-[1500px] px-[22px] pt-[26px]">
       {/* heading */}
@@ -138,14 +169,35 @@ export default function ModeCards({
 
       {/* cards */}
       <div className="mt-[22px] grid grid-cols-1 gap-[22px] lg:grid-cols-3">
-        {MODES.map((mode) => (
-          <ModeCard
-            key={mode.title}
-            mode={mode}
-            isSelected={selectedMode === mode.title}
-            onSelect={() => onSelectMode(mode.title)}
-          />
-        ))}
+        {MODES.map((mode) => {
+          const modeKey: "audio" | "video" | "chat" =
+            mode.title === "Audio Call"
+              ? "audio"
+              : mode.title === "Video Call"
+                ? "video"
+                : "chat";
+
+          return (
+            <ModeCard
+              key={mode.title}
+              mode={mode}
+              isSelected={selectedPackage?.mode === modeKey}
+              selectedPackage={selectedPackage}
+              onSelect={() => onSelectMode(mode.title)}
+              onSelectPackage={(data) => {
+                setSelectedPackage(data);
+
+                saveConsultationData({
+                  mode: data.mode,
+                  duration: data.duration_minutes,
+                  amount: data.amount,
+                });
+
+                onSelectPackage(data);
+              }}
+            />
+          );
+        })}
       </div>
     </section>
   );
@@ -154,11 +206,23 @@ export default function ModeCards({
 function ModeCard({
   mode,
   isSelected,
+  selectedPackage,
   onSelect,
+  onSelectPackage,
 }: {
   mode: Mode;
   isSelected: boolean;
+  selectedPackage: {
+    mode: "audio" | "video" | "chat";
+    duration_minutes: number;
+    amount: number;
+  } | null;
   onSelect: () => void;
+  onSelectPackage: (data: {
+    mode: "audio" | "video" | "chat";
+    duration_minutes: number;
+    amount: number;
+  }) => void;
 }) {
   const {
     Icon,
@@ -167,12 +231,19 @@ function ModeCard({
     desc,
     features,
     bestFor,
-    price,
     cta,
     popular,
     image,
     pad,
+    packages,
   } = mode;
+
+  const modeKey: "audio" | "video" | "chat" =
+    title === "Audio Call"
+      ? "audio"
+      : title === "Video Call"
+        ? "video"
+        : "chat";
 
   return (
     <article
@@ -256,12 +327,30 @@ function ModeCard({
           <div>
             <p className="text-[12px] font-medium text-[#3b2a58]">Duration</p>
             <div className="mt-[4px] flex items-center gap-[8px]">
-              {DURATIONS.map((duration, i) => (
-                <div key={duration} className="flex items-center gap-[8px]">
+              {packages.map((pkg, i) => (
+                <div key={pkg.duration} className="flex items-center gap-[8px]">
                   {i > 0 && <span className="h-[12px] w-px bg-[#c4b2e0]" />}
-                  <span className="text-[11.5px] whitespace-nowrap text-[#4a3570]">
-                    {duration}
-                  </span>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+
+                      onSelectPackage({
+                        mode: modeKey,
+                        duration_minutes: pkg.duration,
+                        amount: pkg.price,
+                      });
+                    }}
+                    className={`rounded-md px-1.5 py-1 text-[11.5px] whitespace-nowrap transition-colors ${
+                      selectedPackage?.mode === modeKey &&
+                      selectedPackage?.duration_minutes === pkg.duration
+                        ? "bg-[#5c2d9e] font-semibold text-white"
+                        : "text-[#4a3570] hover:bg-white/60"
+                    }`}
+                  >
+                    {pkg.duration} Min
+                  </button>
                 </div>
               ))}
             </div>
@@ -269,9 +358,18 @@ function ModeCard({
         </div>
 
         <div className="pl-[8px] text-right">
-          <p className="text-[11px] text-[#6b5b86]">Starting From</p>
+          <p className="text-[11px] text-[#6b5b86]">
+            {selectedPackage?.mode === modeKey
+              ? "Selected Price"
+              : "Starting From"}
+          </p>
+
           <p className="mt-[2px] text-[23px] leading-none font-bold text-[#5c2d9e]">
-            {price}
+            ₹
+            {(selectedPackage?.mode === modeKey
+              ? selectedPackage.amount
+              : packages[0].price
+            ).toLocaleString("en-IN")}
           </p>
         </div>
       </div>
@@ -281,8 +379,14 @@ function ModeCard({
         type="button"
         onClick={(e) => {
           e.stopPropagation();
+
+          if (selectedPackage?.mode !== modeKey) {
+            return;
+          }
+
           onSelect();
         }}
+        disabled={!selectedPackage || selectedPackage.mode !== modeKey}
         className="relative z-10 mt-[14px] h-[46px] w-full rounded-[8px] bg-gradient-to-b from-[#f2cd76] to-[#dfa63f] text-[15px] font-semibold text-[#2b0a3d]"
       >
         {cta}

@@ -6,8 +6,8 @@ import { WHATSAPP_URL } from "../../../lib/constants";
 export default function CtaBanner() {
   return (
     <section className="bg-white">
-      <div className="mx-auto w-full max-w-[1440px] px-[22px] pb-[34px]">
-        <div className="relative h-[150px] rounded-[16px] border border-gold/20 bg-[linear-gradient(90deg,#3d1157_0%,#2a0940_50%,#3d1157_100%)]">
+      <div className="mx-auto w-full max-w-[1440px] px-4 pb-[24px] sm:px-[22px] sm:pb-[34px]">
+        <div className="relative min-h-[330px] overflow-hidden rounded-[16px] border border-gold/20 bg-[linear-gradient(90deg,#3d1157_0%,#2a0940_50%,#3d1157_100%)] sm:min-h-[300px] md:h-[150px] md:min-h-0">
           <div className="stars pointer-events-none absolute inset-0 opacity-40" />
 
           <Image
@@ -28,21 +28,22 @@ export default function CtaBanner() {
             className="pointer-events-none absolute inset-y-0 right-0 hidden h-full w-[260px] object-contain object-right md:block"
           />
 
-          <div className="relative flex h-full items-center justify-center gap-[46px] px-5">
-            <div className="md:pl-[190px]">
-              <h2 className="font-display text-[27px] leading-tight font-bold text-gold">
+          <div className="relative flex min-h-[330px] flex-col items-center justify-center gap-[24px] px-5 py-7 text-center sm:min-h-[300px] sm:gap-[28px] md:h-full md:min-h-0 md:flex-row md:gap-[46px] md:px-5 md:py-0 md:text-left">
+            <div className="w-full md:w-auto md:pl-[190px]">
+              <h2 className="font-display text-[23px] leading-[1.25] font-bold text-gold sm:text-[27px]">
                 Ready to Get Your Answers?
               </h2>
-              <p className="mt-[8px] max-w-[330px] text-[13px] leading-[1.6] text-white/75">
+
+              <p className="mx-auto mt-[8px] max-w-[330px] text-[13px] leading-[1.6] text-white/75 md:mx-0">
                 Book your personalized consultation today and step into a life
                 of clarity, peace and abundance.
               </p>
             </div>
 
-            <div className="flex shrink-0 items-center gap-[14px] md:pr-[210px]">
+            <div className="flex w-full shrink-0 flex-col items-center gap-[12px] sm:flex-row sm:justify-center md:w-auto md:gap-[14px] md:pr-[210px]">
               <Link
                 href="/consultation/select-service"
-                className="flex h-[46px] items-center rounded-[8px] bg-gradient-to-b from-gold-2 to-gold-3 px-[24px] text-[14px] font-semibold text-[#2b0a3d]"
+                className="flex h-[46px] w-full max-w-[240px] items-center justify-center rounded-[8px] bg-gradient-to-b from-gold-2 to-gold-3 px-[18px] text-[13px] font-semibold text-[#2b0a3d] sm:w-auto sm:max-w-none sm:px-[24px] sm:text-[14px]"
               >
                 Book Consultation Now
               </Link>
@@ -51,7 +52,7 @@ export default function CtaBanner() {
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-[46px] items-center gap-2.5 rounded-[8px] border border-white/45 bg-black/20 px-[22px] text-[14px] font-medium text-white"
+                className="flex h-[46px] w-full max-w-[240px] items-center justify-center gap-2.5 rounded-[8px] border border-white/45 bg-black/20 px-[18px] text-[13px] font-medium text-white sm:w-auto sm:max-w-none sm:px-[22px] sm:text-[14px]"
               >
                 <MessageCircle size={18} />
                 Chat on WhatsApp

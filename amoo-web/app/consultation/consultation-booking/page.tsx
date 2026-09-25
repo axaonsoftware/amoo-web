@@ -211,11 +211,13 @@ const STEPS = [
 function BookingForm() {
   const router = useRouter();
   const [params, setParams] = useState({
-    service: "Reiki Healing Session",
-    mode: "Video Call",
+    service: "",
+    mode: "",
     date: "",
     time: "",
     slot_id: undefined as number | undefined,
+    duration: undefined as number | undefined,
+    amount: undefined as number | undefined,
   });
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -247,17 +249,29 @@ function BookingForm() {
   useEffect(() => {
     const stored = loadConsultationData();
     const urlParams = new URLSearchParams(window.location.search);
+
+    const storedDuration =
+      stored.duration !== undefined && stored.duration !== null
+        ? Number(stored.duration)
+        : undefined;
+
+    const storedAmount =
+      stored.amount !== undefined && stored.amount !== null
+        ? Number(stored.amount)
+        : undefined;
+
     setParams({
-      service:
-        stored.service || urlParams.get("service") || "Reiki Healing Session",
-      mode: stored.mode || urlParams.get("mode") || "Video Call",
+      service: stored.service || urlParams.get("service") || "",
+      mode: stored.mode || urlParams.get("mode") || "",
       date: stored.date || urlParams.get("date") || "",
       time: stored.time || urlParams.get("time") || "",
       slot_id: stored.slot_id || undefined,
+      duration: storedDuration,
+      amount: storedAmount,
     });
   }, []);
 
-  const { service, mode, date, time, slot_id } = params;
+  const { service, mode, date, time, slot_id, duration, amount } = params;
 
   // Price comes from the services table, never from a constant in this file —
   // it's also what the API cross-checks the booking amount against.
@@ -267,9 +281,6 @@ function BookingForm() {
       .then((row) => {
         if (live) {
           setSvcRow(row);
-          if (row.duration) {
-            saveConsultationData({ duration: row.duration });
-          }
         }
       })
       .catch(() => {});
@@ -278,10 +289,13 @@ function BookingForm() {
     };
   }, [service]);
 
-  const price = svcRow ? `₹${svcRow.price.toLocaleString("en-IN")}` : "—";
-  const total = svcRow
-    ? `₹${Math.max(0, svcRow.price - couponDiscount).toLocaleString("en-IN")}`
-    : "—";
+  const price =
+    amount !== undefined ? `₹${amount.toLocaleString("en-IN")}` : "—";
+
+  const total =
+    amount !== undefined
+      ? `₹${Math.max(0, amount - couponDiscount).toLocaleString("en-IN")}`
+      : "—";
 
   const handleBack = () => {
     router.push(
@@ -318,6 +332,10 @@ function BookingForm() {
 
   const handleContinue = async () => {
     if (!validate()) return;
+    if (duration === undefined || amount === undefined) {
+      setSubmitError("Please select a consultation duration and package.");
+      return;
+    }
     setSubmitting(true);
     setSubmitError("");
     try {
@@ -334,6 +352,8 @@ function BookingForm() {
         date,
         time,
         slot_id,
+        duration,
+        amount,
         fullName: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),
@@ -1032,7 +1052,7 @@ function BookingForm() {
                         Duration
                       </span>
                       <span className="text-[12.5px] font-medium text-ink">
-                        {svcRow?.duration || "—"}
+                        {duration !== undefined ? `${duration} Min` : "—"}
                       </span>
                     </div>
                     <div className="flex items-center gap-3">

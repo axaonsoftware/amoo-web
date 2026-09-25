@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { RequireAuth } from "../../../lib/auth-context";
-import { loadConsultationData, saveConsultationData } from "../lib/consultation-storage";
+import {
+  loadConsultationData,
+  saveConsultationData,
+} from "../lib/consultation-storage";
 import Link from "next/link";
 import {
   WHATSAPP_URL,
@@ -160,10 +163,12 @@ function SectionHeading({
 
 function FieldRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex text-sm mb-3 last:mb-0">
-      <span className="text-gray-500 w-40 shrink-0">{label}</span>
-      <span className="text-gray-500 mr-2">:</span>
-      <span className="text-purple-950 font-medium">{value}</span>
+    <div className="flex items-start text-sm mb-3 last:mb-0 min-w-0">
+      <span className="text-gray-500 w-32 sm:w-40 shrink-0">{label}</span>
+      <span className="text-gray-500 mr-2 shrink-0">:</span>
+      <span className="text-purple-950 font-medium min-w-0 flex-1 break-all">
+        {value}
+      </span>
     </div>
   );
 }
@@ -206,19 +211,29 @@ function OverviewRow({
 function BookingSummaryContent() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [servicePrice, setServicePrice] = useState<number | null>(null);
+  const [serviceDetails, setServiceDetails] = useState<{
+    id?: number;
+    name?: string;
+    sub?: string;
+    img?: string;
+    category?: string;
+    type?: string;
+    price?: number;
+    duration?: string;
+    status?: string;
+  } | null>(null);
 
   const [data] = useState(() => {
     try {
       const stored = loadConsultationData();
       const params = new URLSearchParams(window.location.search);
       return {
-        service:
-          stored.service || params.get("service") || "Reiki Healing Session",
-        mode: stored.mode || params.get("mode") || "Video Call",
-        date: stored.date || params.get("date") || "Tuesday, 10 June 2026",
-        time: stored.time || params.get("time") || "08:00 AM",
+        service: params.get("service") || stored.service || "",
+        mode: params.get("mode") || stored.mode || "",
+        date: params.get("date") || stored.date || "",
+        time: params.get("time") || stored.time || "",
         duration: stored.duration || "",
+        amount: stored.amount || "",
         fullName: stored.fullName || "",
         email: stored.email || "",
         phone: stored.phone || "",
@@ -232,11 +247,12 @@ function BookingSummaryContent() {
       };
     } catch {
       return {
-        service: "Reiki Healing Session",
-        mode: "Video Call",
-        date: "Tuesday, 10 June 2026",
-        time: "08:00 AM",
+        service: "",
+        mode: "",
+        date: "",
+        time: "",
         duration: "",
+        amount: "",
         fullName: "",
         email: "",
         phone: "",
@@ -274,13 +290,10 @@ function BookingSummaryContent() {
     if (data.service) {
       resolveService(data.service)
         .then((svc) => {
-          setServicePrice(svc.price);
-          if (svc.duration) {
-            saveConsultationData({ duration: svc.duration });
-          }
+          setServiceDetails(svc);
         })
         .catch(() => {
-          // Fallback: price will show as unavailable
+          setServiceDetails(null);
         });
     }
   }, [data.service]);
@@ -309,7 +322,15 @@ function BookingSummaryContent() {
     concern,
     specialRequests,
     duration,
+    amount,
   } = data;
+
+  const serviceName = serviceDetails?.name || service || "—";
+  const serviceDescription =
+    serviceDetails?.sub || "Selected consultation service";
+  const serviceDuration = duration ? `${duration} Min` : "N/A";
+  const serviceCategory = serviceDetails?.category || "—";
+  const serviceType = serviceDetails?.type || "—";
 
   const personalInfoLeft = [
     { label: "Full Name", value: fullName || "—" },
@@ -325,7 +346,7 @@ function BookingSummaryContent() {
     { label: "How did you find us?", value: foundUs || "—" },
   ];
 
-  const price = servicePrice ?? 0;
+  const price = Number(data.amount || serviceDetails?.price || 0);
   const total = price;
 
   const dateShort = date ? date.replace(/,?\s*\d{4}/, "") : "";
@@ -343,7 +364,7 @@ function BookingSummaryContent() {
       value: date ? `${date}\n${time} (IST)` : "—",
       error: validationErrors.date || validationErrors.time,
     },
-    { icon: Clock, label: "Duration", value: duration || "N/A" },
+    { icon: Clock, label: "Duration", value: serviceDuration },
   ];
 
   const BOOKING_OVERVIEW = [
@@ -371,7 +392,7 @@ function BookingSummaryContent() {
       value: time ? `${time} (IST)` : "—",
       error: validationErrors.time,
     },
-    { icon: Clock, label: "Duration", value: duration || "N/A" },
+    { icon: Clock, label: "Duration", value: serviceDuration },
   ];
 
   return (
@@ -498,10 +519,19 @@ function BookingSummaryContent() {
                 <div>
                   <p className="text-xs text-gray-500">Service</p>
                   <p className="font-bold text-purple-950">
-                    {sanitize(service)}
+                    {sanitize(serviceName)}
                   </p>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">
+                      {sanitize(serviceCategory)}
+                    </span>
+
+                    <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700">
+                      {sanitize(serviceType)}
+                    </span>
+                  </div>
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed">
-                    Selected consultation service
+                    {sanitize(serviceDescription)}
                   </p>
                 </div>
               </div>
@@ -554,7 +584,7 @@ function BookingSummaryContent() {
               number={4}
               title="Additional Information"
             />
-            <div className="grid sm:grid-cols-2 gap-6">
+            {/* <div className="grid sm:grid-cols-2 gap-6">
               <div>
                 <p className="text-sm text-gray-500 mb-2 font-medium">
                   Uploaded Documents
@@ -575,7 +605,7 @@ function BookingSummaryContent() {
                   {specialRequests || "No special requests."}
                 </p>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* review banner */}

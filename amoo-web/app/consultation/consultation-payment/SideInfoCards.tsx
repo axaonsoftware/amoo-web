@@ -14,13 +14,13 @@ export function NeedHelpCard() {
           </p>
         </div>
       </div>
-      <button
+      {/* <button
         className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-white text-sm font-medium"
         style={{ background: "#3E1E7A" }}
       >
         <MessageCircle size={15} />
         Chat on WhatsApp
-      </button>
+      </button> */}
     </div>
   );
 }

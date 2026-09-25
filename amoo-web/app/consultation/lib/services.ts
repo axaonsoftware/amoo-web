@@ -75,6 +75,8 @@ export async function resolveService(
 // labels have to be translated. "Audio Call" has no member in that enum, so it
 // maps to "" and the real choice is preserved in `notes` (see modeNote).
 const MODE_MAP: Record<string, string> = {
+  "audio call": "audio",
+  audio: "audio",
   "video call": "video",
   video: "video",
   chat: "chat",

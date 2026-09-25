@@ -4,7 +4,10 @@ import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { AlertCircle, Loader2 } from "lucide-react";
-import { saveConsultationData, loadConsultationData } from "../lib/consultation-storage";
+import {
+  saveConsultationData,
+  loadConsultationData,
+} from "../lib/consultation-storage";
 import { api } from "../../../lib/api";
 import { SiteFooter } from "../../components/site-footer";
 import { SectionHeading } from "../../components/ornament";
@@ -21,9 +24,10 @@ function SelectDateTimeInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const service = searchParams.get("service") || "Selected Service";
-  const mode = searchParams.get("mode") || "Selected Mode";
   const storedData = loadConsultationData();
-  const duration = storedData.duration || undefined;
+  const mode = storedData.mode || searchParams.get("mode") || "Selected Mode";
+  const duration = storedData.duration;
+  const amount = storedData.amount;
 
   const now = new Date();
   // Default to tomorrow: the backend rejects bookings for today/past dates
@@ -71,7 +75,7 @@ function SelectDateTimeInner() {
     setSelectedSlot(slot);
     setSelectedSlotId(slotId);
     setValidationError("");
-    
+
     // Reserve the slot immediately to prevent double-booking if slotId present.
     // Block the Continue button until reservation resolves so users can't
     // navigate away with an unconfirmed slot.
@@ -83,7 +87,9 @@ function SelectDateTimeInner() {
         // If reservation fails (e.g., slot already booked), clear selection
         setSelectedSlot("");
         setSelectedSlotId(undefined);
-        setValidationError("Sorry, this slot is no longer available. Please select a different time.");
+        setValidationError(
+          "Sorry, this slot is no longer available. Please select a different time.",
+        );
       } finally {
         setReservingSlot(false);
       }
@@ -107,9 +113,16 @@ function SelectDateTimeInner() {
       "Saturday",
     ][dateObj.getDay()];
     const dateStr = `${weekday}, ${selectedDate} ${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
-    saveConsultationData({ date: dateStr, time: selectedSlot, slot_id: selectedSlotId });
+    saveConsultationData({
+      mode,
+      date: dateStr,
+      time: selectedSlot,
+      slot_id: selectedSlotId,
+      duration,
+      amount,
+    });
     router.push(
-      `/consultation/consultation-booking?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(selectedSlot)}`,
+      `/consultation/consultation-booking?service=${encodeURIComponent(service)}&mode=${encodeURIComponent(mode)}&duration=${duration ?? ""}&amount=${amount ?? ""}&date=${encodeURIComponent(dateStr)}&time=${encodeURIComponent(selectedSlot)}`,
     );
   };
 
@@ -185,6 +198,7 @@ function SelectDateTimeInner() {
               year={selectedYear}
               time={selectedSlot}
               duration={duration}
+              price={amount}
             />
           </div>
         </div>

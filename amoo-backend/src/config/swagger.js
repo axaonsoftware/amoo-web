@@ -2536,6 +2536,166 @@ const env = require("./env");
  *                 time: { type: string, format: date-time }
  */
 
+
+/**
+ * @openapi
+ * /api/auth/expert/forgot-password:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Send expert password reset OTP
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *     responses:
+ *       200:
+ *         description: If the account exists, a reset OTP has been sent
+ *       400:
+ *         description: Invalid request
+ *       500:
+ *         description: Password reset email service is not configured
+ */
+
+/**
+ * @openapi
+ * /api/auth/expert/reset-password:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Reset expert password
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - otp
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               otp:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 format: password
+ *     responses:
+ *       200:
+ *         description: Password updated successfully
+ *       400:
+ *         description: Invalid or expired OTP
+ */
+
+/**
+ * @swagger
+ * /api/agora/token:
+ *   post:
+ *     summary: Generate Agora token
+ *     tags: [Agora]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - bookingId
+ *               - mode
+ *             properties:
+ *               bookingId:
+ *                 type: integer
+ *                 example: 123
+ *               mode:
+ *                 type: string
+ *                 enum: [audio, video]
+ *                 example: video
+ *     responses:
+ *       200:
+ *         description: Agora token generated successfully
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ *//**
+* @swagger
+* /api/agora/token:
+*   post:
+*     summary: Generate Agora token
+*     tags: [Agora]
+*     security:
+*       - bearerAuth: []
+*     requestBody:
+*       required: true
+*       content:
+*         application/json:
+*           schema:
+*             type: object
+*             required:
+*               - bookingId
+*               - mode
+*             properties:
+*               bookingId:
+*                 type: integer
+*                 example: 123
+*               mode:
+*                 type: string
+*                 enum: [audio, video]
+*                 example: video
+*     responses:
+*       200:
+*         description: Agora token generated successfully
+*       400:
+*         description: Invalid request
+*       401:
+*         description: Unauthorized
+*       500:
+*         description: Server error
+*/
+
+/**
+* @swagger
+* /api/users/{id}:
+*   delete:
+*     summary: Delete a user
+*     tags: [Users]
+*     security:
+*       - bearerAuth: []
+*     parameters:
+*       - in: path
+*         name: id
+*         required: true
+*         schema:
+*           type: integer
+*         example: 12
+*     responses:
+*       200:
+*         description: User deleted successfully
+*       404:
+*         description: User not found
+*       401:
+*         description: Unauthorized
+*       403:
+*         description: Admin access required
+*       500:
+*         description: Server error
+*/
+
+
+
 const options = {
   definition: {
     openapi: "3.0.0",

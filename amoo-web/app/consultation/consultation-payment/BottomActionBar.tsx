@@ -28,6 +28,8 @@ export default function BottomActionBar({
   date,
   time,
   slot_id,
+  duration,
+  amount,
   svc,
   coupon,
   total,
@@ -37,6 +39,8 @@ export default function BottomActionBar({
   date: string;
   time: string;
   slot_id?: number;
+  duration?: number;
+  amount?: number;
   svc: ConsultationService | null;
   coupon: AppliedCoupon | null;
   total: number;
@@ -80,7 +84,8 @@ export default function BottomActionBar({
           date: parseDisplayDate(date),
           time: parseDisplayTime(time),
           mode: toApiMode(mode),
-          amount: 0,
+          amount: amount ?? 0,
+          duration_minutes: duration,
           method: "razorpay",
           ...(note ? { notes: note } : {}),
         });
@@ -221,9 +226,7 @@ export default function BottomActionBar({
               {/* Prefer the backend-validated amount; fall back to the
                   client-side total while the order hasn't been created yet. */}
               Pay{" "}
-              {formatCurrency(
-                validatedAmount ? validatedAmount / 100 : total,
-              )}{" "}
+              {formatCurrency(validatedAmount ? validatedAmount / 100 : total)}{" "}
               Securely
               <ArrowRight size={16} aria-hidden="true" />
               <Lock size={14} aria-hidden="true" />

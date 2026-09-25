@@ -3,7 +3,10 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+// import { HomeHeader, OfferBar } from "../components/home-header";
 import { HomeHeader, OfferBar } from "../components/home-header";
+import { SiteFooter } from "../components/site-footer";
+import WhatsAppFloatButton from "../about/components/WhatsAppFloatButton";
 import {
   ArrowRightIcon,
   CalendarIcon,
@@ -661,163 +664,9 @@ export default function ContactPage() {
             </Link>
           </div>
         </section>
-
-        {/* CUSTOM FOOTER */}
-        <footer className="relative overflow-hidden bg-[#0c0620] text-white">
-          <div className="haze pointer-events-none absolute inset-0 opacity-40" />
-
-          <div className="relative mx-auto w-full max-w-[1336px] px-5 pt-[40px] pb-[24px]">
-            <div className="grid grid-cols-1 gap-[30px] sm:grid-cols-2 lg:grid-cols-[220px_1fr_1fr_1fr_1fr]">
-              {/* Brand Column */}
-              <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-                <Image
-                  src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/images/logo-footer.png"
-                  alt={SITE_NAME}
-                  width={460}
-                  height={460}
-                  className="h-[70px] w-auto object-contain"
-                />
-                <p className="mt-[12px] max-w-[200px] text-[11.5px] leading-[1.65] text-white/75">
-                  Empowering lives with divine guidance through Numerology,
-                  Tarot, Reiki, Kundali &amp; more.
-                </p>
-                <div className="mt-[16px] flex items-center gap-[10px]">
-                  {[
-                    {
-                      Icon: FacebookIcon,
-                      label: "Facebook",
-                      bg: "bg-[#3b5998]",
-                      href: "https://facebook.com/amoooguru",
-                    },
-                    {
-                      Icon: InstagramIcon,
-                      label: "Instagram",
-                      bg: "bg-gradient-to-br from-[#f9ce34] via-[#ee2a7b] to-[#6228d7]",
-                      href: "https://instagram.com/amooguru_official",
-                    },
-                    {
-                      Icon: YoutubeIcon,
-                      label: "YouTube",
-                      bg: "bg-[#ff0000]",
-                      href: "https://youtube.com/@amoooguru",
-                    },
-                    {
-                      Icon: WhatsAppIcon,
-                      label: "WhatsApp",
-                      bg: "bg-[#25D366]",
-                      href: WHATSAPP_URL,
-                    },
-                    {
-                      Icon: SendIcon,
-                      label: "Telegram",
-                      bg: "bg-[#0088cc]",
-                      href: "https://t.me/amoooguru",
-                    },
-                  ].map(({ Icon, label, bg, href }) => (
-                    <Link
-                      key={label}
-                      href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      aria-label={label}
-                      className={`flex h-[28px] w-[28px] items-center justify-center rounded-full ${bg} hover:opacity-80 transition-opacity`}
-                    >
-                      <Icon className="h-[14px] w-[14px] text-white" />
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quick Links */}
-              <div>
-                <h3 className="mb-[14px] text-[14px] font-semibold text-gold">
-                  Quick Links
-                </h3>
-                <ul className="space-y-[8px]">
-                  {FOOTER_LINKS.quickLinks.map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        href={link.href}
-                        className="flex items-center gap-2 text-[12px] text-white/75 transition-colors hover:text-gold"
-                      >
-                        <span className="h-[5px] w-[5px] shrink-0 rotate-45 bg-gold/70" />
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Our Services */}
-              <div>
-                <h3 className="mb-[14px] text-[14px] font-semibold text-gold">
-                  Our Services
-                </h3>
-                <ul className="space-y-[8px]">
-                  {FOOTER_LINKS.ourServices.map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        href={link.href}
-                        className="flex items-center gap-2 text-[12px] text-white/75 transition-colors hover:text-gold"
-                      >
-                        <span className="h-[5px] w-[5px] shrink-0 rotate-45 bg-gold/70" />
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Resources */}
-              <div>
-                <h3 className="mb-[14px] text-[14px] font-semibold text-gold">
-                  Resources
-                </h3>
-                <ul className="space-y-[8px]">
-                  {FOOTER_LINKS.resources.map((link) => (
-                    <li key={link.label}>
-                      <Link
-                        href={link.href}
-                        className="flex items-center gap-2 text-[12px] text-white/75 transition-colors hover:text-gold"
-                      >
-                        <span className="h-[5px] w-[5px] shrink-0 rotate-45 bg-gold/70" />
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Contact Info */}
-              <div>
-                <h3 className="mb-[14px] text-[14px] font-semibold text-gold">
-                  Contact Info
-                </h3>
-                <ul className="space-y-[10px]">
-                  {CONTACT_INFO.map(({ icon: Icon, text }) => (
-                    <li
-                      key={text}
-                      className="flex items-center gap-2.5 text-[12px] text-white/80"
-                    >
-                      <Icon className="h-[14px] w-[14px] shrink-0 text-gold" />
-                      {text}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {/* Copyright */}
-          <div className="relative border-t border-white/10">
-            <div className="mx-auto flex w-full max-w-[1336px] items-center justify-center px-5 py-[14px]">
-              <p className="text-[12px] text-white/65">
-                &copy; {new Date().getFullYear()} {SITE_NAME}. All Rights Reserved.
-              </p>
-            </div>
-          </div>
-        </footer>
       </main>
+      <SiteFooter />
+      <WhatsAppFloatButton />
     </>
   );
 }

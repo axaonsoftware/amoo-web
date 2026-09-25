@@ -288,18 +288,32 @@ export default function Home() {
         <section className="relative overflow-hidden rounded-b-[16px] bg-[radial-gradient(120%_130%_at_18%_50%,#33124f_0%,#22083a_45%,#170426_100%)]">
           <HomeHeader />
 
+          {/* Desktop Background */}
           <Image
             src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooHomeHeroBgP.png"
             alt=""
             fill
             priority
             sizes="100vw"
-            className="pointer-events-none absolute inset-0 h-full w-full object-cover object-center"
+            className="pointer-events-none absolute inset-0 hidden h-full w-full object-cover object-center sm:block"
           />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,#1c0730_0%,rgba(28,7,48,0.9)_15%,rgba(28,7,48,0.35)_40%,rgba(28,7,48,0)_60%)] md:bg-[linear-gradient(90deg,#1c0730_0%,rgba(28,7,48,0.9)_6%,rgba(28,7,48,0.35)_20%,rgba(28,7,48,0)_36%)]" />
+
+          {/* Mobile Image */}
+          <div className="relative block h-[260px] w-full sm:hidden">
+            <Image
+              src="https://res.cloudinary.com/iguqsxhj/image/upload/amoo/imagesP/amooHomeHeroBgP.png"
+              alt=""
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover object-[65%_center]"
+            />
+          </div>
+
+          <div className="absolute inset-0 hidden bg-[linear-gradient(90deg,#1c0730_0%,rgba(28,7,48,0.9)_15%,rgba(28,7,48,0.35)_40%,rgba(28,7,48,0)_60%)] sm:block" />
 
           <div className="relative mx-auto w-full max-w-[1336px] px-5">
-            <div className="w-full max-w-[560px] pt-[100px] pb-[62px] sm:pt-[128px]">
+            <div className="w-full max-w-[560px] pt-[40px] pb-[40px] sm:pt-[128px] sm:pb-[62px]">
               <p className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.14em] text-gold uppercase">
                 <LotusIcon className="h-[13px] w-[13px]" />
                 Welcome to {SITE_NAME}
@@ -313,9 +327,9 @@ export default function Home() {
 
               <p className="mt-[18px] text-[15px] leading-[1.75] text-white/90">
                 Transform your life through Numerology, Reiki Healing,
-                <br />
+                <br className="hidden sm:block" />
                 Tarot Guidance and Spiritual Consultation with
-                <br />
+                <br className="hidden sm:block" />
                 Reiki Grand Dr. Master Surinder Kaur Sehgal.
               </p>
 
@@ -343,17 +357,18 @@ export default function Home() {
                 ))}
               </ul>
 
-              <div className="mt-[28px] flex flex-wrap items-center gap-[26px]">
+              <div className="mt-[28px] flex flex-nowrap items-center gap-[12px]">
                 <Link
                   href="/consultation/select-service"
-                  className="flex h-[52px] items-center gap-2.5 rounded-[8px] bg-gradient-to-b from-gold-2 to-gold-3 px-[26px] text-[15px] font-semibold text-[#2b0a3d]"
+                  className="flex h-[52px] shrink-0 items-center gap-2.5 rounded-[8px] bg-gradient-to-b from-gold-2 to-gold-3 px-[18px] text-[14px] font-semibold text-[#2b0a3d] sm:px-[26px] sm:text-[15px]"
                 >
                   <CalendarIcon className="h-[18px] w-[18px]" />
                   Book Consultation
                 </Link>
+
                 <Link
                   href="/services"
-                  className="flex h-[52px] items-center gap-3 rounded-[8px] border border-white/50 px-[26px] text-[15px] font-medium text-white"
+                  className="flex h-[52px] shrink-0 items-center gap-2 rounded-[8px] border border-white/50 px-[18px] text-[14px] font-medium text-white sm:gap-3 sm:px-[26px] sm:text-[15px]"
                 >
                   Explore Services
                   <ArrowRightIcon className="h-[17px] w-[17px]" />
@@ -499,24 +514,24 @@ export default function Home() {
 
         {/* ---------------- ABOUT ---------------- */}
         <section className="rounded-[16px] bg-[#faf7f2]">
-          <div className="mx-auto grid w-full max-w-[1336px] grid-cols-1 items-center gap-8 px-5 py-[26px] lg:grid-cols-[380px_1fr_400px] lg:gap-[38px]">
-            <div className="flex justify-center mr-20">
+          <div className="mx-auto grid w-full max-w-[1336px] grid-cols-1 items-center gap-8 px-5 py-[26px] sm:px-6 lg:grid-cols-[380px_1fr_400px] lg:gap-[38px]">
+            <div className="flex justify-center lg:mr-20">
               <Image
                 src="reiki.png"
                 alt="Surinder Kaur Sehgal"
                 width={890}
                 height={878}
-                className="h-[350px] w-full max-w-[550px] object-cover sm:h-[545px] lg:w-[550px]"
+                className="h-[350px] w-full max-w-[550px] object-cover sm:h-[545px] lg:h-[545px] lg:w-[550px]"
               />
             </div>
 
-            <div className="ml-8">
+            <div className="ml-0 lg:ml-8">
               <p className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.12em] text-[#c08a2c] uppercase">
                 <DiamondIcon className="h-[9px] w-[9px] rotate-90" />
                 Meet Your Spiritual Guide
               </p>
 
-              <h2 className="font-display mt-[12px] text-[24px] lg:text-[30px] leading-[1.25] font-bold text-[#2c0c47]">
+              <h2 className="font-display mt-[12px] text-[24px] leading-[1.25] font-bold text-[#2c0c47] lg:text-[30px]">
                 Reiki Grand Master
                 <br />
                 Dr. Surinder Kaur Sehgal
@@ -542,25 +557,27 @@ export default function Home() {
 
               <Link
                 href="/about"
-                className="mt-[22px] inline-flex h-[36px] items-center rounded-[6px] bg-gradient-to-r from-[#4a1273] to-[#7a2ba3] px-[22px] text-[13px] font-semibold text-gold-2"
+                className="mt-[22px] inline-flex h-auto min-h-[36px] items-center rounded-[6px] bg-gradient-to-r from-[#4a1273] to-[#7a2ba3] px-[22px] py-2 text-[13px] font-semibold text-gold-2"
               >
                 Know More About Surinder Ji
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 overflow-hidden rounded-[12px] border border-[#e8dcc8]">
+            <div className="grid grid-cols-2 overflow-hidden rounded-[12px] border border-[#e8dcc8]">
               {STATS.map(({ icon: Icon, value, label }, index) => (
                 <div
                   key={value}
-                  className={`flex flex-col items-center justify-center px-4 py-[26px] text-center ${
-                    index % 2 === 0 ? "sm:border-r border-[#e8dcc8]" : ""
-                  } ${index < 2 ? "border-b border-[#e8dcc8] sm:border-b-0" : index >= STATS.length - 2 ? "" : ""}`}
+                  className={`flex flex-col items-center justify-center px-3 py-[22px] text-center sm:px-4 sm:py-[26px] ${
+                    index % 2 === 0 ? "border-r border-[#e8dcc8]" : ""
+                  } ${index < 2 ? "border-b border-[#e8dcc8]" : ""}`}
                 >
                   <Icon className="h-[30px] w-[30px] text-[#6b2a9c]" />
-                  <p className="font-display mt-[12px] text-[26px] leading-none font-bold text-[#b5471a]">
+
+                  <p className="font-display mt-[12px] text-[24px] leading-none font-bold text-[#b5471a] sm:text-[26px]">
                     {value}
                   </p>
-                  <p className="mt-[10px] text-[12.5px] leading-[1.5] text-[#4a4956]">
+
+                  <p className="mt-[10px] text-[12px] leading-[1.5] text-[#4a4956] sm:text-[12.5px]">
                     {label[0]}
                     <br />
                     {label[1]}

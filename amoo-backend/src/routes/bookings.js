@@ -94,7 +94,17 @@ router.post(
   verifiedRequired,
   validate("booking"),
   asyncHandler(async (req, res) => {
-    const { service_id, expert_id, slot_id, date, time, mode, amount, notes } = req.body;
+    const {
+      service_id,
+      expert_id,
+      slot_id,
+      date,
+      time,
+      mode,
+      amount,
+      duration_minutes,
+      notes,
+    } = req.body;
     // Idempotency: the client sends the same Idempotency-Key on retries (e.g.
     // after a token-refresh race or a timeout). A replay returns the original
     // booking instead of double-reserving a slot / double-inserting a booking.
@@ -124,11 +134,21 @@ router.post(
       // The booking always stores the real service price; the client `amount` is
       // only cross-checked so a stale UI price surfaces as a 400 rather than
       // silently charging something else. 0 means "pay later".
-      const { rows: [svc] } = await client.query("SELECT id, price FROM services WHERE id = $1 AND deleted_at IS NULL", [service_id]);
+      const { rows: [svc] } = await client.query(
+        "SELECT id FROM services WHERE id = $1 AND deleted_at IS NULL",
+        [service_id]
+      );
       if (!svc) throw new HttpError(404, "Service not found");
-      const expected = Number(svc.price);
-      if (Number(amount) !== 0 && Math.abs(Number(amount) - expected) > 0.01) {
-        throw new HttpError(400, "Amount does not match the service price");
+      const bookingAmount = Number(amount);
+      const bookingDuration = Number(duration_minutes);
+      if (!Number.isFinite(bookingAmount) || bookingAmount < 0) {
+        throw new HttpError(400, "Invalid booking amount");
+      }
+      if (!Number.isFinite(bookingDuration) || bookingDuration <= 0) {
+        throw new HttpError(400, "Invalid booking duration");
+      }
+      if (!mode) {
+        throw new HttpError(400, "Consultation mode is required");
       }
 
       // Reserve slot if provided
@@ -150,10 +170,53 @@ router.post(
       // the other conflicts, falls through to the existing-row lookup, and
       // returns the original booking.
       const result = await client.query(
-        `INSERT INTO bookings (booking_ref, user_id, expert_id, service_id, slot_id, date, time, mode, amount, payment, status, notes, idempotency_key)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pending', 'pending-payment', $10, $11)
+        `INSERT INTO bookings (
+  booking_ref,
+  user_id,
+  expert_id,
+  service_id,
+  slot_id,
+  date,
+  time,
+  mode,
+  amount,
+  duration_minutes,
+  payment,
+  status,
+  notes,
+  idempotency_key
+)
+         VALUES (
+  $1,
+  $2,
+  $3,
+  $4,
+  $5,
+  $6,
+  $7,
+  $8,
+  $9,
+  $10,
+  'Pending',
+  'pending-payment',
+  $11,
+  $12
+)
          ON CONFLICT ON CONSTRAINT uq_bookings_idempotency DO NOTHING RETURNING id`,
-        [ref, req.user.id, expert_id || null, service_id, slot_id || null, date, time, mode || null, expected, notes || null, idemKey]
+        [
+          ref,
+          req.user.id,
+          expert_id || null,
+          service_id,
+          slot_id || null,
+          date,
+          time,
+          mode,
+          bookingAmount,
+          bookingDuration,
+          notes || null,
+          idemKey,
+        ]
       );
       let bookingId = result.rows[0]?.id;
 

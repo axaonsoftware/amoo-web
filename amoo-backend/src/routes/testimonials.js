@@ -98,22 +98,16 @@ router.delete(
 
 router.get("/avatar", asyncHandler(async (req, res) => {
   const { url } = req.query;
-
   if (!url || typeof url !== "string") {
-    return res.status(400).end(); 
+    return res.status(400).end();
   }
-
   const response = await fetch(url);
-
   if (!response.ok) {
     return res.status(response.status).end();
   }
-
   const contentType = response.headers.get("content-type");
-
   res.set("Content-Type", contentType || "image/jpeg");
   res.set("Cache-Control", "public, max-age=86400");
-
   const buffer = Buffer.from(await response.arrayBuffer());
   res.send(buffer);
 }));

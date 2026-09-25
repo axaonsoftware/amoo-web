@@ -25,7 +25,8 @@ export default function SummaryCard({
   year: number;
   time: string;
   price?: number;
-  duration?: string;
+  // duration?: string;
+  duration?: number;
 }) {
   const dateObj = new Date(year, month, date);
   const dayName = dateObj.toLocaleDateString("en-US", { weekday: "long" });
@@ -83,7 +84,7 @@ export default function SummaryCard({
             <PinIcon className="h-[16px] w-[16px] shrink-0 text-grape-2" />
             <span className="flex-1 text-[13px] text-body">Price</span>
             <span className="text-[14.5px] font-bold text-[#1f8a4c]">
-              ₹{price ?? 799}
+              {price !== undefined ? `₹${price}` : "N/A"}
             </span>
           </div>
         </div>

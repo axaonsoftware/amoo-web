@@ -12,6 +12,7 @@ import {
   ArrowRight,
   BadgeCheck,
   Loader2,
+  PhoneCall,
 } from "lucide-react";
 import { useApi } from "@/lib/useApi";
 import { api } from "@/lib/api";
@@ -176,13 +177,6 @@ export default function UpcomingConsultations({
                 key={c.id}
                 className="relative rounded-[14px] border border-[#f0e9dd] bg-white p-[15px] shadow-[0_1px_2px_rgba(38,17,66,.03)]"
               >
-                <button
-                  type="button"
-                  aria-label="More options"
-                  className="absolute right-3 top-3 flex h-6 w-6 items-center justify-center text-[#9a95a5]"
-                >
-                  <MoreVertical className="h-[18px] w-[18px]" strokeWidth={2} />
-                </button>
                 <div className="flex flex-col gap-4 md:flex-row md:flex-wrap md:items-start lg:flex-nowrap">
                   <div className="relative h-[98px] w-[98px] shrink-0">
                     <span className="relative block h-full w-full overflow-hidden rounded-[12px] bg-gradient-to-br from-[#8b5cf6] to-[#6d28d9]">
@@ -279,21 +273,27 @@ export default function UpcomingConsultations({
                               callerId: currentUserId,
                             });
                           }}
-                          className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]"
+                          className="flex h-[42px] w-full items-center justify-center gap-1.5 rounded-[10px] border border-[#c9b3e6] bg-white px-2 text-[12px] font-semibold text-[#5b21a8] cursor-pointer"
                         >
-                          <Video
-                            className="h-[16px] w-[16px]"
-                            strokeWidth={1.9}
-                          />
-                          {c.mode === "audio"
-                            ? "Join Audio Meeting"
-                            : "Join Video Meeting"}
+                          {c.mode === "audio" ? (
+                            <PhoneCall
+                              className="h-[15px] w-[15px] shrink-0"
+                              strokeWidth={1.9}
+                            />
+                          ) : (
+                            <Video
+                              className="h-[15px] w-[15px] shrink-0"
+                              strokeWidth={1.9}
+                            />
+                          )}
+
+                          {c.mode === "audio" ? "Join Audio" : "Join Video"}
                         </button>
                       ) : null
                     ) : (
                       <button
                         type="button"
-                        className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]"
+                        className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8] cursor-pointer"
                       >
                         <CalendarClock
                           className="h-[16px] w-[16px]"
@@ -302,18 +302,18 @@ export default function UpcomingConsultations({
                         Reschedule
                       </button>
                     )}
-                    {c.expert_id && (
+                    {c.expert_id && c.mode === "chat" && (
                       <StartChatButton
-                        expertId={c.expert_id ?? undefined}
+                        expertId={c.expert_id}
                         userId={c.user_id}
                         variant="secondary"
-                        className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8]"
+                        className="flex h-[42px] w-full items-center justify-center gap-2 rounded-[10px] border border-[#c9b3e6] bg-white text-[13px] font-semibold text-[#5b21a8] cursor-pointer"
                       />
                     )}
                     <button
                       type="button"
                       onClick={() => setSelectedBooking(c)}
-                      className="flex h-[42px] w-full items-center justify-center rounded-[10px] border border-[#e6dfd3] bg-white text-[13px] font-medium text-[#4a4356]"
+                      className="flex h-[42px] w-full items-center justify-center rounded-[10px] border border-[#e6dfd3] bg-white text-[13px] font-medium text-[#4a4356] cursor-pointer"
                     >
                       View Details
                     </button>

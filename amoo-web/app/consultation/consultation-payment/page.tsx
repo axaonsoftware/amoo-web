@@ -25,6 +25,8 @@ type BookingParams = {
   date: string;
   time: string;
   slot_id?: number;
+  duration?: number;
+  amount?: number;
 };
 
 /**
@@ -40,13 +42,32 @@ function readParams(): BookingParams | null {
   const stored = loadConsultationData();
   const url = new URLSearchParams(window.location.search);
 
-  const service = stored.service || url.get("service") || "";
-  const mode = stored.mode || url.get("mode") || "";
-  const date = stored.date || url.get("date") || "";
-  const time = stored.time || url.get("time") || "";
+  const service = url.get("service") || stored.service || "";
+  const mode = url.get("mode") || stored.mode || "";
+  const date = url.get("date") || stored.date || "";
+  const time = url.get("time") || stored.time || "";
+
+  const duration =
+    stored.duration !== undefined && stored.duration !== null
+      ? Number(stored.duration)
+      : undefined;
+
+  const amount =
+    stored.amount !== undefined && stored.amount !== null
+      ? Number(stored.amount)
+      : undefined;
 
   if (!service || !date || !time) return null;
-  return { service, mode: mode || "Video Call", date, time, slot_id: stored.slot_id || undefined };
+
+  return {
+    service,
+    mode,
+    date,
+    time,
+    slot_id: stored.slot_id || undefined,
+    duration,
+    amount,
+  };
 }
 
 function ConsultationPaymentPageInner() {
@@ -134,8 +155,8 @@ function ConsultationPaymentPageInner() {
     );
   }
 
-  const { service, mode, date, time, slot_id } = params;
-  const price = svc?.price ?? 0;
+  const { service, mode, date, time, slot_id, duration, amount } = params;
+  const price = amount ?? 0;
   const discount = coupon?.discount ?? 0;
   const total = Math.max(0, Math.round((price - discount) * 100) / 100);
 
@@ -160,7 +181,7 @@ function ConsultationPaymentPageInner() {
             mode={mode}
             date={date}
             time={time}
-            duration={svc?.duration}
+            duration={duration ? `${duration} Min` : undefined}
             price={price}
             coupon={coupon}
             total={total}
@@ -177,6 +198,8 @@ function ConsultationPaymentPageInner() {
           date={date}
           time={time}
           slot_id={slot_id}
+          duration={duration}
+          amount={amount}
           svc={svc}
           coupon={coupon}
           total={total}
